@@ -300,7 +300,7 @@ const CalendarHeatmap: React.FC<ActivityCalendarProps> = ({ logs, onDateClick, c
                     <DashItem label="晨勃率" icon={SunMedium} value={`${monthlyStats.morningWoodRate}%`} sub="出现概率" colorClass="text-blue-500 dark:text-blue-400"/>
                     <DashItem label="运动天数" icon={Dumbbell} value={`${monthlyStats.exerciseDays}天`} sub="保持活力" colorClass="text-orange-500 dark:text-orange-400"/>
                     <DashItem label="自慰次数" icon={Hand} value={`${monthlyStats.masturbationCount}次`} sub="本月释放" colorClass="text-purple-500 dark:text-purple-400"/>
-                    <DashItem label="本月热点 XP" icon={Flame} value={monthlyStats.topXP} sub="最常施法标签" colorClass="text-pink-500 dark:text-pink-400"/>
+                    <DashItem label="本月热点性癖" icon={Flame} value={monthlyStats.topXP} sub="最常施法标签" colorClass="text-pink-500 dark:text-pink-400"/>
                     <DashItem 
                         label="酒精影响" 
                         icon={Beer} 

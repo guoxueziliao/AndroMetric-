@@ -141,7 +141,7 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose }) => {
                 {/* Tabs */}
                 <div className="flex bg-slate-50 dark:bg-slate-800/50 p-1 rounded-xl mb-4 border border-slate-200 dark:border-slate-800">
                     <button onClick={() => setActiveTab('xp')} className={`flex-1 py-2 text-xs font-bold rounded-lg flex items-center justify-center gap-2 ${activeTab === 'xp' ? 'bg-white dark:bg-slate-700 shadow-sm text-brand-accent' : 'text-slate-400 hover:text-slate-600'}`}>
-                        <Hash size={14} /> XP / 类型
+                        <Hash size={14} /> 性癖 / 类型
                     </button>
                     <button onClick={() => setActiveTab('event')} className={`flex-1 py-2 text-xs font-bold rounded-lg flex items-center justify-center gap-2 ${activeTab === 'event' ? 'bg-white dark:bg-slate-700 shadow-sm text-brand-accent' : 'text-slate-400 hover:text-slate-600'}`}>
                         <Activity size={14} /> 特别事件

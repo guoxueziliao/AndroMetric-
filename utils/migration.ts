@@ -2,7 +2,7 @@
 import { StoredData, LogEntry, SexRecordDetails, MasturbationRecordDetails, SexInteraction, SexAction, ExerciseRecord, MorningRecord, SleepRecord } from '../types';
 
 // The latest version of our data structure.
-export const LATEST_VERSION = 34;
+export const LATEST_VERSION = 35;
 
 /**
  * MIGRATION UTILITIES
@@ -165,6 +165,17 @@ function migrateV33toV34(logs: any[]): LogEntry[] {
     });
 }
 
+// V35: Fix legacy English symptoms (cold -> 感冒)
+function migrateV34toV35(logs: any[]): LogEntry[] {
+    const MAP: Record<string, string> = { 'cold': '感冒', 'fever': '发烧', 'headache': '头痛', 'other': '其他' };
+    return logs.map(log => {
+        if (log.health && Array.isArray(log.health.symptoms)) {
+            log.health.symptoms = log.health.symptoms.map((s: string) => MAP[s] || s);
+        }
+        return log;
+    });
+}
+
 /**
  * REPAIR UTILS
  */
@@ -201,7 +212,8 @@ const MIGRATION_REGISTRY: Record<number, (logs: any[]) => any[]> = {
     31: migrateV30toV31,
     32: migrateV31toV32,
     33: migrateV32toV33,
-    34: migrateV33toV34
+    34: migrateV33toV34,
+    35: migrateV34toV35
 };
 
 export function runMigrations(data: any): StoredData {

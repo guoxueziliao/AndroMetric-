@@ -372,7 +372,7 @@ const StatsView: React.FC<StatsViewProps> = ({ isDarkMode }) => {
 
                 {activeTab === 'behavior' && (
                     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
-                        <ChartCard title="性癖雷达 (XP Radar)" icon={Radar} subtext="基于自慰记录的标签频率分析">
+                        <ChartCard title="性癖雷达" icon={Radar} subtext="基于自慰记录的标签频率分析">
                             {xpRadarData.data.length > 2 ? (
                                 <RadarChart 
                                     data={{

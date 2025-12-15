@@ -195,7 +195,7 @@ const analyzeXPChange = (logs: LogEntry[]): Insight[] => {
              insights.push({
                 id: `xp_surge_${tag}`,
                 type: 'neutral',
-                title: 'XP 偏好转移',
+                title: '性癖偏好转移',
                 description: `最近对「${tag}」兴趣激增 ${Math.round((recentShare - allShare)*100)}%。`,
                 score: 7,
                 icon: 'trend'

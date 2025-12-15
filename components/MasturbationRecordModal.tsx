@@ -309,7 +309,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                         
                         {/* Categories / Tags */}
                         <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
-                            <label className="text-[10px] text-slate-500 font-bold uppercase block mb-2">类型 / XP (多选)</label>
+                            <label className="text-[10px] text-slate-500 font-bold uppercase block mb-2">性癖 / 类型 (多选)</label>
                             <div className="flex flex-wrap gap-2 h-32 overflow-y-auto custom-scrollbar content-start">
                                 {CATEGORIES.map(c => (
                                     <button
