@@ -227,6 +227,12 @@ const AppContent: React.FC<{ data: any }> = ({ data }) => {
 
   // Masturbation Logic
   const handleStartMasturbation = () => {
+      // FIX: Check if already ongoing to prevent duplicates
+      if (ongoingMb) {
+          handleFinishMasturbation(ongoingMb);
+          return;
+      }
+
       // Create new record with status inProgress
       const newRecord: MasturbationRecordDetails = {
           id: Date.now().toString(),

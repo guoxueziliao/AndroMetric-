@@ -41,6 +41,12 @@ const FORCE_LEVELS = [
 const POST_MOODS = ['满足', '平淡', '空虚', '后悔', '想再来一次'];
 const FATIGUE_LEVELS = ['精神焕发', '无变化', '略有困意', '极度疲惫', '秒睡'];
 
+// State Sliders Config
+const ENERGY_LABELS = ['疲惫', '较累', '正常', '充沛', '爆表'];
+const MOOD_LABELS = ['低落', '焦虑', '平淡', '开心', '兴奋'];
+const MOOD_VALUES: Mood[] = ['sad', 'anxious', 'neutral', 'happy', 'excited'];
+const STRESS_LABELS = ['放松', '微压', '一般', '较大', '崩溃'];
+
 interface CustomOptions {
     sources: string[];
     platforms: string[];
@@ -146,7 +152,7 @@ const Slider = ({ value, min, max, onChange, labels }: { value: number, min: num
         />
         {labels && (
             <div className="flex justify-between text-[10px] text-brand-muted mt-2 px-1">
-                {labels.map((l, i) => <span key={i} className={i === value - 1 ? 'text-brand-accent font-bold' : ''}>{l}</span>)}
+                {labels.map((l, i) => <span key={i} className={i === value - 1 ? 'text-brand-accent font-bold scale-110' : ''}>{l}</span>)}
             </div>
         )}
     </div>
@@ -232,6 +238,9 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                 volumeForceLevel: initialData.volumeForceLevel || 3,
                 postMood: initialData.postMood || '平淡',
                 fatigue: initialData.fatigue || '无变化',
+                energyLevel: initialData.energyLevel || 3,
+                stressLevel: initialData.stressLevel || 3,
+                mood: initialData.mood || 'neutral',
                 // Legacy mapping if needed
                 assets: { sources: [], platforms: [], categories: [], target: '', actors: [], ...initialData.assets }
             });
@@ -347,6 +356,9 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
       return colors[Math.abs(hash) % colors.length];
   };
 
+  // Helper to get Mood index for slider
+  const getMoodIndex = (m: Mood) => MOOD_VALUES.indexOf(m) + 1;
+
   if (!isOpen) return null;
 
   return (
@@ -401,8 +413,11 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
 
                 <Block title="施法材料 (可选)">
                     {/* List of added materials */}
-                    {data.materialsList && data.materialsList.length > 0 && (
-                        <div className="space-y-2 mb-3">
+                    {data.materialsList && data.materialsList.length > 0 ? (
+                        <div className="space-y-2 mb-4">
+                            <div className="flex items-center justify-between text-xs text-brand-muted font-bold px-1">
+                                <span>已添加清单 ({data.materialsList.length})</span>
+                            </div>
                             {data.materialsList.map((m, i) => (
                                 <div key={i} className="bg-slate-100 dark:bg-slate-800 p-2 rounded-lg text-xs border border-slate-200 dark:border-slate-700 flex justify-between items-start animate-in slide-in-from-top-2">
                                     <div className="flex gap-2">
@@ -422,10 +437,15 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                                 </div>
                             ))}
                         </div>
-                    )}
+                    ) : null}
 
                     {/* Detailed Input Form */}
-                    <div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-700 p-3 space-y-3">
+                    <div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-700 p-3 space-y-3 relative">
+                        <div className="text-[10px] font-bold text-brand-muted uppercase tracking-wider mb-1 flex items-center justify-between">
+                            <span>添加新素材 (支持多条)</span>
+                            {data.materialsList && data.materialsList.length > 0 && <span className="text-brand-accent">继续添加 👇</span>}
+                        </div>
+                        
                         <input 
                             className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg py-2.5 px-3 text-sm outline-none focus:border-brand-accent transition-colors"
                             placeholder="番号 / 标题 (可选)"
@@ -517,16 +537,17 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                                 onClick={handleCancelMaterial}
                                 className="flex-1 py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-500 font-bold rounded-lg text-xs hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
                             >
-                                取消
+                                清空
                             </button>
                             <button 
                                 onClick={handleAddMaterial}
                                 disabled={!newMaterial.label && !newMaterial.publisher && newMaterial.actors.length === 0 && newMaterial.tags.length === 0}
-                                className="flex-1 py-2.5 bg-blue-50 dark:bg-blue-900/30 text-brand-accent font-bold rounded-lg text-xs hover:bg-blue-100 dark:hover:bg-blue-900/50 disabled:opacity-50 disabled:bg-slate-100 transition-colors border border-blue-100 dark:border-blue-900"
+                                className="flex-1 py-2.5 bg-blue-50 dark:bg-blue-900/30 text-brand-accent font-bold rounded-lg text-xs hover:bg-blue-100 dark:hover:bg-blue-900/50 disabled:opacity-50 disabled:bg-slate-100 transition-colors border border-blue-100 dark:border-blue-900 flex justify-center items-center"
                             >
-                                确认添加
+                                <Plus size={14} className="mr-1"/> 确认添加
                             </button>
                         </div>
+                        <div className="text-[10px] text-center text-slate-400">点击确认添加后，可继续录入下一条</div>
                     </div>
                 </Block>
 
@@ -598,10 +619,11 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                     </Row>
                     <div className="pt-2">
                         <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center justify-between">
-                            <span className="text-sm font-bold text-slate-500">边缘控制 (Edging): {data.edgingCount} 次</span>
-                            <div className="flex items-center gap-4">
-                                <button onClick={() => setData(p => ({...p, edgingCount: Math.max(0, (p.edgingCount||0)-1), edging: (p.edgingCount||0)-1 > 0 ? 'multiple' : 'none'}))} className="w-8 h-8 flex items-center justify-center rounded-full bg-white dark:bg-slate-700 border shadow-sm"><Minus size={16}/></button>
-                                <button onClick={() => setData(p => ({...p, edgingCount: (p.edgingCount||0)+1, edging: (p.edgingCount||0)+1 === 1 ? 'once' : 'multiple'}))} className="w-8 h-8 flex items-center justify-center rounded-full bg-brand-accent text-white shadow-md"><Plus size={16}/></button>
+                            <span className="text-sm font-bold text-slate-500">边缘控制 (Edging)</span>
+                            <div className="flex items-center gap-3 bg-white dark:bg-slate-700 rounded-lg p-1 border border-slate-200 dark:border-slate-600 shadow-sm">
+                                <button onClick={() => setData(p => ({...p, edgingCount: Math.max(0, (p.edgingCount||0)-1), edging: (p.edgingCount||0)-1 > 0 ? 'multiple' : 'none'}))} className="w-8 h-8 flex items-center justify-center rounded hover:bg-slate-100 dark:hover:bg-slate-600"><Minus size={16}/></button>
+                                <span className="w-8 text-center font-bold text-lg">{data.edgingCount}</span>
+                                <button onClick={() => setData(p => ({...p, edgingCount: (p.edgingCount||0)+1, edging: (p.edgingCount||0)+1 === 1 ? 'once' : 'multiple'}))} className="w-8 h-8 flex items-center justify-center rounded hover:bg-slate-100 dark:hover:bg-slate-600 text-brand-accent"><Plus size={16}/></button>
                             </div>
                         </div>
                     </div>
@@ -654,6 +676,22 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                             </div>
                         </div>
                     )}
+
+                    {/* Energy / Mood / Stress Sliders */}
+                    <div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-3 space-y-4 border border-slate-200 dark:border-slate-800">
+                        <div>
+                            <label className="text-xs font-bold text-brand-muted mb-2 block uppercase">精力状态</label>
+                            <Slider value={data.energyLevel || 3} min={1} max={5} onChange={v => setData({...data, energyLevel: v})} labels={ENERGY_LABELS}/>
+                        </div>
+                        <div>
+                            <label className="text-xs font-bold text-brand-muted mb-2 block uppercase">心情</label>
+                            <Slider value={getMoodIndex(data.mood || 'neutral')} min={1} max={5} onChange={v => setData({...data, mood: MOOD_VALUES[v-1]})} labels={MOOD_LABELS}/>
+                        </div>
+                        <div>
+                            <label className="text-xs font-bold text-brand-muted mb-2 block uppercase">压力</label>
+                            <Slider value={data.stressLevel || 3} min={1} max={5} onChange={v => setData({...data, stressLevel: v})} labels={STRESS_LABELS}/>
+                        </div>
+                    </div>
 
                     <div className="grid grid-cols-2 gap-4 pt-2">
                         <Row label="贤者时间 (心理)">
