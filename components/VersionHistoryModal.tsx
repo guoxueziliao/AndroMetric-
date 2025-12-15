@@ -25,6 +25,18 @@ interface VersionEntry {
 
 const HISTORY: VersionEntry[] = [
     {
+        version: '0.0.6',
+        date: '2025-12-12',
+        summary: 'Context & Quality：引入全局时间轴与多维身心记录。',
+        changes: [
+            { type: 'new', text: '全局事件时间轴：在日记底部将睡眠、运动、咖啡与性活动串联为生活流' },
+            { type: 'new', text: '自慰详情增强：新增“纸巾压力测试”与“贤者时间”心理/生理评估' },
+            { type: 'new', text: '生活方式补全：新增咖啡因摄入记录，饮酒记录增加具体时间' },
+            { type: 'opt', text: '数据质量评分：根据记录完整度实时反馈质量分' },
+            { type: 'data', text: 'Schema v1.1：底层数据结构升级适配新特性' }
+        ]
+    },
+    {
         version: '0.0.5',
         date: '2025-12-10',
         summary: '生活方式记录全面升级：从 QuickLog 到多维体感。',
