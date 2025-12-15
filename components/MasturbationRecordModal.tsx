@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { X, Check, Clock, Smile, PenLine, Tag, Smartphone, User, Target, Layers, Plus, Zap, Minus, FilePlus, Bookmark, ShieldCheck, Trash2, ArrowLeft, ArrowRight, MapPin, AlertTriangle, Search, Battery, Droplets, BatteryCharging, Wind } from 'lucide-react';
+import { X, Check, Clock, Smile, PenLine, Tag, Smartphone, User, Target, Layers, Plus, Zap, Minus, FilePlus, Bookmark, ShieldCheck, Trash2, ArrowLeft, ArrowRight, MapPin, AlertTriangle, Search, Battery, Droplets, BatteryCharging, Wind, Film } from 'lucide-react';
 import { MasturbationRecordDetails, LogEntry, PartnerProfile, Mood, MasturbationMaterial } from '../types';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { calculateInventory } from '../utils/helpers';
@@ -187,7 +187,8 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
   const TOTAL_STEPS = 4;
   const [actorInput, setActorInput] = useState('');
   const [customOptions, setCustomOptions] = useLocalStorage<CustomOptions>('userCustomOptions_masturbation', { sources: [], platforms: [], categories: [], tools: [], scenes: [] });
-  const [isAddingMaterial, setIsAddingMaterial] = useState(false);
+  
+  // Detailed Material Form State
   const [newMaterial, setNewMaterial] = useState<MasturbationMaterial>({ id: '', label: '', publisher: '', actors: [], tags: [] });
   const [newMatActorInput, setNewMatActorInput] = useState('');
   const [showTargetSuggestions, setShowTargetSuggestions] = useState(false);
@@ -271,29 +272,54 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                 fatigue: '无变化'
             });
         }
-        setIsAddingMaterial(false);
+        setNewMaterial({ id: '', label: '', publisher: '', actors: [], tags: [] });
     }
   }, [initialData, isOpen]);
 
   const handleSave = () => { onSave({ ...data, status: 'completed' }); onClose(); };
+
+  const prevStep = () => setStep(s => Math.max(1, s - 1));
+  const nextStep = () => {
+      if (step === TOTAL_STEPS) {
+          handleSave();
+      } else {
+          setStep(s => Math.min(TOTAL_STEPS, s + 1));
+      }
+  };
+  
+  const handleAddMaterial = () => {
+      if (!newMaterial.label && !newMaterial.publisher && newMaterial.actors.length === 0) return;
+      const item: MasturbationMaterial = {
+          ...newMaterial,
+          id: Date.now().toString()
+      };
+      setData(prev => ({
+          ...prev,
+          materialsList: [...(prev.materialsList || []), item],
+          // Keep legacy string array in sync for simple displays
+          materials: [...prev.materials, item.label || '未命名素材']
+      }));
+      setNewMaterial({ id: '', label: '', publisher: '', actors: [], tags: [] });
+  };
+
   const updateAsset = (key: any, val: string) => setData(prev => {
       const current = prev.assets?.[key] || [];
       const next = current.includes(val) ? current.filter((x: any) => x !== val) : [...current, val];
       return { ...prev, assets: { ...prev.assets!, [key]: next } };
   });
+  
   const addCustomOption = (key: keyof CustomOptions, value: string) => {
       if (!customOptions[key].includes(value)) setCustomOptions(prev => ({ ...prev, [key]: [...prev[key], value] }));
       if (key === 'tools') setData(p => ({ ...p, tools: p.tools.includes(value) ? p.tools.filter(t => t!==value) : [...p.tools, value] }));
       else if (key === 'scenes') setData(prev => ({ ...prev, location: value }));
       else updateAsset(key, value);
   };
+  
   const getTargetColor = (name: string) => {
       const colors = ['bg-red-400', 'bg-orange-400', 'bg-amber-400', 'bg-green-400', 'bg-blue-400', 'bg-purple-400'];
       let hash = 0; for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
       return colors[Math.abs(hash) % colors.length];
   };
-  const nextStep = () => { if(step < TOTAL_STEPS) setStep(step + 1); else handleSave(); };
-  const prevStep = () => { if(step > 1) setStep(step - 1); };
 
   if (!isOpen) return null;
 
@@ -346,6 +372,89 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                         </Row>
                     )}
                 </Block>
+
+                <Block title="施法材料 (可选)">
+                    {/* List of added materials */}
+                    {data.materialsList && data.materialsList.length > 0 && (
+                        <div className="space-y-2 mb-3">
+                            {data.materialsList.map((m, i) => (
+                                <div key={i} className="bg-slate-100 dark:bg-slate-800 p-2 rounded-lg text-xs border border-slate-200 dark:border-slate-700 flex justify-between items-start animate-in slide-in-from-top-2">
+                                    <div className="flex gap-2">
+                                        <div className="bg-slate-200 dark:bg-slate-700 p-2 rounded flex items-center justify-center text-slate-500">
+                                            <Film size={16}/>
+                                        </div>
+                                        <div>
+                                            <div className="font-bold text-brand-text dark:text-slate-200 text-sm">{m.label || '未命名'}</div>
+                                            <div className="text-[10px] text-slate-500 mt-0.5 space-x-2">
+                                                {m.publisher && <span className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-1.5 rounded">🏢 {m.publisher}</span>}
+                                                {m.actors.length > 0 && <span className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-1.5 rounded">👤 {m.actors.join(', ')}</span>}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button onClick={() => setData(p => ({...p, materialsList: p.materialsList?.filter((_, idx) => idx !== i)}))} className="text-slate-400 hover:text-red-500 p-1"><X size={14}/></button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Detailed Input Form */}
+                    <div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-700 p-3 space-y-3">
+                        <input 
+                            className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg py-2.5 px-3 text-sm outline-none focus:border-brand-accent transition-colors"
+                            placeholder="番号 / 标题 (可选)"
+                            value={newMaterial.label || ''}
+                            onChange={e => setNewMaterial({...newMaterial, label: e.target.value})}
+                        />
+                        <input 
+                            className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg py-2.5 px-3 text-sm outline-none focus:border-brand-accent transition-colors"
+                            placeholder="发行商 / 厂牌"
+                            value={newMaterial.publisher || ''}
+                            onChange={e => setNewMaterial({...newMaterial, publisher: e.target.value})}
+                        />
+                        
+                        {/* Actors Input */}
+                        <div>
+                            <div className="flex flex-wrap gap-2 mb-2 empty:hidden">
+                                {newMaterial.actors.map(a => (
+                                    <span key={a} className="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-300 px-2 py-1 rounded text-xs border border-indigo-100 dark:border-indigo-800 flex items-center">
+                                        {a}
+                                        <button onClick={() => setNewMaterial(p => ({...p, actors: p.actors.filter(x => x!==a)}))} className="ml-1 hover:text-red-500"><X size={10}/></button>
+                                    </span>
+                                ))}
+                            </div>
+                            <div className="relative">
+                                <input 
+                                    className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg py-2.5 px-3 text-sm outline-none focus:border-brand-accent transition-colors"
+                                    placeholder="添加主演 (回车)"
+                                    value={newMatActorInput}
+                                    onChange={e => setNewMatActorInput(e.target.value)}
+                                    onKeyDown={e => {
+                                        if (e.key === 'Enter' && newMatActorInput.trim()) {
+                                            e.preventDefault();
+                                            setNewMaterial(p => ({...p, actors: [...p.actors, newMatActorInput.trim()]}));
+                                            setNewMatActorInput('');
+                                        }
+                                    }}
+                                />
+                                <button 
+                                    onClick={() => { if(newMatActorInput.trim()) { setNewMaterial(p => ({...p, actors: [...p.actors, newMatActorInput.trim()]})); setNewMatActorInput(''); }}}
+                                    className="absolute right-2 top-1.5 p-1 bg-slate-100 dark:bg-slate-700 rounded text-slate-500 hover:text-brand-accent"
+                                >
+                                    <Plus size={16}/>
+                                </button>
+                            </div>
+                        </div>
+
+                        <button 
+                            onClick={handleAddMaterial}
+                            disabled={!newMaterial.label && !newMaterial.publisher && newMaterial.actors.length === 0}
+                            className="w-full py-2.5 bg-blue-50 dark:bg-blue-900/30 text-brand-accent font-bold rounded-lg text-xs hover:bg-blue-100 dark:hover:bg-blue-900/50 disabled:opacity-50 disabled:bg-slate-100 transition-colors border border-blue-100 dark:border-blue-900"
+                        >
+                            确认添加材料
+                        </button>
+                    </div>
+                </Block>
+
                 <Block title="施法对象">
                     <Row label="目标 (Target)">
                         <div className="flex gap-4 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide snap-x">
@@ -385,7 +494,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                     <Row label="类型 / XP (生成雷达图)">
                         <ChipSelect options={sortedCategories} selected={data.assets?.categories || []} onToggle={v => updateAsset('categories', v)} onAdd={v => addCustomOption('categories', v)} multi placeholder="搜索XP标签 (如: 巨乳)..." />
                     </Row>
-                    <Row label="主演 / 发行商">
+                    <Row label="主演 (全局)">
                         <div className="flex flex-wrap gap-2 mb-2">
                             {data.assets?.actors?.map(actor => (
                                 <button key={actor} onClick={() => updateAsset('actors', actor)} className="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 px-3 py-1.5 rounded-xl text-xs font-bold border border-indigo-200 dark:border-indigo-800 flex items-center group">
@@ -417,84 +526,97 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                             <span className="text-sm font-bold text-slate-500">边缘控制 (Edging): {data.edgingCount} 次</span>
                             <div className="flex items-center gap-4">
                                 <button onClick={() => setData(p => ({...p, edgingCount: Math.max(0, (p.edgingCount||0)-1), edging: (p.edgingCount||0)-1 > 0 ? 'multiple' : 'none'}))} className="w-8 h-8 flex items-center justify-center rounded-full bg-white dark:bg-slate-700 border shadow-sm"><Minus size={16}/></button>
-                                <button onClick={() => setData(p => ({...p, edgingCount: (p.edgingCount||0)+1, edging: (p.edgingCount||0)+1 === 1 ? 'once' : 'multiple'}))} className="w-8 h-8 flex items-center justify-center rounded-full bg-brand-accent text-white shadow-sm"><Plus size={16}/></button>
+                                <button onClick={() => setData(p => ({...p, edgingCount: (p.edgingCount||0)+1, edging: (p.edgingCount||0)+1 === 1 ? 'once' : 'multiple'}))} className="w-8 h-8 flex items-center justify-center rounded-full bg-brand-accent text-white shadow-md"><Plus size={16}/></button>
                             </div>
+                        </div>
+                    </div>
+                    <div className="pt-2">
+                        <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700 space-y-3">
+                            <div className="flex items-center justify-between">
+                                <span className="text-sm font-bold text-slate-500">被打断?</span>
+                                <input type="checkbox" className="toggle-checkbox h-5 w-9" checked={data.interrupted} onChange={e => setData({...data, interrupted: e.target.checked})}/>
+                            </div>
+                            {data.interrupted && (
+                                <div className="grid grid-cols-2 gap-2 animate-in fade-in">
+                                    {INTERRUPTION_OPTIONS.map(opt => (
+                                        <button key={opt} onClick={() => setData(p => ({...p, interruptionReasons: p.interruptionReasons?.includes(opt)?p.interruptionReasons.filter(x=>x!==opt):[...(p.interruptionReasons||[]), opt]}))} className={`text-[10px] p-2 rounded border transition-all ${data.interruptionReasons?.includes(opt) ? 'bg-orange-100 border-orange-200 text-orange-700' : 'bg-white border-slate-200 text-slate-500'}`}>{opt}</button>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     </div>
                 </Block>
             </div>
         )}
 
-        {/* STEP 4: Result (Updated for v0.0.6) */}
+        {/* STEP 4: Outcome */}
         {step === 4 && (
             <div className="space-y-6 animate-in slide-in-from-right fade-in">
-                <Block title="结局">
-                    <RowSplit label="是否射精">
-                        <button onClick={() => setData({...data, ejaculation: !data.ejaculation})} className={`w-12 h-6 rounded-full relative transition-colors ${data.ejaculation ? 'bg-brand-accent' : 'bg-slate-300'}`}><div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-all ${data.ejaculation ? 'left-7' : 'left-1'}`}></div></button>
+                <Block title="结局与状态">
+                    <RowSplit label="最终射精">
+                        <div className="flex items-center">
+                            <span className={`text-xs mr-2 font-bold ${data.ejaculation ? 'text-blue-500' : 'text-slate-400'}`}>{data.ejaculation ? '已发射' : '寸止/未射'}</span>
+                            <input type="checkbox" className="toggle-checkbox h-6 w-11" checked={data.ejaculation} onChange={e => setData({...data, ejaculation: e.target.checked})}/>
+                        </div>
                     </RowSplit>
+                    
                     {data.ejaculation && (
-                        <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-4 mt-3 border border-slate-200 dark:border-slate-700">
-                            <div className="flex justify-between items-center mb-2">
-                                <span className="text-xs font-bold text-slate-500 uppercase flex items-center"><Droplets size={12} className="mr-1"/> 纸巾压力测试 (量与力)</span>
-                                <span className="text-lg font-black text-brand-accent">{data.volumeForceLevel || 3}级</span>
+                        <div className="bg-blue-50 dark:bg-blue-900/10 rounded-xl p-3 border border-blue-100 dark:border-blue-900/30 space-y-4 animate-in fade-in">
+                            <div>
+                                <label className="text-xs font-bold text-blue-600 dark:text-blue-400 mb-2 block uppercase">愉悦强度 (1-5)</label>
+                                <Slider value={data.orgasmIntensity || 3} min={1} max={5} onChange={v => setData({...data, orgasmIntensity: v})} labels={['无感', '微爽', '舒适', '很爽', '升天']}/>
                             </div>
-                            <input 
-                                type="range" min={1} max={5} value={data.volumeForceLevel || 3} 
-                                onChange={e => setData({...data, volumeForceLevel: Number(e.target.value) as any})}
-                                className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-brand-accent mb-2"
-                            />
-                            <div className="text-xs text-brand-text dark:text-slate-300 font-medium bg-white dark:bg-slate-900 p-2 rounded border border-slate-100 dark:border-slate-800">
-                                {FORCE_LEVELS[(data.volumeForceLevel || 3) - 1].label}: {FORCE_LEVELS[(data.volumeForceLevel || 3) - 1].desc}
-                            </div>
-                            
-                            <div className="mt-4">
-                                <Row label="愉悦评分">
-                                    <Slider min={1} max={5} value={data.orgasmIntensity || 3} onChange={v => setData({...data, orgasmIntensity: v})} labels={['无感', '一般', '爽', '非常爽', '升天']} />
-                                </Row>
+                            <div>
+                                <label className="text-xs font-bold text-blue-600 dark:text-blue-400 mb-2 block uppercase">发射力度 (纸巾测试)</label>
+                                <div className="space-y-1">
+                                    {FORCE_LEVELS.map(L => (
+                                        <button key={L.lvl} onClick={() => setData({...data, volumeForceLevel: L.lvl as any})} className={`w-full text-left p-2 rounded-lg border text-xs flex justify-between items-center transition-all ${data.volumeForceLevel === L.lvl ? 'bg-blue-500 text-white border-blue-600 shadow-md' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700'}`}>
+                                            <span className="font-bold">Lv.{L.lvl} {L.label}</span>
+                                            <span className={`text-[10px] ${data.volumeForceLevel === L.lvl ? 'text-blue-100' : 'text-slate-400'}`}>{L.desc}</span>
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
                         </div>
                     )}
-                </Block>
 
-                <Block title="贤者时间 (Post-Nut Clarity)">
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="text-xs font-bold text-slate-500 mb-2 block">射后心理</label>
-                            <div className="flex flex-wrap gap-2">
+                    <div className="grid grid-cols-2 gap-4 pt-2">
+                        <Row label="贤者时间 (心理)">
+                            <div className="flex flex-col gap-1">
                                 {POST_MOODS.map(m => (
-                                    <button key={m} onClick={() => setData({...data, postMood: m})} className={`text-[10px] px-2 py-1.5 rounded border transition-all ${data.postMood === m ? 'bg-indigo-500 text-white border-indigo-600' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700'}`}>
-                                        {m}
-                                    </button>
+                                    <button key={m} onClick={() => setData({...data, postMood: m})} className={`text-xs py-1.5 rounded border transition-all ${data.postMood === m ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-500 border-slate-200'}`}>{m}</button>
                                 ))}
                             </div>
-                        </div>
-                        <div>
-                            <label className="text-xs font-bold text-slate-500 mb-2 block">身体疲劳</label>
-                            <div className="flex flex-wrap gap-2">
+                        </Row>
+                        <Row label="身体疲劳度">
+                            <div className="flex flex-col gap-1">
                                 {FATIGUE_LEVELS.map(f => (
-                                    <button key={f} onClick={() => setData({...data, fatigue: f})} className={`text-[10px] px-2 py-1.5 rounded border transition-all ${data.fatigue === f ? 'bg-orange-500 text-white border-orange-600' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700'}`}>
-                                        {f}
-                                    </button>
+                                    <button key={f} onClick={() => setData({...data, fatigue: f})} className={`text-xs py-1.5 rounded border transition-all ${data.fatigue === f ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-500 border-slate-200'}`}>{f}</button>
                                 ))}
                             </div>
-                        </div>
+                        </Row>
                     </div>
-                </Block>
 
-                <Block title="备注">
-                    <textarea value={data.notes || ''} onChange={e => setData({...data, notes: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm min-h-[60px] outline-none focus:border-brand-accent" placeholder="记录当下的感受..."/>
+                    <Row label="备注">
+                        <textarea className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm h-20 outline-none focus:border-brand-accent" placeholder="番号、链接或特殊感受..." value={data.notes || ''} onChange={e => setData({...data, notes: e.target.value})} />
+                    </Row>
                 </Block>
             </div>
         )}
-        
-        <div className="h-10"></div>
+
       </div>
 
-      {/* Bottom Nav */}
-      <div className="flex-none p-4 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 shadow-lg flex gap-3">
-          {step > 1 && <button onClick={prevStep} className="flex-1 py-3.5 bg-slate-100 dark:bg-slate-800 text-brand-text dark:text-slate-200 font-bold rounded-2xl flex items-center justify-center"><ArrowLeft size={18} className="mr-2"/> 上一步</button>}
-          <button onClick={nextStep} className={`flex-[2] py-3.5 bg-brand-accent text-white font-bold rounded-2xl shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-transform`}>
-              {step === TOTAL_STEPS ? <><Check size={20} /> 完成记录</> : <>下一步 <ArrowRight size={18} /></>}
+      {/* Footer Nav */}
+      <div className="flex-none p-4 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex justify-between items-center z-20">
+          <button onClick={prevStep} className={`px-6 py-3 rounded-xl font-bold text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors ${step === 1 ? 'opacity-0 pointer-events-none' : ''}`}>
+              上一步
+          </button>
+          <div className="flex gap-1">
+              {[1, 2, 3, 4].map(s => <div key={s} className={`w-2 h-2 rounded-full transition-all ${step === s ? 'bg-brand-accent w-4' : 'bg-slate-200 dark:bg-slate-700'}`}></div>)}
+          </div>
+          <button onClick={nextStep} className="px-8 py-3 bg-brand-accent hover:bg-brand-accent-hover text-white rounded-xl font-bold shadow-lg shadow-blue-500/30 transition-transform active:scale-95 flex items-center">
+              {step === TOTAL_STEPS ? <Check size={18} className="mr-2"/> : null}
+              {step === TOTAL_STEPS ? '完成' : '下一步'}
           </button>
       </div>
     </div>
