@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { X, Check, Clock, Smile, PenLine, Tag, Smartphone, User, Target, Layers, Plus, Zap, Minus, FilePlus, Bookmark, ShieldCheck, Trash2, ArrowLeft, ArrowRight, MapPin, AlertTriangle, Search, Battery, Droplets, BatteryCharging, Wind, Film } from 'lucide-react';
+import { X, Check, Clock, Smile, PenLine, Tag, Smartphone, User, Target, Layers, Plus, Zap, Minus, FilePlus, Bookmark, ShieldCheck, Trash2, ArrowLeft, ArrowRight, MapPin, AlertTriangle, Search, Battery, Droplets, BatteryCharging, Wind, Film, Hash } from 'lucide-react';
 import { MasturbationRecordDetails, LogEntry, PartnerProfile, Mood, MasturbationMaterial } from '../types';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { calculateInventory } from '../utils/helpers';
@@ -191,6 +191,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
   // Detailed Material Form State
   const [newMaterial, setNewMaterial] = useState<MasturbationMaterial>({ id: '', label: '', publisher: '', actors: [], tags: [] });
   const [newMatActorInput, setNewMatActorInput] = useState('');
+  const [newMatTagInput, setNewMatTagInput] = useState('');
   const [showTargetSuggestions, setShowTargetSuggestions] = useState(false);
 
   // --- Helpers ---
@@ -288,18 +289,35 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
   };
   
   const handleAddMaterial = () => {
-      if (!newMaterial.label && !newMaterial.publisher && newMaterial.actors.length === 0) return;
+      if (!newMaterial.label && !newMaterial.publisher && newMaterial.actors.length === 0 && newMaterial.tags.length === 0) return;
       const item: MasturbationMaterial = {
           ...newMaterial,
           id: Date.now().toString()
       };
+      
+      // Auto-add tags to global categories if they are new
+      newMaterial.tags.forEach(t => addCustomOption('categories', t));
+      
+      // Auto-add global categories if matching
+      const mergedTags = new Set([...newMaterial.tags, ...(data.assets?.categories || [])]);
+      
       setData(prev => ({
           ...prev,
           materialsList: [...(prev.materialsList || []), item],
           // Keep legacy string array in sync for simple displays
-          materials: [...prev.materials, item.label || '未命名素材']
+          materials: [...prev.materials, item.label || '未命名素材'],
+          assets: {
+              ...prev.assets!,
+              categories: Array.from(mergedTags)
+          }
       }));
       setNewMaterial({ id: '', label: '', publisher: '', actors: [], tags: [] });
+  };
+  
+  const handleCancelMaterial = () => {
+      setNewMaterial({ id: '', label: '', publisher: '', actors: [], tags: [] });
+      setNewMatActorInput('');
+      setNewMatTagInput('');
   };
 
   const updateAsset = (key: any, val: string) => setData(prev => {
@@ -313,6 +331,14 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
       if (key === 'tools') setData(p => ({ ...p, tools: p.tools.includes(value) ? p.tools.filter(t => t!==value) : [...p.tools, value] }));
       else if (key === 'scenes') setData(prev => ({ ...prev, location: value }));
       else updateAsset(key, value);
+  };
+  
+  const toggleNewMaterialTag = (tag: string) => {
+      setNewMaterial(prev => {
+          const tags = prev.tags || [];
+          if (tags.includes(tag)) return { ...prev, tags: tags.filter(t => t !== tag) };
+          return { ...prev, tags: [...tags, tag] };
+      });
   };
   
   const getTargetColor = (name: string) => {
@@ -385,9 +411,10 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                                         </div>
                                         <div>
                                             <div className="font-bold text-brand-text dark:text-slate-200 text-sm">{m.label || '未命名'}</div>
-                                            <div className="text-[10px] text-slate-500 mt-0.5 space-x-2">
-                                                {m.publisher && <span className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-1.5 rounded">🏢 {m.publisher}</span>}
-                                                {m.actors.length > 0 && <span className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-1.5 rounded">👤 {m.actors.join(', ')}</span>}
+                                            <div className="flex flex-wrap gap-1 mt-1">
+                                                {m.publisher && <span className="text-[9px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-1 rounded text-slate-500">🏢 {m.publisher}</span>}
+                                                {m.actors.length > 0 && <span className="text-[9px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-1 rounded text-slate-500">👤 {m.actors.join(', ')}</span>}
+                                                {m.tags.map(t => <span key={t} className="text-[9px] bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 px-1 rounded border border-blue-100 dark:border-blue-900">#{t}</span>)}
                                             </div>
                                         </div>
                                     </div>
@@ -445,13 +472,61 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                             </div>
                         </div>
 
-                        <button 
-                            onClick={handleAddMaterial}
-                            disabled={!newMaterial.label && !newMaterial.publisher && newMaterial.actors.length === 0}
-                            className="w-full py-2.5 bg-blue-50 dark:bg-blue-900/30 text-brand-accent font-bold rounded-lg text-xs hover:bg-blue-100 dark:hover:bg-blue-900/50 disabled:opacity-50 disabled:bg-slate-100 transition-colors border border-blue-100 dark:border-blue-900"
-                        >
-                            确认添加材料
-                        </button>
+                        {/* Tags Input for Material */}
+                        <div>
+                            <div className="flex flex-wrap gap-2 mb-2 empty:hidden">
+                                {newMaterial.tags.map(t => (
+                                    <span key={t} className="bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 px-2 py-1 rounded text-xs border border-blue-100 dark:border-blue-900 flex items-center">
+                                        #{t}
+                                        <button onClick={() => toggleNewMaterialTag(t)} className="ml-1 hover:text-red-500"><X size={10}/></button>
+                                    </span>
+                                ))}
+                            </div>
+                            <div className="relative">
+                                <Search size={14} className="absolute left-3 top-3 text-slate-400"/>
+                                <input 
+                                    className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg py-2.5 pl-9 pr-3 text-sm outline-none focus:border-brand-accent transition-colors"
+                                    placeholder="搜索标签..."
+                                    value={newMatTagInput}
+                                    onChange={e => setNewMatTagInput(e.target.value)}
+                                    onKeyDown={e => {
+                                        if (e.key === 'Enter' && newMatTagInput.trim()) {
+                                            e.preventDefault();
+                                            toggleNewMaterialTag(newMatTagInput.trim());
+                                            setNewMatTagInput('');
+                                        }
+                                    }}
+                                />
+                            </div>
+                            {/* Quick Select Tags Suggestions */}
+                            <div className="flex flex-wrap gap-2 mt-2">
+                                {sortedCategories.slice(0, 8).filter(c => !newMaterial.tags.includes(c)).map(c => (
+                                    <button 
+                                        key={c}
+                                        onClick={() => toggleNewMaterialTag(c)}
+                                        className="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-2 py-1 rounded-full border border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                                    >
+                                        {c}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="flex gap-2 pt-1">
+                            <button 
+                                onClick={handleCancelMaterial}
+                                className="flex-1 py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-500 font-bold rounded-lg text-xs hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                            >
+                                取消
+                            </button>
+                            <button 
+                                onClick={handleAddMaterial}
+                                disabled={!newMaterial.label && !newMaterial.publisher && newMaterial.actors.length === 0 && newMaterial.tags.length === 0}
+                                className="flex-1 py-2.5 bg-blue-50 dark:bg-blue-900/30 text-brand-accent font-bold rounded-lg text-xs hover:bg-blue-100 dark:hover:bg-blue-900/50 disabled:opacity-50 disabled:bg-slate-100 transition-colors border border-blue-100 dark:border-blue-900"
+                            >
+                                确认添加
+                            </button>
+                        </div>
                     </div>
                 </Block>
 

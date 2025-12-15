@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { LogEntry, HardnessLevel, MorningWoodRetention, ExerciseRecord, SexRecordDetails, MasturbationRecordDetails, HistoryCategory } from '../types';
+import { LogEntry, HardnessLevel, MorningWoodRetention, ExerciseRecord, SexRecordDetails, MasturbationRecordDetails, HistoryCategory, AppSettings } from '../types';
 import CalendarHeatmap from './CalendarHeatmap';
 import { Signal, SignalHigh, SignalMedium, SignalLow, SignalZero, Moon, ShieldAlert, BedDouble, Zap, Leaf, Activity, Hand, HeartPulse, Bed, Hourglass, BatteryMedium, Battery, AlertTriangle, ArrowLeft, ArrowRight, X, Clock, CloudDrizzle, History, Dumbbell, Footprints, Timer, CloudSun, Swords, TrendingUp, TrendingDown, Beer, Film, BrainCircuit, ChevronLeft, ChevronRight, MapPin, User, Shirt, Droplets, Target, Sparkles, Play, Thermometer, Pill, GitCommit, Edit3, PlusCircle, Trash2, RefreshCcw, Check, FileText } from 'lucide-react';
 import Modal from './Modal';
@@ -123,13 +123,30 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
 
   useEffect(() => {
     const checkBackup = () => {
-        if (logs.length < 3) return;
+        if (logs.length < 3) return; // Only show if user has significant data
+        
         try {
-            const backupStateStr = localStorage.getItem('backupState');
-            if (!backupStateStr) { setShowBackupAlert(true); return; }
-            const lastBackup = new Date(JSON.parse(backupStateStr).timestamp);
-            if ((new Date().getTime() - lastBackup.getTime()) / (1000 * 3600 * 24) > 7) setShowBackupAlert(true);
-        } catch { setShowBackupAlert(true); }
+            const settingsStr = localStorage.getItem('appSettings');
+            if (!settingsStr) {
+                // If no settings exist, they definitely haven't backed up
+                setShowBackupAlert(true); 
+                return; 
+            }
+            
+            const settings: AppSettings = JSON.parse(settingsStr);
+            // Check last export time (File Export is the only true "Backup" for local-first apps)
+            const lastExport = settings.lastExportAt || 0;
+            
+            // Show alert if never exported or exported more than 7 days ago
+            if (lastExport === 0 || (Date.now() - lastExport) / (1000 * 3600 * 24) > 7) {
+                setShowBackupAlert(true);
+            } else {
+                setShowBackupAlert(false);
+            }
+        } catch { 
+            // On error (e.g. malformed JSON), safe default is to show alert
+            setShowBackupAlert(true); 
+        }
     };
     checkBackup();
 
