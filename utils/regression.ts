@@ -1,0 +1,1 @@
+export const performRegression = (data: any) => ({ correlation: 0, slope: 0 });
