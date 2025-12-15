@@ -4,7 +4,7 @@ import { LogEntry, AppSettings, ExerciseRecord, MasturbationRecordDetails } from
 import Dashboard from './components/Dashboard';
 import LogForm from './components/LogForm';
 import BottomNav from './components/BottomNav';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft, Loader2, Database } from 'lucide-react';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import FAB from './components/FAB';
 import Modal from './components/Modal';
@@ -48,7 +48,7 @@ const LoadingFallback = () => (
 );
 
 const AppContent: React.FC<{ data: any }> = ({ data }) => {
-  const { logs, partners, quickAddSex, quickAddMasturbation, saveExercise, saveAlcoholRecord } = data;
+  const { logs, partners, quickAddSex, quickAddMasturbation, saveExercise, saveAlcoholRecord, isInitializing } = data;
   const { showToast } = useToast();
   
   const [settings, setSettings] = useLocalStorage<AppSettings>('appSettings', defaultSettings);
@@ -254,6 +254,21 @@ const AppContent: React.FC<{ data: any }> = ({ data }) => {
       setMbToFinish(record);
       setIsQuickMbModalOpen(true);
   };
+
+  // Migration Loading Screen
+  if (isInitializing) {
+      return (
+          <div className="min-h-screen bg-brand-primary dark:bg-slate-950 flex flex-col items-center justify-center">
+              <div className="relative w-20 h-20 mb-6">
+                  <div className="absolute inset-0 rounded-full border-4 border-slate-200 dark:border-slate-800"></div>
+                  <div className="absolute inset-0 rounded-full border-4 border-t-brand-accent animate-spin"></div>
+                  <Database className="absolute inset-0 m-auto text-brand-accent" size={32} />
+              </div>
+              <h2 className="text-xl font-bold text-brand-text dark:text-slate-200 mb-2">正在升级数据库</h2>
+              <p className="text-sm text-brand-muted dark:text-slate-500">为了更好的体验，正在迁移您的数据...</p>
+          </div>
+      );
+  }
 
   if (!hasSeenWelcome) return <Welcome onGetStarted={handleGetStarted} />;
 

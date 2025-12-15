@@ -1,5 +1,5 @@
 
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { StorageService } from '../services/StorageService';
 import { LogEntry, SexRecordDetails, MasturbationRecordDetails, PartnerProfile, ExerciseRecord, NapRecord, ChangeRecord, AlcoholRecord } from '../types';
@@ -12,9 +12,16 @@ export function useLogs() {
     const logs = useMemo(() => rawLogs.map(hydrateLog), [rawLogs]);
     
     const partners = useLiveQuery(StorageService.partners.queries.all) || [];
+    
+    // Initial loading state
+    const [isInitializing, setIsInitializing] = useState(true);
 
     useEffect(() => {
-        StorageService.init();
+        const init = async () => {
+            await StorageService.init();
+            setIsInitializing(false);
+        };
+        init();
     }, []);
 
     const addOrUpdatePartner = useCallback(async (partner: PartnerProfile) => {
@@ -372,7 +379,7 @@ export function useLogs() {
     }, []);
 
     return {
-        logs, partners,
+        logs, partners, isInitializing,
         addOrUpdateLog, deleteLog,
         addOrUpdatePartner, deletePartner,
         quickAddSex, quickAddMasturbation,
