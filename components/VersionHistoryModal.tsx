@@ -26,7 +26,7 @@ interface VersionEntry {
 const HISTORY: VersionEntry[] = [
     {
         version: '0.0.5',
-        date: '2025-06-15',
+        date: '2025-12-10',
         summary: '生活方式记录全面升级：从 QuickLog 到多维体感。',
         changes: [
             { type: 'new', text: '自慰 Quick Log：一键记录开始时间，完事后再补充详情' },
@@ -40,7 +40,7 @@ const HISTORY: VersionEntry[] = [
     },
     {
         version: '0.0.4',
-        date: '2025-06-05',
+        date: '2025-12-10',
         summary: '数据健康体系上线：让数据更可靠，维护更轻松。',
         changes: [
             { type: 'new', text: '全新“数据健康体检”功能，可自动扫描并修复数据结构异常' },
@@ -51,7 +51,7 @@ const HISTORY: VersionEntry[] = [
     },
     {
         version: '0.0.3',
-        date: '2025-05-30',
+        date: '2025-11-11',
         summary: '引入“伴侣档案”与自慰记录 2.0，大幅增强数据维度。',
         changes: [
             { type: 'new', text: '全新“伴侣档案”，记录喜好、纪念日与身体密码' },
@@ -65,7 +65,7 @@ const HISTORY: VersionEntry[] = [
     },
     {
         version: '0.0.2',
-        date: '2025-04-15',
+        date: '2025-11-11',
         summary: '生活习惯快速记录与统计模块上线。',
         changes: [
             { type: 'new', text: '增加饮酒、运动与午休的快速记录功能' },
@@ -77,7 +77,7 @@ const HISTORY: VersionEntry[] = [
     },
     {
         version: '0.0.1',
-        date: '2025-03-01',
+        date: '2025-11-11',
         summary: '初版发布，确立隐私优先的核心架构。',
         changes: [
             { type: 'new', text: '核心功能上线，支持晨勃硬度与睡眠时间记录' },
