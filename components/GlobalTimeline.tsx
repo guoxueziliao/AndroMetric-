@@ -57,7 +57,7 @@ export const GlobalTimeline: React.FC<GlobalTimelineProps> = ({ log }) => {
                     time: item.time,
                     type: 'caffeine',
                     title: '咖啡因',
-                    desc: `${item.name} (${item.count}杯)`,
+                    desc: `${item.name} (${item.volume}ml x ${item.count})`,
                     icon: Coffee,
                     color: 'text-amber-700 bg-amber-100 dark:bg-amber-900/30',
                     timestamp: getTimestamp(item.time)

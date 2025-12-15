@@ -47,7 +47,9 @@ export const hydrateLog = (raw: any): LogEntry => {
         const items = Array.isArray(raw.caffeineRecord.items) ? raw.caffeineRecord.items.map((i: any) => ({
             ...i,
             // If old 'mg' exists but no 'count', convert (assume 1 cup if undefined)
-            count: i.count ?? (i.mg ? (i.mg > 10 ? 1 : i.mg) : 1) 
+            count: i.count ?? (i.mg ? (i.mg > 10 ? 1 : i.mg) : 1),
+            // Default volume if missing (standard cup 350ml)
+            volume: i.volume ?? 350 
         })) : [];
         
         log.caffeineRecord = {

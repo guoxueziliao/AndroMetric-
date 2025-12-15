@@ -210,6 +210,7 @@ export interface CaffeineItem {
     name: string;
     time: string; // HH:mm
     count: number; // cups
+    volume?: number; // ml (size of cup)
 }
 
 export interface CaffeineRecord {

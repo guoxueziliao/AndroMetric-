@@ -105,7 +105,7 @@ const LogForm: React.FC<{
 
     // Caffeine State (Updated to Cups)
     const [isAddingCaffeine, setIsAddingCaffeine] = useState(false);
-    const [caffeineInput, setCaffeineInput] = useState({ time: '09:00', name: '美式咖啡', count: 1 });
+    const [caffeineInput, setCaffeineInput] = useState({ time: '09:00', name: '美式咖啡', count: 1, volume: 350 });
 
     const initialLogState = useRef(JSON.stringify(log));
     const qualityScore = calculateDataQuality(log);
@@ -280,12 +280,21 @@ const LogForm: React.FC<{
                                     <button type="button" onClick={() => setIsAddingCaffeine(true)} className="text-xs text-brand-accent bg-blue-50 px-2 py-1 rounded">+ 添加</button>
                                 </div>
                                 {isAddingCaffeine && (
-                                    <div className="flex gap-2 items-center bg-slate-50 dark:bg-slate-800 p-2 rounded-lg border border-brand-accent/30 animate-in fade-in">
+                                    <div className="flex gap-2 items-center bg-slate-50 dark:bg-slate-800 p-2 rounded-lg border border-brand-accent/30 animate-in fade-in flex-wrap">
                                         <input type="time" value={caffeineInput.time} onChange={e => setCaffeineInput({...caffeineInput, time: e.target.value})} className="w-16 text-xs bg-white rounded border border-slate-200 p-1"/>
-                                        <input type="text" value={caffeineInput.name} onChange={e => setCaffeineInput({...caffeineInput, name: e.target.value})} className="flex-1 text-xs bg-white rounded border border-slate-200 p-1" placeholder="品类"/>
-                                        <input type="number" step="0.5" value={caffeineInput.count} onChange={e => setCaffeineInput({...caffeineInput, count: parseFloat(e.target.value)||0})} className="w-12 text-xs bg-white rounded border border-slate-200 p-1"/>
-                                        <span className="text-xs text-slate-400">杯</span>
-                                        <button onClick={addCaffeine} className="text-green-500"><Check size={16}/></button>
+                                        <input type="text" value={caffeineInput.name} onChange={e => setCaffeineInput({...caffeineInput, name: e.target.value})} className="flex-1 min-w-[80px] text-xs bg-white rounded border border-slate-200 p-1" placeholder="品类"/>
+                                        
+                                        <div className="flex items-center gap-1">
+                                            <input type="number" step="50" value={caffeineInput.volume} onChange={e => setCaffeineInput({...caffeineInput, volume: parseInt(e.target.value)||0})} className="w-12 text-xs bg-white rounded border border-slate-200 p-1 text-center" placeholder="ml"/>
+                                            <span className="text-xs text-slate-400">ml</span>
+                                        </div>
+
+                                        <div className="flex items-center gap-1">
+                                            <input type="number" step="0.5" value={caffeineInput.count} onChange={e => setCaffeineInput({...caffeineInput, count: parseFloat(e.target.value)||0})} className="w-10 text-xs bg-white rounded border border-slate-200 p-1 text-center"/>
+                                            <span className="text-xs text-slate-400">杯</span>
+                                        </div>
+                                        
+                                        <button onClick={addCaffeine} className="text-green-500 ml-auto"><Check size={16}/></button>
                                         <button onClick={() => setIsAddingCaffeine(false)} className="text-slate-400"><X size={16}/></button>
                                     </div>
                                 )}
@@ -294,7 +303,7 @@ const LogForm: React.FC<{
                                         <div key={c.id} className="flex justify-between items-center text-xs bg-slate-50 dark:bg-slate-800 p-2 rounded">
                                             <span className="font-mono text-slate-400">{c.time}</span>
                                             <span className="font-bold flex-1 ml-2">{c.name}</span>
-                                            <span className="text-slate-500 mr-2">{c.count}杯</span>
+                                            <span className="text-slate-500 mr-2">{c.volume}ml x {c.count}</span>
                                             <button onClick={() => removeCaffeine(c.id)} className="text-slate-400 hover:text-red-500"><Trash2 size={12}/></button>
                                         </div>
                                     ))}
@@ -425,7 +434,7 @@ const LogForm: React.FC<{
               </div>
             </Modal>
             
-            <SexRecordModal isOpen={isSexModalOpen} onClose={() => setIsSexModalOpen(false)} onSave={(r) => handleSaveRecord('sex', r)} initialData={editingSexRecord} dateStr={log.date || ''} logs={logs} partners={partners} />
+            <SexRecordModal isOpen={isSexModalOpen} onClose={() => setIsSexModalOpen(false)} onSave={(r) => handleSaveRecord('sex', r)} initialData={editingSexRecord} dateStr={log.date || ''} partners={partners} logs={logs} />
             <MasturbationRecordModal isOpen={isMbModalOpen} onClose={() => setIsMbModalOpen(false)} onSave={(r) => handleSaveRecord('masturbation', r)} initialData={editingMbRecord} dateStr={log.date || ''} logs={logs} partners={partners} />
             <ExerciseRecordModal isOpen={isExerciseModalOpen} onClose={() => setIsExerciseModalOpen(false)} onSave={(r) => handleSaveRecord('exercise', r)} initialData={editingExerciseRecord} />
             <NapRecordModal isOpen={isNapModalOpen} onClose={() => setIsNapModalOpen(false)} onSave={handleSaveNap} initialData={editingNapRecord} />

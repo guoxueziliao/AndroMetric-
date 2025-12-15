@@ -166,7 +166,7 @@ export const generateLogSummary = (log: Partial<LogEntry>): Array<{ label: strin
     }
     life.push(`看片: ${LABELS.porn[log.pornConsumption || 'none']}`);
     if (log.caffeineRecord && log.caffeineRecord.totalCount > 0) {
-        life.push(`☕ 咖啡因: ${log.caffeineRecord.totalCount}杯 (${log.caffeineRecord.items.map(i => i.name).join(', ')})`);
+        life.push(`☕ 咖啡因: ${log.caffeineRecord.totalCount}杯 (${log.caffeineRecord.items.map(i => `${i.name}(${i.volume}ml)`).join(', ')})`);
     } else {
         life.push(`☕ 咖啡因: 无`);
     }
