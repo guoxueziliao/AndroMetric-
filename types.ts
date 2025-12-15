@@ -23,6 +23,11 @@ export type HealthFeeling = 'normal' | 'minor_discomfort' | 'bad';
 export type ExerciseFeeling = 'great' | 'ok' | 'tired' | 'bad';
 export type CaffeineIntake = 'none' | 'low' | 'medium' | 'high';
 
+// v0.0.6 New Enums
+export type EjaculationVolume = 1 | 2 | 3 | 4 | 5;
+export type PostNutMood = 'satisfied' | 'calm' | 'empty' | 'regret' | 'craving';
+export type PostNutFatigue = 'refreshed' | 'no_change' | 'sleepy' | 'exhausted';
+
 // --- History Categories ---
 export type HistoryCategory = 'sleep' | 'morning' | 'nap' | 'exercise' | 'masturbation' | 'sex' | 'health' | 'lifestyle' | 'meta' | 'system';
 export type HistoryEventType = 'manual' | 'quick' | 'auto';
@@ -146,14 +151,19 @@ export interface MasturbationRecordDetails {
   useCondom?: boolean;
   ejaculation?: boolean;
   orgasmIntensity?: number;
+  
+  // v0.0.6: Advanced Metrics
+  volumeForceLevel?: EjaculationVolume; // Tissue Stress Test
+  postMood?: PostNutMood;
+  fatigue?: PostNutFatigue;
+  quickLog?: boolean;
+
   mood?: Mood | null;
   stressLevel?: number;
   energyLevel?: number;
   interrupted?: boolean;
   interruptionReasons?: string[];
   notes?: string | null;
-  
-  // v0.0.5
   status?: 'completed' | 'inProgress'; 
 }
 
@@ -167,7 +177,6 @@ export interface ExerciseRecord {
     ongoing?: boolean;
     steps?: number | null;
     notes?: string | null;
-    // v0.0.5
     feeling?: ExerciseFeeling;
 }
 
@@ -177,9 +186,12 @@ export interface NapRecord {
     endTime?: string | null;
     duration?: number;
     ongoing?: boolean;
-    // v0.0.5
     hasDream?: boolean;
     dreamTypes?: string[];
+    environment?: {
+        location: SleepLocation;
+        temperature: SleepTemperature;
+    };
 }
 
 export interface AlcoholItem {
@@ -196,9 +208,16 @@ export interface AlcoholRecord {
     durationMinutes: number;
     isLate: boolean;
     items: AlcoholItem[];
-    // v0.0.5
     drunkLevel?: DrunkLevel;
     alcoholScene?: string;
+    startTime?: string; // v0.0.6 Added for Timeline
+}
+
+export interface CaffeineRecord {
+    id: string;
+    time: string;
+    type: string; // coffee, tea, energy_drink
+    amount: 'low' | 'medium' | 'high';
 }
 
 export interface PartnerProfile {
@@ -270,7 +289,6 @@ export interface SleepRecord {
     withPartner?: boolean;
     preSleepState?: PreSleepState | null;
     naps: NapRecord[];
-    // v0.0.5
     hasDream?: boolean;
     dreamTypes?: string[];
     environment?: {
@@ -281,7 +299,6 @@ export interface SleepRecord {
 
 export interface Health {
     isSick: boolean;
-    // v0.0.5
     feeling?: HealthFeeling | null;
     symptoms?: string[];
     medications?: string[];
@@ -321,8 +338,10 @@ export interface LogEntry {
     alcoholRecord?: AlcoholRecord | null;
     pornConsumption?: PornConsumption | null;
     
-    // v0.0.5 New Fields
-    caffeineIntake?: CaffeineIntake | null;
+    // v0.0.6: Caffeine Array
+    caffeineIntake?: CaffeineIntake | null; // Legacy simple enum
+    caffeineRecords?: CaffeineRecord[]; // New detailed array
+    
     dailyEvents?: string[];
     
     // Activity Arrays

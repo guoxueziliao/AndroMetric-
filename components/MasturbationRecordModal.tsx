@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { X, Check, Clock, Smile, PenLine, Tag, Smartphone, User, Target, Layers, Plus, Zap, Minus, FilePlus, Bookmark, ShieldCheck, Trash2, ArrowLeft, ArrowRight, MapPin, AlertTriangle, Search } from 'lucide-react';
-import { MasturbationRecordDetails, LogEntry, PartnerProfile, Mood, MasturbationMaterial } from '../types';
+import { X, Check, Clock, Smile, PenLine, Tag, Smartphone, User, Target, Layers, Plus, Zap, Minus, FilePlus, Bookmark, ShieldCheck, Trash2, ArrowLeft, ArrowRight, MapPin, AlertTriangle, Search, Droplets, BatteryCharging, BatteryWarning } from 'lucide-react';
+import { MasturbationRecordDetails, LogEntry, PartnerProfile, Mood, MasturbationMaterial, EjaculationVolume, PostNutMood, PostNutFatigue } from '../types';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 
 interface MasturbationRecordModalProps {
@@ -29,6 +29,29 @@ const INTERRUPTION_OPTIONS = ['🚪 有人敲门', '📞 电话/微信', '🐱 �
 
 const LUBRICANT_TYPES = ['水溶性', '油性', '硅基', '唾液', '乳液'];
 
+const VOLUME_LEVELS: { val: EjaculationVolume, label: string, desc: string, color: string }[] = [
+    { val: 1, label: '滞留', desc: '几乎没出来，干涩', color: 'text-red-400' },
+    { val: 2, label: '流出', desc: '缓缓流出，量少', color: 'text-orange-400' },
+    { val: 3, label: '喷射', desc: '标准节奏，量正常', color: 'text-blue-400' },
+    { val: 4, label: '汹涌', desc: '量大浓厚，湿透纸巾', color: 'text-indigo-400' },
+    { val: 5, label: '爆发', desc: '极强冲力，超大量', color: 'text-purple-500 font-bold' },
+];
+
+const POST_MOODS: { val: PostNutMood, label: string }[] = [
+    { val: 'satisfied', label: '😌 满足' },
+    { val: 'calm', label: '😐 平淡' },
+    { val: 'empty', label: '😶 空虚' },
+    { val: 'regret', label: '😣 后悔' },
+    { val: 'craving', label: '😋 再来一次' }
+];
+
+const FATIGUE_LEVELS: { val: PostNutFatigue, label: string }[] = [
+    { val: 'refreshed', label: '⚡ 精神焕发' },
+    { val: 'no_change', label: '👌 无变化' },
+    { val: 'sleepy', label: '🥱 略困' },
+    { val: 'exhausted', label: '🛌 秒睡' }
+];
+
 interface CustomOptions {
     sources: string[];
     platforms: string[];
@@ -55,9 +78,7 @@ const ChipSelect = ({
     placeholder?: string
 }) => {
     const [searchTerm, setSearchTerm] = useState('');
-    const [isExpanded, setIsExpanded] = useState(false);
 
-    // Filter options based on search
     const filteredOptions = useMemo(() => {
         if (!searchTerm) return options;
         return options.filter(opt => opt.toLowerCase().includes(searchTerm.toLowerCase()));
@@ -72,12 +93,10 @@ const ChipSelect = ({
         }
     };
     
-    // Auto-expand search if list is long
     const showSearch = options.length > 12;
 
     return (
         <div className="space-y-2">
-            {/* Search Bar (Only shown if list is long or user is typing) */}
             {(showSearch || searchTerm) && (
                 <div className="relative">
                     <Search size={14} className="absolute left-3 top-2.5 text-slate-400"/>
@@ -92,7 +111,6 @@ const ChipSelect = ({
             )}
 
             <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto custom-scrollbar pt-1">
-                {/* Custom Add Button from Search */}
                 {searchTerm && !filteredOptions.includes(searchTerm) && onAdd && (
                     <button
                         onClick={handleAdd}
@@ -102,7 +120,6 @@ const ChipSelect = ({
                     </button>
                 )}
 
-                {/* Filtered List */}
                 {filteredOptions.map(opt => (
                     <button
                         key={opt}
@@ -117,15 +134,13 @@ const ChipSelect = ({
                     </button>
                 ))}
 
-                {/* Empty State */}
                 {filteredOptions.length === 0 && !searchTerm && (
                     <div className="text-xs text-slate-400 py-1">暂无选项</div>
                 )}
                 
-                {/* Manual Add Button (if search is hidden or empty) */}
                 {onAdd && !searchTerm && !showSearch && (
                     <button
-                        onClick={() => setSearchTerm(' ')} // Hack to show input
+                        onClick={() => setSearchTerm(' ')}
                         className="px-3 py-1.5 rounded-xl text-xs font-bold border border-dashed border-slate-300 dark:border-slate-600 text-slate-400 hover:text-brand-accent hover:border-brand-accent transition-colors flex items-center bg-transparent"
                     >
                         <Plus size={12} className="mr-1"/> 自定义
@@ -159,21 +174,6 @@ const RowSplit = ({ label, children }: { label: string, children: React.ReactNod
     </div>
 );
 
-const Slider = ({ value, min, max, onChange, labels }: { value: number, min: number, max: number, onChange: (v: number) => void, labels?: string[] }) => (
-    <div className="w-full pt-1 pb-2">
-        <input 
-            type="range" min={min} max={max} value={value} 
-            onChange={e => onChange(Number(e.target.value))}
-            className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-brand-accent hover:accent-brand-accent-hover"
-        />
-        {labels && (
-            <div className="flex justify-between text-[10px] text-brand-muted mt-2 px-1">
-                {labels.map((l, i) => <span key={i} className={i === value - 1 ? 'text-brand-accent font-bold' : ''}>{l}</span>)}
-            </div>
-        )}
-    </div>
-);
-
 // --- Main Modal ---
 
 const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpen, onClose, onSave, initialData, dateStr, logs = [], partners = [] }) => {
@@ -192,6 +192,9 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
     lubricant: '',
     useCondom: false,
     ejaculation: true,
+    volumeForceLevel: 3,
+    postMood: 'satisfied',
+    fatigue: 'no_change',
     orgasmIntensity: 3,
     mood: 'neutral',
     stressLevel: 3,
@@ -244,12 +247,8 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                   rec.assets.categories.forEach(c => counts.cat[c] = (counts.cat[c] || 0) + 1);
                   if (rec.assets.target) counts.target[rec.assets.target] = (counts.target[rec.assets.target] || 0) + 1;
               }
-              if (rec.tools) {
-                  rec.tools.forEach(t => counts.tool[t] = (counts.tool[t] || 0) + 1);
-              }
-              if (rec.location) {
-                  counts.scene[rec.location] = (counts.scene[rec.location] || 0) + 1;
-              }
+              if (rec.tools) rec.tools.forEach(t => counts.tool[t] = (counts.tool[t] || 0) + 1);
+              if (rec.location) counts.scene[rec.location] = (counts.scene[rec.location] || 0) + 1;
           });
       });
 
@@ -258,7 +257,6 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
           return combined.sort((a, b) => (countMap[b] || 0) - (countMap[a] || 0));
       };
 
-      // Filter out existing partners from history targets
       const partnerNames = new Set(partners.map(p => p.name));
       const historyTargets = Object.keys(counts.target).filter(t => !partnerNames.has(t));
       const sortedHistoryTargets = historyTargets.sort((a, b) => counts.target[b] - counts.target[a]);
@@ -275,7 +273,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
 
   useEffect(() => {
     if (isOpen) {
-        setStep(1); // Reset step on open
+        setStep(1); 
         if (initialData) {
             setData({
                 ...initialData,
@@ -293,15 +291,14 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                 edgingCount: initialData.edgingCount || (initialData.edging === 'once' ? 1 : initialData.edging === 'multiple' ? 2 : 0),
                 lubricant: initialData.lubricant || '',
                 useCondom: initialData.useCondom || false,
-                mood: initialData.mood || 'neutral',
-                stressLevel: initialData.stressLevel || 3,
-                energyLevel: initialData.energyLevel || 3,
+                volumeForceLevel: initialData.volumeForceLevel || 3,
+                postMood: initialData.postMood || 'satisfied',
+                fatigue: initialData.fatigue || 'no_change',
                 interrupted: initialData.interrupted || false,
                 interruptionReasons: initialData.interruptionReasons || [],
                 status: initialData.status || 'completed'
             });
             
-            // Calculate duration if ongoing
             if (initialData.status === 'inProgress' && initialData.startTime) {
                 const now = new Date();
                 const [h, m] = initialData.startTime.split(':').map(Number);
@@ -328,6 +325,9 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                 lubricant: '',
                 useCondom: false,
                 ejaculation: true,
+                volumeForceLevel: 3,
+                postMood: 'satisfied',
+                fatigue: 'no_change',
                 orgasmIntensity: 3,
                 mood: 'neutral',
                 stressLevel: 3,
@@ -401,7 +401,6 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
       }));
   };
 
-  // Helper for consistent avatar colors
   const getTargetColor = (name: string) => {
       const colors = ['bg-red-400', 'bg-orange-400', 'bg-amber-400', 'bg-green-400', 'bg-emerald-400', 'bg-teal-400', 'bg-cyan-400', 'bg-sky-400', 'bg-blue-400', 'bg-indigo-400', 'bg-violet-400', 'bg-purple-400', 'bg-fuchsia-400', 'bg-pink-400', 'bg-rose-400'];
       let hash = 0;
@@ -477,11 +476,10 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                 {step === 1 && '1. 基础与内容'}
                 {step === 2 && '2. 标签与XP'}
                 {step === 3 && '3. 场景与工具'}
-                {step === 4 && '4. 结果与记录'}
+                {step === 4 && '4. 结果与贤者时间'}
             </span>
-            <div className="w-8"></div> {/* Spacer for alignment */}
+            <div className="w-8"></div>
         </div>
-        {/* Progress Bar */}
         <div className="h-1 bg-slate-100 dark:bg-slate-800 w-full">
             <div 
                 className="h-full bg-brand-accent transition-all duration-300 ease-out" 
@@ -535,7 +533,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                 </Block>
 
                 <Block title="详细信息">
-                    {/* Materials List */}
+                    {/* Materials List (Same as before) */}
                     <div className="bg-slate-50 dark:bg-slate-950/50 rounded-xl p-3 border border-slate-200 dark:border-slate-800 mb-4">
                         <div className="flex justify-between items-center mb-2">
                             <span className="text-xs font-bold text-slate-500 uppercase">施法材料 (可选)</span>
@@ -620,7 +618,6 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                                 placeholder="或输入临时昵称..." 
                                 className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-2.5 pl-10 pr-3 text-sm text-brand-text dark:text-slate-200 outline-none focus:border-brand-accent placeholder-brand-muted" 
                             />
-                            {/* Historical Targets Dropdown */}
                             {showTargetSuggestions && (
                                 <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-100 dark:border-slate-700 z-50 max-h-48 overflow-y-auto animate-in fade-in zoom-in-95 duration-200 custom-scrollbar">
                                     <div className="p-2">
@@ -750,20 +747,82 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
             </div>
         )}
 
-        {/* STEP 4: Result */}
+        {/* STEP 4: Result (Updated for v0.0.6) */}
         {step === 4 && (
             <div className="space-y-6 animate-in slide-in-from-right fade-in duration-300">
                 <Block title="结局">
-                    <RowSplit label="是否射精">
+                    <RowSplit label="最终射精">
                         <button onClick={() => setData({...data, ejaculation: !data.ejaculation})} className={`w-12 h-6 rounded-full relative transition-colors duration-300 ${data.ejaculation ? 'bg-brand-accent' : 'bg-slate-300 dark:bg-slate-600'}`}>
                             <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-300 ${data.ejaculation ? 'left-7' : 'left-1'}`}></div>
                         </button>
                     </RowSplit>
                     {data.ejaculation && (
-                        <Row label={`愉悦强度: ${data.orgasmIntensity} / 5`}>
-                            <Slider min={1} max={5} value={data.orgasmIntensity || 3} onChange={v => setData({...data, orgasmIntensity: v})} labels={['无感', '一般', '爽', '非常爽', '升天']} />
-                        </Row>
+                        <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+                            {/* Tissue Stress Test */}
+                            <div>
+                                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center">
+                                    <Droplets size={14} className="mr-1"/> 纸巾压力测试 (量与力)
+                                </label>
+                                <input 
+                                    type="range" min={1} max={5} value={data.volumeForceLevel || 3} 
+                                    onChange={e => {
+                                        const v = Number(e.target.value) as EjaculationVolume;
+                                        // Vibrate if available
+                                        if (typeof navigator !== 'undefined' && navigator.vibrate) {
+                                            if (v === 5) navigator.vibrate([50, 30, 50]);
+                                            else navigator.vibrate(20);
+                                        }
+                                        setData({...data, volumeForceLevel: v});
+                                    }}
+                                    className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                                />
+                                <div className="flex justify-between items-center mt-2">
+                                    <span className="text-2xl font-bold text-slate-400">Lv.{data.volumeForceLevel || 3}</span>
+                                    <div className="text-right">
+                                        <div className={`font-bold ${VOLUME_LEVELS[(data.volumeForceLevel || 3) - 1].color}`}>
+                                            {VOLUME_LEVELS[(data.volumeForceLevel || 3) - 1].label}
+                                        </div>
+                                        <div className="text-[10px] text-slate-400">
+                                            {VOLUME_LEVELS[(data.volumeForceLevel || 3) - 1].desc}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     )}
+                </Block>
+
+                <Block title="贤者时间 (Post-Nut Clarity)">
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <label className="text-xs font-bold text-slate-500 uppercase">射后心理</label>
+                            <div className="flex flex-col gap-2">
+                                {POST_MOODS.map(m => (
+                                    <button 
+                                        key={m.val} 
+                                        onClick={() => setData({...data, postMood: m.val})}
+                                        className={`text-xs p-2 rounded-lg border text-left transition-all ${data.postMood === m.val ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800 text-brand-accent' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500'}`}
+                                    >
+                                        {m.label}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-xs font-bold text-slate-500 uppercase">身体疲劳</label>
+                            <div className="flex flex-col gap-2">
+                                {FATIGUE_LEVELS.map(f => (
+                                    <button 
+                                        key={f.val} 
+                                        onClick={() => setData({...data, fatigue: f.val})}
+                                        className={`text-xs p-2 rounded-lg border text-left transition-all ${data.fatigue === f.val ? 'bg-orange-50 dark:bg-orange-900/30 border-orange-200 dark:border-orange-800 text-orange-600' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500'}`}
+                                    >
+                                        {f.label}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
                 </Block>
 
                 <Block title="意外">
@@ -792,23 +851,8 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                     )}
                 </Block>
 
-                <Block title="状态">
-                    <Row label="精力状态">
-                        <Slider min={1} max={5} value={data.energyLevel || 3} onChange={v => setData({...data, energyLevel: v})} labels={['疲惫', '较累', '正常', '充沛', '爆表']} />
-                    </Row>
-                    <Row label="心情">
-                        <Slider min={1} max={5} value={data.mood === 'sad' ? 1 : data.mood === 'anxious' ? 2 : data.mood === 'neutral' ? 3 : data.mood === 'happy' ? 4 : 5} onChange={v => {
-                            const map = ['sad', 'anxious', 'neutral', 'happy', 'excited'];
-                            setData({...data, mood: map[v-1] as Mood});
-                        }} labels={['低落', '焦虑', '平淡', '开心', '兴奋']} />
-                    </Row>
-                    <Row label="压力">
-                        <Slider min={1} max={5} value={data.stressLevel || 3} onChange={v => setData({...data, stressLevel: v})} labels={['放松', '微压', '一般', '较大', '崩溃']} />
-                    </Row>
-                </Block>
-
                 <Block title="备注">
-                    <textarea value={data.notes} onChange={e => setData({...data, notes: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm text-brand-text dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:border-brand-accent min-h-[80px] leading-relaxed resize-none" placeholder="记录当下的感受、灵感或特殊情况..." />
+                    <textarea value={data.notes || ''} onChange={e => setData({...data, notes: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm text-brand-text dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:border-brand-accent min-h-[80px] leading-relaxed resize-none" placeholder="记录当下的感受、灵感或特殊情况..." />
                 </Block>
             </div>
         )}

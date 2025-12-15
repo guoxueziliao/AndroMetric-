@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { LogEntry, SexRecordDetails, MasturbationRecordDetails, ExerciseRecord, NapRecord, ChangeDetail, ChangeRecord, AlcoholRecord, PartnerProfile, MorningRecord, SleepRecord, CaffeineIntake } from '../types';
+import { LogEntry, SexRecordDetails, MasturbationRecordDetails, ExerciseRecord, NapRecord, ChangeDetail, ChangeRecord, AlcoholRecord, PartnerProfile, MorningRecord, SleepRecord, CaffeineIntake, CaffeineRecord } from '../types';
 import { CheckSquare, Tag, GlassWater, Beer, Film, Clapperboard, Eye, Dumbbell, Sun, Cloud, CloudRain, Snowflake, Wind, CloudFog, Home, Users, Hotel, Plane, MapPin, Shirt, EyeOff, HeartPulse, Hand, Plus, Edit2, Trash2, Footprints, Save, Coffee, Calendar, X } from 'lucide-react';
 import Modal from './Modal';
 import SexRecordModal from './SexRecordModal';
@@ -18,6 +18,7 @@ import { IconToggleButton } from './FormControls';
 import MorningSection from './MorningSection';
 import SleepSection from './SleepSection';
 import HealthSection from './HealthSection';
+import { DailyTimeline } from './DailyTimeline';
 
 // --- Options Config ---
 const PORN_OPTS = [{value: 'none', label: '无'}, {value: 'low', label: '少量'}, {value: 'medium', label: '适量'}, {value: 'high', label: '沉迷'}];
@@ -39,13 +40,8 @@ const LogForm: React.FC<{
     
     // --- Initialization Logic ---
     const initializeLog = (baseData: LogEntry | null): LogEntry => {
-        // 1. Determine Target Date
         const date = logDate || baseData?.date || getTodayDateString();
-        
-        // 2. Prepare Base (Partial or Skeleton)
         const base = baseData ? { ...baseData } : { date };
-        
-        // 3. Hydrate (Fills defaults, arrays, health object, etc.)
         return hydrateLog(base);
     };
 
@@ -78,14 +74,12 @@ const LogForm: React.FC<{
         const currentString = JSON.stringify(log);
         const initialString = initialLogState.current;
 
-        // If user switched dates, always reset
         if (log.date !== freshLog.date) {
             setLog(freshLog);
             initialLogState.current = JSON.stringify(freshLog);
             return;
         }
 
-        // If existingLog updated AND user hasn't typed
         if (currentString === initialString && JSON.stringify(freshLog) !== initialString) {
             setLog(freshLog);
             initialLogState.current = JSON.stringify(freshLog);
@@ -108,7 +102,6 @@ const LogForm: React.FC<{
         }));
     };
 
-    // New Handlers for Sub-Objects
     const handleMorningChange = (field: keyof MorningRecord, value: any) => {
         setLog(prev => ({ ...prev, morning: { ...prev.morning!, [field]: value } }));
     };
@@ -118,28 +111,59 @@ const LogForm: React.FC<{
     };
 
     const handleSaveAlcohol = (record: AlcoholRecord) => {
+        const startTime = record.startTime || new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
         const alcoholLevel = record.totalGrams > 50 ? 'high' : record.totalGrams > 20 ? 'medium' : record.totalGrams > 0 ? 'low' : 'none';
         setLog(prev => ({
             ...prev,
-            alcoholRecord: record,
+            alcoholRecord: { ...record, startTime },
             alcohol: alcoholLevel
         }));
     };
 
+    const handleAddCaffeine = () => {
+        const time = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+        const newRecord: CaffeineRecord = {
+            id: Date.now().toString(),
+            time,
+            type: 'coffee',
+            amount: 'medium'
+        };
+        const currentRecords = log.caffeineRecords || [];
+        const nextRecords = [...currentRecords, newRecord];
+        
+        // Update simple level
+        const level = nextRecords.length > 2 ? 'high' : nextRecords.length > 0 ? 'medium' : 'none';
+        
+        setLog(prev => ({
+            ...prev,
+            caffeineRecords: nextRecords,
+            caffeineIntake: level
+        }));
+    };
+
+    const removeCaffeine = (id: string) => {
+        const currentRecords = log.caffeineRecords || [];
+        const nextRecords = currentRecords.filter(c => c.id !== id);
+        const level = nextRecords.length > 2 ? 'high' : nextRecords.length > 0 ? 'medium' : 'none';
+        
+        setLog(prev => ({
+            ...prev,
+            caffeineRecords: nextRecords,
+            caffeineIntake: level
+        }));
+    };
+
     const handleReview = () => {
-        // Validate before showing review
         const { valid, errors } = validateLogEntry(log as LogEntry);
         if (!valid) {
             showToast(errors[0], 'error');
             return;
         }
-
         setSummaryData(generateLogSummary(log));
         setIsSummaryModalOpen(true);
     };
 
     const handleConfirmSave = () => {
-        // Double check validation
         const { valid, errors } = validateLogEntry(log as LogEntry);
         if (!valid) {
             showToast(errors[0], 'error');
@@ -170,7 +194,6 @@ const LogForm: React.FC<{
     }
     
     const handleSaveDraft = () => {
-        // Drafts can be partial, but let's at least ensure structure is safe
         const historyEntry: ChangeRecord = { 
             timestamp: Date.now(), 
             summary: '保存草稿 (部分记录)',
@@ -225,12 +248,9 @@ const LogForm: React.FC<{
 
     if (!log.date) return <div>Loading...</div>;
 
-    // --- Icon Renderers ---
-    const renderPornIcon = (v: string) => v === 'none' ? <EyeOff size={20}/> : v === 'low' ? <Film size={20}/> : v === 'medium' ? <Clapperboard size={20}/> : <Eye size={20}/>;
     const renderWeatherIcon = (v: string) => v === 'sunny' ? <Sun size={20}/> : v === 'cloudy' ? <Cloud size={20}/> : v === 'rainy' ? <CloudRain size={20}/> : v === 'snowy' ? <Snowflake size={20}/> : v === 'windy' ? <Wind size={20}/> : <CloudFog size={20}/>;
     const renderLocationIcon = (v: string) => v === 'home' ? <Home size={20}/> : v === 'partner' ? <Users size={20}/> : v === 'hotel' ? <Hotel size={20}/> : v === 'travel' ? <Plane size={20}/> : <MapPin size={20}/>;
     const renderAttireIcon = (v: string) => <Shirt size={20}/>; 
-    const renderCaffeineIcon = (v: string) => <Coffee size={20}/>;
 
     return (
         <form onSubmit={(e) => { e.preventDefault(); handleReview(); }} className="space-y-6 pb-8">
@@ -299,26 +319,40 @@ const LogForm: React.FC<{
                                 )}
                             </div>
                             
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium text-brand-text dark:text-slate-300">看片</label>
-                                    <div className="grid grid-cols-4 gap-1">
-                                        {PORN_OPTS.map(opt => (
-                                            <button key={opt.value} onClick={() => handleChange('pornConsumption', opt.value)} className={`p-1.5 rounded border text-[10px] text-center ${log.pornConsumption === opt.value ? 'bg-purple-100 dark:bg-purple-900 text-purple-700 border-purple-300' : 'bg-white dark:bg-slate-800 border-slate-200'}`}>
-                                                {opt.label}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-                                <div className="space-y-2">
+                            <div className="space-y-2">
+                                <div className="flex justify-between items-center">
                                     <label className="text-sm font-medium text-brand-text dark:text-slate-300">咖啡因</label>
-                                    <div className="grid grid-cols-4 gap-1">
-                                        {CAFFEINE_OPTS.map(opt => (
-                                            <button key={opt.value} onClick={() => handleChange('caffeineIntake', opt.value)} className={`p-1.5 rounded border text-[10px] text-center ${log.caffeineIntake === opt.value ? 'bg-orange-100 dark:bg-orange-900 text-orange-700 border-orange-300' : 'bg-white dark:bg-slate-800 border-slate-200'}`}>
-                                                {opt.label}
-                                            </button>
-                                        ))}
-                                    </div>
+                                    <button 
+                                        type="button" 
+                                        onClick={handleAddCaffeine}
+                                        className="text-[10px] text-amber-600 bg-amber-50 px-2 py-1 rounded hover:bg-amber-100"
+                                    >
+                                        + 添加一杯
+                                    </button>
+                                </div>
+                                <div className="flex flex-wrap gap-2">
+                                    {log.caffeineRecords && log.caffeineRecords.length > 0 ? (
+                                        log.caffeineRecords.map(c => (
+                                            <div key={c.id} className="flex items-center bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-900/30 px-2 py-1 rounded text-xs text-amber-800 dark:text-amber-200">
+                                                <Coffee size={12} className="mr-1"/>
+                                                {c.time}
+                                                <button onClick={() => removeCaffeine(c.id)} className="ml-2 text-amber-400 hover:text-amber-600"><X size={12}/></button>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <span className="text-xs text-slate-400 italic">今日未摄入</span>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-brand-text dark:text-slate-300">看片</label>
+                                <div className="grid grid-cols-4 gap-1">
+                                    {PORN_OPTS.map(opt => (
+                                        <button key={opt.value} onClick={() => handleChange('pornConsumption', opt.value)} className={`p-1.5 rounded border text-[10px] text-center ${log.pornConsumption === opt.value ? 'bg-purple-100 dark:bg-purple-900 text-purple-700 border-purple-300' : 'bg-white dark:bg-slate-800 border-slate-200'}`}>
+                                            {opt.label}
+                                        </button>
+                                    ))}
                                 </div>
                             </div>
 
@@ -449,6 +483,11 @@ const LogForm: React.FC<{
                     className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-3 text-sm focus:ring-brand-accent focus:border-brand-accent text-brand-text dark:text-slate-200 min-h-[80px]"
                     placeholder="今天感觉如何？写点什么吧..."
                 />
+            </div>
+
+            {/* Daily Timeline */}
+            <div className="bg-brand-secondary dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+                <DailyTimeline log={log} />
             </div>
 
             <div className="flex gap-3">
