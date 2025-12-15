@@ -1,4 +1,3 @@
-
 import { LogEntry } from '../types';
 
 export const hydrateLog = (partial: Partial<LogEntry>): LogEntry => {
@@ -20,9 +19,6 @@ export const hydrateLog = (partial: Partial<LogEntry>): LogEntry => {
         },
         health: {
             isSick: false,
-            symptoms: [],
-            medications: [],
-            feeling: 'normal',
             ...partial.health
         },
         location: partial.location || null,
@@ -30,10 +26,9 @@ export const hydrateLog = (partial: Partial<LogEntry>): LogEntry => {
         mood: partial.mood || null,
         stressLevel: partial.stressLevel || null,
         alcohol: partial.alcohol || 'none',
-        alcoholRecord: partial.alcoholRecord || { totalGrams: 0, durationMinutes: 0, isLate: false, items: [], startTime: '' },
+        alcoholRecord: partial.alcoholRecord || { totalGrams: 0, durationMinutes: 0, isLate: false, items: [] },
         pornConsumption: partial.pornConsumption || 'none',
         caffeineIntake: partial.caffeineIntake || 'none',
-        caffeineRecords: partial.caffeineRecords || [],
         dailyEvents: partial.dailyEvents || [],
         exercise: partial.exercise || [],
         sex: partial.sex || [],

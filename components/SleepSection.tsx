@@ -1,9 +1,9 @@
 
 import React, { useMemo, useState } from 'react';
-import { BedDouble, Leaf, CloudDrizzle, Heart, CloudSun, Clock, Edit2, Trash2, Plus, AlertCircle, Sparkles, MapPin, Thermometer } from 'lucide-react';
+import { BedDouble, Leaf, CloudDrizzle, Heart, CheckSquare, CloudSun, Clock, Edit2, Trash2, Plus, AlertCircle, Sparkles, MapPin, Thermometer } from 'lucide-react';
 import { SleepRecord, NapRecord } from '../types';
 import DateTimePicker from './DateTimePicker';
-import { RangeSlider } from './FormControls';
+import { RangeSlider, IconToggleButton } from './FormControls';
 
 interface SleepSectionProps {
     sleep: SleepRecord;

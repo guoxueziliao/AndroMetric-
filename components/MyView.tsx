@@ -245,8 +245,7 @@ const MyView: React.FC<MyViewProps> = ({ settings, onUpdateSettings, installProm
       if (confirm('还原将覆盖当前所有数据。确定要回滚到此版本吗？')) {
           try {
               await StorageService.snapshots.restore(id);
-              showToast('回滚成功，即将刷新...', 'success');
-              setTimeout(() => window.location.reload(), 1500);
+              showToast('回滚成功', 'success');
           } catch (e: any) {
               showToast('回滚失败: ' + e.message, 'error');
           }
@@ -277,11 +276,8 @@ const MyView: React.FC<MyViewProps> = ({ settings, onUpdateSettings, installProm
           try {
               await StorageService.restoreSnapshot(text, 'merge');
               setImportStatus('success'); 
-              showToast('导入成功，应用即将刷新...', 'success');
-              // Force reload to ensure all states (like useLogs, internal component states) are clean and fresh
-              setTimeout(() => {
-                  window.location.reload();
-              }, 1500);
+              showToast('导入成功', 'success');
+              setTimeout(() => setImportStatus('idle'), 2000);
           } catch (error: any) { 
               setImportStatus('error'); 
               showToast(error.message || '导入失败', 'error'); 

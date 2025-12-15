@@ -1,8 +1,6 @@
-
 import { db } from '../db';
 import { LogEntry, Snapshot } from '../types';
 import { DataHealthReport } from '../utils/dataHealthCheck';
-import { runMigrations } from '../utils/migration';
 
 export const StorageService = {
     snapshots: {
@@ -51,27 +49,13 @@ export const StorageService = {
     },
     
     restoreSnapshot: async (jsonStr: string, mode: 'merge' | 'replace') => {
-        let rawData;
-        try {
-            rawData = JSON.parse(jsonStr);
-        } catch (e) {
-            throw new Error('文件格式错误 (非 JSON)');
-        }
-
-        // Use migration logic to parse and hydrate
-        const { logs, partners } = runMigrations(rawData);
-
-        if (logs.length === 0 && partners.length === 0) {
-             throw new Error('文件中未发现有效的日记或伴侣数据');
-        }
-
+        const data = JSON.parse(jsonStr);
         if(mode === 'replace') {
             await db.logs.clear();
             await db.partners.clear();
         }
-        
-        if(logs.length > 0) await db.logs.bulkPut(logs);
-        if(partners.length > 0) await db.partners.bulkPut(partners);
+        if(data.logs) await db.logs.bulkPut(data.logs);
+        if(data.partners) await db.partners.bulkPut(data.partners);
     },
     
     clearAllData: async () => {
