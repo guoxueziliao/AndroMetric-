@@ -165,8 +165,12 @@ export const generateLogSummary = (log: Partial<LogEntry>): Array<{ label: strin
         life.push(`饮酒: ${LABELS.alcohol[log.alcohol || 'none']}`);
     }
     life.push(`看片: ${LABELS.porn[log.pornConsumption || 'none']}`);
+    
     if (log.caffeineRecord && log.caffeineRecord.totalCount > 0) {
-        life.push(`☕ 咖啡因: ${log.caffeineRecord.totalCount}杯 (${log.caffeineRecord.items.map(i => `${i.name}(${i.volume}ml)`).join(', ')})`);
+        const detailStr = log.caffeineRecord.items
+            .map(i => `${i.name} ${i.volume}ml${i.count > 1 ? 'x'+i.count : ''}`)
+            .join(', ');
+        life.push(`☕ 咖啡因: ${log.caffeineRecord.totalCount}杯 [${detailStr}]`);
     } else {
         life.push(`☕ 咖啡因: 无`);
     }
@@ -204,7 +208,11 @@ export const generateLogSummary = (log: Partial<LogEntry>): Array<{ label: strin
     if (log.masturbation && log.masturbation.length > 0) {
         const mbDetails = log.masturbation.map((r, i) => {
             const tools = r.tools?.join(',') || '手';
-            return `${i + 1}. ${r.startTime} ${tools} (${r.duration}分) ${r.status === 'inProgress' ? '[进行中]' : ''}`;
+            let extra = '';
+            if (r.volumeForceLevel) extra += ` [射精Lv.${r.volumeForceLevel}]`;
+            if (r.materialsList && r.materialsList.length > 0) extra += ` [素材:${r.materialsList.length}]`;
+            
+            return `${i + 1}. ${r.startTime} ${tools} (${r.duration}分)${extra} ${r.status === 'inProgress' ? '[进行中]' : ''}`;
         });
         summary.push({ label: `自慰 (${log.masturbation.length})`, value: mbDetails.join('\n') });
     } else {

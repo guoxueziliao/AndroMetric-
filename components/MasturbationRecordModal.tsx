@@ -429,7 +429,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                                         <Film size={20} />
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <div className="font-bold text-sm text-brand-text dark:text-slate-200 truncate pr-6">{m.label}</div>
+                                        <div className="font-bold text-sm text-brand-text dark:text-slate-200 truncate pr-10">{m.label}</div>
                                         <div className="flex flex-wrap gap-1 mt-1">
                                             {m.publisher && <span className="text-[10px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-1.5 rounded flex items-center"><Smartphone size={8} className="mr-1"/>{m.publisher}</span>}
                                             {m.tags.slice(0,3).map(t => <span key={t} className="text-[10px] text-blue-500">#{t}</span>)}

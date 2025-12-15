@@ -267,7 +267,7 @@ const LogForm: React.FC<{
                                                 </div>
                                             </div>
                                         </div>
-                                        <Edit2 size={16} className="text-amber-500" />
+                                        <div className="p-2 text-amber-500 hover:bg-amber-100 rounded-full"><Edit2 size={16} /></div>
                                     </div>
                                 ) : (
                                     <button type="button" onClick={() => setIsAlcoholModalOpen(true)} className="w-full py-3 border-2 border-dashed border-amber-200 dark:border-amber-800/50 text-amber-500 dark:text-amber-400 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-900/20 text-sm font-medium flex justify-center items-center transition-colors"><Plus size={16} className="mr-1"/> 添加饮酒</button>
@@ -277,34 +277,43 @@ const LogForm: React.FC<{
                             <div className="space-y-2">
                                 <div className="flex justify-between items-center">
                                     <label className="text-sm font-medium text-brand-text dark:text-slate-300">咖啡因</label>
-                                    <button type="button" onClick={() => setIsAddingCaffeine(true)} className="text-xs text-brand-accent bg-blue-50 px-2 py-1 rounded">+ 添加</button>
+                                    <button type="button" onClick={() => setIsAddingCaffeine(true)} className="text-xs text-brand-accent bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded">+ 添加</button>
                                 </div>
                                 {isAddingCaffeine && (
-                                    <div className="flex gap-2 items-center bg-slate-50 dark:bg-slate-800 p-2 rounded-lg border border-brand-accent/30 animate-in fade-in flex-wrap">
-                                        <input type="time" value={caffeineInput.time} onChange={e => setCaffeineInput({...caffeineInput, time: e.target.value})} className="w-16 text-xs bg-white rounded border border-slate-200 p-1"/>
-                                        <input type="text" value={caffeineInput.name} onChange={e => setCaffeineInput({...caffeineInput, name: e.target.value})} className="flex-1 min-w-[80px] text-xs bg-white rounded border border-slate-200 p-1" placeholder="品类"/>
-                                        
-                                        <div className="flex items-center gap-1">
-                                            <input type="number" step="50" value={caffeineInput.volume} onChange={e => setCaffeineInput({...caffeineInput, volume: parseInt(e.target.value)||0})} className="w-12 text-xs bg-white rounded border border-slate-200 p-1 text-center" placeholder="ml"/>
-                                            <span className="text-xs text-slate-400">ml</span>
+                                    <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border border-brand-accent/30 animate-in fade-in space-y-3">
+                                        <div className="flex gap-2">
+                                            <input type="time" value={caffeineInput.time} onChange={e => setCaffeineInput({...caffeineInput, time: e.target.value})} className="w-20 p-2 text-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg outline-none focus:border-brand-accent"/>
+                                            <input type="text" value={caffeineInput.name} onChange={e => setCaffeineInput({...caffeineInput, name: e.target.value})} className="flex-1 p-2 text-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg outline-none focus:border-brand-accent" placeholder="品类 (如:拿铁)"/>
                                         </div>
-
-                                        <div className="flex items-center gap-1">
-                                            <input type="number" step="0.5" value={caffeineInput.count} onChange={e => setCaffeineInput({...caffeineInput, count: parseFloat(e.target.value)||0})} className="w-10 text-xs bg-white rounded border border-slate-200 p-1 text-center"/>
-                                            <span className="text-xs text-slate-400">杯</span>
+                                        <div className="flex items-center gap-2 justify-between">
+                                            <div className="flex gap-2">
+                                                 <div className="flex items-center gap-1 bg-white dark:bg-slate-900 rounded-lg px-2 border border-slate-200 dark:border-slate-700">
+                                                    <input type="number" step="50" value={caffeineInput.volume} onChange={e => setCaffeineInput({...caffeineInput, volume: parseInt(e.target.value)||0})} className="w-12 py-2 text-center bg-transparent outline-none text-sm" />
+                                                    <span className="text-xs text-slate-400">ml</span>
+                                                 </div>
+                                                 <div className="flex items-center gap-1 bg-white dark:bg-slate-900 rounded-lg px-2 border border-slate-200 dark:border-slate-700">
+                                                    <input type="number" step="0.5" value={caffeineInput.count} onChange={e => setCaffeineInput({...caffeineInput, count: parseFloat(e.target.value)||0})} className="w-10 py-2 text-center bg-transparent outline-none text-sm"/>
+                                                    <span className="text-xs text-slate-400">杯</span>
+                                                 </div>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <button onClick={() => setIsAddingCaffeine(false)} className="p-2 bg-slate-200 dark:bg-slate-700 text-slate-500 rounded-lg"><X size={18}/></button>
+                                                <button onClick={addCaffeine} className="p-2 bg-brand-accent text-white rounded-lg"><Check size={18}/></button>
+                                            </div>
                                         </div>
-                                        
-                                        <button onClick={addCaffeine} className="text-green-500 ml-auto"><Check size={16}/></button>
-                                        <button onClick={() => setIsAddingCaffeine(false)} className="text-slate-400"><X size={16}/></button>
                                     </div>
                                 )}
-                                <div className="space-y-1">
+                                <div className="space-y-2">
                                     {log.caffeineRecord?.items.map(c => (
-                                        <div key={c.id} className="flex justify-between items-center text-xs bg-slate-50 dark:bg-slate-800 p-2 rounded">
-                                            <span className="font-mono text-slate-400">{c.time}</span>
-                                            <span className="font-bold flex-1 ml-2">{c.name}</span>
-                                            <span className="text-slate-500 mr-2">{c.volume}ml x {c.count}</span>
-                                            <button onClick={() => removeCaffeine(c.id)} className="text-slate-400 hover:text-red-500"><Trash2 size={12}/></button>
+                                        <div key={c.id} className="flex justify-between items-center text-sm bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
+                                            <div className="flex items-center gap-3">
+                                                <span className="font-mono text-slate-400 text-xs">{c.time}</span>
+                                                <div className="flex flex-col">
+                                                    <span className="font-bold text-brand-text dark:text-slate-200">{c.name}</span>
+                                                    <span className="text-xs text-slate-500">{c.volume}ml × {c.count}</span>
+                                                </div>
+                                            </div>
+                                            <button onClick={() => removeCaffeine(c.id)} className="p-2 text-slate-400 hover:text-red-500 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors"><Trash2 size={16}/></button>
                                         </div>
                                     ))}
                                 </div>
@@ -327,7 +336,10 @@ const LogForm: React.FC<{
                                             <span className="font-semibold text-green-700 dark:text-green-300 flex items-center">
                                                 {r.steps ? <><Footprints size={14} className="mr-2"/> {r.type} <span className="text-xs opacity-70 ml-1 font-mono">({r.steps}步)</span></> : <><span className="mr-2 font-mono text-xs">{r.startTime}</span> {r.type} <span className="text-xs opacity-70 ml-1">({r.duration}分)</span></>}
                                             </span>
-                                            <div className="flex gap-2 text-green-400"><Edit2 size={16} className="cursor-pointer hover:text-green-600" onClick={() => { setEditingExerciseRecord(r); setIsExerciseModalOpen(true); }}/><Trash2 size={16} className="cursor-pointer hover:text-green-600" onClick={() => deleteRecord('exercise', r.id)}/></div>
+                                            <div className="flex gap-1 text-green-400">
+                                                <button type="button" className="p-2 hover:bg-green-100 dark:hover:bg-green-900/40 rounded-lg hover:text-green-600 transition-colors" onClick={() => { setEditingExerciseRecord(r); setIsExerciseModalOpen(true); }}><Edit2 size={16}/></button>
+                                                <button type="button" className="p-2 hover:bg-green-100 dark:hover:bg-green-900/40 rounded-lg hover:text-green-600 transition-colors" onClick={() => deleteRecord('exercise', r.id)}><Trash2 size={16}/></button>
+                                            </div>
                                         </div>
                                     ))}
                                     <button type="button" onClick={() => { setEditingExerciseRecord(undefined); setIsExerciseModalOpen(true); }} className="w-full py-2 border-2 border-dashed border-green-200 dark:border-green-900 text-green-400 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/10 text-sm font-medium flex justify-center items-center"><Plus size={16} className="mr-1"/> 添加运动</button>
@@ -340,7 +352,10 @@ const LogForm: React.FC<{
                                     {log.sex?.map(r => (
                                         <div key={r.id} className="bg-pink-50 dark:bg-pink-900/20 border border-pink-100 dark:border-pink-900/30 p-2.5 rounded-lg flex justify-between items-center text-sm">
                                             <span className="font-semibold text-pink-700 dark:text-pink-300">❤️ 性生活 ({r.startTime})</span>
-                                            <div className="flex gap-2 text-pink-400"><Edit2 size={16} className="cursor-pointer hover:text-pink-600" onClick={() => { setEditingSexRecord(r); setIsSexModalOpen(true); }}/><Trash2 size={16} className="cursor-pointer hover:text-pink-600" onClick={() => deleteRecord('sex', r.id)}/></div>
+                                            <div className="flex gap-1 text-pink-400">
+                                                <button type="button" className="p-2 hover:bg-pink-100 dark:hover:bg-pink-900/40 rounded-lg hover:text-pink-600 transition-colors" onClick={() => { setEditingSexRecord(r); setIsSexModalOpen(true); }}><Edit2 size={16}/></button>
+                                                <button type="button" className="p-2 hover:bg-pink-100 dark:hover:bg-pink-900/40 rounded-lg hover:text-pink-600 transition-colors" onClick={() => deleteRecord('sex', r.id)}><Trash2 size={16}/></button>
+                                            </div>
                                         </div>
                                     ))}
                                     <button type="button" onClick={() => { setEditingSexRecord(undefined); setIsSexModalOpen(true); }} className="w-full py-2 border-2 border-dashed border-pink-200 dark:border-pink-900 text-pink-400 rounded-lg hover:bg-pink-50 dark:hover:bg-pink-900/10 text-sm font-medium flex justify-center items-center"><Plus size={16} className="mr-1"/> 添加性生活</button>
@@ -351,7 +366,10 @@ const LogForm: React.FC<{
                                             <span className="font-semibold text-blue-700 dark:text-blue-300 flex items-center">
                                                 🖐️ 自慰 ({r.startTime}) {r.status === 'inProgress' && <span className="ml-2 text-[10px] bg-blue-200 text-blue-800 px-1 rounded animate-pulse">进行中</span>}
                                             </span>
-                                            <div className="flex gap-2 text-blue-400"><Edit2 size={16} className="cursor-pointer hover:text-blue-600" onClick={() => { setEditingMbRecord(r); setIsMbModalOpen(true); }}/><Trash2 size={16} className="cursor-pointer hover:text-blue-600" onClick={() => deleteRecord('masturbation', r.id)}/></div>
+                                            <div className="flex gap-1 text-blue-400">
+                                                <button type="button" className="p-2 hover:bg-blue-100 dark:hover:bg-blue-900/40 rounded-lg hover:text-blue-600 transition-colors" onClick={() => { setEditingMbRecord(r); setIsMbModalOpen(true); }}><Edit2 size={16}/></button>
+                                                <button type="button" className="p-2 hover:bg-blue-100 dark:hover:bg-blue-900/40 rounded-lg hover:text-blue-600 transition-colors" onClick={() => deleteRecord('masturbation', r.id)}><Trash2 size={16}/></button>
+                                            </div>
                                         </div>
                                     ))}
                                     <button type="button" onClick={() => { setEditingMbRecord(undefined); setIsMbModalOpen(true); }} className="w-full py-2 border-2 border-dashed border-blue-200 dark:border-blue-900 text-blue-400 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/10 text-sm font-medium flex justify-center items-center"><Plus size={16} className="mr-1"/> 添加自慰</button>

@@ -2,7 +2,7 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { LogEntry, HardnessLevel, MorningWoodRetention, ExerciseRecord, SexRecordDetails, MasturbationRecordDetails, HistoryCategory, AppSettings } from '../types';
 import CalendarHeatmap from './CalendarHeatmap';
-import { Signal, SignalHigh, SignalMedium, SignalLow, SignalZero, Moon, ShieldAlert, BedDouble, Zap, Leaf, Activity, Hand, HeartPulse, Bed, Hourglass, BatteryMedium, Battery, AlertTriangle, ArrowLeft, ArrowRight, X, Clock, CloudDrizzle, History, Dumbbell, Footprints, Timer, CloudSun, Swords, TrendingUp, TrendingDown, Beer, Film, BrainCircuit, ChevronLeft, ChevronRight, MapPin, User, Shirt, Droplets, Target, Sparkles, Play, Thermometer, Pill, GitCommit, Edit3, PlusCircle, Trash2, RefreshCcw, Check, FileText, FastForward } from 'lucide-react';
+import { Signal, SignalHigh, SignalMedium, SignalLow, SignalZero, Moon, ShieldAlert, BedDouble, Zap, Leaf, Activity, Hand, HeartPulse, Bed, Hourglass, BatteryMedium, Battery, AlertTriangle, ArrowLeft, ArrowRight, X, Clock, CloudDrizzle, History, Dumbbell, Footprints, Timer, CloudSun, Swords, TrendingUp, TrendingDown, Beer, Film, BrainCircuit, ChevronLeft, ChevronRight, MapPin, User, Shirt, Droplets, Target, Sparkles, Play, Thermometer, Pill, GitCommit, Edit3, PlusCircle, Trash2, RefreshCcw, Check, FileText, FastForward, Coffee } from 'lucide-react';
 import Modal from './Modal';
 import SafeDeleteModal from './SafeDeleteModal';
 import { formatTime, calculateSleepDuration, analyzeSleep } from '../utils/helpers';
@@ -537,15 +537,39 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
         <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-4 rounded-3xl shadow-sm">
             <h4 className="text-sm font-bold text-brand-muted dark:text-slate-400 mb-3 flex items-center"><Activity size={16} className="mr-1"/> 生活方式</h4>
             <div className="grid grid-cols-2 gap-2 text-xs">
+                
+                {/* Alcohol */}
                 <div className={`p-3 rounded-2xl border flex items-center ${log.alcoholRecord?.totalGrams ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-200' : 'bg-brand-primary dark:bg-slate-800 border-transparent opacity-70 text-brand-text dark:text-slate-200'}`}>
-                    <Beer size={16} className="mr-2"/> {log.alcoholRecord?.totalGrams ? `${log.alcoholRecord.totalGrams}g 酒精` : '未饮酒'}
+                    <Beer size={16} className="mr-2 shrink-0"/> 
+                    <span className="truncate">{log.alcoholRecord?.totalGrams ? `${log.alcoholRecord.totalGrams}g 酒精` : '未饮酒'}</span>
                 </div>
+                
+                {/* Caffeine - NEW */}
+                <div className={`p-3 rounded-2xl border flex items-center ${log.caffeineRecord?.totalCount ? 'bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800 text-orange-800 dark:text-orange-200' : 'bg-brand-primary dark:bg-slate-800 border-transparent opacity-70 text-brand-text dark:text-slate-200'}`}>
+                    <Coffee size={16} className="mr-2 shrink-0"/> 
+                    <span className="truncate">
+                        {log.caffeineRecord?.totalCount 
+                            ? `${log.caffeineRecord.totalCount}杯 (${log.caffeineRecord.items.reduce((acc, i) => acc + (i.volume || 0), 0)}ml)` 
+                            : '无咖啡因'}
+                    </span>
+                </div>
+
+                {/* Porn */}
                 <div className={`p-3 rounded-2xl border flex items-center ${log.pornConsumption && log.pornConsumption !== 'none' ? 'bg-purple-50 dark:bg-purple-900/20 border-purple-100 dark:border-purple-800 text-purple-800 dark:text-purple-200' : 'bg-brand-primary dark:bg-slate-800 border-transparent opacity-70 text-brand-text dark:text-slate-200'}`}>
-                    <Film size={16} className="mr-2"/> {log.pornConsumption === 'none' ? '未看片' : '有看片'}
+                    <Film size={16} className="mr-2 shrink-0"/> 
+                    <span>{log.pornConsumption === 'none' ? '未看片' : '有看片'}</span>
                 </div>
+
+                {/* Stress */}
+                <div className={`p-3 rounded-2xl border flex items-center ${(log.stressLevel || 0) > 3 ? 'bg-red-50 dark:bg-red-900/20 border-red-100 dark:border-red-800 text-red-800 dark:text-red-200' : 'bg-brand-primary dark:bg-slate-800 border-transparent opacity-70 text-brand-text dark:text-slate-200'}`}>
+                    <BrainCircuit size={16} className="mr-2 shrink-0"/> 
+                    <span>压力: {log.stressLevel || '-'}</span>
+                </div>
+
+                {/* Exercise (Full width) */}
                 <div className={`col-span-2 p-3 rounded-2xl border ${log.exercise && log.exercise.length > 0 ? 'bg-green-50 dark:bg-green-900/20 border-green-100 dark:border-green-800 text-green-800 dark:text-green-200' : 'bg-brand-primary dark:bg-slate-800 border-transparent opacity-70 text-brand-text dark:text-slate-200'}`}>
                     <div className="flex items-center mb-1">
-                        <Activity size={16} className="mr-2"/> <span className="font-bold">{log.exercise && log.exercise.length > 0 ? '运动记录' : '无运动'}</span>
+                        <Activity size={16} className="mr-2 shrink-0"/> <span className="font-bold">{log.exercise && log.exercise.length > 0 ? '运动记录' : '无运动'}</span>
                     </div>
                     {log.exercise && log.exercise.length > 0 && (
                         <div className="flex flex-wrap gap-1 pl-6">
@@ -557,9 +581,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                             ))}
                         </div>
                     )}
-                </div>
-                <div className={`p-3 rounded-2xl border flex items-center col-span-2 ${(log.stressLevel || 0) > 3 ? 'bg-red-50 dark:bg-red-900/20 border-red-100 dark:border-red-800 text-red-800 dark:text-red-200' : 'bg-brand-primary dark:bg-slate-800 border-transparent opacity-70 text-brand-text dark:text-slate-200'}`}>
-                    <BrainCircuit size={16} className="mr-2"/> 压力: {log.stressLevel}
                 </div>
             </div>
         </div>
