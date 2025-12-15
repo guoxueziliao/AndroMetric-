@@ -3,15 +3,6 @@ import { LogEntry, Health, MorningRecord, SleepRecord, AlcoholRecord } from '../
 
 /**
  * HYDRATE LOG (Schema v1.0 Enforcer)
- * 
- * This function takes any object (partial log, legacy log, or new log)
- * and returns a guaranteed valid LogEntry matching Schema v1.0.
- * 
- * Rules:
- * 1. Missing arrays -> []
- * 2. Missing objects (health, morning, sleep) -> Default Objects
- * 3. Undefined optional fields -> null
- * 4. Legacy flat fields -> Mapped to Domain Objects
  */
 export const hydrateLog = (raw: any): LogEntry => {
     if (!raw) raw = {};
@@ -22,7 +13,7 @@ export const hydrateLog = (raw: any): LogEntry => {
         status: raw.status || 'completed',
         updatedAt: raw.updatedAt || Date.now(),
         
-        // Environment & State (Force undefined to null)
+        // Environment & State
         location: raw.location ?? null,
         weather: raw.weather ?? null,
         mood: raw.mood ?? null,
@@ -48,11 +39,20 @@ export const hydrateLog = (raw: any): LogEntry => {
         changeHistory: Array.isArray(raw.changeHistory) ? raw.changeHistory : [],
     };
 
+    // v0.0.6 Caffeine Record
+    if (!raw.caffeineRecord) {
+        log.caffeineRecord = { totalMg: 0, items: [] };
+    } else {
+        log.caffeineRecord = {
+            totalMg: raw.caffeineRecord.totalMg || 0,
+            items: Array.isArray(raw.caffeineRecord.items) ? raw.caffeineRecord.items : []
+        };
+    }
+
     // 2. Domain Object: MorningRecord
     const defaultMorning: MorningRecord = {
         id: raw.morning?.id || `mr_${log.date}_${Date.now()}`,
         timestamp: raw.morning?.timestamp || Date.now(),
-        // Fallback to legacy flat fields if sub-object is missing
         wokeWithErection: raw.morning?.wokeWithErection ?? raw.wokeWithErection ?? true,
         hardness: raw.morning?.hardness ?? raw.hardness ?? null,
         retention: raw.morning?.retention ?? raw.retention ?? null,
@@ -62,12 +62,10 @@ export const hydrateLog = (raw: any): LogEntry => {
     log.morning = { ...defaultMorning, ...(raw.morning || {}) };
 
     // 3. Domain Object: SleepRecord
-    // Helper to get naps
     let naps = [];
     if (raw.sleep && Array.isArray(raw.sleep.naps)) naps = raw.sleep.naps;
-    else if (Array.isArray(raw.naps)) naps = raw.naps; // Legacy flat naps
+    else if (Array.isArray(raw.naps)) naps = raw.naps;
     
-    // Ensure naps have v0.0.5 structure
     naps = naps.map((n: any) => ({
         ...n,
         hasDream: n.hasDream ?? false,
@@ -76,7 +74,6 @@ export const hydrateLog = (raw: any): LogEntry => {
 
     const defaultSleep: SleepRecord = {
         id: raw.sleep?.id || `sr_${log.date}_${Date.now()}`,
-        // Fallback to legacy flat fields
         startTime: raw.sleep?.startTime ?? raw.sleepDateTime ?? null,
         endTime: raw.sleep?.endTime ?? raw.wakeUpDateTime ?? null,
         quality: raw.sleep?.quality ?? raw.sleepQuality ?? 3,
@@ -86,7 +83,6 @@ export const hydrateLog = (raw: any): LogEntry => {
         withPartner: raw.sleep?.withPartner ?? raw.sleepWithPartner ?? false,
         preSleepState: raw.sleep?.preSleepState ?? raw.preSleepState ?? null,
         naps: naps,
-        // v0.0.5
         hasDream: raw.sleep?.hasDream ?? false,
         dreamTypes: Array.isArray(raw.sleep?.dreamTypes) ? raw.sleep.dreamTypes : [],
         environment: raw.sleep?.environment || { location: 'home', temperature: 'comfortable' }
@@ -94,25 +90,24 @@ export const hydrateLog = (raw: any): LogEntry => {
     log.sleep = { ...defaultSleep, ...(raw.sleep || {}) };
 
     // 4. Domain Object: Health
-    // Ensure structure exists even if empty
     const defaultHealth: Health = {
         isSick: false,
         illnessType: null,
         medicationTaken: null,
         medicationName: null,
-        // v0.0.5
         feeling: raw.health?.isSick ? 'bad' : 'normal',
         symptoms: [],
         medications: []
     };
     log.health = { ...defaultHealth, ...(raw.health || {}) };
 
-    // 5. Alcohol Record (Special Handling for Object)
+    // 5. Alcohol Record
     if (raw.alcoholRecord) {
         log.alcoholRecord = {
             ...raw.alcoholRecord,
             drunkLevel: raw.alcoholRecord.drunkLevel || 'none',
-            alcoholScene: raw.alcoholRecord.alcoholScene || ''
+            alcoholScene: raw.alcoholRecord.alcoholScene || '',
+            time: raw.alcoholRecord.time || '20:00' // v0.0.6 default
         };
     } else {
         log.alcoholRecord = null;

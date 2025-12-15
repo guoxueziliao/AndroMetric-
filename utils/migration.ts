@@ -2,7 +2,7 @@
 import { StoredData, LogEntry, SexRecordDetails, MasturbationRecordDetails, SexInteraction, SexAction, ExerciseRecord, MorningRecord, SleepRecord } from '../types';
 
 // The latest version of our data structure.
-export const LATEST_VERSION = 33;
+export const LATEST_VERSION = 34;
 
 /**
  * MIGRATION UTILITIES
@@ -45,6 +45,7 @@ function migrateV1toV2(logs: any[]): any[] {
     });
 }
 
+// ... Keep existing migrations ...
 function migrateV3toV4(logs: any[]): any[] { return logs.map(log => ({ ...log, updatedAt: log.updatedAt || Date.now(), tags: log.tags || [] })); }
 function migrateV5toV6(logs: any[]): any[] { return logs.map(log => { if (log.sex && !Array.isArray(log.sex)) { const oldSex = log.sex; const newSexArray: SexRecordDetails[] = []; if (oldSex.details) { newSexArray.push({ ...oldSex.details, id: `migrated-${Date.now()}-${Math.random()}`, ejaculation: oldSex.ejaculation ?? true, interactions: [] }); } else if (oldSex.count > 0) { for (let i = 0; i < oldSex.count; i++) { newSexArray.push({ id: `migrated-placeholder-${Date.now()}-${i}`, startTime: '22:00', duration: 15, ejaculation: oldSex.ejaculation ?? true, protection: '无保护措施', indicators: { lingerie: false, orgasm: true, partnerOrgasm: false, squirting: false, toys: false }, interactions: [] }); } } return { ...log, sex: newSexArray.length > 0 ? newSexArray : undefined }; } return log; }); }
 function migrateV6toV7(logs: any[]): any[] { return logs.map(log => { if (log.masturbation && !Array.isArray(log.masturbation)) { const oldMb = log.masturbation; const newMbArray: MasturbationRecordDetails[] = []; if (oldMb.count > 0) { for (let i = 0; i < oldMb.count; i++) { newMbArray.push({ id: `migrated-mb-${Date.now()}-${i}`, startTime: '23:00', duration: 10, tools: ['手'], materials: [], props: [], ejaculation: oldMb.ejaculation ?? true, orgasmIntensity: 3, notes: '' }); } } return { ...log, masturbation: newMbArray.length > 0 ? newMbArray : undefined }; } return log; }); }
@@ -110,13 +111,10 @@ function migrateV31toV32(logs: any[]): LogEntry[] {
 // V33: Initialize v0.0.5 New Fields (Environment, Dreams, Health Details, etc.)
 function migrateV32toV33(logs: any[]): LogEntry[] {
     return logs.map(log => {
-        // Init Sleep Env & Dreams
         if (log.sleep) {
             if (!log.sleep.environment) log.sleep.environment = { location: 'home', temperature: 'comfortable' };
             if (log.sleep.hasDream === undefined) log.sleep.hasDream = false;
             if (!log.sleep.dreamTypes) log.sleep.dreamTypes = [];
-            
-            // Fix Naps
             if (log.sleep.naps) {
                 log.sleep.naps = log.sleep.naps.map((n: any) => ({
                     ...n,
@@ -125,35 +123,44 @@ function migrateV32toV33(logs: any[]): LogEntry[] {
                 }));
             }
         }
-
-        // Init Alcohol
         if (log.alcoholRecord) {
             log.alcoholRecord.drunkLevel = 'none';
             log.alcoholRecord.alcoholScene = '';
         }
-
-        // Init Health
         if (log.health) {
-            // Migrate legacy fields to new ones
             log.health.feeling = log.health.isSick ? 'bad' : 'normal';
             log.health.symptoms = log.health.illnessType ? [log.health.illnessType] : [];
             log.health.medications = log.health.medicationName ? [log.health.medicationName] : [];
         }
-
-        // Init Root
         if (log.caffeineIntake === undefined) log.caffeineIntake = 'none';
         if (!log.dailyEvents) log.dailyEvents = [];
-
-        // Init Exercise Feeling
         if (log.exercise) {
             log.exercise = log.exercise.map((e: any) => ({ ...e, feeling: 'ok' }));
         }
-        
-        // Init Masturbation Status
         if (log.masturbation) {
             log.masturbation = log.masturbation.map((m: any) => ({ ...m, status: 'completed' }));
         }
+        return log;
+    });
+}
 
+// V34: v0.0.6 (CaffeineRecord, AlcoholTime, MB v2 fields)
+function migrateV33toV34(logs: any[]): LogEntry[] {
+    return logs.map(log => {
+        if (!log.caffeineRecord) {
+            log.caffeineRecord = { totalMg: 0, items: [] };
+        }
+        if (log.alcoholRecord && !log.alcoholRecord.time) {
+            log.alcoholRecord.time = '20:00'; // Default time
+        }
+        if (log.masturbation) {
+            log.masturbation = log.masturbation.map(m => ({
+                ...m,
+                volumeForceLevel: m.volumeForceLevel || (m.ejaculation ? 3 : undefined),
+                postMood: m.postMood || undefined,
+                fatigue: m.fatigue || undefined
+            }));
+        }
         return log;
     });
 }
@@ -164,25 +171,13 @@ function migrateV32toV33(logs: any[]): LogEntry[] {
 function repairLogs(logs: LogEntry[]): LogEntry[] {
     return logs.map(log => {
         if (!log.sleep) return log;
-
-        let { startTime, endTime } = log.sleep;
-        let needsUpdate = false;
-
-        // Repair from Change History if times are missing
-        if ((!startTime || !endTime) && log.changeHistory) {
-            // ... (Repair logic)
-            // For brevity, assuming basic repair logic from previous version is preserved or improved here
-            // This ensures data integrity even if migration missed something
-        }
-        
+        // Basic check
         return log;
     });
 }
 
 /**
  * MIGRATION REGISTRY
- * Maps "Target Version" to the function that migrates *to* it.
- * e.g., Key 2 = Migrate from V1 to V2
  */
 const MIGRATION_REGISTRY: Record<number, (logs: any[]) => any[]> = {
     2: migrateV1toV2,
@@ -205,14 +200,14 @@ const MIGRATION_REGISTRY: Record<number, (logs: any[]) => any[]> = {
     30: migrateV29toV30,
     31: migrateV30toV31,
     32: migrateV31toV32,
-    33: migrateV32toV33
+    33: migrateV32toV33,
+    34: migrateV33toV34
 };
 
 export function runMigrations(data: any): StoredData {
   let currentVersion = 1;
   let rawLogs: any[] = [];
 
-  // 1. Detect Source Version
   if (typeof data === 'object' && data !== null && 'version' in data && 'logs' in data) {
     currentVersion = data.version;
     if (Array.isArray(data.logs)) rawLogs = data.logs;
@@ -222,15 +217,12 @@ export function runMigrations(data: any): StoredData {
     rawLogs = data;
   }
 
-  // 2. Filter Invalid Logs
   const sanitizedLogs = rawLogs.filter((log): log is any => {
     return typeof log === 'object' && log !== null && typeof log.date === 'string' && !isNaN(new Date(log.date).getTime());
   });
   
   let migratedLogs = sanitizedLogs;
 
-  // 3. Execute Migration Chain
-  // Loop from Current+1 up to LATEST_VERSION
   for (let v = currentVersion + 1; v <= LATEST_VERSION; v++) {
       const migrationFn = MIGRATION_REGISTRY[v];
       if (migrationFn) {
@@ -239,14 +231,11 @@ export function runMigrations(data: any): StoredData {
               migratedLogs = migrationFn(migratedLogs);
           } catch (e) {
               console.error(`[Migration] Failed at step V${v}:`, e);
-              // Critical failure policy: Abort or Skip? 
-              // Aborting ensures we don't corrupt data further.
               throw new Error(`Migration failed at version ${v}`);
           }
       }
   }
 
-  // 4. Final Polish
   migratedLogs = repairLogs(migratedLogs);
 
   return {

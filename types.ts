@@ -152,9 +152,13 @@ export interface MasturbationRecordDetails {
   interrupted?: boolean;
   interruptionReasons?: string[];
   notes?: string | null;
-  
-  // v0.0.5
   status?: 'completed' | 'inProgress'; 
+  
+  // v0.0.6 New Fields
+  volumeForceLevel?: 1 | 2 | 3 | 4 | 5; // 纸巾测试
+  postMood?: string;    // 贤者时间 - 心理
+  fatigue?: string;     // 贤者时间 - 身体
+  quickLog?: boolean;   // 标记是否为快速记录生成
 }
 
 export interface ExerciseRecord {
@@ -167,7 +171,6 @@ export interface ExerciseRecord {
     ongoing?: boolean;
     steps?: number | null;
     notes?: string | null;
-    // v0.0.5
     feeling?: ExerciseFeeling;
 }
 
@@ -177,7 +180,6 @@ export interface NapRecord {
     endTime?: string | null;
     duration?: number;
     ongoing?: boolean;
-    // v0.0.5
     hasDream?: boolean;
     dreamTypes?: string[];
 }
@@ -196,9 +198,23 @@ export interface AlcoholRecord {
     durationMinutes: number;
     isLate: boolean;
     items: AlcoholItem[];
-    // v0.0.5
     drunkLevel?: DrunkLevel;
     alcoholScene?: string;
+    // v0.0.6
+    time?: string; // HH:mm
+}
+
+// v0.0.6
+export interface CaffeineItem {
+    id: string;
+    name: string;
+    time: string; // HH:mm
+    mg: number;
+}
+
+export interface CaffeineRecord {
+    totalMg: number;
+    items: CaffeineItem[];
 }
 
 export interface PartnerProfile {
@@ -270,7 +286,6 @@ export interface SleepRecord {
     withPartner?: boolean;
     preSleepState?: PreSleepState | null;
     naps: NapRecord[];
-    // v0.0.5
     hasDream?: boolean;
     dreamTypes?: string[];
     environment?: {
@@ -281,7 +296,6 @@ export interface SleepRecord {
 
 export interface Health {
     isSick: boolean;
-    // v0.0.5
     feeling?: HealthFeeling | null;
     symptoms?: string[];
     medications?: string[];
@@ -321,8 +335,9 @@ export interface LogEntry {
     alcoholRecord?: AlcoholRecord | null;
     pornConsumption?: PornConsumption | null;
     
-    // v0.0.5 New Fields
-    caffeineIntake?: CaffeineIntake | null;
+    // v0.0.6 New Fields
+    caffeineIntake?: CaffeineIntake | null; // Legacy enum
+    caffeineRecord?: CaffeineRecord | null; // New object
     dailyEvents?: string[];
     
     // Activity Arrays
