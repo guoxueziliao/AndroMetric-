@@ -3,6 +3,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { X, Check, Clock, Smile, PenLine, Tag, Smartphone, User, Target, Layers, Plus, Zap, Minus, FilePlus, Bookmark, ShieldCheck, Trash2, ArrowLeft, ArrowRight, MapPin, AlertTriangle, Search, Battery, Droplets, BatteryCharging, Wind, Film, Hash, Edit2 } from 'lucide-react';
 import { MasturbationRecordDetails, LogEntry, PartnerProfile, Mood, MasturbationMaterial } from '../types';
 import Modal from './Modal';
+import { calculateInventory } from '../utils/helpers';
 
 interface MasturbationRecordModalProps {
   isOpen: boolean;
@@ -40,7 +41,7 @@ const FORCE_LEVELS = [
 const FATIGUE_OPTIONS = ['精神焕发', '无明显疲劳', '轻微困倦', '身体沉重', '秒睡'];
 const POST_MOOD_OPTIONS = ['满足/愉悦', '平静/贤者', '空虚/后悔', '焦虑/负罪', '恶心/厌恶'];
 
-const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpen, onClose, onSave, initialData, dateStr, partners = [] }) => {
+const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpen, onClose, onSave, initialData, dateStr, logs = [], partners = [] }) => {
     
     // --- State ---
     const [data, setData] = useState<MasturbationRecordDetails>({
@@ -82,6 +83,8 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
     
     const [tempActor, setTempActor] = useState('');
     const [tempTag, setTempTag] = useState('');
+
+    const inventoryTime = useMemo(() => calculateInventory(logs), [logs]);
 
     useEffect(() => {
         if (isOpen) {
@@ -235,6 +238,15 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
         >
             <div className="space-y-6 pb-4">
                 
+                {/* 0. Inventory (New in v0.0.6) */}
+                <div className="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl p-3 text-white flex items-center justify-between shadow-md">
+                    <div className="flex items-center gap-2">
+                        <BatteryCharging size={20} className="text-yellow-300 animate-pulse"/>
+                        <span className="text-xs font-bold uppercase tracking-wider opacity-90">当前蓄力 (Inventory)</span>
+                    </div>
+                    <span className="font-black text-lg tracking-tight">{inventoryTime}</span>
+                </div>
+
                 {/* 1. Time & Duration */}
                 <div className="flex gap-4">
                     <div className="flex-1 bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700">

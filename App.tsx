@@ -60,6 +60,7 @@ const AppContent: React.FC<{ data: any }> = ({ data }) => {
   const [isFormDirty, setIsFormDirty] = useState(false);
   const [isConfirmBackModalOpen, setIsConfirmBackModalOpen] = useState(false);
   const [isVersionHistoryOpen, setIsVersionHistoryOpen] = useState(false);
+  const [isBlurred, setIsBlurred] = useState(false);
   
   // PWA Install Prompt State
   const [installPrompt, setInstallPrompt] = useState<any>(null);
@@ -98,6 +99,16 @@ const AppContent: React.FC<{ data: any }> = ({ data }) => {
     };
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     
+    // Privacy Blur Listener
+    const handleVisibilityChange = () => {
+        if (document.hidden) {
+            setIsBlurred(true);
+        } else {
+            setIsBlurred(false);
+        }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
     // Scheduled Health Check (Monthly)
     const checkDataHealth = async () => {
         const lastCheck = localStorage.getItem('last_health_check');
@@ -122,6 +133,7 @@ const AppContent: React.FC<{ data: any }> = ({ data }) => {
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, []);
 
@@ -273,7 +285,7 @@ const AppContent: React.FC<{ data: any }> = ({ data }) => {
   if (!hasSeenWelcome) return <Welcome onGetStarted={handleGetStarted} />;
 
   return (
-    <div className="min-h-screen bg-brand-primary dark:bg-slate-950 text-brand-text dark:text-slate-200 font-sans transition-colors duration-300">
+    <div className={`min-h-screen bg-brand-primary dark:bg-slate-950 text-brand-text dark:text-slate-200 font-sans transition-all duration-500 ${isBlurred ? 'blur-md grayscale opacity-50' : ''}`}>
       
       <div className="container mx-auto max-w-2xl p-4 pb-28">
         
@@ -361,6 +373,8 @@ const AppContent: React.FC<{ data: any }> = ({ data }) => {
             onClose={() => setIsQuickSexModalOpen(false)} 
             onSave={(record) => { wrapAction(async () => { await quickAddSex(record); setIsQuickSexModalOpen(false); }, '性生活记录已添加'); }}
             dateStr="现在"
+            logs={logs}
+            partners={partners}
         />
         <MasturbationRecordModal 
             isOpen={isQuickMbModalOpen} 
@@ -368,6 +382,8 @@ const AppContent: React.FC<{ data: any }> = ({ data }) => {
             onSave={(record) => { wrapAction(async () => { await quickAddMasturbation(record); setIsQuickMbModalOpen(false); setMbToFinish(null); }, '自慰记录已完成'); }}
             dateStr="现在"
             initialData={mbToFinish || undefined}
+            logs={logs}
+            partners={partners}
         />
         <ExerciseRecordModal
             isOpen={isExerciseModalOpen}

@@ -2,7 +2,7 @@
 import React, { useState, useMemo, useRef } from 'react';
 import { LogEntry } from '../types';
 import { ChevronLeft, ChevronRight, Heart, Hand, ShieldAlert, Zap, Activity, Moon, Beer, Film, BrainCircuit, Star, Dumbbell, Clock, BatteryWarning, TrendingUp, TrendingDown, Minus, Flame, Sparkles, Calendar as CalendarIcon, ChevronDown as ChevronDownIcon, SunMedium, Footprints } from 'lucide-react';
-import { analyzeSleep } from '../utils/helpers';
+import { analyzeSleep, calculateDataQuality } from '../utils/helpers';
 
 interface ActivityCalendarProps {
     logs: LogEntry[];
@@ -169,8 +169,10 @@ const CalendarHeatmap: React.FC<ActivityCalendarProps> = ({ logs, onDateClick, c
         let visual = { bg: "bg-white dark:bg-slate-900", border: "border-slate-100 dark:border-slate-800", text: "text-slate-400 dark:text-slate-600", ring: '' };
         let opacityClass = "opacity-100";
         let ringClass = isToday ? 'ring-2 ring-brand-accent ring-offset-2 dark:ring-offset-slate-950 z-10' : '';
+        let qualityScore = 0;
         
         if (log) {
+            qualityScore = calculateDataQuality(log);
             const sleepAnalysis = analyzeSleep(log.sleep?.startTime, log.sleep?.endTime);
             const checks: Record<FilterType, boolean> = {
                 all: true,
@@ -201,12 +203,18 @@ const CalendarHeatmap: React.FC<ActivityCalendarProps> = ({ logs, onDateClick, c
                         <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center text-[9px] font-black ${visual.bg} ${visual.text} border ${visual.border}`}>{log.morning.hardness}</div>
                     )}
                 </div>
-                <div className="flex flex-wrap justify-end content-end gap-0.5 px-0.5">
-                    {log?.health?.isSick && <div className="w-1.5 h-1.5 rounded-full bg-red-500 shadow-sm" title="生病"></div>}
-                    {log?.sex && log.sex.length > 0 && <Heart size={10} className="text-pink-500 fill-pink-500"/>}
-                    {log?.masturbation && log.masturbation.length > 0 && <Hand size={10} className="text-blue-500 fill-blue-500"/>}
-                    {log?.alcoholRecord && log.alcoholRecord.totalGrams > 0 && <div className="w-1.5 h-1.5 rounded-full bg-amber-500" title="饮酒"></div>}
-                    {log?.exercise && log.exercise.length > 0 && <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" title="运动"></div>}
+                <div className="flex flex-wrap justify-between content-end gap-0.5 px-0.5 w-full items-end">
+                    <div className="flex gap-0.5">
+                        {log?.health?.isSick && <div className="w-1.5 h-1.5 rounded-full bg-red-500 shadow-sm" title="生病"></div>}
+                        {log?.sex && log.sex.length > 0 && <Heart size={10} className="text-pink-500 fill-pink-500"/>}
+                        {log?.masturbation && log.masturbation.length > 0 && <Hand size={10} className="text-blue-500 fill-blue-500"/>}
+                        {log?.alcoholRecord && log.alcoholRecord.totalGrams > 0 && <div className="w-1.5 h-1.5 rounded-full bg-amber-500" title="饮酒"></div>}
+                        {log?.exercise && log.exercise.length > 0 && <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" title="运动"></div>}
+                    </div>
+                    {/* Quality Score Indicator */}
+                    {qualityScore > 0 && activeFilter === 'all' && (
+                        <span className={`text-[8px] font-mono leading-none ${qualityScore >= 80 ? 'text-green-500 font-bold' : 'text-slate-300'}`}>{qualityScore}</span>
+                    )}
                 </div>
             </div>
         );
