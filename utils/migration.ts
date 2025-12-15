@@ -148,7 +148,7 @@ function migrateV32toV33(logs: any[]): LogEntry[] {
 function migrateV33toV34(logs: any[]): LogEntry[] {
     return logs.map(log => {
         if (!log.caffeineRecord) {
-            log.caffeineRecord = { totalMg: 0, items: [] };
+            log.caffeineRecord = { totalCount: 0, items: [] };
         }
         if (log.alcoholRecord && !log.alcoholRecord.time) {
             log.alcoholRecord.time = '20:00'; // Default time

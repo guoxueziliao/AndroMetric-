@@ -165,8 +165,8 @@ export const generateLogSummary = (log: Partial<LogEntry>): Array<{ label: strin
         life.push(`饮酒: ${LABELS.alcohol[log.alcohol || 'none']}`);
     }
     life.push(`看片: ${LABELS.porn[log.pornConsumption || 'none']}`);
-    if (log.caffeineRecord && log.caffeineRecord.totalMg > 0) {
-        life.push(`☕ 咖啡因: ${log.caffeineRecord.totalMg}mg (${log.caffeineRecord.items.map(i => i.name).join(', ')})`);
+    if (log.caffeineRecord && log.caffeineRecord.totalCount > 0) {
+        life.push(`☕ 咖啡因: ${log.caffeineRecord.totalCount}杯 (${log.caffeineRecord.items.map(i => i.name).join(', ')})`);
     } else {
         life.push(`☕ 咖啡因: 无`);
     }
@@ -309,7 +309,7 @@ export const calculateDataQuality = (log: Partial<LogEntry>): number => {
     if (log.weather) score += 5;
     if (log.stressLevel) score += 5;
     if (log.mood) score += 5;
-    if (log.caffeineIntake || log.caffeineRecord?.totalMg) score += 5;
+    if (log.caffeineIntake || log.caffeineRecord?.totalCount) score += 5;
 
     // Activities (Bonus up to 30)
     if (log.sex && log.sex.length > 0) score += 10;

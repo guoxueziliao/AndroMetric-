@@ -58,7 +58,13 @@ const MyView: React.FC<MyViewProps> = ({ settings, onUpdateSettings, installProm
   
   const [snapshotFeedback, setSnapshotFeedback] = useState('');
   const [isClearDataModalOpen, setIsClearDataModalOpen] = useState(false);
-  const [storagePersisted, setStoragePersisted] = useState<boolean | null>(null);
+  
+  // Backup Status Check (Replaces persistence check)
+  const isBackedUp = useMemo(() => {
+      if (!settings.lastExportAt) return false;
+      const daysSinceBackup = (Date.now() - settings.lastExportAt) / (1000 * 60 * 60 * 24);
+      return daysSinceBackup < 7;
+  }, [settings.lastExportAt]);
   
   // Health Check State
   const [healthReport, setHealthReport] = useState<DataHealthReport | null>(null);
@@ -94,16 +100,6 @@ const MyView: React.FC<MyViewProps> = ({ settings, onUpdateSettings, installProm
           goodSleep: logs.filter(l => (l.sleep?.quality || 0) >= 4).length
       };
   }, [logs]);
-
-  useEffect(() => {
-      const checkPersistence = async () => {
-          if (navigator.storage && navigator.storage.persisted) {
-              const isPersisted = await navigator.storage.persisted();
-              setStoragePersisted(isPersisted);
-          }
-      }
-      checkPersistence();
-  }, []);
 
   const handleRunHealthCheck = async () => {
       const report = await StorageService.runHealthCheck();
@@ -346,7 +342,7 @@ const MyView: React.FC<MyViewProps> = ({ settings, onUpdateSettings, installProm
                     </div>
                 </div>
                 <div className="flex items-center text-slate-400 text-xs">
-                    {storagePersisted ? <span className="flex items-center text-green-500 mr-2"><ShieldCheck size={12} className="mr-1"/>已持久化</span> : <span className="flex items-center text-orange-500 mr-2"><AlertTriangle size={12} className="mr-1"/>未持久化</span>}
+                    {isBackedUp ? <span className="flex items-center text-green-500 mr-2"><ShieldCheck size={12} className="mr-1"/>已备份</span> : <span className="flex items-center text-orange-500 mr-2"><AlertTriangle size={12} className="mr-1"/>未备份</span>}
                     <ChevronRight size={18}/>
                 </div>
             </button>

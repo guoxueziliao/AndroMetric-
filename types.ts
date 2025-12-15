@@ -204,16 +204,16 @@ export interface AlcoholRecord {
     time?: string; // HH:mm
 }
 
-// v0.0.6
+// v0.0.6 Caffeine (Updated to use Cups)
 export interface CaffeineItem {
     id: string;
     name: string;
     time: string; // HH:mm
-    mg: number;
+    count: number; // cups
 }
 
 export interface CaffeineRecord {
-    totalMg: number;
+    totalCount: number; // total cups
     items: CaffeineItem[];
 }
 
@@ -337,7 +337,7 @@ export interface LogEntry {
     
     // v0.0.6 New Fields
     caffeineIntake?: CaffeineIntake | null; // Legacy enum
-    caffeineRecord?: CaffeineRecord | null; // New object
+    caffeineRecord?: CaffeineRecord | null; // New object (Cups based)
     dailyEvents?: string[];
     
     // Activity Arrays

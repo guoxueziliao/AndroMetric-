@@ -39,13 +39,20 @@ export const hydrateLog = (raw: any): LogEntry => {
         changeHistory: Array.isArray(raw.changeHistory) ? raw.changeHistory : [],
     };
 
-    // v0.0.6 Caffeine Record
+    // v0.0.6 Caffeine Record (Cups)
     if (!raw.caffeineRecord) {
-        log.caffeineRecord = { totalMg: 0, items: [] };
+        log.caffeineRecord = { totalCount: 0, items: [] };
     } else {
+        // Migration from mg (old) to count (new) if needed, otherwise default
+        const items = Array.isArray(raw.caffeineRecord.items) ? raw.caffeineRecord.items.map((i: any) => ({
+            ...i,
+            // If old 'mg' exists but no 'count', convert (assume 1 cup if undefined)
+            count: i.count ?? (i.mg ? (i.mg > 10 ? 1 : i.mg) : 1) 
+        })) : [];
+        
         log.caffeineRecord = {
-            totalMg: raw.caffeineRecord.totalMg || 0,
-            items: Array.isArray(raw.caffeineRecord.items) ? raw.caffeineRecord.items : []
+            totalCount: raw.caffeineRecord.totalCount ?? raw.caffeineRecord.totalMg ?? 0,
+            items
         };
     }
 

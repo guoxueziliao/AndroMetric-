@@ -2,7 +2,7 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { LogEntry, HardnessLevel, MorningWoodRetention, ExerciseRecord, SexRecordDetails, MasturbationRecordDetails, HistoryCategory, AppSettings } from '../types';
 import CalendarHeatmap from './CalendarHeatmap';
-import { Signal, SignalHigh, SignalMedium, SignalLow, SignalZero, Moon, ShieldAlert, BedDouble, Zap, Leaf, Activity, Hand, HeartPulse, Bed, Hourglass, BatteryMedium, Battery, AlertTriangle, ArrowLeft, ArrowRight, X, Clock, CloudDrizzle, History, Dumbbell, Footprints, Timer, CloudSun, Swords, TrendingUp, TrendingDown, Beer, Film, BrainCircuit, ChevronLeft, ChevronRight, MapPin, User, Shirt, Droplets, Target, Sparkles, Play, Thermometer, Pill, GitCommit, Edit3, PlusCircle, Trash2, RefreshCcw, Check, FileText } from 'lucide-react';
+import { Signal, SignalHigh, SignalMedium, SignalLow, SignalZero, Moon, ShieldAlert, BedDouble, Zap, Leaf, Activity, Hand, HeartPulse, Bed, Hourglass, BatteryMedium, Battery, AlertTriangle, ArrowLeft, ArrowRight, X, Clock, CloudDrizzle, History, Dumbbell, Footprints, Timer, CloudSun, Swords, TrendingUp, TrendingDown, Beer, Film, BrainCircuit, ChevronLeft, ChevronRight, MapPin, User, Shirt, Droplets, Target, Sparkles, Play, Thermometer, Pill, GitCommit, Edit3, PlusCircle, Trash2, RefreshCcw, Check, FileText, FastForward } from 'lucide-react';
 import Modal from './Modal';
 import SafeDeleteModal from './SafeDeleteModal';
 import { formatTime, calculateSleepDuration, analyzeSleep } from '../utils/helpers';
@@ -63,7 +63,7 @@ const getPowerLevel = (score: number) => {
 };
 
 const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateToBackup, onFinishExercise, onFinishMasturbation }) => {
-  const { logs, deleteLog, toggleNap } = useData();
+  const { logs, deleteLog, toggleNap, addOrUpdateLog } = useData();
   const { showToast } = useToast();
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -73,6 +73,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
   const [showBackupAlert, setShowBackupAlert] = useState(false);
   const [isHistoryView, setIsHistoryView] = useState(false);
   const [isTrendWarningOpen, setIsTrendWarningOpen] = useState(false);
+  
+  // Masturbation Action Modal
+  const [isMbActionModalOpen, setIsMbActionModalOpen] = useState(false);
 
   // Swipe State
   const touchStart = useRef<number | null>(null);
@@ -204,6 +207,43 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
       } catch (e: any) {
           showToast(e.message, 'error');
       }
+  };
+  
+  // --- Masturbation Actions ---
+  const handleQuickFinishMb = async () => {
+      if (!ongoingMb) return;
+      const now = new Date();
+      const [h, m] = ongoingMb.startTime.split(':').map(Number);
+      const startDate = new Date(); startDate.setHours(h); startDate.setMinutes(m); startDate.setSeconds(0);
+      let duration = Math.round((now.getTime() - startDate.getTime()) / 60000);
+      if (duration < 0) duration += 24 * 60;
+      if (duration === 0) duration = 1;
+
+      // Find the log containing this record
+      const parentLog = logs.find(l => l.masturbation?.some(r => r.id === ongoingMb.id));
+      if (parentLog) {
+          const updatedMb = parentLog.masturbation?.map(r => 
+              r.id === ongoingMb.id 
+              ? { ...r, status: 'completed' as const, duration, quickLog: true } 
+              : r
+          );
+          await addOrUpdateLog({ ...parentLog, masturbation: updatedMb });
+          showToast(`已快速记录: ${duration}分钟`, 'success');
+      }
+      setIsMbActionModalOpen(false);
+  };
+
+  const handleCancelMb = async () => {
+      if (!ongoingMb) return;
+      if (!confirm('确定要取消并删除这条开始记录吗？')) return;
+      
+      const parentLog = logs.find(l => l.masturbation?.some(r => r.id === ongoingMb.id));
+      if (parentLog) {
+          const updatedMb = parentLog.masturbation?.filter(r => r.id !== ongoingMb.id);
+          await addOrUpdateLog({ ...parentLog, masturbation: updatedMb });
+          showToast('记录已取消', 'info');
+      }
+      setIsMbActionModalOpen(false);
   };
 
   // Swipe & Navigation Logic
@@ -624,7 +664,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                           <p className="text-xs opacity-90 mt-0.5 font-mono">开始于 {ongoingMb.startTime}</p>
                       </div>
                   </div>
-                  <button onClick={() => onFinishMasturbation(ongoingMb)} className="px-4 py-2 bg-white text-blue-600 text-xs font-bold rounded-full shadow-sm">结束/记录</button>
+                  <button onClick={() => setIsMbActionModalOpen(true)} className="px-4 py-2 bg-white text-blue-600 text-xs font-bold rounded-full shadow-sm">结束/记录</button>
               </div>
           </section>
       )}
@@ -724,6 +764,49 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
             </div>
             <button onClick={() => { setIsTrendWarningOpen(false); localStorage.setItem('HD_trend_warning_dismissed_date', new Date().toDateString()); }} className="w-full py-3 bg-brand-accent text-white font-bold rounded-xl shadow-lg mt-2">收到</button>
         </div>
+      </Modal>
+      
+      {/* Masturbation Action Modal */}
+      <Modal isOpen={isMbActionModalOpen} onClose={() => setIsMbActionModalOpen(false)} title="施法结束">
+          <div className="space-y-3 pb-2">
+              <p className="text-sm text-center text-slate-500 mb-4">辛苦了！请选择如何记录本次施法。</p>
+              
+              <button onClick={handleQuickFinishMb} className="w-full bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 p-4 rounded-2xl flex items-center justify-between group hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors">
+                  <div className="flex items-center gap-3">
+                      <div className="p-2 bg-blue-100 dark:bg-blue-800 rounded-full text-blue-600 dark:text-blue-300">
+                          <FastForward size={20} />
+                      </div>
+                      <div className="text-left">
+                          <h4 className="font-bold text-brand-text dark:text-slate-200">快速结案</h4>
+                          <p className="text-xs text-slate-500">仅记录时间，跳过详情</p>
+                      </div>
+                  </div>
+                  <ArrowRight size={18} className="text-slate-400 group-hover:text-blue-500"/>
+              </button>
+
+              <button 
+                onClick={() => { 
+                    if (ongoingMb && onFinishMasturbation) onFinishMasturbation(ongoingMb); 
+                    setIsMbActionModalOpen(false); 
+                }} 
+                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-4 rounded-2xl flex items-center justify-between group hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+              >
+                  <div className="flex items-center gap-3">
+                      <div className="p-2 bg-slate-200 dark:bg-slate-700 rounded-full text-slate-600 dark:text-slate-300">
+                          <Edit3 size={20} />
+                      </div>
+                      <div className="text-left">
+                          <h4 className="font-bold text-brand-text dark:text-slate-200">补全详情</h4>
+                          <p className="text-xs text-slate-500">记录素材、感受与评价</p>
+                      </div>
+                  </div>
+                  <ArrowRight size={18} className="text-slate-400 group-hover:text-brand-accent"/>
+              </button>
+
+              <button onClick={handleCancelMb} className="w-full mt-4 py-3 text-red-500 dark:text-red-400 text-sm font-bold flex items-center justify-center gap-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors">
+                  <Trash2 size={16} /> 放弃 / 删除记录
+              </button>
+          </div>
       </Modal>
     </>
   );

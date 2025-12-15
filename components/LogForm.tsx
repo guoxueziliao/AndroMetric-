@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { LogEntry, SexRecordDetails, MasturbationRecordDetails, ExerciseRecord, NapRecord, ChangeDetail, ChangeRecord, AlcoholRecord, PartnerProfile, MorningRecord, SleepRecord, CaffeineRecord } from '../types';
-import { CheckSquare, Tag, Beer, Film, Clapperboard, Eye, Dumbbell, Sun, Cloud, CloudRain, Snowflake, Wind, CloudFog, Home, Users, Hotel, Plane, MapPin, Shirt, EyeOff, HeartPulse, Hand, Plus, Edit2, Trash2, Footprints, Save, Coffee, Calendar, X, Zap, Check } from 'lucide-react';
+import { CheckSquare, Tag, Beer, Film, Clapperboard, Eye, Dumbbell, Sun, Cloud, CloudRain, Snowflake, Wind, CloudFog, Home, Users, Hotel, Plane, MapPin, Shirt, EyeOff, HeartPulse, Hand, Plus, Edit2, Trash2, Footprints, Save, Coffee, Calendar, X, Zap, Check, Sparkles } from 'lucide-react';
 import Modal from './Modal';
 import SexRecordModal from './SexRecordModal';
 import MasturbationRecordModal from './MasturbationRecordModal';
@@ -26,6 +26,47 @@ const WEATHER_OPTS = [{value: 'sunny', label: '晴'}, {value: 'cloudy', label: '
 const LOCATION_OPTS = [{value: 'home', label: '家'}, {value: 'partner', label: '伴侣家'}, {value: 'hotel', label: '酒店'}, {value: 'travel', label: '旅途'}, {value: 'other', label: '其他'}];
 const ATTIRE_OPTS = [{value: 'naked', label: '裸睡'}, {value: 'light', label: '内衣'}, {value: 'pajamas', label: '睡衣'}, {value: 'other', label: '其他'}];
 const EVENT_PRESETS = ['加班', '吵架', '出差', '聚会', '家庭烦心事', '生病'];
+
+const QualityRing = ({ score }: { score: number }) => {
+    const radius = 18;
+    const circumference = 2 * Math.PI * radius;
+    const offset = circumference - (score / 100) * circumference;
+    const isPerfect = score === 100;
+
+    return (
+        <div className="relative w-12 h-12 flex items-center justify-center">
+            {/* Sparkle Effect for 100% */}
+            {isPerfect && (
+                <div className="absolute inset-0 animate-pulse text-yellow-400 pointer-events-none">
+                    <Sparkles size={12} className="absolute -top-1 -right-1 animate-bounce" style={{animationDelay: '0.1s'}}/>
+                    <Sparkles size={10} className="absolute bottom-0 -left-1 animate-bounce" style={{animationDelay: '0.3s'}}/>
+                </div>
+            )}
+            <svg className="w-full h-full transform -rotate-90">
+                <circle
+                    cx="24" cy="24" r={radius}
+                    stroke="currentColor" strokeWidth="4" fill="transparent"
+                    className="text-slate-200 dark:text-slate-700"
+                />
+                <circle
+                    cx="24" cy="24" r={radius}
+                    stroke="currentColor" strokeWidth="4" fill="transparent"
+                    strokeDasharray={circumference}
+                    strokeDashoffset={offset}
+                    strokeLinecap="round"
+                    className={`transition-all duration-1000 ease-out ${
+                        isPerfect ? 'text-yellow-400 drop-shadow-[0_0_4px_rgba(250,204,21,0.6)]' :
+                        score >= 80 ? 'text-green-500' :
+                        score >= 60 ? 'text-blue-500' : 'text-orange-500'
+                    }`}
+                />
+            </svg>
+            <span className={`absolute text-[10px] font-black ${isPerfect ? 'text-yellow-500 scale-110' : 'text-slate-600 dark:text-slate-300'} transition-transform`}>
+                {score}
+            </span>
+        </div>
+    );
+};
 
 const LogForm: React.FC<{
   onSave: (log: LogEntry) => void;
@@ -62,9 +103,9 @@ const LogForm: React.FC<{
     const [isExerciseModalOpen, setIsExerciseModalOpen] = useState(false);
     const [editingExerciseRecord, setEditingExerciseRecord] = useState<ExerciseRecord | undefined>(undefined);
 
-    // Caffeine State
+    // Caffeine State (Updated to Cups)
     const [isAddingCaffeine, setIsAddingCaffeine] = useState(false);
-    const [caffeineInput, setCaffeineInput] = useState({ time: '09:00', name: '美式咖啡', mg: 100 });
+    const [caffeineInput, setCaffeineInput] = useState({ time: '09:00', name: '美式咖啡', count: 1 });
 
     const initialLogState = useRef(JSON.stringify(log));
     const qualityScore = calculateDataQuality(log);
@@ -88,6 +129,13 @@ const LogForm: React.FC<{
         onDirtyStateChange(JSON.stringify(log) !== initialLogState.current);
     }, [log, onDirtyStateChange]);
 
+    // Haptic Feedback on Perfect Score
+    useEffect(() => {
+        if (qualityScore === 100 && typeof navigator.vibrate === 'function') {
+            navigator.vibrate([50, 100, 50]);
+        }
+    }, [qualityScore]);
+
     const handleChange = (field: keyof LogEntry, value: any) => setLog(prev => ({ ...prev, [field]: value }));
     const handleDeepChange = (parent: keyof LogEntry, field: string, value: any) => setLog(prev => ({ ...prev, [parent]: { ...((prev[parent] as any) || {}), [field]: value } }));
     const handleMorningChange = (field: keyof MorningRecord, value: any) => setLog(prev => ({ ...prev, morning: { ...prev.morning!, [field]: value } }));
@@ -103,19 +151,19 @@ const LogForm: React.FC<{
         const id = Date.now().toString();
         const newItem = { id, ...caffeineInput };
         setLog(prev => {
-            const current = prev.caffeineRecord || { totalMg: 0, items: [] };
+            const current = prev.caffeineRecord || { totalCount: 0, items: [] };
             const newItems = [...current.items, newItem];
-            const totalMg = newItems.reduce((acc, i) => acc + i.mg, 0);
-            return { ...prev, caffeineRecord: { totalMg, items: newItems }, caffeineIntake: totalMg > 300 ? 'high' : totalMg > 100 ? 'medium' : totalMg > 0 ? 'low' : 'none' };
+            const totalCount = newItems.reduce((acc, i) => acc + i.count, 0);
+            return { ...prev, caffeineRecord: { totalCount, items: newItems }, caffeineIntake: totalCount > 3 ? 'high' : totalCount > 1 ? 'medium' : totalCount > 0 ? 'low' : 'none' };
         });
         setIsAddingCaffeine(false);
     };
     const removeCaffeine = (id: string) => {
         setLog(prev => {
-            const current = prev.caffeineRecord || { totalMg: 0, items: [] };
+            const current = prev.caffeineRecord || { totalCount: 0, items: [] };
             const newItems = current.items.filter(i => i.id !== id);
-            const totalMg = newItems.reduce((acc, i) => acc + i.mg, 0);
-            return { ...prev, caffeineRecord: { totalMg, items: newItems } };
+            const totalCount = newItems.reduce((acc, i) => acc + i.count, 0);
+            return { ...prev, caffeineRecord: { totalCount, items: newItems } };
         });
     };
 
@@ -181,12 +229,13 @@ const LogForm: React.FC<{
     return (
         <form onSubmit={(e) => { e.preventDefault(); handleReview(); }} className="space-y-6 pb-8 relative">
              {/* Date Header with Quality Score */}
-             <div className="flex justify-between items-center bg-brand-secondary dark:bg-slate-900 py-3 px-4 rounded-lg border border-slate-200 dark:border-slate-800">
-                 <p className="text-lg font-bold text-brand-text dark:text-slate-200">
+             <div className="flex justify-between items-center bg-brand-secondary dark:bg-slate-900 py-2 px-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                 <p className="text-lg font-black text-brand-text dark:text-slate-200 tracking-tight">
                      {new Date(log.date).toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })}
                  </p>
-                 <div className={`flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full border ${qualityScore >= 80 ? 'text-green-600 bg-green-50 border-green-200' : qualityScore >= 60 ? 'text-blue-600 bg-blue-50 border-blue-200' : 'text-orange-500 bg-orange-50 border-orange-200'}`}>
-                     <Zap size={12} className="fill-current"/> 质量: {qualityScore}
+                 <div className="flex items-center gap-2">
+                     <span className="text-xs text-brand-muted font-bold uppercase tracking-wider">今日质量</span>
+                     <QualityRing score={qualityScore} />
                  </div>
              </div>
 
@@ -234,8 +283,8 @@ const LogForm: React.FC<{
                                     <div className="flex gap-2 items-center bg-slate-50 dark:bg-slate-800 p-2 rounded-lg border border-brand-accent/30 animate-in fade-in">
                                         <input type="time" value={caffeineInput.time} onChange={e => setCaffeineInput({...caffeineInput, time: e.target.value})} className="w-16 text-xs bg-white rounded border border-slate-200 p-1"/>
                                         <input type="text" value={caffeineInput.name} onChange={e => setCaffeineInput({...caffeineInput, name: e.target.value})} className="flex-1 text-xs bg-white rounded border border-slate-200 p-1" placeholder="品类"/>
-                                        <input type="number" value={caffeineInput.mg} onChange={e => setCaffeineInput({...caffeineInput, mg: parseInt(e.target.value)||0})} className="w-12 text-xs bg-white rounded border border-slate-200 p-1"/>
-                                        <span className="text-xs text-slate-400">mg</span>
+                                        <input type="number" step="0.5" value={caffeineInput.count} onChange={e => setCaffeineInput({...caffeineInput, count: parseFloat(e.target.value)||0})} className="w-12 text-xs bg-white rounded border border-slate-200 p-1"/>
+                                        <span className="text-xs text-slate-400">杯</span>
                                         <button onClick={addCaffeine} className="text-green-500"><Check size={16}/></button>
                                         <button onClick={() => setIsAddingCaffeine(false)} className="text-slate-400"><X size={16}/></button>
                                     </div>
@@ -245,7 +294,7 @@ const LogForm: React.FC<{
                                         <div key={c.id} className="flex justify-between items-center text-xs bg-slate-50 dark:bg-slate-800 p-2 rounded">
                                             <span className="font-mono text-slate-400">{c.time}</span>
                                             <span className="font-bold flex-1 ml-2">{c.name}</span>
-                                            <span className="text-slate-500 mr-2">{c.mg}mg</span>
+                                            <span className="text-slate-500 mr-2">{c.count}杯</span>
                                             <button onClick={() => removeCaffeine(c.id)} className="text-slate-400 hover:text-red-500"><Trash2 size={12}/></button>
                                         </div>
                                     ))}
