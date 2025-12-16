@@ -106,7 +106,7 @@ const COMING_SOON = [
     '📱 桌面小组件 (无需打开 App 即可打卡)'
 ];
 
-const TypeIcon = ({ type }: { type: ChangeType }) => {
+const TypeIcon: React.FC<{ type: ChangeType }> = ({ type }) => {
     switch (type) {
         case 'new': return <Sparkles size={14} className="text-green-500" />;
         case 'opt': return <Zap size={14} className="text-blue-500" />;
@@ -116,7 +116,7 @@ const TypeIcon = ({ type }: { type: ChangeType }) => {
     }
 };
 
-const TypeBadge = ({ type }: { type: ChangeType }) => {
+const TypeBadge: React.FC<{ type: ChangeType }> = ({ type }) => {
     const config = {
         new: { label: '新增', color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' },
         opt: { label: '优化', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' },
@@ -131,7 +131,7 @@ const TypeBadge = ({ type }: { type: ChangeType }) => {
     );
 };
 
-const VersionCard = ({ entry, isLatest }: { entry: VersionEntry, isLatest: boolean }) => {
+const VersionCard: React.FC<{ entry: VersionEntry, isLatest: boolean }> = ({ entry, isLatest }) => {
     const [isExpanded, setIsExpanded] = useState(isLatest);
     
     // Extract unique types for summary tags

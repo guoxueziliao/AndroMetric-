@@ -90,6 +90,20 @@
           -ms-overflow-style: none;
           scrollbar-width: none;
       }
+      /* Custom Scrollbar */
+      .custom-scrollbar::-webkit-scrollbar {
+          width: 4px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+      }
+      .custom-scrollbar::-webkit-scrollbar-thumb {
+          background-color: #cbd5e1;
+          border-radius: 20px;
+      }
+      .dark .custom-scrollbar::-webkit-scrollbar-thumb {
+          background-color: #475569;
+      }
       /* Privacy Blur */
       .privacy-blur {
           filter: blur(12px) grayscale(100%);

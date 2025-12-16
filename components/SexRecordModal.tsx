@@ -61,7 +61,7 @@ const EJACULATION_LOCATIONS = [
 
 // --- Visual Components ---
 
-const Card = ({ children, className = '', onClick }: { children: React.ReactNode, className?: string, onClick?: () => void }) => (
+const Card: React.FC<{ children: React.ReactNode, className?: string, onClick?: () => void }> = ({ children, className = '', onClick }) => (
     <div 
         onClick={onClick}
         className={`bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm rounded-2xl ${className}`}
@@ -70,7 +70,7 @@ const Card = ({ children, className = '', onClick }: { children: React.ReactNode
     </div>
 );
 
-const Chip = ({ label, active, onClick, color = 'blue' }: { label: string, active: boolean, onClick: () => void, color?: string }) => {
+const Chip: React.FC<{ label: string, active: boolean, onClick: () => void, color?: string }> = ({ label, active, onClick, color = 'blue' }) => {
     // Reverted to clean slate theme
     return (
         <button
@@ -86,7 +86,7 @@ const Chip = ({ label, active, onClick, color = 'blue' }: { label: string, activ
     );
 };
 
-const TabButton = ({ active, onClick, icon: Icon, label }: any) => (
+const TabButton: React.FC<{ active: boolean, onClick: () => void, icon: React.ElementType, label: string }> = ({ active, onClick, icon: Icon, label }) => (
     <button 
         onClick={onClick}
         className={`flex flex-col items-center justify-center py-2 px-1 rounded-xl transition-all flex-1 relative

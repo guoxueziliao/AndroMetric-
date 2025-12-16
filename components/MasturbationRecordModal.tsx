@@ -18,7 +18,6 @@ interface MasturbationRecordModalProps {
 // --- CONSTANTS ---
 
 const SOURCES = ['视频', '直播', '图片', '文爱', '回忆', '幻想', '音声', '漫画'];
-// Platforms removed to match screenshot
 const CATEGORIES = [
     '巨乳', '贫乳', '长腿', '丝袜', '足交', '人妻/熟女', '母子', '学生/JK', 
     '女上司/OL', '颜射', '口交', '内射', 'SM/调教', '群P', 'NTR', '纯爱', 
@@ -89,9 +88,17 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
     useEffect(() => {
         if (isOpen) {
             if (initialData) {
+                // Ensure Assets object structure is fully populated even if legacy data is missing it
+                const baseAssets = initialData.assets || {};
                 setData({
                     ...initialData,
-                    assets: initialData.assets || { sources: [], platforms: [], categories: [], target: '', actors: [] },
+                    assets: { 
+                        sources: baseAssets.sources || [], 
+                        platforms: baseAssets.platforms || [], 
+                        categories: baseAssets.categories || [], 
+                        target: baseAssets.target || '', 
+                        actors: baseAssets.actors || [] 
+                    },
                     materialsList: initialData.materialsList || [],
                     // V2 defaults
                     volumeForceLevel: initialData.volumeForceLevel || (initialData.ejaculation ? 3 : undefined),

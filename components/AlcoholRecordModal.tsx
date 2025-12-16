@@ -55,7 +55,8 @@ const AlcoholRecordModal: React.FC<AlcoholRecordModalProps> = ({ isOpen, onClose
 
     const totalGrams = React.useMemo(() => {
         let sum = 0;
-        Object.entries(selectedItems).forEach(([key, count]) => {
+        Object.entries(selectedItems).forEach(([key, val]) => {
+            const count = val as number;
             const drink = DRINK_TYPES.find(d => d.key === key);
             if (drink) sum += drink.pure * count;
         });
@@ -83,7 +84,8 @@ const AlcoholRecordModal: React.FC<AlcoholRecordModalProps> = ({ isOpen, onClose
 
     const handleSave = () => {
         const items: AlcoholItem[] = [];
-        Object.entries(selectedItems).forEach(([key, count]) => {
+        Object.entries(selectedItems).forEach(([key, val]) => {
+            const count = val as number;
             const drink = DRINK_TYPES.find(d => d.key === key);
             if (drink) {
                 items.push({ 

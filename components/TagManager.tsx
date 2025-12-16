@@ -44,7 +44,7 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose }) => {
         const map = tagsMap[activeTab];
         return Object.entries(map)
             .filter(([name]) => name.toLowerCase().includes(searchTerm.toLowerCase()))
-            .sort((a, b) => b[1] - a[1]);
+            .sort((a: [string, number], b: [string, number]) => b[1] - a[1]);
     }, [tagsMap, activeTab, searchTerm]);
 
     const handleRename = async () => {
