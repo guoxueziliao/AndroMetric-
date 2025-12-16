@@ -19,7 +19,8 @@ export type PartnerType = 'stable' | 'dating' | 'casual' | 'service';
 export type SleepLocation = 'home' | 'hotel' | 'others_home' | 'dorm' | 'other';
 export type SleepTemperature = 'cold' | 'comfortable' | 'hot';
 export type DrunkLevel = 'none' | 'tipsy' | 'drunk' | 'wasted';
-export type HealthFeeling = 'normal' | 'minor_discomfort' | 'bad';
+export type HealthFeeling = 'normal' | 'minor_discomfort' | 'bad'; // Deprecated in v0.0.6
+export type DiscomfortLevel = 'mild' | 'moderate' | 'severe';
 export type ExerciseFeeling = 'great' | 'ok' | 'tired' | 'bad';
 export type CaffeineIntake = 'none' | 'low' | 'medium' | 'high';
 
@@ -296,12 +297,13 @@ export interface SleepRecord {
 }
 
 export interface Health {
-    isSick: boolean;
-    feeling?: HealthFeeling | null;
+    isSick: boolean; // Corresponds to hasDiscomfort
+    discomfortLevel?: DiscomfortLevel | null;
     symptoms?: string[];
     medications?: string[];
     
-    // Legacy fields
+    // Legacy fields (Deprecated in v0.0.6)
+    feeling?: HealthFeeling | null;
     illnessType?: IllnessType | null;
     medicationTaken?: boolean | null;
     medicationName?: string | null;

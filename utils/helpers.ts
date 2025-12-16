@@ -75,7 +75,7 @@ export const analyzeSleep = (sleepTime?: string, wakeTime?: string) => {
 export const LABELS = {
     hardness: { 1: '1级 (软)', 2: '2级 (较软)', 3: '3级 (标准)', 4: '4级 (硬)', 5: '5级 (最硬)' } as Record<HardnessLevel, string>,
     retention: { instant: '瞬间消失', brief: '快速消退', normal: '正常消退', extended: '持久坚挺' } as Record<MorningWoodRetention, string>,
-    stress: { 1: '平静', 2: '还好', 3: '有压力', 4: '压力大', 5: '崩溃' } as Record<StressLevel, string>,
+    stress: { 1: '放松', 2: '还好', 3: '一般', 4: '有压力', 5: '崩溃' } as Record<StressLevel, string>,
     alcohol: { none: '无', low: '少量', medium: '适量', high: '较多' } as Record<AlcoholConsumption, string>,
     porn: { none: '无', low: '少量', medium: '适量', high: '较多' } as Record<PornConsumption, string>,
     exercise: { low: '低强度', medium: '中强度', high: '高强度' } as Record<ExerciseIntensity, string>,
@@ -86,7 +86,8 @@ export const LABELS = {
     mood: { happy: '开心', excited: '兴奋', neutral: '平淡', anxious: '焦虑', sad: '低落', angry: '生气' } as Record<Mood, string>,
     attire: { naked: '裸睡', light: '内衣', pajamas: '睡衣', other: '其他' } as Record<SleepAttire, string>,
     drunkLevel: { none: '无', tipsy: '微醺', drunk: '醉', wasted: '烂醉' } as Record<string, string>,
-    feeling: { normal: '正常', minor_discomfort: '轻微不适', bad: '难受' } as Record<string, string>,
+    feeling: { normal: '正常', minor_discomfort: '轻微不适', bad: '难受' } as Record<string, string>, // Legacy
+    discomfortLevel: { mild: '轻微不适', moderate: '明显不适', severe: '很难受' } as Record<string, string>,
     exFeeling: { great: '很爽', ok: '正常', tired: '累爆', bad: '不适' } as Record<string, string>,
     caffeine: { none: '无', low: '少', medium: '中', high: '多' } as Record<string, string>,
 };
@@ -130,7 +131,6 @@ export const generateLogSummary = (log: Partial<LogEntry>): Array<{ label: strin
         sleepTxt.push(`${formatTime(sleepRec.startTime)} - ... (睡觉中)`);
     }
     
-    // Updated: Replaced "Quality" with "Score"
     if (sleepRec) sleepTxt.push(`评分: ${sleepRec.quality}星 | 睡衣: ${LABELS.attire[sleepRec.attire || 'light']}`);
     if (sleepRec?.hasDream) sleepTxt.push(`💭 梦境: ${sleepRec.dreamTypes?.join(',') || '有'}`);
     
@@ -220,11 +220,16 @@ export const generateLogSummary = (log: Partial<LogEntry>): Array<{ label: strin
         summary.push({ label: '自慰', value: '无' });
     }
 
-    // 7. Health
+    // 7. Health (New V0.0.6 structure)
     if (log.health) {
-        let healthText = log.health.isSick ? `🔴 生病: ${LABELS.feeling[log.health.feeling || 'bad']}` : '🟢 健康';
-        if (log.health.symptoms && log.health.symptoms.length > 0) healthText += `\n症状: ${log.health.symptoms.join(', ')}`;
-        if (log.health.medications && log.health.medications.length > 0) healthText += `\n用药: ${log.health.medications.join(', ')}`;
+        let healthText = log.health.isSick 
+            ? `🔴 身体不适: ${log.health.discomfortLevel ? LABELS.discomfortLevel[log.health.discomfortLevel] : '未记录程度'}` 
+            : '🟢 身体健康';
+        
+        if (log.health.isSick) {
+            if (log.health.symptoms && log.health.symptoms.length > 0) healthText += `\n症状: ${log.health.symptoms.join(', ')}`;
+            if (log.health.medications && log.health.medications.length > 0) healthText += `\n用药: ${log.health.medications.join(', ')}`;
+        }
         summary.push({ label: '健康状况', value: healthText });
     }
 
@@ -318,16 +323,24 @@ export const calculateDataQuality = (log: Partial<LogEntry>): number => {
     if (log.weather) score += 5;
     if (log.stressLevel) score += 5;
     if (log.mood) score += 5;
-    if (log.caffeineIntake || log.caffeineRecord?.totalCount) score += 5;
+    if (log.caffeineIntake || (log.caffeineRecord?.totalCount || 0) > 0) score += 5;
 
     // Activities (Bonus up to 30)
     if (log.sex && log.sex.length > 0) score += 10;
     if (log.masturbation && log.masturbation.length > 0) score += 10;
     if (log.exercise && log.exercise.length > 0) score += 10;
-    if (log.alcoholRecord && log.alcoholRecord.totalGrams > 0) score += 5; // Tracking details is good
-    if (log.health?.isSick) score += 5; // Tracking health is good
+    if (log.alcoholRecord && log.alcoholRecord.totalGrams > 0) score += 5;
+    
+    // Health Check Penalty (New in v0.0.6)
+    // If Sick is TRUE but Level is Missing -> Penalty
+    if (log.health?.isSick) {
+        if (log.health.discomfortLevel) score += 5;
+        else score -= 5;
+    } else {
+        score += 5; // Healthy bonus
+    }
 
-    return Math.min(maxScore, score);
+    return Math.min(maxScore, Math.max(0, score));
 };
 
 export const calculateLogDiff = (oldLog: LogEntry, newLog: LogEntry): ChangeDetail[] => {

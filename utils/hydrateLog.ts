@@ -105,6 +105,7 @@ export const hydrateLog = (raw: any): LogEntry => {
         medicationTaken: null,
         medicationName: null,
         feeling: raw.health?.isSick ? 'bad' : 'normal',
+        discomfortLevel: null,
         symptoms: [],
         medications: []
     };

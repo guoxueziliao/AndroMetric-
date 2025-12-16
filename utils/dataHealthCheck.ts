@@ -71,6 +71,11 @@ export const checkDataHealth = (logs: LogEntry[], partners: PartnerProfile[]): D
         } else {
             if (typeof log.health.isSick !== 'boolean') {
                  issues.push({ id: `${log.date}_health_issick`, date: log.date, type: 'schema', message: '生病状态字段无效或缺失', severity: 'low' });
+            } else if (log.health.isSick) {
+                // v0.0.6 Health Check Logic
+                if (!log.health.discomfortLevel) {
+                    issues.push({ id: `${log.date}_health_level`, date: log.date, type: 'missing_field', message: '已标记生病但未记录不适程度', severity: 'low' });
+                }
             }
         }
 

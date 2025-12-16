@@ -2,7 +2,7 @@
 import { StoredData, LogEntry, SexRecordDetails, MasturbationRecordDetails, SexInteraction, SexAction, ExerciseRecord, MorningRecord, SleepRecord } from '../types';
 
 // The latest version of our data structure.
-export const LATEST_VERSION = 35;
+export const LATEST_VERSION = 36;
 
 /**
  * MIGRATION UTILITIES
@@ -176,6 +176,34 @@ function migrateV34toV35(logs: any[]): LogEntry[] {
     });
 }
 
+// V36: Health Module Logic Refactor (discomfortLevel)
+function migrateV35toV36(logs: any[]): LogEntry[] {
+    return logs.map(log => {
+        if (!log.health) return log;
+        
+        let discomfortLevel = undefined;
+        // Map old feeling to new discomfortLevel if sick
+        if (log.health.isSick) {
+            if (log.health.feeling === 'minor_discomfort') discomfortLevel = 'mild';
+            else if (log.health.feeling === 'bad') discomfortLevel = 'moderate';
+            else discomfortLevel = 'mild'; // Default if sick but normal feeling
+        } else {
+            // Clean up if not sick
+            log.health.symptoms = [];
+            log.health.medications = [];
+        }
+
+        return {
+            ...log,
+            health: {
+                ...log.health,
+                discomfortLevel: discomfortLevel as any,
+                // feeling is kept but deprecated, effectively replaced by logic above
+            }
+        };
+    });
+}
+
 /**
  * REPAIR UTILS
  */
@@ -213,7 +241,8 @@ const MIGRATION_REGISTRY: Record<number, (logs: any[]) => any[]> = {
     32: migrateV31toV32,
     33: migrateV32toV33,
     34: migrateV33toV34,
-    35: migrateV34toV35
+    35: migrateV34toV35,
+    36: migrateV35toV36
 };
 
 export function runMigrations(data: any): StoredData {
