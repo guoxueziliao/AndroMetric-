@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { SunMedium, Zap, Hourglass, BatteryMedium, Battery } from 'lucide-react';
-import { MorningRecord, LogEntry } from '../types';
+import { MorningRecord } from '../types';
 import HardnessSelector from './HardnessSelector';
 import { IconToggleButton } from './FormControls';
 
@@ -26,13 +26,16 @@ const MorningSection: React.FC<MorningSectionProps> = ({ morning, onChange }) =>
     };
 
     return (
-        <div className="bg-brand-secondary dark:bg-slate-900 p-4 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 space-y-4">
-            <h3 className="text-sm font-bold text-brand-muted uppercase tracking-wider flex items-center">
-                <SunMedium size={16} className="mr-2 text-brand-accent"/>晨间状态
+        <div className="bg-brand-card dark:bg-slate-900 rounded-card p-5 shadow-soft border border-slate-100 dark:border-slate-800">
+            <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center mb-4">
+                <div className="p-1.5 bg-amber-100 dark:bg-amber-900/30 rounded-lg mr-2 text-amber-600">
+                    <SunMedium size={16} />
+                </div>
+                晨间状态
             </h3>
             
-            <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-800 p-3 rounded-lg">
-                <label className="font-medium text-brand-text dark:text-slate-200">有晨勃吗？</label>
+            <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-800 p-4 rounded-2xl mb-4">
+                <label className="font-bold text-sm text-brand-text dark:text-slate-200">有晨勃吗？</label>
                 <input 
                     type="checkbox" 
                     className="toggle-checkbox" 
@@ -42,14 +45,14 @@ const MorningSection: React.FC<MorningSectionProps> = ({ morning, onChange }) =>
             </div>
 
             {morning.wokeWithErection && (
-                <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
+                <div className="space-y-5 animate-in fade-in slide-in-from-top-2">
                     <HardnessSelector 
                         value={morning.hardness || 3} 
                         onChange={(v) => onChange('hardness', v)} 
                     />
                     
                     <div className="space-y-2">
-                        <label className="text-xs font-bold text-brand-muted uppercase tracking-wider">维持时间 / 消退速度</label>
+                        <label className="text-xs font-bold text-slate-400 uppercase tracking-wider pl-1">维持时间</label>
                         <IconToggleButton 
                             options={RETENTION_OPTS} 
                             selected={morning.retention || 'normal'} 
@@ -57,16 +60,17 @@ const MorningSection: React.FC<MorningSectionProps> = ({ morning, onChange }) =>
                             renderIcon={renderRetentionIcon}
                         />
                     </div>
-                    <div className="flex items-center space-x-2">
+                    
+                    <label className="flex items-center space-x-3 p-3 rounded-xl border border-slate-100 hover:bg-slate-50 transition-colors cursor-pointer">
                         <input 
                             type="checkbox" 
                             id="woken" 
                             checked={morning.wokenByErection} 
                             onChange={e => onChange('wokenByErection', e.target.checked)} 
-                            className="w-4 h-4 rounded text-brand-accent focus:ring-brand-accent"
+                            className="w-5 h-5 rounded text-brand-accent focus:ring-brand-accent border-gray-300"
                         />
-                        <label htmlFor="woken" className="text-sm text-brand-text dark:text-slate-300">被勃起弄醒 (雄激素旺盛)</label>
-                    </div>
+                        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">被勃起弄醒 (雄激素旺盛)</span>
+                    </label>
                 </div>
             )}
         </div>

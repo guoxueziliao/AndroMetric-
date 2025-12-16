@@ -43,7 +43,7 @@ const defaultSettings: AppSettings = {
 const LoadingFallback = () => (
     <div className="flex flex-col items-center justify-center h-[50vh] text-brand-muted">
         <Loader2 size={32} className="animate-spin mb-2 text-brand-accent"/>
-        <p className="text-sm">功能加载中...</p>
+        <p className="text-sm font-medium">功能加载中...</p>
     </div>
 );
 
@@ -270,7 +270,7 @@ const AppContent: React.FC<{ data: any }> = ({ data }) => {
   // Migration Loading Screen
   if (isInitializing) {
       return (
-          <div className="min-h-screen bg-brand-primary dark:bg-slate-950 flex flex-col items-center justify-center">
+          <div className="min-h-screen bg-brand-bg dark:bg-slate-950 flex flex-col items-center justify-center">
               <div className="relative w-20 h-20 mb-6">
                   <div className="absolute inset-0 rounded-full border-4 border-slate-200 dark:border-slate-800"></div>
                   <div className="absolute inset-0 rounded-full border-4 border-t-brand-accent animate-spin"></div>
@@ -285,12 +285,12 @@ const AppContent: React.FC<{ data: any }> = ({ data }) => {
   if (!hasSeenWelcome) return <Welcome onGetStarted={handleGetStarted} />;
 
   return (
-    <div className={`min-h-screen bg-brand-primary dark:bg-slate-950 text-brand-text dark:text-slate-200 font-sans transition-all duration-500 ${isBlurred ? 'blur-md grayscale opacity-50' : ''}`}>
+    <div className={`min-h-screen bg-brand-bg dark:bg-slate-950 text-brand-text dark:text-slate-200 font-sans transition-all duration-500 ${isBlurred ? 'blur-md grayscale opacity-50' : ''}`}>
       
-      <div className="container mx-auto max-w-2xl p-4 pb-28">
+      <div className="container mx-auto max-w-lg p-4 pb-32">
         
         {view === 'dashboard' && (
-          <main className="animate-in fade-in">
+          <main className="animate-in fade-in duration-300">
             {activeMainView === 'calendar' && (
                 <Dashboard 
                     onEdit={handleEdit} 
@@ -321,12 +321,12 @@ const AppContent: React.FC<{ data: any }> = ({ data }) => {
         )}
 
         {view === 'form' && (
-          <main className="animate-in slide-in-from-right">
-            <div className="flex items-center mb-6">
-              <button onClick={handleBackToDashboard} className="mr-4 p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors">
-                <ArrowLeft size={24} />
+          <main className="animate-in slide-in-from-right duration-300">
+            <div className="flex items-center mb-6 pt-2">
+              <button onClick={handleBackToDashboard} className="mr-4 p-3 bg-white dark:bg-slate-800 rounded-full shadow-sm hover:shadow-md transition-all">
+                <ArrowLeft size={20} className="text-brand-text dark:text-slate-200" />
               </button>
-              <h2 className="text-2xl font-bold">{editingLogDate ? '编辑记录' : '新记录'}</h2>
+              <h2 className="text-2xl font-black tracking-tight">{editingLogDate ? '编辑记录' : '新记录'}</h2>
             </div>
             <LogForm 
               onSave={handleSaveLog} 
@@ -358,10 +358,12 @@ const AppContent: React.FC<{ data: any }> = ({ data }) => {
         )}
 
         <Modal isOpen={isConfirmBackModalOpen} onClose={() => setIsConfirmBackModalOpen(false)} title="未保存的更改" footer={
-            <><button onClick={() => setIsConfirmBackModalOpen(false)} className="px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded">继续编辑</button>
-            <button onClick={confirmLeaveForm} className="px-4 py-2 bg-brand-danger text-white rounded">放弃更改</button></>
+            <div className="flex gap-3 w-full">
+                <button onClick={() => setIsConfirmBackModalOpen(false)} className="flex-1 py-3 bg-slate-100 dark:bg-slate-800 rounded-xl font-bold text-slate-600 dark:text-slate-300">继续编辑</button>
+                <button onClick={confirmLeaveForm} className="flex-1 py-3 bg-red-50 text-red-500 rounded-xl font-bold">放弃更改</button>
+            </div>
         }>
-            <p>您有未保存的更改。确定要离开吗？</p>
+            <p className="text-slate-600 dark:text-slate-400">您有未保存的更改。确定要离开吗？</p>
         </Modal>
 
         {/* Global Modals */}
