@@ -8,6 +8,10 @@ export interface NoticeAction {
   label: string;
   intent?: 'primary' | 'ghost';
   onAction: (e: React.MouseEvent) => void;
+  confirm?: {
+    title: string;
+    message: string;
+  };
 }
 
 export interface NoticeItem {
@@ -15,6 +19,8 @@ export interface NoticeItem {
   level: NoticeLevel;
   title: string;
   detail?: string;
+  ruleId?: string;
+  path?: string;
   action?: NoticeAction;
 }
 
@@ -54,6 +60,19 @@ export const InlineNotice: React.FC<{
     const conf = LEVEL_CONFIG[item.level];
     const Icon = conf.icon;
 
+    const handleClick = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (item.action) {
+            if (item.action.confirm) {
+                if (window.confirm(`${item.action.confirm.title}\n\n${item.action.confirm.message}`)) {
+                    item.action.onAction(e);
+                }
+            } else {
+                item.action.onAction(e);
+            }
+        }
+    };
+
     return (
         <div className={`p-3 rounded-xl border flex items-start gap-2 text-xs transition-all ${conf.bg} ${conf.border} ${className}`}>
             <Icon size={16} className={`flex-shrink-0 mt-0.5 ${conf.color}`} />
@@ -62,7 +81,7 @@ export const InlineNotice: React.FC<{
                     <span className={`font-medium ${conf.color} leading-5`}>{item.title}</span>
                     {item.action && (
                         <button 
-                            onClick={(e) => { e.stopPropagation(); item.action?.onAction(e); }}
+                            onClick={handleClick}
                             className={`flex-shrink-0 px-2 py-1 rounded-lg text-[10px] font-bold transition-colors whitespace-nowrap ${
                                 item.action.intent === 'primary' 
                                 ? 'bg-brand-accent text-white hover:bg-brand-accent/90 shadow-sm' 
@@ -90,15 +109,11 @@ export const NoticeStack: React.FC<{
   className?: string;
 }> = ({ items, maxVisible = 3, defaultExpanded = false, className = '' }) => {
     const [internalExpanded, setInternalExpanded] = useState(defaultExpanded);
-    // If fewer items than limit, always show all (effectively expanded logic doesn't matter for truncation)
     const shouldTruncate = items.length > maxVisible;
     const isExpanded = defaultExpanded || internalExpanded;
     
     if (items.length === 0) return null;
 
-    // Logic: 
-    // If not expanded and should truncate -> show first `maxVisible`
-    // If expanded -> show all
     const visibleItems = (!isExpanded && shouldTruncate) ? items.slice(0, maxVisible) : items;
     const hiddenCount = items.length - visibleItems.length;
 
