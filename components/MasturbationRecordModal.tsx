@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { X, Check, Clock, Smile, PenLine, Tag, Smartphone, User, Target, Layers, Plus, Zap, Minus, FilePlus, Bookmark, ShieldCheck, Trash2, ArrowLeft, ArrowRight, MapPin, AlertTriangle, Search, Battery, Droplets, BatteryCharging, Wind, Film, Hash, Edit2 } from 'lucide-react';
+import { X, Check, Clock, Smile, PenLine, Tag, Smartphone, User, Target, Layers, Plus, Zap, Minus, FilePlus, Bookmark, ShieldCheck, Trash2, ArrowLeft, ArrowRight, MapPin, AlertTriangle, Search, Battery, Droplets, BatteryCharging, Wind, Film, Hash, Edit2, Globe, Activity, Thermometer, BrainCircuit } from 'lucide-react';
 import { MasturbationRecordDetails, LogEntry, PartnerProfile, Mood, MasturbationMaterial } from '../types';
 import Modal from './Modal';
 import { calculateInventory } from '../utils/helpers';
@@ -18,13 +18,14 @@ interface MasturbationRecordModalProps {
 // --- CONSTANTS ---
 
 const SOURCES = ['视频', '直播', '图片', '文爱', '回忆', '幻想', '音声', '漫画'];
+const PLATFORMS = ['Telegram', 'ONE', 'Pornhub', 'Twitter', 'Xvideos', 'OnlyFans', 'Jable', 'TikTok', '微信/QQ', '本地硬盘', '91', 'MissAV'];
 const CATEGORIES = [
     '巨乳', '贫乳', '长腿', '丝袜', '足交', '人妻/熟女', '母子', '学生/JK', 
     '女上司/OL', '颜射', '口交', '内射', 'SM/调教', '群P', 'NTR', '纯爱', 
     'Cosplay', '欧美', '国产', '日韩', '自拍/偷拍', '剧情', 'ASMR', '粗口', 'VR'
 ];
 const TOOL_OPTIONS = ['手', '润滑液', '飞机杯', '名器/倒模', '电动玩具', '前列腺按摩器', '枕头'];
-const SCENE_OPTIONS = ['卧室/床上', '浴室/洗澡', '厕所/马桶', '书桌/电脑前', '客厅/沙发', '阳台', '车里', '公司/学校', '野外', '站立'];
+const SCENE_OPTIONS = ['书桌/电脑前', '卧室/床上', '浴室/洗澡', '厕所/马桶', '客厅/沙发', '阳台', '车里', '公司/学校', '野外', '站立'];
 const INTERRUPTION_OPTIONS = ['🚪 有人敲门', '📞 电话/微信', '🐱 猫/狗捣乱', '🚴‍♂️ 外卖/快递', '👁️ 突然被看到', '🔊 噪音干扰'];
 
 const LUBRICANT_TYPES = ['水溶性', '油性', '硅基', '唾液', '乳液'];
@@ -89,7 +90,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
         if (isOpen) {
             if (initialData) {
                 // Ensure Assets object structure is fully populated even if legacy data is missing it
-                const baseAssets = initialData.assets || {};
+                const baseAssets = (initialData.assets || {}) as any;
                 setData({
                     ...initialData,
                     assets: { 
@@ -103,7 +104,11 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                     // V2 defaults
                     volumeForceLevel: initialData.volumeForceLevel || (initialData.ejaculation ? 3 : undefined),
                     postMood: initialData.postMood || '平静/贤者',
-                    fatigue: initialData.fatigue || '无明显疲劳'
+                    fatigue: initialData.fatigue || '无明显疲劳',
+                    // Restore state sliders defaults if missing
+                    stressLevel: initialData.stressLevel ?? 3,
+                    energyLevel: initialData.energyLevel ?? 3,
+                    edgingCount: initialData.edgingCount ?? 0
                 });
             } else {
                 setData({
@@ -164,7 +169,14 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
     };
 
     const handleSave = () => {
-        onSave(data);
+        // Sync edging status based on count
+        const finalData = { ...data };
+        if (finalData.edgingCount && finalData.edgingCount > 0) {
+            finalData.edging = finalData.edgingCount === 1 ? 'once' : 'multiple';
+        } else {
+            finalData.edging = 'none';
+        }
+        onSave(finalData);
     };
 
     // --- Material List Logic ---
@@ -230,6 +242,9 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
         }
     };
 
+    const incrementEdging = () => updateData('edgingCount', (data.edgingCount || 0) + 1);
+    const decrementEdging = () => updateData('edgingCount', Math.max(0, (data.edgingCount || 0) - 1));
+
     if (!isOpen) return null;
 
     return (
@@ -285,7 +300,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                 {/* 2. Source & XP (The Core) */}
                 <div className="space-y-4">
                     <h3 className="text-sm font-bold text-brand-text dark:text-slate-200 flex items-center gap-2">
-                        <Layers size={16} className="text-purple-500"/> 素材来源
+                        <Layers size={16} className="text-purple-500"/> 素材与内容
                     </h3>
                     
                     <div className="space-y-3">
@@ -298,6 +313,20 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                                     className={`px-3 py-1.5 text-xs rounded-lg border transition-all ${data.assets?.sources?.includes(s) ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800 font-bold' : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700'}`}
                                 >
                                     {s}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Platforms (Added Back) */}
+                        <div className="flex flex-wrap gap-2 pt-1">
+                            {PLATFORMS.map(p => (
+                                <button
+                                    key={p}
+                                    onClick={() => toggleAssetItem('platforms', p)}
+                                    className={`px-2.5 py-1 text-[10px] rounded-lg border transition-all flex items-center ${data.assets?.platforms?.includes(p) ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800 font-bold' : 'bg-slate-50 dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700 hover:border-blue-300'}`}
+                                >
+                                    <Globe size={10} className="mr-1"/>
+                                    {p}
                                 </button>
                             ))}
                         </div>
@@ -335,7 +364,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                 </div>
 
                 {/* 3. Detailed Material List (Optional) */}
-                <div className="space-y-3">
+                <div className="space-y-3 border-t border-slate-100 dark:border-slate-800 pt-4">
                     <div className="flex justify-between items-center">
                         <h3 className="text-sm font-bold text-brand-text dark:text-slate-200 flex items-center gap-2">
                             <Bookmark size={16} className="text-indigo-500"/> 具体清单
@@ -457,35 +486,33 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                         </div>
                     </div>
                     
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="text-[10px] text-slate-500 font-bold uppercase block mb-2">地点 / 场景</label>
-                            <div className="relative">
-                                <MapPin size={14} className="absolute left-2.5 top-2.5 text-slate-400"/>
-                                <select 
-                                    className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg py-2 pl-8 pr-4 text-xs outline-none appearance-none shadow-sm"
-                                    value={data.location || ''}
-                                    onChange={e => updateData('location', e.target.value)}
+                    <div className="space-y-2">
+                        <label className="text-[10px] text-slate-500 font-bold uppercase block">场景 / 姿势</label>
+                        <div className="flex flex-wrap gap-2">
+                            {SCENE_OPTIONS.map(s => (
+                                <button
+                                    key={s}
+                                    onClick={() => updateData('location', s)}
+                                    className={`px-3 py-1.5 text-xs rounded-lg border transition-all ${data.location === s ? 'bg-teal-500 text-white border-teal-600 shadow-sm' : 'bg-white dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700'}`}
                                 >
-                                    <option value="">选择场景...</option>
-                                    {SCENE_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
-                                </select>
-                            </div>
+                                    {s}
+                                </button>
+                            ))}
                         </div>
-                        <div>
-                            <label className="text-[10px] text-slate-500 font-bold uppercase block mb-2">润滑剂</label>
-                            <div className="relative">
-                                <Droplets size={14} className="absolute left-2.5 top-2.5 text-slate-400"/>
-                                <select 
-                                    className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg py-2 pl-8 pr-4 text-xs outline-none appearance-none shadow-sm"
-                                    value={data.lubricant || ''}
-                                    onChange={e => updateData('lubricant', e.target.value)}
-                                >
-                                    <option value="">未使用</option>
-                                    {LUBRICANT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-                                </select>
-                            </div>
+                    </div>
+
+                    <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
+                        <div className="flex items-center gap-2 text-xs font-bold text-slate-500">
+                            <Droplets size={16}/> 润滑剂
                         </div>
+                        <select 
+                            className="bg-transparent text-xs font-bold text-brand-text dark:text-slate-200 outline-none text-right pr-2"
+                            value={data.lubricant || ''}
+                            onChange={e => updateData('lubricant', e.target.value)}
+                        >
+                            <option value="">未使用</option>
+                            {LUBRICANT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                        </select>
                     </div>
                 </div>
 
@@ -496,16 +523,10 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                             <span className="text-sm font-bold text-slate-600 dark:text-slate-300">边缘控制 (Edging)</span>
                             <span className="text-[10px] px-1.5 py-0.5 bg-yellow-100 text-yellow-700 rounded border border-yellow-200 font-bold">推荐</span>
                         </div>
-                        <div className="flex bg-slate-100 dark:bg-slate-900 rounded-lg p-1 border border-slate-200 dark:border-slate-700">
-                            {['none', 'once', 'multiple'].map(opt => (
-                                <button
-                                    key={opt}
-                                    onClick={() => updateData('edging', opt)}
-                                    className={`px-3 py-1 text-xs rounded font-bold transition-all ${data.edging === opt ? 'bg-yellow-500 text-white shadow-sm' : 'text-slate-400'}`}
-                                >
-                                    {opt === 'none' ? '无' : opt === 'once' ? '1次' : '多次'}
-                                </button>
-                            ))}
+                        <div className="flex items-center bg-slate-100 dark:bg-slate-900 rounded-lg p-1 border border-slate-200 dark:border-slate-700">
+                            <button onClick={decrementEdging} className="w-8 h-7 flex items-center justify-center text-slate-500 hover:bg-white dark:hover:bg-slate-800 rounded transition-colors"><Minus size={14}/></button>
+                            <span className="w-8 text-center text-sm font-black text-brand-accent">{data.edgingCount || 0}</span>
+                            <button onClick={incrementEdging} className="w-8 h-7 flex items-center justify-center text-slate-500 hover:bg-white dark:hover:bg-slate-800 rounded transition-colors"><Plus size={14}/></button>
                         </div>
                     </div>
 
@@ -559,7 +580,68 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                     </div>
                 </div>
 
-                {/* 6. Post-Game */}
+                {/* 6. State Sliders (Added Back) */}
+                <div className="space-y-3 pt-2">
+                    <h3 className="text-sm font-bold text-brand-text dark:text-slate-200 flex items-center gap-2">
+                        <Activity size={16} className="text-indigo-500"/> 状态评估
+                    </h3>
+                    <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl border border-slate-100 dark:border-slate-800 space-y-4">
+                        {/* Energy */}
+                        <div>
+                            <div className="flex justify-between text-xs mb-1.5">
+                                <span className="font-bold text-slate-500">精力状态</span>
+                                <span className="text-indigo-500 font-bold">{data.energyLevel}/5</span>
+                            </div>
+                            <input 
+                                type="range" min="1" max="5" 
+                                value={data.energyLevel || 3}
+                                onChange={e => updateData('energyLevel', parseInt(e.target.value))}
+                                className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                            />
+                            <div className="flex justify-between text-[10px] text-slate-400 mt-1">
+                                <span>疲惫</span><span>充沛</span><span>爆表</span>
+                            </div>
+                        </div>
+                        {/* Mood */}
+                        <div>
+                            <div className="flex justify-between text-xs mb-1.5">
+                                <span className="font-bold text-slate-500">心情</span>
+                                <span className="text-pink-500 font-bold">{data.mood === 'sad' ? '低落' : data.mood === 'excited' ? '兴奋' : '平淡'}</span>
+                            </div>
+                            <input 
+                                type="range" min="1" max="5" 
+                                value={data.mood === 'sad' ? 1 : data.mood === 'anxious' ? 2 : data.mood === 'happy' ? 4 : data.mood === 'excited' ? 5 : 3}
+                                onChange={e => {
+                                    const v = parseInt(e.target.value);
+                                    const m = v === 1 ? 'sad' : v === 2 ? 'anxious' : v === 4 ? 'happy' : v === 5 ? 'excited' : 'neutral';
+                                    updateData('mood', m);
+                                }}
+                                className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-pink-500"
+                            />
+                            <div className="flex justify-between text-[10px] text-slate-400 mt-1">
+                                <span>低落</span><span>平淡</span><span>兴奋</span>
+                            </div>
+                        </div>
+                        {/* Stress */}
+                        <div>
+                            <div className="flex justify-between text-xs mb-1.5">
+                                <span className="font-bold text-slate-500">压力</span>
+                                <span className="text-orange-500 font-bold">{data.stressLevel}/5</span>
+                            </div>
+                            <input 
+                                type="range" min="1" max="5" 
+                                value={data.stressLevel || 3}
+                                onChange={e => updateData('stressLevel', parseInt(e.target.value))}
+                                className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-orange-500"
+                            />
+                            <div className="flex justify-between text-[10px] text-slate-400 mt-1">
+                                <span>放松</span><span>微压</span><span>崩溃</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* 7. Post-Game */}
                 <div className="grid grid-cols-2 gap-4">
                     <div>
                         <label className="text-[10px] text-slate-500 font-bold uppercase block mb-2">贤者时间 (心理)</label>
@@ -583,7 +665,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                     </div>
                 </div>
 
-                {/* 7. Interruption (Optional) */}
+                {/* 8. Interruption (Optional) */}
                 <div className="pt-2">
                     <button 
                         onClick={() => updateData('interrupted', !data.interrupted)}
