@@ -12,7 +12,7 @@
 *   **核心追踪**: 记录晨勃硬度、维持时间、睡眠质量。
 *   **性爱日记**: 详细记录性生活（多伴侣、多阶段、角色扮演）和自慰数据。
 *   **数据分析**: 可视化热力图、趋势图表、因子实验室。
-*   **隐私安全**: 数据完全本地存储 (LocalStorage)，支持导出/导入备份。
+*   **隐私安全**: 数据完全本地存储 (LocalStorage/IndexedDB)，支持导出/导入备份。
 *   **伴侣档案**: 建立详细的伴侣偏好与身体密码数据库。
 
 ## 开发指南
@@ -30,7 +30,13 @@ npm run dev
 
 ### 项目结构
 
-*   `components/`: UI 组件
-*   `hooks/`: 自定义 Hooks (useLogs, useLocalStorage)
-*   `types.ts`: TypeScript 类型定义
-*   `utils/`: 工具函数与迁移脚本
+```
+src/
+├── components/      # UI 组件 (Modals, Charts, Forms)
+├── contexts/        # React Context (DataContext, ToastContext)
+├── hooks/           # Custom Hooks (useLogs, useLocalStorage)
+├── services/        # 业务逻辑层 (Storage, Logger, Plugins)
+├── utils/           # 工具函数 (Migration, Stats, Helpers)
+├── types.ts         # TypeScript 类型定义
+└── db.ts            # Dexie 数据库配置
+```
