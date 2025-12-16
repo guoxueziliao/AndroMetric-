@@ -10,6 +10,7 @@ import { getPrediction } from '../utils/alcoholHelpers';
 import { useData } from '../contexts/DataContext';
 import { useToast } from '../contexts/ToastContext';
 import { LogHistory } from './LogHistory';
+import { GlobalTimeline } from './GlobalTimeline';
 
 interface DashboardProps {
   onEdit: (date: string) => void;
@@ -346,6 +347,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                             )}
                             {/* ... more details ... */}
                         </div>
+                        
+                        <GlobalTimeline log={summaryLog} />
+
                         <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-800 text-center">
                             <button onClick={() => { setIsSummaryModalOpen(false); onEdit(summaryLog.date); }} className="px-6 py-2 bg-brand-accent text-white rounded-full font-bold shadow-md hover:bg-blue-600 transition-colors">
                                 编辑详情
