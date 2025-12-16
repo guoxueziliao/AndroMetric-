@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { X, Check, Clock, Smile, PenLine, Tag, Smartphone, User, Target, Layers, Plus, Zap, Minus, FilePlus, Bookmark, ShieldCheck, Trash2, ArrowLeft, ArrowRight, MapPin, AlertTriangle, Search, Battery, Droplets, BatteryCharging, Wind, Film, Hash, Edit2, Globe, Activity, Thermometer, BrainCircuit } from 'lucide-react';
+import { X, Check, Clock, Smile, PenLine, Tag, Smartphone, User, Target, Layers, Plus, Zap, Minus, FilePlus, Bookmark, ShieldCheck, Trash2, ArrowLeft, ArrowRight, MapPin, AlertTriangle, Search, Battery, Droplets, BatteryCharging, Wind, Film, Hash, Edit2, Globe, Activity, Thermometer, BrainCircuit, ChevronDown } from 'lucide-react';
 import { MasturbationRecordDetails, LogEntry, PartnerProfile, Mood, MasturbationMaterial } from '../types';
 import Modal from './Modal';
 import { calculateInventory } from '../utils/helpers';
@@ -411,16 +411,17 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                             </div>
                             <div className="space-y-2">
                                 <div className="flex gap-2">
-                                    <input 
-                                        className="flex-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded p-2 text-xs"
-                                        placeholder="搜索标签..."
-                                        value={tempTag}
-                                        onChange={e => setTempTag(e.target.value)}
-                                        list="category-suggestions"
-                                    />
-                                    <datalist id="category-suggestions">
-                                        {CATEGORIES.map(c => <option key={c} value={c}/>)}
-                                    </datalist>
+                                    <div className="relative flex-1">
+                                        <select
+                                            className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded p-2 text-xs outline-none appearance-none pr-8"
+                                            value={tempTag}
+                                            onChange={e => setTempTag(e.target.value)}
+                                        >
+                                            <option value="" disabled>选择标签</option>
+                                            {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                                        </select>
+                                        <ChevronDown size={14} className="absolute right-2 top-2.5 text-slate-400 pointer-events-none"/>
+                                    </div>
                                     <button onClick={addTempTag} className="bg-slate-200 dark:bg-slate-700 px-3 rounded text-slate-600 dark:text-slate-300"><Plus size={14}/></button>
                                 </div>
                                 <div className="flex flex-wrap gap-1">
