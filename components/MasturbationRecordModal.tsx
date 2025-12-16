@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo, Suspense, lazy } from 'react';
-import { X, Check, Clock, Smile, PenLine, Tag, Smartphone, User, Target, Layers, Plus, Zap, Minus, FilePlus, Bookmark, ShieldCheck, Trash2, ArrowLeft, ArrowRight, MapPin, AlertTriangle, Search, Battery, Droplets, BatteryCharging, Wind, Film, Edit2, Globe, Activity, Thermometer, BrainCircuit, ChevronDown, UserCheck, Shirt, Gamepad2, BookOpen, MonitorPlay, Sparkles, Hash, Settings } from 'lucide-react';
+import { X, Check, Clock, Smile, PenLine, Tag, Smartphone, User, Target, Layers, Plus, Zap, Minus, FilePlus, Bookmark, ShieldCheck, Trash2, ArrowLeft, ArrowRight, MapPin, AlertTriangle, Search, Battery, Droplets, BatteryCharging, Wind, Film, Edit2, Globe, Activity, Thermometer, BrainCircuit, ChevronDown, UserCheck, Shirt, Gamepad2, BookOpen, MonitorPlay, Sparkles, Hash, Settings, Users } from 'lucide-react';
 import { MasturbationRecordDetails, LogEntry, PartnerProfile, Mood, MasturbationMaterial } from '../types';
 import Modal from './Modal';
 import { calculateInventory } from '../utils/helpers';
@@ -123,6 +123,8 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                         target: baseAssets.target || '', 
                         actors: baseAssets.actors || [] 
                     },
+                    // Ensure materials array exists
+                    materials: initialData.materials || [],
                     materialsList: initialData.materialsList || [],
                     // V2 defaults
                     volumeForceLevel: initialData.volumeForceLevel || (initialData.ejaculation ? 3 : undefined),
@@ -209,6 +211,31 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
 
     const incrementEdging = () => updateData('edgingCount', (data.edgingCount || 0) + 1);
     const decrementEdging = () => updateData('edgingCount', Math.max(0, (data.edgingCount || 0) - 1));
+
+    // Helper for Material Code
+    const handleMaterialChange = (val: string) => {
+        // We use the first element of materials array for the code/title
+        const newMaterials = [...(data.materials || [])];
+        newMaterials[0] = val;
+        // Filter out empty strings if needed, but for index 0 we might want to keep it empty if cleared
+        updateData('materials', newMaterials);
+    };
+
+    // Helper for Actors (split string to array)
+    const handleActorsChange = (val: string) => {
+        // Just keep the value as is in UI state if we were using a string, 
+        // but here we map directly to array. We can allow space separated input.
+        // For better UX, we'll store as array but input is text.
+        // We actually need to split when saving or interpret properly. 
+        // For simplicity, we treat the input as "space separated" visual representation of the array.
+        // BUT, a simple approach is: user types string, we split on blur or change.
+        // Let's split on space or comma.
+        const actors = val.split(/[,，\s]+/).filter(s => s.trim() !== '');
+        updateAssets('actors', actors);
+    };
+
+    // Safe string representation for actors input
+    const actorsInputValue = (data.assets?.actors || []).join(' ');
 
     if (!isOpen) return null;
 
@@ -368,6 +395,28 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                         </div>
                     </div>
 
+                    {/* Details (Code & Actors) - New v0.0.6a */}
+                    <div className="grid grid-cols-2 gap-3 pt-3 border-t border-slate-200 dark:border-slate-700">
+                        <div>
+                            <label className="text-xs font-bold text-slate-400 mb-2 flex items-center gap-1"><Users size={12}/> 主演 / 演员</label>
+                            <input 
+                                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1.5 text-xs focus:border-brand-accent outline-none"
+                                placeholder="多位用空格分隔..."
+                                value={actorsInputValue}
+                                onChange={e => handleActorsChange(e.target.value)}
+                            />
+                        </div>
+                        <div>
+                            <label className="text-xs font-bold text-slate-400 mb-2 flex items-center gap-1"><Hash size={12}/> 番号 / 标识</label>
+                            <input 
+                                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1.5 text-xs focus:border-brand-accent outline-none font-mono"
+                                placeholder="e.g. SSIS-123"
+                                value={data.materials?.[0] || ''}
+                                onChange={e => handleMaterialChange(e.target.value)}
+                            />
+                        </div>
+                    </div>
+
                     {/* Target/Partner */}
                     <div className="pt-3 border-t border-slate-200 dark:border-slate-700">
                         <label className="text-xs font-bold text-slate-400 mb-2 block">施法对象 (Target)</label>
@@ -388,7 +437,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                         )}
                         <input 
                             className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-xs focus:border-brand-accent outline-none"
-                            placeholder="网黄 / 明星 / 角色名 / 伴侣..."
+                            placeholder="对象名称 (网黄 / 角色 / 伴侣)..."
                             value={data.assets?.target || ''}
                             onChange={e => updateAssets('target', e.target.value)}
                         />
@@ -547,7 +596,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                     <PenLine size={14} className="absolute left-3 top-3 text-slate-400" />
                     <textarea 
                         className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl py-2.5 pl-9 pr-4 text-xs outline-none focus:border-brand-accent min-h-[60px]"
-                        placeholder="番号 / 链接 / 特殊感受..."
+                        placeholder="更多备注 / 链接 / 特殊感受..."
                         value={data.notes || ''}
                         onChange={e => updateData('notes', e.target.value)}
                     />
