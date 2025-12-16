@@ -10,6 +10,7 @@ import { getPrediction } from '../utils/alcoholHelpers';
 import { useData } from '../contexts/DataContext';
 import { useToast } from '../contexts/ToastContext';
 import { LogHistory } from './LogHistory';
+import { GlobalTimeline } from './GlobalTimeline';
 
 interface DashboardProps {
   onEdit: (date: string) => void;
@@ -306,16 +307,13 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
             </section>
         )}
 
-        {/* Widgets Grid */}
-        <div className="grid grid-cols-2 gap-4">
-            <SleepWidget log={latestLog} />
-            <ActivityWidget log={latestLog} />
-        </div>
-
-        {/* Calendar */}
-        <section className="bg-white dark:bg-slate-900 p-2 rounded-[2rem] shadow-soft border border-slate-100 dark:border-slate-800">
-            <CalendarHeatmap logs={logs} onDateClick={handleDateClickForSummary} />
-        </section>
+        {/* Calendar with Widgets & Stats */}
+        <CalendarHeatmap logs={logs} onDateClick={handleDateClickForSummary}>
+            <div className="grid grid-cols-2 gap-4 mt-2">
+                <SleepWidget log={latestLog} />
+                <ActivityWidget log={latestLog} />
+            </div>
+        </CalendarHeatmap>
       </div>
       
       {/* Modal Definitions (Summary, Actions, etc.) */}
@@ -349,6 +347,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                             )}
                             {/* ... more details ... */}
                         </div>
+                        
+                        <GlobalTimeline log={summaryLog} />
+
                         <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-800 text-center">
                             <button onClick={() => { setIsSummaryModalOpen(false); onEdit(summaryLog.date); }} className="px-6 py-2 bg-brand-accent text-white rounded-full font-bold shadow-md hover:bg-blue-600 transition-colors">
                                 编辑详情

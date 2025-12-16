@@ -201,7 +201,7 @@ const CalendarHeatmap: React.FC<ActivityCalendarProps> = ({ logs, onDateClick, c
     };
 
     const DashItem = ({ label, value, sub, icon: Icon, colorClass }: any) => (
-        <div className="flex flex-col bg-slate-50 dark:bg-slate-800 p-3 rounded-2xl border border-slate-100 dark:border-slate-700">
+        <div className="flex flex-col bg-white dark:bg-slate-900 p-3 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm">
             <div className="flex justify-between items-start mb-1">
                 <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{label}</span>
                 <Icon size={14} className={colorClass} />
