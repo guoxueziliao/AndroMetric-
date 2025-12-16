@@ -18,7 +18,6 @@ import { IconToggleButton } from './FormControls';
 import MorningSection from './MorningSection';
 import SleepSection from './SleepSection';
 import HealthSection from './HealthSection';
-import { GlobalTimeline } from './GlobalTimeline';
 
 // --- Options Config ---
 const PORN_OPTS = [{value: 'none', label: '无'}, {value: 'low', label: '少量'}, {value: 'medium', label: '适量'}, {value: 'high', label: '沉迷'}];
@@ -390,8 +389,6 @@ const LogForm: React.FC<{
                     <textarea value={log.notes || ''} onChange={(e) => handleChange('notes', e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm min-h-[80px] outline-none focus:border-brand-accent" placeholder="今天感觉如何？写点什么吧..."/>
                 </div>
             </CardSection>
-
-            <GlobalTimeline log={log} />
 
             <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/90 backdrop-blur-md border-t border-slate-100 flex gap-3 z-30">
                  <button type="button" onClick={handleSaveDraft} className="flex-1 py-3 font-bold text-slate-500 bg-slate-100 rounded-2xl">保存草稿</button>
