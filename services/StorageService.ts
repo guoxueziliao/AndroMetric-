@@ -133,6 +133,22 @@ export const StorageService = {
             ensureId(newLog.exercise || [], 'ex');
             ensureId(newLog.sleep?.naps || [], 'nap');
 
+            // Repair 2.3.1: Ensure IDs on ContentItems (Allowed System Repair C-H1)
+            if (newLog.masturbation) {
+                newLog.masturbation.forEach((m, mIdx) => {
+                    if (m.contentItems && Array.isArray(m.contentItems)) {
+                        const seenIds = new Set<string>();
+                        m.contentItems.forEach((c, cIdx) => {
+                            if (!c.id || seenIds.has(c.id)) {
+                                c.id = `restored_content_${newLog.date}_${Date.now()}_${mIdx}_${cIdx}`;
+                                modified = true;
+                            }
+                            seenIds.add(c.id);
+                        });
+                    }
+                });
+            }
+
             // Repair 2.4: Missing Partner Profiles & Legacy Sex Fields
             if (newLog.sex) {
                 newLog.sex.forEach(sex => {
@@ -199,7 +215,7 @@ export const StorageService = {
         
         const snapshot = {
             appName: '硬度日记',
-            appVersion: '0.0.5', // v0.0.5
+            appVersion: '0.0.6',
             dataVersion: LATEST_VERSION,
             exportDate: new Date().toISOString(),
             dataHealth: {
@@ -264,7 +280,7 @@ export const StorageService = {
             const snapshot: Snapshot = {
                 timestamp: Date.now(),
                 dataVersion: meta ? meta.value : 0,
-                appVersion: '0.0.5',
+                appVersion: '0.0.6',
                 description,
                 data: { logs, partners }
             };

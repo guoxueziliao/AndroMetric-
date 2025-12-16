@@ -1,11 +1,13 @@
 
 import React, { useState, useEffect, useMemo, Suspense, lazy } from 'react';
-import { X, Check, Clock, Film, PenLine, Plus, Minus, BatteryCharging, Wind, Sparkles, Hash, Settings, Users, ChevronRight, ArrowLeft, Trash2, Tag, Play, MonitorPlay, Search, AlertTriangle } from 'lucide-react';
+import { X, Check, Clock, Film, PenLine, Plus, Minus, BatteryCharging, Wind, Sparkles, Hash, Settings, Users, ChevronRight, ArrowLeft, Trash2, Tag, MonitorPlay, Search } from 'lucide-react';
 import { MasturbationRecordDetails, LogEntry, PartnerProfile, ContentItem } from '../types';
 import Modal from './Modal';
 import { calculateInventory } from '../utils/helpers';
 import { useToast } from '../contexts/ToastContext';
 import { XP_GROUPS } from '../utils/constants';
+import { validateContentItem, ContentHealthIssue } from '../utils/dataHealthCheck';
+import { NoticeBadge, NoticeStack, NoticeItem, NoticeLevel } from './NoticeSystem';
 
 // Lazy load to avoid circular dependency issues in some builds
 const TagManager = lazy(() => import('./TagManager'));
@@ -39,6 +41,26 @@ const FORCE_LEVELS = [
 
 const FATIGUE_OPTIONS = ['精神焕发', '无明显疲劳', '轻微困倦', '身体沉重', '秒睡'];
 const POST_MOOD_OPTIONS = ['满足/愉悦', '平静/贤者', '空虚/后悔', '焦虑/负罪', '恶心/厌恶'];
+
+// --- Helper: Map HealthIssue to NoticeItem ---
+const mapIssueToNotice = (issue: ContentHealthIssue, index: number, onAction?: () => void): NoticeItem => {
+    const levelMap: Record<string, NoticeLevel> = { high: 'error', medium: 'warn', low: 'info' };
+    return {
+        id: `notice_${index}_${issue.code}`,
+        level: levelMap[issue.severity],
+        title: issue.message,
+        // Map hintAction to NoticeAction if present
+        action: issue.hintAction ? {
+            label: issue.hintAction,
+            // Default intent is ghost unless it's a high severity fix
+            intent: issue.severity === 'high' ? 'primary' : 'ghost',
+            onAction: (e) => {
+                // If onAction provided (e.g. open editor), do it
+                if (onAction) onAction(); 
+            }
+        } : undefined
+    };
+};
 
 const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpen, onClose, onSave, initialData, dateStr, logs = [], partners = [] }) => {
     const { showToast } = useToast();
@@ -77,6 +99,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
 
     // Content Item Editor State
     const [editingItem, setEditingItem] = useState<ContentItem | null>(null);
+    const [expandedHintId, setExpandedHintId] = useState<string | null>(null);
     
     // Tag Manager State
     const [activeCategoryTab, setActiveCategoryTab] = useState<string>('常用');
@@ -146,6 +169,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
             setCategorySearch('');
             setActiveCategoryTab('常用');
             setEditingItem(null);
+            setExpandedHintId(null);
         }
     }, [initialData, isOpen]);
 
@@ -203,7 +227,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
     const handleAddContent = () => {
         setEditingItem({
             id: Date.now().toString(),
-            type: '视频', // Default
+            type: undefined,
             platform: undefined,
             actors: [],
             xpTags: [],
@@ -231,11 +255,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
             showToast('未选择内容形式', 'error');
             return;
         }
-        // Basic check for platform if not memory/fantasy
-        if (!['回忆', '幻想'].includes(editingItem.type) && !editingItem.platform) {
-             showToast('建议选择素材来源 (可选)', 'info');
-        }
-
+        
         const newList = [...data.contentItems];
         const idx = newList.findIndex(m => m.id === editingItem.id);
         if (idx >= 0) newList[idx] = editingItem;
@@ -273,6 +293,10 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
 
     // --- SUB-VIEW: Content Item Editor ---
     if (editingItem) {
+        const itemIssues = validateContentItem(editingItem);
+        // Map to NoticeItems for the editor view
+        const notices = itemIssues.map((issue, idx) => mapIssueToNotice(issue, idx));
+
         return (
             <Modal isOpen={true} onClose={() => setEditingItem(null)} title="编辑素材详情">
                 <div className="space-y-6 pb-20">
@@ -281,6 +305,9 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                             <ArrowLeft size={16} className="mr-1"/> 返回
                         </button>
                     </div>
+
+                    {/* Editor Top Notices */}
+                    <NoticeStack items={notices} defaultExpanded={true} />
 
                     {/* 1. Type & Platform */}
                     <div className="space-y-4">
@@ -299,7 +326,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                             </div>
                         </div>
 
-                        {(['视频', '直播', '图片', '漫画', '音频', '小说'].includes(editingItem.type)) && (
+                        {(['视频', '直播', '图片', '漫画', '音频', '小说'].includes(editingItem.type || '')) && (
                             <div className="animate-in fade-in slide-in-from-top-1">
                                 <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">平台 / 来源</label>
                                 <div className="flex flex-wrap gap-2">
@@ -402,16 +429,6 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                             ))}
                         </div>
                     </div>
-                    
-                    {/* System Note Display (Migration Hint) */}
-                    {editingItem.notes && (
-                        <div className="bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded-xl border border-yellow-200 dark:border-yellow-800 flex items-start gap-2">
-                            <AlertTriangle size={16} className="text-yellow-600 flex-shrink-0 mt-0.5"/>
-                            <div className="text-xs text-yellow-700 dark:text-yellow-400">
-                                {editingItem.notes}
-                            </div>
-                        </div>
-                    )}
                 </div>
 
                 <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-t border-slate-100 dark:border-slate-800 flex justify-end z-20">
@@ -486,7 +503,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                     </div>
                 </div>
 
-                {/* 2. Content Items List (New v0.0.6) */}
+                {/* 2. Content Items List */}
                 <div className="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-4 border border-slate-200 dark:border-slate-700 space-y-3">
                     <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center justify-between">
                         <span className="flex items-center"><Film size={14} className="mr-1.5"/> 施法素材</span>
@@ -495,56 +512,90 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                     
                     {data.contentItems.length > 0 ? (
                         <div className="space-y-2">
-                            {data.contentItems.map((item) => (
-                                <div 
-                                    key={item.id} 
-                                    onClick={() => handleEditContent(item)}
-                                    className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 flex flex-col gap-2 cursor-pointer hover:border-brand-accent transition-all group relative active:scale-[0.98]"
-                                >
-                                    <div className="flex justify-between items-start">
-                                        <div className="flex items-center gap-2">
-                                            <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold uppercase ${item.type === '幻想' || item.type === '回忆' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
-                                                {item.type}
-                                            </span>
-                                            {item.platform && <span className="text-[10px] text-slate-500 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">{item.platform}</span>}
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            {/* Migration Warning Flag */}
-                                            {item.notes && item.notes.includes('迁移') && (
-                                                <AlertTriangle size={14} className="text-yellow-500 animate-pulse" />
-                                            )}
-                                            <ChevronRight size={16} className="text-slate-300"/>
-                                        </div>
-                                    </div>
-                                    
-                                    <div className="font-bold text-sm text-brand-text dark:text-slate-200 truncate pr-6">
-                                        {item.title || '无标题素材'}
-                                    </div>
-                                    
-                                    <div className="flex flex-wrap gap-1.5">
-                                        {item.actors.slice(0, 3).map(a => (
-                                            <span key={a} className="text-[10px] bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-300 px-1.5 py-0.5 rounded flex items-center">
-                                                <Users size={8} className="mr-1"/> {a}
-                                            </span>
-                                        ))}
-                                        {item.xpTags.slice(0, 5).map(t => (
-                                            <span key={t} className="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-500 px-1.5 py-0.5 rounded flex items-center border border-slate-200 dark:border-slate-700">
-                                                <Tag size={8} className="mr-1"/> {t}
-                                            </span>
-                                        ))}
-                                        {(item.xpTags.length > 5) && (
-                                            <span className="text-[10px] text-slate-400 px-1">+{item.xpTags.length - 5}</span>
-                                        )}
-                                    </div>
-                                    
-                                    <button 
-                                        onClick={(e) => handleDeleteContent(item.id, e)}
-                                        className="absolute top-2 right-8 p-1.5 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                            {data.contentItems.map((item) => {
+                                // Get validation issues
+                                const issues = validateContentItem(item);
+                                const hasIssues = issues.length > 0;
+                                
+                                // Map to NoticeItems for this card context
+                                // Clicking 'action' in list view usually just opens the editor anyway
+                                const notices = issues.map((issue, idx) => mapIssueToNotice(issue, idx, () => handleEditContent(item)));
+                                
+                                // Determine badge level
+                                const maxSeverity = issues.some(i => i.severity === 'high') ? 'error' : issues.some(i => i.severity === 'medium') ? 'warn' : 'info';
+                                
+                                return (
+                                    <div 
+                                        key={item.id} 
+                                        onClick={() => handleEditContent(item)}
+                                        className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 flex flex-col gap-2 cursor-pointer hover:border-brand-accent transition-all group relative active:scale-[0.98]"
                                     >
-                                        <Trash2 size={12}/>
-                                    </button>
-                                </div>
-                            ))}
+                                        <div className="flex justify-between items-start">
+                                            <div className="flex items-center gap-2">
+                                                <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold uppercase ${!item.type ? 'bg-slate-200 text-slate-500' : (item.type === '幻想' || item.type === '回忆' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700')}`}>
+                                                    {item.type || '未选择'}
+                                                </span>
+                                                <span className={`text-[10px] px-1.5 py-0.5 rounded ${!item.platform ? 'text-slate-400 bg-slate-100' : 'text-slate-500 bg-slate-100 dark:bg-slate-800'}`}>
+                                                    {item.platform || '无来源'}
+                                                </span>
+                                            </div>
+                                            
+                                            {/* Badge or Arrow */}
+                                            <div className="flex items-center gap-2">
+                                                {hasIssues ? (
+                                                    <NoticeBadge 
+                                                        level={maxSeverity} 
+                                                        count={issues.length} 
+                                                        expanded={expandedHintId === item.id}
+                                                        onToggle={(e) => setExpandedHintId(expandedHintId === item.id ? null : item.id)}
+                                                    />
+                                                ) : (
+                                                    <ChevronRight size={16} className="text-slate-300"/>
+                                                )}
+                                            </div>
+                                        </div>
+                                        
+                                        {/* Expandable Notice Stack in List */}
+                                        {expandedHintId === item.id && (
+                                            <div onClick={(e) => e.stopPropagation()}>
+                                                <NoticeStack items={notices} />
+                                            </div>
+                                        )}
+                                        
+                                        <div className="font-bold text-sm text-brand-text dark:text-slate-200 truncate pr-6">
+                                            {item.title || <span className="text-slate-400 italic">未填写标题</span>}
+                                        </div>
+                                        
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {item.actors.slice(0, 3).map(a => (
+                                                <span key={a} className="text-[10px] bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-300 px-1.5 py-0.5 rounded flex items-center">
+                                                    <Users size={8} className="mr-1"/> {a}
+                                                </span>
+                                            ))}
+                                            {item.xpTags.slice(0, 5).map(t => (
+                                                <span key={t} className="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-500 px-1.5 py-0.5 rounded flex items-center border border-slate-200 dark:border-slate-700">
+                                                    <Tag size={8} className="mr-1"/> {t}
+                                                </span>
+                                            ))}
+                                            {(item.actors.length === 0 && item.xpTags.length === 0) && (
+                                                <span className="text-[10px] text-slate-300 italic">未添加标签/演员</span>
+                                            )}
+                                        </div>
+                                        
+                                        {/* Status Row (Recommended) */}
+                                        <div className="pt-2 mt-1 border-t border-slate-50 dark:border-slate-800 text-[10px] text-slate-400 flex justify-between">
+                                            <span>{item.type || '未选择'} · {item.platform || (item.type === '回忆' || item.type === '幻想' ? '无来源(合理)' : '未选择')}</span>
+                                        </div>
+
+                                        <button 
+                                            onClick={(e) => handleDeleteContent(item.id, e)}
+                                            className="absolute top-2 right-8 p-1.5 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                        >
+                                            <Trash2 size={12}/>
+                                        </button>
+                                    </div>
+                                );
+                            })}
                         </div>
                     ) : (
                         <div className="text-center py-6 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50/50 dark:bg-slate-900/20">

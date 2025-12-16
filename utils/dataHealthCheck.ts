@@ -1,13 +1,24 @@
 
-import { LogEntry, PartnerProfile } from '../types';
+import { LogEntry, PartnerProfile, ContentItem } from '../types';
 import { validateLogEntry } from './validators';
+
+// Re-export for UI usage
+export interface ContentHealthIssue {
+    code: string;
+    severity: 'high' | 'medium' | 'low';
+    message: string;
+    hintAction?: string;
+    path?: string;
+}
 
 export interface HealthIssue {
     id: string; // date + type + index
     date: string;
-    type: 'schema' | 'missing_field' | 'logic' | 'relation';
+    type: 'schema' | 'missing_field' | 'logic' | 'relation' | 'content';
     message: string;
-    severity: 'low' | 'medium' | 'high';
+    severity: 'high' | 'medium' | 'low';
+    hintAction?: string; // New: Suggestion for UI button
+    path?: string; // New: JSON path to the issue
 }
 
 export interface DataHealthReport {
@@ -21,9 +32,75 @@ export interface DataHealthReport {
         nullArrays: number;
         brokenRelations: number;
         missingIds: number;
+        // New Content Stats
+        contentIssues: {
+            schemaErrors: number;
+            missingType: number;
+            missingPlatform: number;
+            migrationUnconfirmed: number;
+        };
     };
     canRepair: boolean;
 }
+
+// Heuristic for C-L3: XP Pollution
+export const isPollutedXpTag = (tag: string): boolean => {
+    const POLLUTION_PATTERNS = [
+        /\d{1,2}[:：]\d{2}/, // Time like 09:00
+        /\d+(ml|l|g|kg|cm|mm|次|个|分钟|h|小时|岁)/i, // Units
+        /^\d+$/, // Pure numbers
+    ];
+    const POLLUTION_WORDS = ['很爽', '满意', '后悔', '舒服', '一般', '开心', '难过', '刺激', '垃圾'];
+    
+    if (POLLUTION_PATTERNS.some(p => p.test(tag))) return true;
+    if (POLLUTION_WORDS.some(w => tag.includes(w))) return true;
+    return false;
+};
+
+// Reusable validation for a single ContentItem (UI & Backend)
+export const validateContentItem = (item: ContentItem): ContentHealthIssue[] => {
+    const issues: ContentHealthIssue[] = [];
+
+    // Error: Missing ID (Technical)
+    if (!item.id) {
+        issues.push({ code: 'missing_id', severity: 'high', message: '素材标识异常（可能导致编辑错位）', hintAction: '一键修复ID' });
+    }
+
+    // Warn: Missing Type
+    if (!item.type) {
+        issues.push({ code: 'missing_type', severity: 'medium', message: '未选择内容形式', hintAction: '去选择' });
+    }
+
+    // Warn: Missing Platform (Conditional)
+    const needsPlatform = item.type && item.type !== '回忆' && item.type !== '幻想';
+    if (needsPlatform && !item.platform) {
+        issues.push({ code: 'missing_platform', severity: 'medium', message: '未选择来源平台', hintAction: '去选择' });
+    }
+
+    // Warn: Empty List Items
+    const hasEmptyActor = item.actors && item.actors.some(a => !a.trim());
+    const hasEmptyTag = item.xpTags && item.xpTags.some(t => !t.trim());
+    if (hasEmptyActor || hasEmptyTag) {
+        issues.push({ code: 'invalid_list', severity: 'medium', message: '列表包含空项，建议清理', hintAction: '去清理' });
+    }
+
+    // Info: Sparse Info
+    if (!item.title && (!item.actors || item.actors.length === 0)) {
+        issues.push({ code: 'sparse_info', severity: 'low', message: '信息较少，建议补充标题或主演', hintAction: '去补充' });
+    }
+
+    // Info: Migration Note
+    if (item.notes && item.notes.includes('迁移')) {
+        issues.push({ code: 'migration', severity: 'low', message: '迁移生成：建议确认类型与平台', hintAction: '去确认' });
+    }
+
+    // Info: XP Pollution
+    if (item.xpTags && item.xpTags.some(t => isPollutedXpTag(t))) {
+        issues.push({ code: 'pollution', severity: 'low', message: '标签可能混入非性癖内容', hintAction: '去标签管理' });
+    }
+
+    return issues;
+};
 
 export const checkDataHealth = (logs: LogEntry[], partners: PartnerProfile[]): DataHealthReport => {
     const issues: HealthIssue[] = [];
@@ -34,6 +111,13 @@ export const checkDataHealth = (logs: LogEntry[], partners: PartnerProfile[]): D
     let nullArrays = 0;
     let brokenRelations = 0;
     let missingIds = 0;
+    
+    const contentStats = {
+        schemaErrors: 0,
+        missingType: 0,
+        missingPlatform: 0,
+        migrationUnconfirmed: 0
+    };
 
     logs.forEach(log => {
         // 1. Schema Validation (Base types)
@@ -135,10 +219,70 @@ export const checkDataHealth = (logs: LogEntry[], partners: PartnerProfile[]): D
                 });
             });
         }
+
+        // 7. ContentItem Checks (Refactored to use validateContentItem)
+        if (log.masturbation) {
+            log.masturbation.forEach((mb, mIdx) => {
+                if (mb.contentItems && !Array.isArray(mb.contentItems)) {
+                    issues.push({
+                        id: `${log.date}_content_schema_${mIdx}`,
+                        date: log.date,
+                        type: 'content',
+                        severity: 'high',
+                        message: '素材数据格式错误（非数组）',
+                        hintAction: '导出备份并执行数据修复'
+                    });
+                    contentStats.schemaErrors++;
+                    return;
+                }
+
+                if (mb.contentItems) {
+                    const seenIds = new Set<string>();
+                    
+                    mb.contentItems.forEach((item, cIdx) => {
+                        // Check Duplication (Contextual, so kept here)
+                        if (item.id && seenIds.has(item.id)) {
+                             issues.push({
+                                id: `${log.date}_content_${mIdx}_${cIdx}_dup`,
+                                date: log.date,
+                                type: 'content',
+                                severity: 'high',
+                                message: '素材ID重复',
+                                hintAction: '系统可自动修复',
+                                path: `masturbation[${mIdx}].contentItems[${cIdx}]`
+                            });
+                            missingIds++;
+                        }
+                        if (item.id) seenIds.add(item.id);
+
+                        // Run intrinsic checks
+                        const itemIssues = validateContentItem(item);
+                        
+                        itemIssues.forEach(i => {
+                            // Map ContentHealthIssue to Global HealthIssue
+                            issues.push({
+                                id: `${log.date}_content_${mIdx}_${cIdx}_${i.code}`,
+                                date: log.date,
+                                type: 'content',
+                                severity: i.severity,
+                                message: i.message,
+                                hintAction: i.hintAction,
+                                path: `masturbation[${mIdx}].contentItems[${cIdx}]`
+                            });
+
+                            // Update stats based on code
+                            if (i.code === 'missing_type') contentStats.missingType++;
+                            if (i.code === 'missing_platform') contentStats.missingPlatform++;
+                            if (i.code === 'migration') contentStats.migrationUnconfirmed++;
+                            if (i.code === 'missing_id') missingIds++;
+                        });
+                    });
+                }
+            });
+        }
     });
 
     // Calculate Health Score
-    // Base 100. High severity -5, Medium -2, Low -0.5
     let rawScore = 100;
     issues.forEach(i => {
         if (i.severity === 'high') rawScore -= 5;
@@ -152,7 +296,14 @@ export const checkDataHealth = (logs: LogEntry[], partners: PartnerProfile[]): D
         totalRecords: logs.length,
         score,
         issues,
-        stats: { missingSleep, missingHealth, nullArrays, brokenRelations, missingIds },
-        canRepair: issues.length > 0
+        stats: { 
+            missingSleep, 
+            missingHealth, 
+            nullArrays, 
+            brokenRelations, 
+            missingIds,
+            contentIssues: contentStats
+        },
+        canRepair: issues.some(i => i.hintAction === '系统可自动修复' || (i.type !== 'content' && i.severity === 'high') || i.message.includes('ID'))
     };
 };
