@@ -55,6 +55,19 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose }) => {
 
         const oldName = editingTag;
         const newName = newTagName.trim();
+        
+        // Check if target tag exists (Merge scenario)
+        // Case insensitive check to detect merge intent
+        const existingTags = Object.keys(tagsMap[activeTab]);
+        const targetExists = existingTags.some(t => t.toLowerCase() === newName.toLowerCase());
+        
+        if (targetExists) {
+            const confirmMerge = confirm(
+                `标签 "${newName}" 已存在。\n\n确定要将 "${oldName}" 合并到 "${newName}" 吗？\n此操作将统一所有相关历史记录，且不可撤销。`
+            );
+            if (!confirmMerge) return;
+        }
+
         let updateCount = 0;
 
         // Perform Bulk Update
