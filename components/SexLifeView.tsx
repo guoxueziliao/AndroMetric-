@@ -67,16 +67,33 @@ const SexLifeView: React.FC = () => {
     const visibleTimeline = useMemo(() => timeline.slice(0, visibleCount), [timeline, visibleCount]);
 
     const stats = useMemo(() => {
-        let totalActs = timeline.length;
-        let ejaculationCount = timeline.filter(r => r.ejaculation).length;
-        const partnersSet = new Set<string>();
+        let sexCount = 0;
+        let sexEjaculationCount = 0;
+        let mbCount = 0;
+        let mbEjaculationCount = 0;
+
         timeline.forEach(r => {
-            if(r.type === 'sex' && r.sexDetails) {
-                if(r.sexDetails.interactions) r.sexDetails.interactions.forEach(i => { if(i.partner) partnersSet.add(i.partner); });
-                else if(r.partner) partnersSet.add(r.partner);
+            if (r.type === 'sex') {
+                sexCount++;
+                if (r.ejaculation) sexEjaculationCount++;
+            } else if (r.type === 'masturbation') {
+                mbCount++;
+                if (r.ejaculation) mbEjaculationCount++;
             }
         });
-        return { totalActs, partnerCount: partnersSet.size, ejaculationRate: totalActs > 0 ? Math.round((ejaculationCount / totalActs) * 100) : 0 };
+
+        const formatRate = (count: number, total: number) => {
+            if (total === 0) return '--';
+            return Math.round((count / total) * 100) + '%';
+        };
+
+        return {
+            sexCount,
+            mbCount,
+            sexEjacRate: formatRate(sexEjaculationCount, sexCount),
+            mbEjacRate: formatRate(mbEjaculationCount, mbCount),
+            totalActs: sexCount + mbCount
+        };
     }, [timeline]);
 
     const handleRecordClick = (record: TimelineRecord) => {
@@ -108,10 +125,26 @@ const SexLifeView: React.FC = () => {
                     <button onClick={() => setIsPartnerManagerOpen(true)} className="flex items-center space-x-1 px-3 py-1.5 bg-white dark:bg-slate-800 text-brand-text dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-full text-xs font-medium hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors shadow-sm"><Users size={14} /><span>伴侣档案</span></button>
                 </div>
 
-                <div className="grid grid-cols-3 gap-3">
-                    <div className="bg-pink-50 dark:bg-pink-900/20 p-3 rounded-lg text-center border border-pink-100 dark:border-pink-900"><p className="text-xs text-pink-600 dark:text-pink-400">总次数</p><p className="text-2xl font-bold text-pink-700 dark:text-pink-300">{stats.totalActs}</p></div>
-                    <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg text-center border border-blue-100 dark:border-blue-900"><p className="text-xs text-blue-600 dark:text-blue-400">伴侣数</p><p className="text-2xl font-bold text-blue-700 dark:text-blue-300">{stats.partnerCount}</p></div>
-                    <div className="bg-purple-50 dark:bg-purple-900/20 p-3 rounded-lg text-center border border-purple-100 dark:border-purple-900"><p className="text-xs text-purple-600 dark:text-purple-400">射精率</p><p className="text-2xl font-bold text-purple-700 dark:text-purple-300">{stats.ejaculationRate}%</p></div>
+                <div className="grid grid-cols-2 gap-3">
+                    {/* Masturbation Stats - Blue Theme */}
+                    <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg text-center border border-blue-100 dark:border-blue-900">
+                        <p className="text-xs text-blue-600 dark:text-blue-400 font-bold opacity-80">自慰次数</p>
+                        <p className="text-2xl font-black text-blue-700 dark:text-blue-300">{stats.mbCount}</p>
+                    </div>
+                    <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg text-center border border-blue-100 dark:border-blue-900">
+                        <p className="text-xs text-blue-600 dark:text-blue-400 font-bold opacity-80">自慰射精率</p>
+                        <p className="text-2xl font-black text-blue-700 dark:text-blue-300">{stats.mbEjacRate}</p>
+                    </div>
+
+                    {/* Sex Stats - Pink Theme */}
+                    <div className="bg-pink-50 dark:bg-pink-900/20 p-3 rounded-lg text-center border border-pink-100 dark:border-pink-900">
+                        <p className="text-xs text-pink-600 dark:text-pink-400 font-bold opacity-80">性生活次数</p>
+                        <p className="text-2xl font-black text-pink-700 dark:text-pink-300">{stats.sexCount}</p>
+                    </div>
+                    <div className="bg-pink-50 dark:bg-pink-900/20 p-3 rounded-lg text-center border border-pink-100 dark:border-pink-900">
+                        <p className="text-xs text-pink-600 dark:text-pink-400 font-bold opacity-80">性生活射精率</p>
+                        <p className="text-2xl font-black text-pink-700 dark:text-pink-300">{stats.sexEjacRate}</p>
+                    </div>
                 </div>
 
                 {stats.totalActs === 0 ? (
