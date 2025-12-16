@@ -19,9 +19,27 @@ interface TimelineEvent {
 
 export const GlobalTimeline: React.FC<GlobalTimelineProps> = ({ log }) => {
     
+    // Helper to extract local HH:mm from ISO string or return as is
+    const getLocalTime = (isoString?: string): string | undefined => {
+        if (!isoString) return undefined;
+        // Check if it matches ISO format roughly (contains T)
+        if (isoString.includes('T')) {
+            try {
+                const date = new Date(isoString);
+                if (isNaN(date.getTime())) return isoString.split('T')[1]?.slice(0, 5);
+                
+                const h = date.getHours().toString().padStart(2, '0');
+                const m = date.getMinutes().toString().padStart(2, '0');
+                return `${h}:${m}`;
+            } catch {
+                return isoString.split('T')[1]?.slice(0, 5);
+            }
+        }
+        return isoString; // Already HH:mm
+    };
+
     const events = useMemo(() => {
         const list: TimelineEvent[] = [];
-        const dateBase = log.date; 
 
         const getTimestamp = (timeStr: string) => {
             if (!timeStr) return 0;
@@ -33,21 +51,18 @@ export const GlobalTimeline: React.FC<GlobalTimelineProps> = ({ log }) => {
             return sortH * 60 + m;
         };
 
-        // 1. Wake Up (from Sleep End) - technically belongs to THIS day's start if we view "Physiological Day"
-        // But log.sleep.endTime is when we woke up ON this date.
-        if (log.sleep?.endTime) {
-            const time = log.sleep.endTime.split('T')[1]?.slice(0, 5) || log.sleep.endTime; // Handle ISO or HH:mm
-            if (time.includes(':')) {
-                list.push({
-                    time,
-                    type: 'wakeup',
-                    title: '起床',
-                    desc: log.morning?.wokeWithErection ? `晨勃 Lv${log.morning.hardness}` : '无晨勃',
-                    icon: SunMedium,
-                    color: 'text-orange-500 bg-orange-100 dark:bg-orange-900/30',
-                    timestamp: getTimestamp(time)
-                });
-            }
+        // 1. Wake Up (from Sleep End)
+        const wakeTime = getLocalTime(log.sleep?.endTime);
+        if (wakeTime) {
+            list.push({
+                time: wakeTime,
+                type: 'wakeup',
+                title: '起床',
+                desc: log.morning?.wokeWithErection ? `晨勃 Lv${log.morning.hardness}` : '无晨勃',
+                icon: SunMedium,
+                color: 'text-orange-500 bg-orange-100 dark:bg-orange-900/30',
+                timestamp: getTimestamp(wakeTime)
+            });
         }
 
         // 2. Caffeine
@@ -123,19 +138,17 @@ export const GlobalTimeline: React.FC<GlobalTimelineProps> = ({ log }) => {
         });
 
         // 7. Sleep Start (Bedtime)
-        if (log.sleep?.startTime) {
-            const time = log.sleep.startTime.split('T')[1]?.slice(0, 5) || log.sleep.startTime;
-            if (time.includes(':')) {
-                list.push({
-                    time,
-                    type: 'sleep',
-                    title: '入睡',
-                    desc: log.sleep.environment?.location === 'home' ? '在家' : log.sleep.environment?.location,
-                    icon: Moon,
-                    color: 'text-indigo-600 bg-indigo-100 dark:bg-indigo-900/30',
-                    timestamp: getTimestamp(time)
-                });
-            }
+        const sleepTime = getLocalTime(log.sleep?.startTime);
+        if (sleepTime) {
+            list.push({
+                time: sleepTime,
+                type: 'sleep',
+                title: '入睡',
+                desc: log.sleep?.environment?.location === 'home' ? '在家' : log.sleep?.environment?.location,
+                icon: Moon,
+                color: 'text-indigo-600 bg-indigo-100 dark:bg-indigo-900/30',
+                timestamp: getTimestamp(sleepTime)
+            });
         }
 
         return list.sort((a, b) => a.timestamp - b.timestamp);
