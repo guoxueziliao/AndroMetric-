@@ -1,7 +1,7 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import { LogEntry, SexRecordDetails, MasturbationRecordDetails, ExerciseRecord, NapRecord, ChangeDetail, ChangeRecord, AlcoholRecord, PartnerProfile, MorningRecord, SleepRecord, CaffeineRecord } from '../types';
-import { CheckSquare, Tag, Beer, Film, Dumbbell, Sun, Cloud, CloudRain, Snowflake, Wind, CloudFog, Home, Users, Hotel, Plane, MapPin, Shirt, HeartPulse, Hand, Plus, Edit2, Trash2, Footprints, Save, Coffee, Calendar, X, Zap, Check, Sparkles } from 'lucide-react';
+import { CheckSquare, Tag, Beer, Film, Dumbbell, Sun, Cloud, CloudRain, Snowflake, Wind, CloudFog, Home, Users, Hotel, Plane, MapPin, Shirt, HeartPulse, Hand, Plus, Edit2, Trash2, Footprints, Save, Coffee, Calendar, X, Zap, Check, Sparkles, Settings } from 'lucide-react';
 import Modal from './Modal';
 import SexRecordModal from './SexRecordModal';
 import MasturbationRecordModal from './MasturbationRecordModal';
@@ -18,6 +18,10 @@ import { IconToggleButton } from './FormControls';
 import MorningSection from './MorningSection';
 import SleepSection from './SleepSection';
 import HealthSection from './HealthSection';
+import { TagType } from './TagManager';
+
+// Lazy Load
+const TagManager = lazy(() => import('./TagManager'));
 
 // --- Options Config ---
 const PORN_OPTS = [{value: 'none', label: '无'}, {value: 'low', label: '少量'}, {value: 'medium', label: '适量'}, {value: 'high', label: '沉迷'}];
@@ -80,9 +84,13 @@ const LogForm: React.FC<{
     const [activeDetailTab, setActiveDetailTab] = useState<'lifestyle' | 'environment' | 'health'>('lifestyle');
     const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
     const [summaryData, setSummaryData] = useState<Array<{ label: string, value: string }>>([]);
-    const [tagInput, setTagInput] = useState('');
     const [eventInput, setEventInput] = useState('');
     
+    // Tag Manager State
+    const [isTagManagerOpen, setIsTagManagerOpen] = useState(false);
+    const [tagManagerMode, setTagManagerMode] = useState<TagType>('xp');
+    const [tagSearch, setTagSearch] = useState('');
+
     // Modals
     const [isSexModalOpen, setIsSexModalOpen] = useState(false);
     const [editingSexRecord, setEditingSexRecord] = useState<SexRecordDetails | undefined>(undefined);
@@ -197,6 +205,24 @@ const LogForm: React.FC<{
         const events = log.dailyEvents || [];
         const next = events.includes(evt) ? events.filter(e => e !== evt) : [...events, evt];
         handleChange('dailyEvents', next);
+    };
+
+    const handleManageTags = (type: TagType, initialSearch = '') => {
+        setTagManagerMode(type);
+        setTagSearch(initialSearch);
+        setIsTagManagerOpen(true);
+    };
+
+    const handleTagSelect = (tag: string) => {
+        if (tagManagerMode === 'event') {
+            toggleEvent(tag);
+        } else if (tagManagerMode === 'symptom') {
+            const current = log.health?.symptoms || [];
+            if (!current.includes(tag)) {
+                handleDeepChange('health', 'symptoms', [...current, tag]);
+            }
+        }
+        setIsTagManagerOpen(false);
     };
 
     if (!log.date) return <div>Loading...</div>;
@@ -362,7 +388,12 @@ const LogForm: React.FC<{
 
                     {/* TAB: HEALTH */}
                     {activeDetailTab === 'health' && (
-                        <HealthSection log={log} onChange={handleChange} onDeepChange={handleDeepChange} />
+                        <HealthSection 
+                            log={log} 
+                            onChange={handleChange} 
+                            onDeepChange={handleDeepChange} 
+                            onManageTags={handleManageTags}
+                        />
                     )}
                 </div>
             </div>
@@ -375,8 +406,16 @@ const LogForm: React.FC<{
                     ))}
                 </div>
                 <div className="flex gap-2">
-                    <input value={eventInput} onChange={e => setEventInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), toggleEvent(eventInput), setEventInput(''))} className="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs" placeholder="自定义事件..." />
-                    <button type="button" onClick={() => {if(eventInput) {toggleEvent(eventInput); setEventInput('');}}} className="px-3 py-2 bg-slate-200 text-xs rounded-lg font-bold text-slate-600">+</button>
+                    <div className="relative flex-1">
+                        <input value={eventInput} onChange={e => setEventInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleManageTags('event', eventInput))} className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs" placeholder="搜索或创建事件标签..." />
+                        <button 
+                            type="button" 
+                            onClick={() => handleManageTags('event', eventInput)}
+                            className="absolute right-1 top-1 p-1 bg-slate-200 text-slate-600 rounded text-xs hover:bg-slate-300"
+                        >
+                            <Settings size={14}/>
+                        </button>
+                    </div>
                 </div>
                 {log.dailyEvents && log.dailyEvents.filter(e => !EVENT_PRESETS.includes(e)).length > 0 && (
                     <div className="flex flex-wrap gap-2">
@@ -406,6 +445,16 @@ const LogForm: React.FC<{
               </div>
             </Modal>
             
+            <Suspense fallback={null}>
+                <TagManager 
+                    isOpen={isTagManagerOpen} 
+                    onClose={() => setIsTagManagerOpen(false)} 
+                    defaultTab={tagManagerMode}
+                    initialSearch={tagSearch}
+                    onSelectTag={handleTagSelect}
+                />
+            </Suspense>
+
             <SexRecordModal isOpen={isSexModalOpen} onClose={() => setIsSexModalOpen(false)} onSave={(r) => handleSaveRecord('sex', r)} initialData={editingSexRecord} dateStr={log.date || ''} partners={partners} logs={logs} />
             <MasturbationRecordModal isOpen={isMbModalOpen} onClose={() => setIsMbModalOpen(false)} onSave={(r) => handleSaveRecord('masturbation', r)} initialData={editingMbRecord} dateStr={log.date || ''} logs={logs} partners={partners} />
             <ExerciseRecordModal isOpen={isExerciseModalOpen} onClose={() => setIsExerciseModalOpen(false)} onSave={(r) => handleSaveRecord('exercise', r)} initialData={editingExerciseRecord} />

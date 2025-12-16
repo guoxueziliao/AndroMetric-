@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { ShieldAlert, Plus, X, Activity, BrainCircuit, Heart, AlertCircle, Info } from 'lucide-react';
+import { ShieldAlert, Plus, X, Activity, BrainCircuit, Heart, AlertCircle, Info, Settings } from 'lucide-react';
 import { LogEntry } from '../types';
 import { FaceSelector, MOOD_FACES, STRESS_FACES } from './FormControls';
 
@@ -8,6 +8,7 @@ interface HealthSectionProps {
     log: Partial<LogEntry>;
     onChange: (field: keyof LogEntry, value: any) => void;
     onDeepChange: (parent: keyof LogEntry, field: string, value: any) => void;
+    onManageTags: (type: 'symptom') => void;
 }
 
 const SYMPTOMS = ['头痛', '喉咙痛', '胃不适', '肌肉酸痛', '腹泻', '发烧', '鼻塞', '乏力', '咳嗽'];
@@ -17,24 +18,15 @@ const ChipSelect = ({
     options, 
     selected, 
     onToggle, 
-    color = 'red' 
+    color = 'red',
+    onAdd
 }: { 
     options: string[], 
     selected: string[], 
     onToggle: (val: string) => void, 
-    color?: string 
+    color?: string,
+    onAdd?: () => void
 }) => {
-    const [isAdding, setIsAdding] = useState(false);
-    const [newItem, setNewItem] = useState('');
-
-    const handleAdd = () => {
-        if (newItem.trim()) {
-            onToggle(newItem.trim());
-            setNewItem('');
-            setIsAdding(false);
-        }
-    };
-
     return (
         <div className="flex flex-wrap gap-2">
             {options.map(opt => (
@@ -53,27 +45,16 @@ const ChipSelect = ({
                 </button>
             ))}
             
-            {isAdding ? (
-                <div className="flex items-center">
-                    <input 
-                        autoFocus
-                        className="w-16 text-xs border border-slate-300 rounded px-1 py-0.5 outline-none dark:bg-slate-800 dark:border-slate-600"
-                        value={newItem}
-                        onChange={e => setNewItem(e.target.value)}
-                        onKeyDown={e => e.key === 'Enter' && handleAdd()}
-                        onBlur={() => setIsAdding(false)}
-                    />
-                </div>
-            ) : (
-                <button onClick={() => setIsAdding(true)} type="button" className="px-2 py-1 rounded text-xs font-bold border border-dashed border-slate-300 text-slate-400 hover:text-slate-600">
-                    +
+            {onAdd && (
+                <button onClick={onAdd} type="button" className="px-2 py-1 rounded text-xs font-bold border border-dashed border-slate-300 text-slate-400 hover:text-slate-600 flex items-center">
+                    <Plus size={12}/>
                 </button>
             )}
         </div>
     );
 };
 
-const HealthSection: React.FC<HealthSectionProps> = ({ log, onChange, onDeepChange }) => {
+const HealthSection: React.FC<HealthSectionProps> = ({ log, onChange, onDeepChange, onManageTags }) => {
     
     // Safety check: Clear data if sick is turned off
     // This is handled in the onChange event of the toggle below
@@ -175,8 +156,17 @@ const HealthSection: React.FC<HealthSectionProps> = ({ log, onChange, onDeepChan
 
                         {/* Symptoms */}
                         <div>
-                            <label className="text-xs font-bold text-red-600/70 mb-2 block uppercase">症状 (多选)</label>
-                            <ChipSelect options={SYMPTOMS} selected={log.health?.symptoms || []} onToggle={toggleSymptom} color="red" />
+                            <div className="flex justify-between items-center mb-2">
+                                <label className="text-xs font-bold text-red-600/70 block uppercase">症状 (多选)</label>
+                                <button type="button" onClick={() => onManageTags('symptom')} className="text-[10px] text-slate-400 flex items-center"><Settings size={10} className="mr-1"/> 管理标签</button>
+                            </div>
+                            <ChipSelect 
+                                options={SYMPTOMS} 
+                                selected={log.health?.symptoms || []} 
+                                onToggle={toggleSymptom} 
+                                color="red" 
+                                onAdd={() => onManageTags('symptom')}
+                            />
                         </div>
 
                         {/* Medications */}

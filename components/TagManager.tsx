@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo, Suspense } from 'react';
+import React, { useState, useMemo, Suspense, useEffect } from 'react';
 import { LogEntry } from '../types';
 import { Tag, Edit2, Trash2, X, Check, Activity, ShieldAlert, Stethoscope, Plus, Search } from 'lucide-react';
 import Modal from './Modal';
@@ -10,23 +10,24 @@ import TagHealthCheck from './TagHealthCheck';
 import { XP_GROUPS } from '../utils/constants';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 
+export type TagType = 'xp' | 'event' | 'symptom' | 'health_check';
+
 interface TagManagerProps {
     isOpen: boolean;
     onClose: () => void;
     onSelectTag?: (tag: string) => void; // If present, runs in "Selection/Creation Mode"
     initialSearch?: string;
+    defaultTab?: TagType;
 }
-
-type TagType = 'xp' | 'event' | 'symptom' | 'health_check';
 
 // System Presets (Sync with LogForm/HealthSection)
 const SYSTEM_EVENTS = ['加班', '吵架', '出差', '聚会', '家庭烦心事', '生病'];
-const SYSTEM_SYMPTOMS = ['头痛', '咽喉痛', '胃不适', '肌肉酸痛', '腹泻', '发烧', '鼻塞', '乏力'];
+const SYSTEM_SYMPTOMS = ['头痛', '喉咙痛', '胃不适', '肌肉酸痛', '腹泻', '发烧', '鼻塞', '乏力', '咳嗽'];
 
-const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, initialSearch = '' }) => {
+const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, initialSearch = '', defaultTab = 'xp' }) => {
     const { logs, addOrUpdateLog } = useData();
     const { showToast } = useToast();
-    const [activeTab, setActiveTab] = useState<TagType>('xp');
+    const [activeTab, setActiveTab] = useState<TagType>(defaultTab);
     const [searchTerm, setSearchTerm] = useState(initialSearch);
     const [editingTag, setEditingTag] = useState<string | null>(null);
     const [newTagName, setNewTagName] = useState('');
@@ -39,6 +40,16 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
     // Creation State
     const [isCreating, setIsCreating] = useState(false);
     const [createInput, setCreateInput] = useState(initialSearch);
+
+    // Sync tab when prop changes
+    useEffect(() => {
+        if (isOpen) {
+            setActiveTab(defaultTab);
+            setSearchTerm(initialSearch);
+            setCreateInput(initialSearch);
+            setIsCreating(false);
+        }
+    }, [isOpen, defaultTab, initialSearch]);
 
     const tagsMap = useMemo(() => {
         const xp: Record<string, number> = {};
@@ -121,6 +132,11 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
         // 3. Action
         if (onSelectTag) {
             // Selection Mode
+            // Automatically add to custom list first to persist it
+            if (activeTab === 'xp') setCustomXpTags(prev => [...prev, tag]);
+            else if (activeTab === 'event') setCustomEventTags(prev => [...prev, tag]);
+            else if (activeTab === 'symptom') setCustomSymptomTags(prev => [...prev, tag]);
+
             onSelectTag(tag);
             onClose();
         } else {
@@ -149,15 +165,13 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
         const newName = newTagName.trim();
 
         // 1. Run Validation
-        if (activeTab === 'xp') {
-            const res = validateTag(newName);
-            if (res.level === 'P0') {
-                showToast(`无效名称: ${res.message}`, 'error');
-                return;
-            }
-            if (res.level === 'P1') {
-                if (!confirm(`⚠️ 警告: ${res.message}\n\n确定要使用这个名称吗？`)) return;
-            }
+        const res = validateTag(newName);
+        if (res.level === 'P0') {
+            showToast(`无效名称: ${res.message}`, 'error');
+            return;
+        }
+        if (res.level === 'P1') {
+            if (!confirm(`⚠️ 警告: ${res.message}\n\n确定要使用这个名称吗？`)) return;
         }
         
         // Check merge
@@ -172,13 +186,14 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
         const targetType = activeTab;
 
         // Update Custom Tags List if applicable
-        if (targetType === 'xp' && customXpTags.includes(oldName)) {
-            setCustomXpTags(prev => prev.map(t => t === oldName ? newName : t));
-        } else if (targetType === 'event' && customEventTags.includes(oldName)) {
-            setCustomEventTags(prev => prev.map(t => t === oldName ? newName : t));
-        } else if (targetType === 'symptom' && customSymptomTags.includes(oldName)) {
-            setCustomSymptomTags(prev => prev.map(t => t === oldName ? newName : t));
-        }
+        const updateCustomList = (list: string[], setter: (v: string[]) => void) => {
+            if (list.includes(oldName)) {
+                setter(list.map(t => t === oldName ? newName : t));
+            }
+        };
+        if (targetType === 'xp') updateCustomList(customXpTags, setCustomXpTags);
+        else if (targetType === 'event') updateCustomList(customEventTags, setCustomEventTags);
+        else if (targetType === 'symptom') updateCustomList(customSymptomTags, setCustomSymptomTags);
 
         // Perform Bulk Update on Logs
         for (const log of logs) {
@@ -222,9 +237,6 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
         
         if (usageCount > 0) {
             if (!confirm(`确定要删除标签 "${tag}" 吗？这会从 ${usageCount} 条历史记录中移除它。`)) return;
-        } else {
-            // Unused tag (custom or preset)
-            // if (!confirm(`确定要删除标签 "${tag}" 吗？`)) return; // Optional for quick cleanup
         }
 
         // Remove from Custom Tags
@@ -386,7 +398,6 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
                                                     onClick={() => {
                                                         if (onSelectTag) {
                                                             onSelectTag(tag);
-                                                            onClose();
                                                         }
                                                     }}
                                                 >

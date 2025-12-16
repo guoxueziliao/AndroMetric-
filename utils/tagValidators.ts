@@ -42,6 +42,15 @@ export const validateTag = (tagName: string): ValidationResult => {
     // Basic illegal chars
     if (/[<>{}[\]\\]/.test(lower)) return { level: 'P0', message: '包含非法字符' };
 
+    // New: Strict Creation Rules (Tag System Definition 7.2)
+    // - Time/Number Patterns
+    if (/^\d{1,2}:\d{2}$/.test(lower)) return { level: 'P0', message: '禁止包含时间格式 (如 09:00)' };
+    if (/^\d{4}$/.test(lower)) return { level: 'P0', message: '禁止纯年份 (如 2025)' };
+    if (/^\d+(\.\d+)?[a-z]+$/.test(lower)) return { level: 'P0', message: '禁止包含数值单位 (如 350ml)' };
+    
+    // - Compound Separators
+    if (/[/&+\u2192|]/.test(lower)) return { level: 'P0', message: '禁止使用复合连接词 (/, &, +, |)' };
+
     // 2. P0: Platforms - PRD 7.2
     if (PLATFORMS.some(p => lower === p || lower.includes(p))) {
         return { level: 'P0', message: '平台或网站不属于标签，请在「素材来源」中选择。' };
@@ -68,12 +77,12 @@ export const validateTag = (tagName: string): ValidationResult => {
     }
 
     // 6. P1: Compound Tags (Heuristic) - PRD 8.3
-    if (/[\/&+\uFF0B\u0026]/.test(lower) || (lower.includes(' ') && lower.length > 8)) {
+    if ((lower.includes(' ') && lower.length > 8)) {
         return { level: 'P1', message: '检测到复合含义标签，建议拆分为多个标签以便长期分析。' };
     }
 
     // 7. P2: Generic / Emotional - PRD 9
-    const GENERIC_TERMS = ['好看', '刺激', '极品', '社保', '爽', '牛逼', '一般', '垃圾', '无聊', '好冲'];
+    const GENERIC_TERMS = ['好看', '刺激', '极品', '社保', '爽', '牛逼', '一般', '垃圾', '无聊', '好冲', '满意'];
     if (GENERIC_TERMS.some(t => lower.includes(t))) {
         return { level: 'P2', message: '该标签过于主观或空泛，可能对长期分析价值有限。' };
     }
