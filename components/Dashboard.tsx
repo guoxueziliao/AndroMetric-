@@ -29,6 +29,7 @@ const SleepWidget = ({ log }: { log?: LogEntry | null }) => {
         const match = duration.match(/(\d+)小时/);
         if (match) durationHours = parseInt(match[1]);
     }
+    const hasData = !!(sleep?.startTime && sleep?.endTime);
     const progress = Math.min(100, (durationHours / 8) * 100);
     const analysis = analyzeSleep(sleep?.startTime, sleep?.endTime);
 
@@ -46,16 +47,27 @@ const SleepWidget = ({ log }: { log?: LogEntry | null }) => {
                         <h3 className="font-bold text-lg text-brand-text dark:text-slate-100">睡眠</h3>
                     </div>
                     <div className="flex gap-2 text-xs text-brand-muted font-medium">
-                        <span>{sleep?.startTime ? formatTime(sleep.startTime) : '--:--'}</span>
-                        <span>-</span>
-                        <span>{sleep?.endTime ? formatTime(sleep.endTime) : '--:--'}</span>
+                        {hasData ? (
+                            <>
+                                <span>{formatTime(sleep?.startTime)}</span>
+                                <span>-</span>
+                                <span>{formatTime(sleep?.endTime)}</span>
+                            </>
+                        ) : (
+                            <span className="text-orange-400">时间未记录</span>
+                        )}
                     </div>
                 </div>
                 <div className="text-right">
-                    <div className="text-2xl font-black text-brand-text dark:text-slate-100">
-                        {durationHours}<span className="text-sm font-bold text-brand-muted ml-1">h</span>
-                    </div>
-                    <div className="text-xs text-brand-muted font-medium">Quality</div>
+                    {hasData ? (
+                        <div className="text-2xl font-black text-brand-text dark:text-slate-100">
+                            {durationHours}<span className="text-sm font-bold text-brand-muted ml-1">h</span>
+                        </div>
+                    ) : (
+                        <div className="text-xl font-bold text-slate-300 dark:text-slate-600">
+                            未记录
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -64,8 +76,8 @@ const SleepWidget = ({ log }: { log?: LogEntry | null }) => {
                 {[40, 60, 45, 70, 50, 80, 65, 55, 40, 30].map((h, i) => (
                     <div key={i} className="flex-1 bg-pastel-blue dark:bg-slate-800 rounded-t-sm relative group">
                         <div 
-                            className="absolute bottom-0 left-0 right-0 bg-brand-accent rounded-t-sm transition-all duration-1000 opacity-80" 
-                            style={{ height: `${h}%` }}
+                            className={`absolute bottom-0 left-0 right-0 rounded-t-sm transition-all duration-1000 opacity-80 ${hasData ? 'bg-brand-accent' : 'bg-slate-300 dark:bg-slate-700'}`} 
+                            style={{ height: hasData ? `${h}%` : '10%' }}
                         ></div>
                     </div>
                 ))}
@@ -78,16 +90,17 @@ const SleepWidget = ({ log }: { log?: LogEntry | null }) => {
                         <span className={`w-2 h-2 rounded-full ${analysis?.isLate ? 'bg-orange-400' : 'bg-green-400'}`}></span>
                         <span className="text-xs font-bold text-slate-500">{analysis?.isLate ? '熬夜' : '作息'}</span>
                     </div>
+                    {/* Fake data removed or kept for visual consistency? "Deep Sleep" is not real yet. Keep for UI stability but maybe rename or remove if strict. Keeping as placeholder for "Structure" */}
                     <div className="flex items-center gap-1.5">
                         <span className="w-2 h-2 rounded-full bg-blue-400"></span>
                         <span className="text-xs font-bold text-slate-500">深睡</span>
                     </div>
                 </div>
-                {sleep?.quality && (
+                {sleep?.quality ? (
                     <span className="text-xs font-bold bg-pastel-green text-pastel-green-text px-2 py-1 rounded-lg">
-                        {sleep.quality >= 4 ? 'Good' : 'Avg'}
+                        {sleep.quality >= 4 ? '安睡' : sleep.quality >= 3 ? '一般' : '较差'}
                     </span>
-                )}
+                ) : null}
             </div>
         </div>
     );
@@ -109,9 +122,6 @@ const ActivityWidget = ({ log }: { log?: LogEntry | null }) => {
                     </div>
                     <h3 className="font-bold text-lg text-brand-text dark:text-slate-100">活力</h3>
                 </div>
-                <span className="text-xs font-bold text-slate-400 bg-slate-50 dark:bg-slate-800 px-2 py-1 rounded-lg">
-                    {hasWorkout || hasSex || hasMb ? 'Active' : 'Rest'}
-                </span>
              </div>
 
              <div className="space-y-3 relative z-10">
@@ -123,11 +133,11 @@ const ActivityWidget = ({ log }: { log?: LogEntry | null }) => {
                         <div>
                             <div className="text-xs font-bold text-slate-500">运动</div>
                             <div className="text-sm font-black text-brand-text dark:text-slate-200">
-                                {hasWorkout ? `${log?.exercise?.length} Sets` : '0'}
+                                {hasWorkout ? `${log?.exercise?.length} 组` : '无'}
                             </div>
                         </div>
                     </div>
-                    {hasWorkout && <div className="text-xs font-bold text-green-500">Done</div>}
+                    {hasWorkout && <div className="text-xs font-bold text-green-500">已完成</div>}
                 </div>
 
                 <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/50">
@@ -138,7 +148,9 @@ const ActivityWidget = ({ log }: { log?: LogEntry | null }) => {
                         <div>
                             <div className="text-xs font-bold text-slate-500">释放</div>
                             <div className="text-sm font-black text-brand-text dark:text-slate-200">
-                                {(log?.sex?.length || 0) + (log?.masturbation?.length || 0)} 次
+                                {(log?.sex?.length || 0) + (log?.masturbation?.length || 0) > 0 
+                                    ? `${(log?.sex?.length || 0) + (log?.masturbation?.length || 0)} 次` 
+                                    : '无'}
                             </div>
                         </div>
                     </div>
@@ -162,7 +174,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
   const [isMbActionModalOpen, setIsMbActionModalOpen] = useState(false);
 
   const completedLogs = useMemo(() => logs.filter(log => log.status !== 'pending'), [logs]);
-  const sortedHistoryLogs = useMemo(() => [...completedLogs].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()), [completedLogs]);
   const latestLog = useMemo(() => logs.length > 0 ? logs[0] : null, [logs]);
   const pendingLog = useMemo(() => logs.find(log => log.status === 'pending'), [logs]);
   const ongoingExercise = useMemo(() => logs.flatMap(l => l.exercise || []).find(e => e.ongoing), [logs]);
@@ -271,8 +282,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                                 <Bed size={20}/>
                             </div>
                             <div>
-                                <h4 className="font-bold text-orange-900 dark:text-orange-100 text-sm">记录待完成</h4>
-                                <p className="text-xs text-orange-700 dark:text-orange-300">昨晚的睡眠记录是空的</p>
+                                <h4 className="font-bold text-orange-900 dark:text-orange-100 text-sm">记录待补充</h4>
+                                <p className="text-xs text-orange-700 dark:text-orange-300">⚠️ 夜间睡眠未记录</p>
                             </div>
                         </div>
                         <ArrowRight size={18} className="text-orange-400"/>

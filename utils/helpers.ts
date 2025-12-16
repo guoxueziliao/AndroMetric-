@@ -130,7 +130,8 @@ export const generateLogSummary = (log: Partial<LogEntry>): Array<{ label: strin
         sleepTxt.push(`${formatTime(sleepRec.startTime)} - ... (睡觉中)`);
     }
     
-    if (sleepRec) sleepTxt.push(`质量: ${sleepRec.quality}星 | 睡衣: ${LABELS.attire[sleepRec.attire || 'light']}`);
+    // Updated: Replaced "Quality" with "Score"
+    if (sleepRec) sleepTxt.push(`评分: ${sleepRec.quality}星 | 睡衣: ${LABELS.attire[sleepRec.attire || 'light']}`);
     if (sleepRec?.hasDream) sleepTxt.push(`💭 梦境: ${sleepRec.dreamTypes?.join(',') || '有'}`);
     
     const sleepEvents = [];
