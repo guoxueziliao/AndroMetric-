@@ -51,16 +51,22 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
             if (xp[tag] === undefined) xp[tag] = 0;
         });
 
-        // 3. Count usage from logs
+        // 3. Count usage from logs (Count Days, not just array entries)
         logs.forEach(log => {
             // XP (Masturbation Categories)
+            // Flatten all tags for this day first to avoid double counting same tag in one day (though unlikely for XP in different records, logical day count vs frequency count is debatable for XP. For now, let's keep frequency for XP as it's 'times used')
             log.masturbation?.forEach(m => {
-                m.assets?.categories?.forEach(c => xp[c] = (xp[c] || 0) + 1);
+                const uniqueCategories = new Set(m.assets?.categories || []);
+                uniqueCategories.forEach(c => xp[c] = (xp[c] || 0) + 1);
             });
-            // Events (Daily Events)
-            log.dailyEvents?.forEach(e => events[e] = (events[e] || 0) + 1);
-            // Symptoms (Health)
-            log.health?.symptoms?.forEach(s => symptoms[s] = (symptoms[s] || 0) + 1);
+            
+            // Events (Daily Events) - Deduplicate per day
+            const uniqueEvents = new Set(log.dailyEvents || []);
+            uniqueEvents.forEach(e => events[e] = (events[e] || 0) + 1);
+            
+            // Symptoms (Health) - Deduplicate per day
+            const uniqueSymptoms = new Set(log.health?.symptoms || []);
+            uniqueSymptoms.forEach(s => symptoms[s] = (symptoms[s] || 0) + 1);
         });
 
         return { xp, event: events, symptom: symptoms };
