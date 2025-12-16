@@ -27,13 +27,16 @@ const HISTORY: VersionEntry[] = [
     {
         version: '0.0.6',
         date: '2025-12-12',
-        summary: 'Context & Quality：引入全局时间轴与多维身心记录。',
+        summary: 'Tag System & Context：引入标签治理体系与全局时间轴。',
         changes: [
-            { type: 'new', text: '全局事件时间轴：在日记底部将睡眠、运动、咖啡与性活动串联为生活流' },
-            { type: 'new', text: '自慰详情增强：新增“纸巾压力测试”与“贤者时间”心理/生理评估' },
-            { type: 'new', text: '生活方式补全：新增咖啡因摄入记录，饮酒记录增加具体时间' },
-            { type: 'opt', text: '数据质量评分：根据记录完整度实时反馈质量分' },
-            { type: 'data', text: 'Schema v1.1：底层数据结构升级适配新特性' }
+            { type: 'new', text: '全局时间轴 (Global Timeline)：自动将睡眠、运动、咖啡与性活动串联为生活流视图' },
+            { type: 'new', text: '标签健康体系：新增“标签体检”功能，自动检测复合语义、维度冲突等长期风险' },
+            { type: 'new', text: '标签管理重构：支持按 XP/事件/症状 分类管理，新增创建时的语义即时校验' },
+            { type: 'new', text: '自慰记录 2.0：新增射精强度（量/力）评级与贤者时间身心状态评估' },
+            { type: 'new', text: '生活方式补全：新增咖啡因摄入记录，饮酒记录增加具体时间点' },
+            { type: 'opt', text: '数据质量评分：根据记录完整度实时反馈质量环，鼓励高质量记录' },
+            { type: 'fix', text: '健康模块重构：支持记录生病时的具体不适程度与详细症状' },
+            { type: 'data', text: 'Schema v36：底层数据结构升级，支持标签维度的长期统计' }
         ]
     },
     {
