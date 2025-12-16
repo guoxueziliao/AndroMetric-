@@ -223,13 +223,6 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
 
     // Helper for Actors (split string to array)
     const handleActorsChange = (val: string) => {
-        // Just keep the value as is in UI state if we were using a string, 
-        // but here we map directly to array. We can allow space separated input.
-        // For better UX, we'll store as array but input is text.
-        // We actually need to split when saving or interpret properly. 
-        // For simplicity, we treat the input as "space separated" visual representation of the array.
-        // BUT, a simple approach is: user types string, we split on blur or change.
-        // Let's split on space or comma.
         const actors = val.split(/[,，\s]+/).filter(s => s.trim() !== '');
         updateAssets('actors', actors);
     };
@@ -326,8 +319,32 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                         )}
                     </div>
 
+                    {/* Meta Input Card (Code/Title & Actors) - Moved Here & Enhanced */}
+                    <div className="bg-white dark:bg-slate-900 rounded-xl p-3 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
+                        {/* Title / Code */}
+                        <div className="relative">
+                            <span className="absolute left-3 top-2.5 text-slate-400"><Hash size={14}/></span>
+                            <input 
+                                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-lg py-2 pl-9 pr-3 text-xs focus:border-brand-accent outline-none font-medium placeholder-slate-400"
+                                placeholder="番号 / 标题 (e.g. SSIS-123)..."
+                                value={data.materials?.[0] || ''}
+                                onChange={e => handleMaterialChange(e.target.value)}
+                            />
+                        </div>
+                        {/* Actors */}
+                        <div className="relative">
+                            <span className="absolute left-3 top-2.5 text-slate-400"><Users size={14}/></span>
+                            <input 
+                                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-lg py-2 pl-9 pr-3 text-xs focus:border-brand-accent outline-none font-medium placeholder-slate-400"
+                                placeholder="主演 / 演员 (空格分隔)..."
+                                value={actorsInputValue}
+                                onChange={e => handleActorsChange(e.target.value)}
+                            />
+                        </div>
+                    </div>
+
                     {/* XP Categories (Improved) */}
-                    <div className="pt-2">
+                    <div>
                         <label className="text-xs font-bold text-slate-400 mb-2 flex items-center justify-between">
                             <span>类型 / 性癖</span>
                             <span className="text-[10px] font-normal">{data.assets?.categories?.length || 0} selected</span>
@@ -392,28 +409,6 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                                     </button>
                                 </div>
                             )}
-                        </div>
-                    </div>
-
-                    {/* Details (Code & Actors) - New v0.0.6a */}
-                    <div className="grid grid-cols-2 gap-3 pt-3 border-t border-slate-200 dark:border-slate-700">
-                        <div>
-                            <label className="text-xs font-bold text-slate-400 mb-2 flex items-center gap-1"><Users size={12}/> 主演 / 演员</label>
-                            <input 
-                                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1.5 text-xs focus:border-brand-accent outline-none"
-                                placeholder="多位用空格分隔..."
-                                value={actorsInputValue}
-                                onChange={e => handleActorsChange(e.target.value)}
-                            />
-                        </div>
-                        <div>
-                            <label className="text-xs font-bold text-slate-400 mb-2 flex items-center gap-1"><Hash size={12}/> 番号 / 标识</label>
-                            <input 
-                                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1.5 text-xs focus:border-brand-accent outline-none font-mono"
-                                placeholder="e.g. SSIS-123"
-                                value={data.materials?.[0] || ''}
-                                onChange={e => handleMaterialChange(e.target.value)}
-                            />
                         </div>
                     </div>
 
