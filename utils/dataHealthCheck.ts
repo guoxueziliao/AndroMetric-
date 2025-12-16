@@ -65,7 +65,7 @@ export const validateContentItem = (item: ContentItem): ContentNoticeDef[] => {
             ruleId: 'C-W1', 
             level: 'warn', 
             title: '未选择素材类型', 
-            detail: '无法区分视频、图片或文字素材', 
+            detail: '分类统计失效', // Spec says "无法判断素材形态" / "分类统计失效"
             actionLabel: '去选择' 
         });
     }
@@ -78,22 +78,21 @@ export const validateContentItem = (item: ContentItem): ContentNoticeDef[] => {
             ruleId: 'C-W2', 
             level: 'warn', 
             title: '未选择来源平台', 
-            detail: '平台统计将失效', 
+            detail: '平台统计失效', 
             actionLabel: '去选择' 
         });
     }
 
     // C-W3: Platform Name Empty (Warn)
-    // Note: Our current ContentItem type uses 'platform' string directly. 
-    // If we support 'Other', user likely enters it in platform field. 
-    // Checking if platform is literally '其他' or 'Other' with no specific detail might be relevant if we had platformName.
-    // For now, if platform is just "其他" without further info in title/notes, it's vague.
+    // Spec: platform = other but platformName is empty. 
+    // Since we don't have separate platformName field in types yet, we assume platform string holds the value.
+    // If it equals strictly 'Other' or '其他' without user input details, it triggers.
     if (item.platform === '其他' || item.platform === 'Other') {
          issues.push({
             ruleId: 'C-W3',
             level: 'warn',
-            title: '平台名称模糊',
-            detail: '建议填写具体来源名称',
+            title: '平台名称为空',
+            detail: '来源聚合失败',
             actionLabel: '去补充'
         });
     }
@@ -105,7 +104,7 @@ export const validateContentItem = (item: ContentItem): ContentNoticeDef[] => {
             ruleId: 'C-W4', 
             level: 'warn', 
             title: '一个素材包含多个平台', 
-            detail: '建议拆分为多个素材单元', 
+            detail: '后续迁移困难', 
             actionLabel: '拆分素材' 
         });
     }
@@ -116,7 +115,7 @@ export const validateContentItem = (item: ContentItem): ContentNoticeDef[] => {
             ruleId: 'C-I1', 
             level: 'info', 
             title: '未填写素材备注', 
-            detail: '回顾时可能难以识别内容', 
+            detail: '回顾困难', 
             actionLabel: '去补充' 
         });
     }
@@ -127,7 +126,7 @@ export const validateContentItem = (item: ContentItem): ContentNoticeDef[] => {
             ruleId: 'C-I2', 
             level: 'info', 
             title: '未添加性癖标签', 
-            detail: '不影响记录，仅影响偏好统计', 
+            detail: '不参与偏好统计', 
             actionLabel: '去添加' 
         });
     } else {
@@ -135,8 +134,8 @@ export const validateContentItem = (item: ContentItem): ContentNoticeDef[] => {
         // Check if any tag is flagged as 'state' or 'invalid' by validator
         const hasNoise = item.xpTags.some(t => {
             const res = validateTag(t, 'xp');
-            // If Level is P0 or message contains specific keywords about state/result
-            return res.level === 'P0' || (res.message && res.message.includes('状态'));
+            // If Level is P0 or message contains specific keywords about state/result/emotion
+            return res.level === 'P0' || (res.message && (res.message.includes('状态') || res.message.includes('结果')));
         });
 
         if (hasNoise) {
@@ -144,7 +143,7 @@ export const validateContentItem = (item: ContentItem): ContentNoticeDef[] => {
                 ruleId: 'C-I3',
                 level: 'info',
                 title: '标签可能混入非性癖内容',
-                detail: '检测到状态或评价类标签',
+                detail: 'XP 统计噪声',
                 actionLabel: '去检查'
             });
         }
