@@ -1,9 +1,13 @@
 
-import React, { useState, useEffect, useMemo } from 'react';
-import { X, Check, Clock, Smile, PenLine, Tag, Smartphone, User, Target, Layers, Plus, Zap, Minus, FilePlus, Bookmark, ShieldCheck, Trash2, ArrowLeft, ArrowRight, MapPin, AlertTriangle, Search, Battery, Droplets, BatteryCharging, Wind, Film, Edit2, Globe, Activity, Thermometer, BrainCircuit, ChevronDown, UserCheck, Shirt, Gamepad2, BookOpen, MonitorPlay, Sparkles, Hash } from 'lucide-react';
+import React, { useState, useEffect, useMemo, Suspense, lazy } from 'react';
+import { X, Check, Clock, Smile, PenLine, Tag, Smartphone, User, Target, Layers, Plus, Zap, Minus, FilePlus, Bookmark, ShieldCheck, Trash2, ArrowLeft, ArrowRight, MapPin, AlertTriangle, Search, Battery, Droplets, BatteryCharging, Wind, Film, Edit2, Globe, Activity, Thermometer, BrainCircuit, ChevronDown, UserCheck, Shirt, Gamepad2, BookOpen, MonitorPlay, Sparkles, Hash, Settings } from 'lucide-react';
 import { MasturbationRecordDetails, LogEntry, PartnerProfile, Mood, MasturbationMaterial } from '../types';
 import Modal from './Modal';
 import { calculateInventory } from '../utils/helpers';
+import { useToast } from '../contexts/ToastContext';
+
+// Lazy load to avoid circular dependency issues in some builds
+const TagManager = lazy(() => import('./TagManager'));
 
 interface MasturbationRecordModalProps {
   isOpen: boolean;
@@ -66,6 +70,7 @@ const XP_GROUPS: Record<string, string[]> = {
 };
 
 const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpen, onClose, onSave, initialData, dateStr, logs = [], partners = [] }) => {
+    const { showToast } = useToast();
     
     // --- State ---
     const [data, setData] = useState<MasturbationRecordDetails>({
@@ -97,19 +102,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
 
     const [activeCategoryTab, setActiveCategoryTab] = useState<string>('常用');
     const [categorySearch, setCategorySearch] = useState('');
-
-    // Material Form State
-    const [isAddingMaterial, setIsAddingMaterial] = useState(false);
-    const [tempMaterial, setTempMaterial] = useState<MasturbationMaterial>({
-        id: '',
-        label: '',
-        publisher: '',
-        actors: [],
-        tags: []
-    });
-    
-    const [tempActor, setTempActor] = useState('');
-    const [tempTag, setTempTag] = useState('');
+    const [isTagManagerOpen, setIsTagManagerOpen] = useState(false);
 
     const inventoryTime = useMemo(() => calculateInventory(logs), [logs]);
 
@@ -195,8 +188,6 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                     fatigue: '无明显疲劳'
                 });
             }
-            setIsAddingMaterial(false);
-            setTempMaterial({ id: '', label: '', publisher: '', actors: [], tags: [] });
             setCategorySearch('');
             setActiveCategoryTab('常用');
         }
@@ -221,6 +212,11 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
         updateAssets(field, next);
     };
 
+    const handleSelectTagFromManager = (tag: string) => {
+        toggleAssetItem('categories', tag);
+        setIsTagManagerOpen(false);
+    };
+
     const toggleTool = (tool: string) => {
         const current = data.tools || [];
         const next = current.includes(tool) ? current.filter(x => x !== tool) : [...current, tool];
@@ -236,69 +232,6 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
             finalData.edging = 'none';
         }
         onSave(finalData);
-    };
-
-    // --- Material List Logic ---
-
-    const handleAddMaterialClick = () => {
-        setTempMaterial({ id: '', label: '', publisher: '', actors: [], tags: [] });
-        setIsAddingMaterial(true);
-    };
-
-    const handleEditMaterialClick = (material: MasturbationMaterial) => {
-        setTempMaterial({ ...material });
-        setIsAddingMaterial(true);
-    };
-
-    const handleSaveMaterial = () => {
-        if (!tempMaterial.label) return;
-        
-        setData(prev => {
-            const list = prev.materialsList || [];
-            
-            // Check if updating existing
-            if (tempMaterial.id && list.some(m => m.id === tempMaterial.id)) {
-                return {
-                    ...prev,
-                    materialsList: list.map(m => m.id === tempMaterial.id ? tempMaterial : m)
-                };
-            } else {
-                // Create new
-                const newMat = { ...tempMaterial, id: tempMaterial.id || Date.now().toString() };
-                return {
-                    ...prev,
-                    materialsList: [...list, newMat]
-                };
-            }
-        });
-
-        // Reset
-        setTempMaterial({ id: '', label: '', publisher: '', actors: [], tags: [] });
-        setIsAddingMaterial(false);
-    };
-
-    const removeMaterial = (id: string, e: React.MouseEvent) => {
-        e.stopPropagation(); // Prevent triggering edit
-        if(confirm('移除此素材?')) {
-            setData(prev => ({
-                ...prev,
-                materialsList: prev.materialsList?.filter(m => m.id !== id) || []
-            }));
-        }
-    };
-
-    const addTempActor = () => {
-        if (tempActor && !tempMaterial.actors.includes(tempActor)) {
-            setTempMaterial(prev => ({ ...prev, actors: [...prev.actors, tempActor] }));
-            setTempActor('');
-        }
-    };
-
-    const addTempTag = () => {
-        if (tempTag && !tempMaterial.tags.includes(tempTag)) {
-            setTempMaterial(prev => ({ ...prev, tags: [...prev.tags, tempTag] }));
-            setTempTag('');
-        }
     };
 
     const incrementEdging = () => updateData('edgingCount', (data.edgingCount || 0) + 1);
@@ -418,14 +351,19 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                         </div>
 
                         {/* Search Bar */}
-                        <div className="relative mb-2">
-                            <Search className="absolute left-2 top-2 text-slate-400" size={12}/>
-                            <input 
-                                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg py-1.5 pl-7 pr-2 text-xs focus:border-brand-accent outline-none"
-                                placeholder={`搜索${activeCategoryTab}标签...`}
-                                value={categorySearch}
-                                onChange={e => setCategorySearch(e.target.value)}
-                            />
+                        <div className="relative mb-2 flex gap-2">
+                            <div className="relative flex-1">
+                                <Search className="absolute left-2 top-2 text-slate-400" size={12}/>
+                                <input 
+                                    className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg py-1.5 pl-7 pr-2 text-xs focus:border-brand-accent outline-none"
+                                    placeholder="搜索标签..."
+                                    value={categorySearch}
+                                    onChange={e => setCategorySearch(e.target.value)}
+                                />
+                            </div>
+                            <button onClick={() => setIsTagManagerOpen(true)} className="px-3 bg-slate-200 dark:bg-slate-700 text-slate-500 rounded-lg text-xs font-bold hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors" title="管理或创建标签">
+                                <Settings size={14}/>
+                            </button>
                         </div>
 
                         {/* Tags Grid */}
@@ -443,7 +381,17 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                                     {cat}
                                 </button>
                             ))}
-                            {activeTags.length === 0 && <div className="w-full text-center text-xs text-slate-400 py-4">无匹配标签</div>}
+                            {activeTags.length === 0 && (
+                                <div className="w-full text-center py-4">
+                                    <p className="text-xs text-slate-400 mb-2">无匹配标签</p>
+                                    <button 
+                                        onClick={() => setIsTagManagerOpen(true)}
+                                        className="text-brand-accent text-xs font-bold hover:underline"
+                                    >
+                                        前往标签管理创建 "{categorySearch}"
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -632,6 +580,16 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                     />
                 </div>
             </div>
+
+            {/* Tag Manager Modal (Nested) */}
+            <Suspense fallback={null}>
+                <TagManager 
+                    isOpen={isTagManagerOpen} 
+                    onClose={() => setIsTagManagerOpen(false)} 
+                    onSelectTag={handleSelectTagFromManager}
+                    initialSearch={categorySearch}
+                />
+            </Suspense>
         </Modal>
     );
 };

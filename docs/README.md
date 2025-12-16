@@ -1,3 +1,4 @@
+
 # Hardness Diary · Core Governance Documents
 
 本目录包含本项目中 **不可轻易破坏的核心治理文档**。
