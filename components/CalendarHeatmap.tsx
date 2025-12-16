@@ -41,14 +41,21 @@ const getCalendarDays = (currentDate: Date) => {
 };
 
 // Auxiliary Color System for Completed Logs (Hardness Heatmap)
+// Updated for intuitive progression: Red -> Orange -> Amber -> Green -> Blue
 const getVisualsForCompleted = (level: number) => {
     switch (level) {
-        case 1: return { bg: 'bg-red-50 dark:bg-red-900/20', border: 'border-red-200 dark:border-red-800', text: 'text-red-500', score: 'text-red-600 dark:text-red-400' };
-        case 2: return { bg: 'bg-orange-50 dark:bg-orange-900/20', border: 'border-orange-200 dark:border-orange-800', text: 'text-orange-500', score: 'text-orange-600 dark:text-orange-400' };
-        case 3: return { bg: 'bg-blue-50 dark:bg-blue-900/20', border: 'border-blue-200 dark:border-blue-800', text: 'text-blue-500', score: 'text-blue-600 dark:text-blue-400' };
-        case 4: return { bg: 'bg-emerald-50 dark:bg-emerald-900/20', border: 'border-emerald-200 dark:border-emerald-800', text: 'text-emerald-500', score: 'text-emerald-600 dark:text-emerald-400' };
-        case 5: return { bg: 'bg-teal-50 dark:bg-teal-900/20', border: 'border-teal-200 dark:border-teal-800', text: 'text-teal-500', score: 'text-teal-600 dark:text-teal-400' };
-        default: return { bg: 'bg-slate-50 dark:bg-slate-800', border: 'border-slate-200 dark:border-slate-700', text: 'text-slate-400', score: 'text-slate-500' };
+        case 1: // Bad/Soft
+            return { bg: 'bg-rose-50 dark:bg-rose-900/20', border: 'border-rose-200 dark:border-rose-800', text: 'text-rose-500', score: 'text-rose-600 dark:text-rose-400' };
+        case 2: // Weak
+            return { bg: 'bg-orange-50 dark:bg-orange-900/20', border: 'border-orange-200 dark:border-orange-800', text: 'text-orange-500', score: 'text-orange-600 dark:text-orange-400' };
+        case 3: // Standard (Mid)
+            return { bg: 'bg-amber-50 dark:bg-amber-900/20', border: 'border-amber-200 dark:border-amber-800', text: 'text-amber-600', score: 'text-amber-600 dark:text-amber-400' };
+        case 4: // Good/Hard
+            return { bg: 'bg-emerald-50 dark:bg-emerald-900/20', border: 'border-emerald-200 dark:border-emerald-800', text: 'text-emerald-500', score: 'text-emerald-600 dark:text-emerald-400' };
+        case 5: // Excellent/Iron
+            return { bg: 'bg-blue-50 dark:bg-blue-900/20', border: 'border-blue-200 dark:border-blue-800', text: 'text-blue-500', score: 'text-blue-600 dark:text-blue-400' };
+        default: 
+            return { bg: 'bg-slate-50 dark:bg-slate-800', border: 'border-slate-200 dark:border-slate-700', text: 'text-slate-400', score: 'text-slate-500' };
     }
 };
 
@@ -87,8 +94,6 @@ const CalendarHeatmap: React.FC<ActivityCalendarProps> = ({ logs, onDateClick, c
         const avgHardness = validHardnessLogs.length ? validHardnessLogs.reduce((a,b) => a + (b.morning?.hardness||0), 0) / validHardnessLogs.length : 0;
         
         // Calculate trend vs previous month
-        const prevDate = new Date(y, m - 1, 1);
-        const prevLogs = []; // Simplified for trend calculation
         // ... (Skipping full trend calculation for brevity in rendering update) ...
         const trend = 0; // Placeholder
 
@@ -109,23 +114,22 @@ const CalendarHeatmap: React.FC<ActivityCalendarProps> = ({ logs, onDateClick, c
         // 1. Determine State & Score
         let status: 'empty' | 'draft' | 'completed' = 'empty';
         let qualityScore = 0;
-        let hasWarning = false;
+        
+        // Specific Warning Flags
+        let isSick = false;
+        let isStressed = false;
+        let isBadSleep = false;
 
         if (log) {
             qualityScore = calculateDataQuality(log);
             const isDraft = log.status === 'pending' || qualityScore < 60;
             status = isDraft ? 'draft' : 'completed';
             
-            // Check warnings (P1: Worth noting)
+            // Check warnings
             const sleepAnalysis = analyzeSleep(log.sleep?.startTime, log.sleep?.endTime);
-            if (
-                log.health?.isSick || 
-                (log.stressLevel || 0) >= 4 || 
-                sleepAnalysis?.isInsufficient || 
-                sleepAnalysis?.isLate
-            ) {
-                hasWarning = true;
-            }
+            if (log.health?.isSick) isSick = true;
+            if ((log.stressLevel || 0) >= 4) isStressed = true;
+            if (sleepAnalysis?.isInsufficient || sleepAnalysis?.isLate) isBadSleep = true;
         }
 
         // 2. Filter Check
@@ -172,17 +176,25 @@ const CalendarHeatmap: React.FC<ActivityCalendarProps> = ({ logs, onDateClick, c
             <div 
                 key={dateStr} 
                 onClick={() => onDateClick && onDateClick(dateStr)} 
-                className={`relative aspect-square rounded-2xl p-1.5 flex flex-col justify-between cursor-pointer transition-all duration-300 hover:scale-105 active:scale-95 border ${containerClass}`}
+                className={`relative aspect-square rounded-2xl p-1 flex flex-col justify-between cursor-pointer transition-all duration-300 hover:scale-105 active:scale-95 border ${containerClass}`}
             >
                 <div className="flex justify-between items-start">
-                    <span className={`text-[10px] leading-none ${dateClass}`}>{day.getDate()}</span>
-                    {hasWarning && !isDimmed && (
-                        <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></div>
+                    <span className={`text-[10px] leading-none ml-0.5 mt-0.5 ${dateClass}`}>{day.getDate()}</span>
+                    
+                    {/* Warning Icons Layer (Top Right) */}
+                    {!isDimmed && (isSick || isStressed || isBadSleep) && (
+                        <div className="flex gap-[1px] mt-0.5 mr-0.5">
+                            {isSick && <ShieldAlert size={10} className="text-red-500" strokeWidth={3} />}
+                            {isStressed && !isSick && <Zap size={10} className="text-orange-500" strokeWidth={3} fill="currentColor" />}
+                            {isBadSleep && !isSick && !isStressed && <Moon size={10} className="text-purple-500" strokeWidth={3} />}
+                            {/* If too many, show a generic dot for overflow, but max 2 icons fit okay */}
+                            {(isStressed && isSick) && <div className="w-1.5 h-1.5 rounded-full bg-orange-500"></div>}
+                        </div>
                     )}
                 </div>
                 
                 {/* Index Layer: Score only */}
-                <div className="flex justify-end items-end">
+                <div className="flex justify-end items-end mr-0.5 mb-0.5">
                     {status !== 'empty' && (
                         <span className={`leading-none ${scoreClass}`}>{qualityScore}</span>
                     )}
