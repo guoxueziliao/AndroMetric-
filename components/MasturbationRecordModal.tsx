@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { X, Check, Clock, Smile, PenLine, Tag, Smartphone, User, Target, Layers, Plus, Zap, Minus, FilePlus, Bookmark, ShieldCheck, Trash2, ArrowLeft, ArrowRight, MapPin, AlertTriangle, Search, Battery, Droplets, BatteryCharging, Wind, Film, Hash, Edit2, Globe, Activity, Thermometer, BrainCircuit, ChevronDown } from 'lucide-react';
+import { X, Check, Clock, Smile, PenLine, Tag, Smartphone, User, Target, Layers, Plus, Zap, Minus, FilePlus, Bookmark, ShieldCheck, Trash2, ArrowLeft, ArrowRight, MapPin, AlertTriangle, Search, Battery, Droplets, BatteryCharging, Wind, Film, Hash, Edit2, Globe, Activity, Thermometer, BrainCircuit, ChevronDown, UserCheck, Shirt, Gamepad2, BookOpen, MonitorPlay, Sparkles } from 'lucide-react';
 import { MasturbationRecordDetails, LogEntry, PartnerProfile, Mood, MasturbationMaterial } from '../types';
 import Modal from './Modal';
 import { calculateInventory } from '../utils/helpers';
@@ -19,11 +19,7 @@ interface MasturbationRecordModalProps {
 
 const SOURCES = ['视频', '直播', '图片', '文爱', '回忆', '幻想', '音声', '漫画'];
 const PLATFORMS = ['Telegram', 'ONE', 'Pornhub', 'Twitter', 'Xvideos', 'OnlyFans', 'Jable', 'TikTok', '微信/QQ', '本地硬盘', '91', 'MissAV'];
-const CATEGORIES = [
-    '巨乳', '贫乳', '长腿', '丝袜', '足交', '人妻/熟女', '母子', '学生/JK', 
-    '女上司/OL', '颜射', '口交', '内射', 'SM/调教', '群P', 'NTR', '纯爱', 
-    'Cosplay', '欧美', '国产', '日韩', '自拍/偷拍', '剧情', 'ASMR', '粗口', 'VR'
-];
+
 const TOOL_OPTIONS = ['手', '润滑液', '飞机杯', '名器/倒模', '电动玩具', '前列腺按摩器', '枕头'];
 const SCENE_OPTIONS = ['书桌/电脑前', '卧室/床上', '浴室/洗澡', '厕所/马桶', '客厅/沙发', '阳台', '车里', '公司/学校', '野外', '站立'];
 const INTERRUPTION_OPTIONS = ['🚪 有人敲门', '📞 电话/微信', '🐱 猫/狗捣乱', '🚴‍♂️ 外卖/快递', '👁️ 突然被看到', '🔊 噪音干扰'];
@@ -40,6 +36,34 @@ const FORCE_LEVELS = [
 
 const FATIGUE_OPTIONS = ['精神焕发', '无明显疲劳', '轻微困倦', '身体沉重', '秒睡'];
 const POST_MOOD_OPTIONS = ['满足/愉悦', '平静/贤者', '空虚/后悔', '焦虑/负罪', '恶心/厌恶'];
+
+// Organized Categories (XP)
+const XP_GROUPS: Record<string, string[]> = {
+    '角色': [
+        '人妻', '熟女', '学生/JK', '少女', '御姐', '萝莉', '女上司', '秘书', '护士', '老师', '空姐', '女仆', '修女', '运动员', '邻居', '朋友', '近亲', '姐姐', '妈妈', '女儿', '孕妇', '偶像', '姐弟', '母子', '师生', '夫妻', '上司', '下属',
+        '老板', '医生', '主人', '母亲', '宠物', '警察', '公主', '机器人', '奴隶', '服从者', '嫂子', '保姆', '姻亲', 'OL', '办公女郎', '女员工', '离异', '主播', '清洁工', '未婚妻', '新娘', '公公', '小叔子', '快递员', '导演', '前任', '姐妹', '闺蜜', '粉丝', '同事', '模特', '摄影师', '经纪人', '小姨子', '宅女', '毕业生', '辅导老师', '技师', '富家女', '女经理', '新人'
+    ],
+    '身体': [
+        '巨乳', '贫乳', '美乳', '爆乳', '垂乳', '美腿', '足控', '巨臀', '美臀', '颜值', '身材', '肤白', '黑皮', '辣妹', '纹身', '穿环', '油亮', '多毛', '无毛', '美尻',
+        '腹部', '金发', '体毛', '乳房', '臀部', '曲线', '耳朵', '眼睛', '脚', '雀斑', '头发', '手', '腿', '嘴唇', '肌肉', '肚脐', '鼻子', '孕肚', '阴毛', '疤痕', '皮肤', '苗条', '小乳', '高挑', '牙齿', '瘦弱', '脚趾', '皱纹', '阿姨', '眼镜', '土味', '中年', '修长', '长腿', '火辣', '风韵'
+    ],
+    '装扮': [
+        '黑丝', '白丝', '网袜', '高跟', '制服', '西装', '眼镜', '口罩', '内衣', '情趣内衣', '丁字裤', '免脱', '胶衣', '皮革', '按摩棒', '假阴茎', '跳蛋', '项圈', '手铐',
+        '比基尼', '眼罩', '靴子', '紧身胸衣', '服装', '鞭子', '裙子', '羽毛', '手套', '安全带', '帽子', '丝袜', '乳胶', '面具', '拍子', '肛塞', '警察服', '绳子', '校服', '泳装', '尾巴', '领带', '婚纱', '快递服', '舞台服', 'OL制服'
+    ],
+    '玩法': [
+        '口交', '手交', '乳交', '足交', '肛交', '深喉', '69', '骑乘', '后入', '传教士', '侧入', '内射', '颜射', '口爆', '吞精', '中出', '多发', '潮吹', '失禁', 'SM', '调教', '捆绑', '窒息', 'SP', '打屁股', '3P', '群P', '轮奸',
+        '咬', '蒙眼', '舔阴', '双插', '边缘控制', '电击', '脸坐', '指交', '拳交', '强制高潮', '群交', '冲击', '挑逗', '温度', '触手', '搔痒', '舔肛', '角色反转', '抓挠', '感官剥夺', '绳艺', '拍打', '女插男', '宠物扮演', '蜡烛', '鞭打', '直播', '下药', '媚药', '多人', '女王', '灌醉', '威胁', '诱惑', '游戏', '按摩', '足控'
+    ],
+    '剧情': [
+        '纯爱', '温柔', '剧情', '调情', '接吻', 'NTR', '出轨', '寝取', '绿帽', '强迫', '勒索', '睡眠', '羞耻', '露出', '受辱', '堕落', '恶堕', '催眠', '时间停止', '强制', '凌辱', '乱伦', '禁忌', '家中', '户外', '车内', '办公室', '卧室', '校园', '酒店', '按摩店', '会议室', '同事家',
+        '通奸', '洗脑', '支配', '幻想', '不忠', '嫉妒', '操纵', '痴迷', '赞美', '惩罚', '复仇', '斯德哥尔摩', '服从', '训练', '家庭', '照顾', '依赖', '离婚', '胁迫', '救助', '英雄救美', '偷窥', '职业', '暧昧', '订婚', '婚前', '报复', '欺骗', '小三', '补习', '寂寞', '修复', '上门', '一见钟情', '误会', '复合', '霸凌', '骚扰', '借宿', '吃醋', '多角关系', '沦陷', '单恋', '暗恋', '报复心理', '觉醒', '愤怒', '倦怠', '无聊', '重燃', '抗拒', '情意', '极致', '摄影棚', '后台'
+    ],
+    '风格': [
+        '真人', '二次元', '动漫', '3D', '建模', 'Cosplay', 'AI生成', 'VR', '全景', 'MMD', 'PMV', '有声', 'ASMR', '漫画', '本子', '小说', '文爱', '硬核', '唯美', '艺术', '写实', 'POV', '淫乱', '痴女', '清纯', '害羞', '高冷', '顺从', '反抗', 'S属性', 'M属性',
+        '2D', '渲染', '音频', '手绘', '同人', 'Hentai', '插图', '拍摄', '舞蹈', 'MV', '文字', '虚拟现实', '网络漫画', '混乱', '冷酷', '可爱', '优雅', '极端', '激烈', '轻松', '神秘', '调皮', '浪漫', '粗暴', '施虐', '感官', '柔软', '甜蜜', '禁忌', '挑逗', '欧美', '日韩', '国产', '韩国', '美国', '欧洲', '亚洲', '泰国', '俄罗斯', '巴西', '印度', '麻豆', '啄木鸟', 'Vixen', 'SOD', 'S1', 'Faleno', 'JAV', 'Brazzers', 'Black', 'Evil Angel', 'Tushy', 'Pure Taboo', 'X-Art', 'MetArt', 'FemJoy', '解说', 'AI视频', 'AI换脸', 'Deepfake'
+    ]
+};
 
 const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpen, onClose, onSave, initialData, dateStr, logs = [], partners = [] }) => {
     
@@ -71,6 +95,9 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
         fatigue: '无明显疲劳'
     });
 
+    const [activeCategoryTab, setActiveCategoryTab] = useState<string>('常用');
+    const [categorySearch, setCategorySearch] = useState('');
+
     // Material Form State
     const [isAddingMaterial, setIsAddingMaterial] = useState(false);
     const [tempMaterial, setTempMaterial] = useState<MasturbationMaterial>({
@@ -85,6 +112,36 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
     const [tempTag, setTempTag] = useState('');
 
     const inventoryTime = useMemo(() => calculateInventory(logs), [logs]);
+
+    // Compute Frequent Tags from logs
+    const frequentTags = useMemo(() => {
+        const counts: Record<string, number> = {};
+        logs.forEach(log => {
+            log.masturbation?.forEach(m => {
+                m.assets?.categories?.forEach(c => {
+                    counts[c] = (counts[c] || 0) + 1;
+                });
+            });
+        });
+        // Sort descending
+        return Object.entries(counts)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 30)
+            .map(x => x[0]);
+    }, [logs]);
+
+    const activeTags = useMemo(() => {
+        if (categorySearch) {
+            // Search across all groups
+            const allTags = new Set<string>();
+            Object.values(XP_GROUPS).forEach(list => list.forEach(t => allTags.add(t)));
+            return Array.from(allTags).filter(t => t.toLowerCase().includes(categorySearch.toLowerCase()));
+        }
+        if (activeCategoryTab === '常用') {
+            return frequentTags.length > 0 ? frequentTags : XP_GROUPS['角色']; // Fallback if no history
+        }
+        return XP_GROUPS[activeCategoryTab] || [];
+    }, [activeCategoryTab, frequentTags, categorySearch]);
 
     useEffect(() => {
         if (isOpen) {
@@ -140,6 +197,8 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
             }
             setIsAddingMaterial(false);
             setTempMaterial({ id: '', label: '', publisher: '', actors: [], tags: [] });
+            setCategorySearch('');
+            setActiveCategoryTab('常用');
         }
     }, [initialData, isOpen]);
 
@@ -280,428 +339,294 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                                 onChange={e => updateData('startTime', e.target.value)}
                                 className="bg-transparent text-xl font-mono font-bold text-brand-text dark:text-slate-200 outline-none w-full"
                             />
-                            <Clock size={18} className="text-slate-400" />
+                            <Clock size={18} className="text-slate-300"/>
                         </div>
                     </div>
                     <div className="flex-1 bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
-                        <label className="text-[10px] text-slate-500 font-bold uppercase block mb-1">时长 (分钟)</label>
+                        <label className="text-[10px] text-slate-500 font-bold uppercase block mb-1">持续时长 (分)</label>
                         <div className="flex items-center justify-between">
-                            <input 
-                                type="number" 
-                                value={data.duration} 
-                                onChange={e => updateData('duration', parseInt(e.target.value)||0)}
-                                className="bg-transparent text-xl font-mono font-bold text-brand-text dark:text-slate-200 outline-none w-full"
-                            />
-                            <span className="text-xs text-slate-400 font-bold">MIN</span>
+                            <div className="flex items-center w-full">
+                                <button type="button" onClick={() => updateData('duration', Math.max(1, (data.duration||0)-5))} className="p-1 rounded-full hover:bg-slate-100 text-slate-400"><Minus size={14}/></button>
+                                <input 
+                                    type="number" 
+                                    value={data.duration} 
+                                    onChange={e => updateData('duration', parseInt(e.target.value) || 0)}
+                                    className="bg-transparent text-xl font-mono font-bold text-brand-text dark:text-slate-200 outline-none w-full text-center"
+                                />
+                                <button type="button" onClick={() => updateData('duration', (data.duration||0)+5)} className="p-1 rounded-full hover:bg-slate-100 text-slate-400"><Plus size={14}/></button>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                {/* 2. Source & XP (The Core) */}
-                <div className="space-y-4">
-                    <h3 className="text-sm font-bold text-brand-text dark:text-slate-200 flex items-center gap-2">
-                        <Layers size={16} className="text-purple-500"/> 素材与内容
-                    </h3>
+                {/* 2. Content (Material & XP) */}
+                <div className="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-4 border border-slate-200 dark:border-slate-700 space-y-4">
+                    <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center"><Film size={14} className="mr-1.5"/> 施法素材 (Content)</h3>
                     
+                    {/* Basic Tags */}
                     <div className="space-y-3">
-                        {/* Sources */}
+                        {/* Source */}
                         <div className="flex flex-wrap gap-2">
-                            {SOURCES.map(s => (
-                                <button
-                                    key={s}
-                                    onClick={() => toggleAssetItem('sources', s)}
-                                    className={`px-3 py-1.5 text-xs rounded-lg border transition-all ${data.assets?.sources?.includes(s) ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800 font-bold' : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700'}`}
+                            {SOURCES.map(src => (
+                                <button 
+                                    key={src} 
+                                    onClick={() => toggleAssetItem('sources', src)}
+                                    className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${data.assets?.sources?.includes(src) ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300' : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-500'}`}
                                 >
-                                    {s}
+                                    {src}
                                 </button>
                             ))}
                         </div>
-
-                        {/* Platforms (Added Back) */}
-                        <div className="flex flex-wrap gap-2 pt-1">
-                            {PLATFORMS.map(p => (
-                                <button
-                                    key={p}
-                                    onClick={() => toggleAssetItem('platforms', p)}
-                                    className={`px-2.5 py-1 text-[10px] rounded-lg border transition-all flex items-center ${data.assets?.platforms?.includes(p) ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800 font-bold' : 'bg-slate-50 dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700 hover:border-blue-300'}`}
-                                >
-                                    <Globe size={10} className="mr-1"/>
-                                    {p}
-                                </button>
-                            ))}
-                        </div>
-                        
-                        {/* Categories / Tags */}
-                        <div className="bg-white dark:bg-slate-800/50 p-3 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
-                            <label className="text-[10px] text-slate-500 font-bold uppercase block mb-2">性癖 / 类型 (多选)</label>
-                            <div className="flex flex-wrap gap-2 h-32 overflow-y-auto custom-scrollbar content-start">
-                                {CATEGORIES.map(c => (
-                                    <button
-                                        key={c}
-                                        onClick={() => toggleAssetItem('categories', c)}
-                                        className={`px-2 py-1 text-[10px] rounded border transition-all ${data.assets?.categories?.includes(c) ? 'bg-pink-500 text-white border-pink-600 shadow-sm' : 'bg-white dark:bg-slate-900 text-slate-500 border-slate-200 dark:border-slate-700 hover:border-pink-300'}`}
+                        {/* Platform */}
+                        {(data.assets?.sources?.includes('视频') || data.assets?.sources?.includes('直播')) && (
+                            <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-200 dark:border-slate-700">
+                                {PLATFORMS.map(pf => (
+                                    <button 
+                                        key={pf} 
+                                        onClick={() => toggleAssetItem('platforms', pf)}
+                                        className={`px-2 py-1 rounded text-[10px] font-medium transition-all ${data.assets?.platforms?.includes(pf) ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-300' : 'text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
                                     >
-                                        {c}
+                                        {pf}
                                     </button>
                                 ))}
                             </div>
+                        )}
+                    </div>
+
+                    {/* XP Categories (Improved) */}
+                    <div className="pt-2">
+                        <label className="text-xs font-bold text-slate-400 mb-2 flex items-center justify-between">
+                            <span className="flex items-center gap-1"><Hash size={12}/> 类型 / XP</span>
+                            <span className="text-[10px] font-normal">{data.assets?.categories?.length || 0} selected</span>
+                        </label>
+                        
+                        {/* XP Tabs */}
+                        <div className="flex gap-1 overflow-x-auto scrollbar-hide mb-2 border-b border-slate-200 dark:border-slate-700 pb-1">
+                            {['常用', '角色', '身体', '装扮', '玩法', '剧情', '风格'].map(tab => (
+                                <button
+                                    key={tab}
+                                    onClick={() => { setActiveCategoryTab(tab); setCategorySearch(''); }}
+                                    className={`px-3 py-1.5 text-xs font-bold rounded-t-lg transition-colors whitespace-nowrap ${
+                                        activeCategoryTab === tab 
+                                        ? 'bg-white dark:bg-slate-900 text-brand-accent border-b-2 border-brand-accent' 
+                                        : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                                    }`}
+                                >
+                                    {tab}
+                                </button>
+                            ))}
                         </div>
 
-                        {/* Target Object */}
-                        <div>
-                            <label className="text-[10px] text-slate-500 font-bold uppercase block mb-2">施法对象</label>
-                            <div className="relative">
-                                <Target size={14} className="absolute left-3 top-3 text-slate-400"/>
-                                <input 
-                                    className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg py-2 pl-9 pr-4 text-xs shadow-sm focus:border-brand-accent outline-none"
-                                    placeholder="或输入临时对象 (如: 某网黄, 前任...)"
-                                    value={data.assets?.target || ''}
-                                    onChange={e => updateAssets('target', e.target.value)}
-                                />
-                            </div>
+                        {/* Search Bar */}
+                        <div className="relative mb-2">
+                            <Search className="absolute left-2 top-2 text-slate-400" size={12}/>
+                            <input 
+                                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg py-1.5 pl-7 pr-2 text-xs focus:border-brand-accent outline-none"
+                                placeholder={`搜索${activeCategoryTab}标签...`}
+                                value={categorySearch}
+                                onChange={e => setCategorySearch(e.target.value)}
+                            />
                         </div>
+
+                        {/* Tags Grid */}
+                        <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto custom-scrollbar content-start p-1">
+                            {activeTags.map(cat => (
+                                <button 
+                                    key={cat}
+                                    onClick={() => toggleAssetItem('categories', cat)}
+                                    className={`px-2.5 py-1.5 rounded-md text-xs font-medium transition-all duration-200 border ${
+                                        data.assets?.categories?.includes(cat) 
+                                        ? 'bg-brand-accent text-white border-brand-accent shadow-sm' 
+                                        : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-brand-accent/50'
+                                    }`}
+                                >
+                                    {cat}
+                                </button>
+                            ))}
+                            {activeTags.length === 0 && <div className="w-full text-center text-xs text-slate-400 py-4">无匹配标签</div>}
+                        </div>
+                    </div>
+
+                    {/* Target/Partner */}
+                    <div className="pt-3 border-t border-slate-200 dark:border-slate-700">
+                        <label className="text-xs font-bold text-slate-400 mb-2 block">施法对象 (Target)</label>
+                        {/* Partner Quick Select */}
+                        {partners.length > 0 && (
+                            <div className="flex gap-2 overflow-x-auto pb-2 mb-2 scrollbar-hide">
+                                {partners.map(p => (
+                                    <button 
+                                        key={p.id}
+                                        onClick={() => updateAssets('target', p.name)}
+                                        className={`flex-shrink-0 flex items-center gap-1.5 px-2 py-1 rounded-full border transition-all ${data.assets?.target === p.name ? 'bg-pink-100 text-pink-700 border-pink-200' : 'bg-white text-slate-500 border-slate-200'}`}
+                                    >
+                                        <div className={`w-4 h-4 rounded-full ${p.avatarColor || 'bg-slate-400'}`}></div>
+                                        <span className="text-[10px] font-bold">{p.name}</span>
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                        <input 
+                            className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-xs focus:border-brand-accent outline-none"
+                            placeholder="网黄 / 明星 / 角色名 / 伴侣..."
+                            value={data.assets?.target || ''}
+                            onChange={e => updateAssets('target', e.target.value)}
+                        />
                     </div>
                 </div>
 
-                {/* 3. Detailed Material List (Optional) */}
-                <div className="space-y-3 border-t border-slate-100 dark:border-slate-800 pt-4">
-                    <div className="flex justify-between items-center">
-                        <h3 className="text-sm font-bold text-brand-text dark:text-slate-200 flex items-center gap-2">
-                            <Bookmark size={16} className="text-indigo-500"/> 具体清单
-                        </h3>
+                {/* 3. Action & Tools */}
+                <div className="space-y-4">
+                    {/* Tools */}
+                    <div>
+                        <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">辅助工具 (Tools)</h4>
+                        <div className="flex flex-wrap gap-2">
+                            {TOOL_OPTIONS.map(tool => (
+                                <button
+                                    key={tool}
+                                    onClick={() => toggleTool(tool)}
+                                    className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${data.tools?.includes(tool) ? 'bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800' : 'bg-slate-50 dark:bg-slate-800 border-transparent text-slate-500'}`}
+                                >
+                                    {tool}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Lubricant & Condom */}
+                    <div className="flex gap-2">
+                        <div className="flex-1 bg-slate-50 dark:bg-slate-800 p-2 rounded-xl flex items-center gap-2 border border-slate-100 dark:border-slate-700">
+                            <Droplets size={16} className="text-blue-400 ml-1"/>
+                            <select 
+                                className="bg-transparent w-full text-xs font-bold outline-none text-slate-600 dark:text-slate-300"
+                                value={data.lubricant || ''}
+                                onChange={e => updateData('lubricant', e.target.value)}
+                            >
+                                <option value="">无润滑</option>
+                                {LUBRICANT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                            </select>
+                        </div>
                         <button 
-                            onClick={handleAddMaterialClick}
-                            className="text-xs text-indigo-500 font-bold flex items-center gap-1 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 px-2 py-1 rounded"
+                            onClick={() => updateData('useCondom', !data.useCondom)}
+                            className={`px-3 py-2 rounded-xl text-xs font-bold border transition-all flex items-center gap-1 ${data.useCondom ? 'bg-green-100 text-green-700 border-green-200' : 'bg-slate-50 text-slate-400 border-transparent'}`}
                         >
-                            <Plus size={14}/> 添加素材
+                            <ShieldCheck size={14}/> 戴套
                         </button>
                     </div>
 
-                    {isAddingMaterial && (
-                        <div className="bg-slate-50 dark:bg-slate-900 border border-indigo-200 dark:border-indigo-900 rounded-xl p-3 space-y-3 animate-in fade-in">
-                            <input 
-                                className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded p-2 text-xs"
-                                placeholder="标题 / 番号 / 描述"
-                                value={tempMaterial.label || ''}
-                                onChange={e => setTempMaterial({...tempMaterial, label: e.target.value})}
-                                autoFocus
-                            />
-                            <div className="flex gap-2">
-                                <input 
-                                    className="flex-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded p-2 text-xs"
-                                    placeholder="发行商 / 厂牌"
-                                    value={tempMaterial.publisher || ''}
-                                    onChange={e => setTempMaterial({...tempMaterial, publisher: e.target.value})}
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <div className="flex gap-2">
-                                    <input 
-                                        className="flex-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded p-2 text-xs"
-                                        placeholder="添加主演 (回车)"
-                                        value={tempActor}
-                                        onChange={e => setTempActor(e.target.value)}
-                                        onKeyDown={e => e.key === 'Enter' && addTempActor()}
-                                    />
-                                    <button onClick={addTempActor} className="bg-slate-200 dark:bg-slate-700 px-3 rounded text-slate-600 dark:text-slate-300"><Plus size={14}/></button>
-                                </div>
-                                <div className="flex flex-wrap gap-1">
-                                    {tempMaterial.actors.map(a => <span key={a} className="text-[10px] bg-slate-200 dark:bg-slate-700 px-1.5 py-0.5 rounded flex items-center">{a} <X size={10} className="ml-1 cursor-pointer" onClick={() => setTempMaterial(p => ({...p, actors: p.actors.filter(x => x!==a)}))}/></span>)}
-                                </div>
-                            </div>
-                            <div className="space-y-2">
-                                <div className="flex gap-2">
-                                    <div className="relative flex-1">
-                                        <select
-                                            className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded p-2 text-xs outline-none appearance-none pr-8"
-                                            value={tempTag}
-                                            onChange={e => setTempTag(e.target.value)}
-                                        >
-                                            <option value="" disabled>选择标签</option>
-                                            {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-                                        </select>
-                                        <ChevronDown size={14} className="absolute right-2 top-2.5 text-slate-400 pointer-events-none"/>
-                                    </div>
-                                    <button onClick={addTempTag} className="bg-slate-200 dark:bg-slate-700 px-3 rounded text-slate-600 dark:text-slate-300"><Plus size={14}/></button>
-                                </div>
-                                <div className="flex flex-wrap gap-1">
-                                    {tempMaterial.tags.map(t => <span key={t} className="text-[10px] bg-blue-100 dark:bg-blue-900/30 text-blue-600 px-1.5 py-0.5 rounded flex items-center">{t} <X size={10} className="ml-1 cursor-pointer" onClick={() => setTempMaterial(p => ({...p, tags: p.tags.filter(x => x!==t)}))}/></span>)}
-                                </div>
-                            </div>
-                            <div className="flex gap-2">
-                                <button onClick={() => setIsAddingMaterial(false)} className="flex-1 py-2 bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs rounded-lg font-bold">取消</button>
-                                <button onClick={handleSaveMaterial} className="flex-1 py-2 bg-indigo-500 text-white text-xs rounded-lg font-bold flex items-center justify-center"><Plus size={14} className="mr-1"/> 确认添加</button>
-                            </div>
-                        </div>
-                    )}
-
-                    <div className="space-y-2">
-                        {data.materialsList?.length === 0 && !isAddingMaterial && (
-                            <div className="text-center py-4 text-xs text-slate-400 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-900">
-                                暂无详细清单，可点击上方添加
-                            </div>
-                        )}
-                        {data.materialsList?.map(m => (
-                            <div 
-                                key={m.id} 
-                                onClick={() => handleEditMaterialClick(m)}
-                                className="bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700 relative group cursor-pointer hover:border-brand-accent hover:shadow-sm transition-all"
-                            >
-                                <div className="flex gap-3">
-                                    <div className="w-10 h-10 bg-slate-200 dark:bg-slate-700 rounded-lg flex items-center justify-center text-slate-400 shrink-0">
-                                        <Film size={20} />
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <div className="font-bold text-sm text-brand-text dark:text-slate-200 truncate pr-10">{m.label}</div>
-                                        <div className="flex flex-wrap gap-1 mt-1">
-                                            {m.publisher && <span className="text-[10px] bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-1.5 rounded flex items-center"><Smartphone size={8} className="mr-1"/>{m.publisher}</span>}
-                                            {m.tags.slice(0,3).map(t => <span key={t} className="text-[10px] text-blue-500">#{t}</span>)}
-                                        </div>
-                                    </div>
-                                </div>
-                                <button 
-                                    onClick={(e) => removeMaterial(m.id, e)}
-                                    className="absolute top-2 right-2 p-1.5 rounded-full text-slate-400 hover:text-red-500 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors z-10"
-                                >
-                                    <X size={14} />
-                                </button>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-
-                {/* 4. Tools & Environment */}
-                <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-slate-800">
-                    <div>
-                        <label className="text-[10px] text-slate-500 font-bold uppercase block mb-2">辅助工具</label>
-                        <div className="flex flex-wrap gap-2">
-                            {TOOL_OPTIONS.map(t => (
-                                <button
-                                    key={t}
-                                    onClick={() => toggleTool(t)}
-                                    className={`px-3 py-1.5 text-xs rounded-lg border transition-all ${data.tools?.includes(t) ? 'bg-orange-500 text-white border-orange-600 shadow-sm' : 'bg-white dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700'}`}
-                                >
-                                    {t}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                    
-                    <div className="space-y-2">
-                        <label className="text-[10px] text-slate-500 font-bold uppercase block">场景 / 姿势</label>
-                        <div className="flex flex-wrap gap-2">
-                            {SCENE_OPTIONS.map(s => (
-                                <button
-                                    key={s}
-                                    onClick={() => updateData('location', s)}
-                                    className={`px-3 py-1.5 text-xs rounded-lg border transition-all ${data.location === s ? 'bg-teal-500 text-white border-teal-600 shadow-sm' : 'bg-white dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700'}`}
-                                >
-                                    {s}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-
-                    <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
-                        <div className="flex items-center gap-2 text-xs font-bold text-slate-500">
-                            <Droplets size={16}/> 润滑剂
-                        </div>
-                        <select 
-                            className="bg-transparent text-xs font-bold text-brand-text dark:text-slate-200 outline-none text-right pr-2"
-                            value={data.lubricant || ''}
-                            onChange={e => updateData('lubricant', e.target.value)}
-                        >
-                            <option value="">未使用</option>
-                            {LUBRICANT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-                        </select>
-                    </div>
-                </div>
-
-                {/* 5. Edging & Outcome */}
-                <div className="bg-white dark:bg-slate-800/50 p-4 rounded-xl border border-slate-200 dark:border-slate-700 space-y-4 shadow-sm">
-                    <div className="flex items-center justify-between">
+                    {/* Edging */}
+                    <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700 flex justify-between items-center">
                         <div className="flex items-center gap-2">
-                            <span className="text-sm font-bold text-slate-600 dark:text-slate-300">边缘控制 (Edging)</span>
-                            <span className="text-[10px] px-1.5 py-0.5 bg-yellow-100 text-yellow-700 rounded border border-yellow-200 font-bold">推荐</span>
-                        </div>
-                        <div className="flex items-center bg-slate-100 dark:bg-slate-900 rounded-lg p-1 border border-slate-200 dark:border-slate-700">
-                            <button onClick={decrementEdging} className="w-8 h-7 flex items-center justify-center text-slate-500 hover:bg-white dark:hover:bg-slate-800 rounded transition-colors"><Minus size={14}/></button>
-                            <span className="w-8 text-center text-sm font-black text-brand-accent">{data.edgingCount || 0}</span>
-                            <button onClick={incrementEdging} className="w-8 h-7 flex items-center justify-center text-slate-500 hover:bg-white dark:hover:bg-slate-800 rounded transition-colors"><Plus size={14}/></button>
-                        </div>
-                    </div>
-
-                    <div className="border-t border-slate-100 dark:border-slate-700 pt-4 space-y-4">
-                        <div className="flex items-center justify-between">
-                            <label className="text-sm font-bold text-slate-600 dark:text-slate-300">最终射精</label>
-                            <input 
-                                type="checkbox" 
-                                className="toggle-checkbox"
-                                checked={data.ejaculation ?? true}
-                                onChange={e => updateData('ejaculation', e.target.checked)}
-                            />
-                        </div>
-                        
-                        {data.ejaculation && (
-                            <div className="space-y-4 animate-in fade-in">
-                                <div>
-                                    <div className="flex justify-between text-xs mb-2">
-                                        <span className="font-bold text-slate-500">射精量 & 力度 (纸巾测试)</span>
-                                        <span className="font-bold text-blue-500">Level {data.volumeForceLevel}</span>
-                                    </div>
-                                    <input 
-                                        type="range" min="1" max="5" step="1"
-                                        value={data.volumeForceLevel || 3}
-                                        onChange={e => updateData('volumeForceLevel', parseInt(e.target.value))}
-                                        className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-500"
-                                    />
-                                    <div className="mt-1 text-xs text-slate-400 text-center">
-                                        {FORCE_LEVELS.find(l => l.lvl === (data.volumeForceLevel || 3))?.desc}
-                                    </div>
-                                </div>
-                                <div>
-                                    <div className="flex justify-between text-xs mb-2">
-                                        <span className="font-bold text-slate-500">愉悦强度</span>
-                                        <span className="font-bold text-pink-500">{data.orgasmIntensity}/5</span>
-                                    </div>
-                                    <div className="flex justify-between gap-1">
-                                        {[1,2,3,4,5].map(i => (
-                                            <button 
-                                                key={i} 
-                                                onClick={() => updateData('orgasmIntensity', i)}
-                                                className={`flex-1 h-8 rounded border transition-all ${data.orgasmIntensity === i ? 'bg-pink-500 border-pink-600 text-white font-bold' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-400'}`}
-                                            >
-                                                {i}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                </div>
-
-                {/* 6. State Sliders (Added Back) */}
-                <div className="space-y-3 pt-2">
-                    <h3 className="text-sm font-bold text-brand-text dark:text-slate-200 flex items-center gap-2">
-                        <Activity size={16} className="text-indigo-500"/> 状态评估
-                    </h3>
-                    <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl border border-slate-100 dark:border-slate-800 space-y-4">
-                        {/* Energy */}
-                        <div>
-                            <div className="flex justify-between text-xs mb-1.5">
-                                <span className="font-bold text-slate-500">精力状态</span>
-                                <span className="text-indigo-500 font-bold">{data.energyLevel}/5</span>
-                            </div>
-                            <input 
-                                type="range" min="1" max="5" 
-                                value={data.energyLevel || 3}
-                                onChange={e => updateData('energyLevel', parseInt(e.target.value))}
-                                className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-500"
-                            />
-                            <div className="flex justify-between text-[10px] text-slate-400 mt-1">
-                                <span>疲惫</span><span>充沛</span><span>爆表</span>
+                            <Activity size={16} className="text-purple-500"/>
+                            <div>
+                                <div className="text-xs font-bold text-slate-600 dark:text-slate-300">边缘控制 (Edging)</div>
+                                <div className="text-[10px] text-slate-400">快射时停下</div>
                             </div>
                         </div>
-                        {/* Mood */}
-                        <div>
-                            <div className="flex justify-between text-xs mb-1.5">
-                                <span className="font-bold text-slate-500">心情</span>
-                                <span className="text-pink-500 font-bold">{data.mood === 'sad' ? '低落' : data.mood === 'excited' ? '兴奋' : '平淡'}</span>
-                            </div>
-                            <input 
-                                type="range" min="1" max="5" 
-                                value={data.mood === 'sad' ? 1 : data.mood === 'anxious' ? 2 : data.mood === 'happy' ? 4 : data.mood === 'excited' ? 5 : 3}
-                                onChange={e => {
-                                    const v = parseInt(e.target.value);
-                                    const m = v === 1 ? 'sad' : v === 2 ? 'anxious' : v === 4 ? 'happy' : v === 5 ? 'excited' : 'neutral';
-                                    updateData('mood', m);
-                                }}
-                                className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-pink-500"
-                            />
-                            <div className="flex justify-between text-[10px] text-slate-400 mt-1">
-                                <span>低落</span><span>平淡</span><span>兴奋</span>
-                            </div>
-                        </div>
-                        {/* Stress */}
-                        <div>
-                            <div className="flex justify-between text-xs mb-1.5">
-                                <span className="font-bold text-slate-500">压力</span>
-                                <span className="text-orange-500 font-bold">{data.stressLevel}/5</span>
-                            </div>
-                            <input 
-                                type="range" min="1" max="5" 
-                                value={data.stressLevel || 3}
-                                onChange={e => updateData('stressLevel', parseInt(e.target.value))}
-                                className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-orange-500"
-                            />
-                            <div className="flex justify-between text-[10px] text-slate-400 mt-1">
-                                <span>放松</span><span>微压</span><span>崩溃</span>
-                            </div>
+                        <div className="flex items-center gap-3">
+                            <button onClick={decrementEdging} className="w-8 h-8 rounded-full bg-white dark:bg-slate-700 shadow flex items-center justify-center text-slate-500"><Minus size={14}/></button>
+                            <span className="font-mono font-bold text-lg w-4 text-center">{data.edgingCount || 0}</span>
+                            <button onClick={incrementEdging} className="w-8 h-8 rounded-full bg-white dark:bg-slate-700 shadow flex items-center justify-center text-purple-500"><Plus size={14}/></button>
                         </div>
                     </div>
                 </div>
 
-                {/* 7. Post-Game */}
-                <div className="grid grid-cols-2 gap-4">
-                    <div>
-                        <label className="text-[10px] text-slate-500 font-bold uppercase block mb-2">贤者时间 (心理)</label>
-                        <select 
-                            className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2 text-xs outline-none shadow-sm"
-                            value={data.postMood || ''}
-                            onChange={e => updateData('postMood', e.target.value)}
-                        >
-                            {POST_MOOD_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
-                        </select>
+                {/* 4. Outcome (Orgasm & Ejaculation) */}
+                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 space-y-4 shadow-sm">
+                    <div className="flex justify-between items-center">
+                        <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider">最终结局</h4>
+                        <div className="flex gap-2">
+                            <button 
+                                onClick={() => updateData('ejaculation', !data.ejaculation)}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${data.ejaculation ? 'bg-blue-500 text-white border-blue-600' : 'bg-slate-100 text-slate-400 border-transparent'}`}
+                            >
+                                {data.ejaculation ? '已射精' : '未射精 (寸止)'}
+                            </button>
+                        </div>
                     </div>
-                    <div>
-                        <label className="text-[10px] text-slate-500 font-bold uppercase block mb-2">身体疲劳度</label>
-                        <select 
-                            className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2 text-xs outline-none shadow-sm"
-                            value={data.fatigue || ''}
-                            onChange={e => updateData('fatigue', e.target.value)}
-                        >
-                            {FATIGUE_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
-                        </select>
-                    </div>
-                </div>
 
-                {/* 8. Interruption (Optional) */}
-                <div className="pt-2">
-                    <button 
-                        onClick={() => updateData('interrupted', !data.interrupted)}
-                        className={`text-xs flex items-center gap-1 ${data.interrupted ? 'text-red-500 font-bold' : 'text-slate-400'}`}
-                    >
-                        <AlertTriangle size={12}/> {data.interrupted ? '施法被打断' : '记录被打断情况 (可选)'}
-                    </button>
-                    {data.interrupted && (
-                        <div className="flex flex-wrap gap-2 mt-2 animate-in fade-in">
-                            {INTERRUPTION_OPTIONS.map(opt => {
-                                const reason = opt.split(' ')[1];
-                                const isSelected = data.interruptionReasons?.includes(reason);
-                                return (
+                    {/* V2: Volume & Force */}
+                    {data.ejaculation && (
+                        <div className="space-y-3 animate-in fade-in pt-2 border-t border-slate-100 dark:border-slate-800">
+                            <div className="flex justify-between items-center">
+                                <label className="text-xs font-bold text-blue-600 flex items-center"><Wind size={12} className="mr-1"/> 射精强度 (量/力)</label>
+                                <span className="text-xs font-mono font-bold bg-blue-100 text-blue-700 px-1.5 rounded">Lv.{data.volumeForceLevel}</span>
+                            </div>
+                            <div className="flex justify-between gap-1">
+                                {FORCE_LEVELS.map(l => (
                                     <button 
-                                        key={reason}
-                                        onClick={() => {
-                                            const current = data.interruptionReasons || [];
-                                            const next = current.includes(reason) ? current.filter(x => x!==reason) : [...current, reason];
-                                            updateData('interruptionReasons', next);
-                                        }}
-                                        className={`px-2 py-1 text-[10px] rounded border transition-all ${isSelected ? 'bg-red-50 dark:bg-red-900/20 text-red-600 border-red-200 dark:border-red-800' : 'bg-slate-50 dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700'}`}
+                                        key={l.lvl}
+                                        onClick={() => updateData('volumeForceLevel', l.lvl)}
+                                        className={`flex-1 h-10 rounded-lg flex flex-col items-center justify-center transition-all border ${data.volumeForceLevel === l.lvl ? 'bg-blue-50 border-blue-400 text-blue-600 shadow-sm' : 'bg-slate-50 border-transparent text-slate-300'}`}
+                                        title={l.desc}
                                     >
-                                        {opt}
+                                        <div className={`w-2 h-2 rounded-full mb-1 ${data.volumeForceLevel! >= l.lvl ? 'bg-blue-500' : 'bg-slate-300'}`}></div>
+                                        <span className="text-[9px] font-bold scale-90">{l.label.split('/')[0]}</span>
                                     </button>
-                                )
-                            })}
+                                ))}
+                            </div>
+                            <p className="text-[10px] text-slate-400 text-center italic">
+                                {FORCE_LEVELS.find(l => l.lvl === data.volumeForceLevel)?.desc}
+                            </p>
                         </div>
                     )}
+
+                    <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                        <div className="flex justify-between text-xs font-bold text-slate-500">
+                            <span>愉悦感 ({data.orgasmIntensity})</span>
+                            <span>{data.orgasmIntensity! >= 5 ? '🔥 极乐升天' : data.orgasmIntensity! >= 4 ? '😍 很爽' : data.orgasmIntensity! >= 3 ? '🙂 舒服' : '😐 一般'}</span>
+                        </div>
+                        <input 
+                            type="range" min="1" max="5" step="1"
+                            value={data.orgasmIntensity || 3}
+                            onChange={e => updateData('orgasmIntensity', parseInt(e.target.value))}
+                            className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-pink-500"
+                        />
+                    </div>
                 </div>
 
+                {/* 5. Post-Clarity (Sage Mode) */}
+                <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl space-y-4">
+                    <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center"><Sparkles size={12} className="mr-1"/> 贤者时间 (Sage Mode)</h4>
+                    
+                    {/* Psychological */}
+                    <div className="space-y-2">
+                        <label className="text-[10px] text-slate-400 block">心理状态</label>
+                        <div className="flex flex-wrap gap-2">
+                            {POST_MOOD_OPTIONS.map(opt => (
+                                <button
+                                    key={opt}
+                                    onClick={() => updateData('postMood', opt)}
+                                    className={`px-2 py-1 rounded text-xs transition-all border ${data.postMood === opt ? 'bg-indigo-100 text-indigo-700 border-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300' : 'bg-white text-slate-500 border-slate-200 dark:bg-slate-900 dark:border-slate-700'}`}
+                                >
+                                    {opt}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Physiological */}
+                    <div className="space-y-2">
+                        <label className="text-[10px] text-slate-400 block">身体疲劳度</label>
+                        <div className="flex flex-wrap gap-2">
+                            {FATIGUE_OPTIONS.map(opt => (
+                                <button
+                                    key={opt}
+                                    onClick={() => updateData('fatigue', opt)}
+                                    className={`px-2 py-1 rounded text-xs transition-all border ${data.fatigue === opt ? 'bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-900/30 dark:text-orange-300' : 'bg-white text-slate-500 border-slate-200 dark:bg-slate-900 dark:border-slate-700'}`}
+                                >
+                                    {opt}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
+                {/* 6. Notes */}
                 <div className="relative">
-                    <PenLine size={14} className="absolute left-3 top-3 text-slate-400"/>
-                    <input 
-                        className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-2.5 pl-9 pr-4 text-xs outline-none focus:border-brand-accent shadow-sm"
-                        placeholder="其他备注..."
+                    <PenLine size={14} className="absolute left-3 top-3 text-slate-400" />
+                    <textarea 
+                        className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl py-2.5 pl-9 pr-4 text-xs outline-none focus:border-brand-accent min-h-[60px]"
+                        placeholder="番号 / 链接 / 特殊感受..."
                         value={data.notes || ''}
                         onChange={e => updateData('notes', e.target.value)}
                     />
