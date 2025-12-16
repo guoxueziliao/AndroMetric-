@@ -2,9 +2,9 @@
 import React, { useMemo, useState } from 'react';
 import { useData } from '../contexts/DataContext';
 import { StatsEngine, MetricId, METRICS } from '../utils/StatsEngine';
-import { performRegression } from '../utils/regression';
+import { calculateXpStats } from '../utils/xpStats';
 import { generateInsights, Insight } from '../utils/insights';
-import { Flame, Activity, HeartPulse, Zap, TrendingUp, Dumbbell, Beer, Moon, FlaskConical, Layers, Eye, EyeOff, BrainCircuit, Clock, Radar, CheckCircle, ArrowDown, AlertTriangle, Info, BarChart3, LayoutGrid, Sparkles, PieChart } from 'lucide-react';
+import { Flame, Activity, HeartPulse, Zap, TrendingUp, Dumbbell, Beer, Moon, FlaskConical, Layers, Eye, EyeOff, BrainCircuit, Clock, Radar, CheckCircle, ArrowDown, AlertTriangle, Info, BarChart3, LayoutGrid, Sparkles, PieChart, Tag } from 'lucide-react';
 import ErrorBoundary from './ErrorBoundary';
 import { Chart, CategoryScale, LinearScale, PointElement, LineElement, BarElement, BarController, Tooltip, Legend, Filler, ScatterController, LineController, BubbleController, ArcElement, PieController, DoughnutController, RadialLinearScale, RadarController, PolarAreaController } from 'chart.js';
 import { Line, Bar, Doughnut, Radar as RadarChart } from 'react-chartjs-2';
@@ -85,6 +85,9 @@ const StatsView: React.FC<StatsViewProps> = ({ isDarkMode }) => {
 
     const statsEngine = useMemo(() => new StatsEngine(displayLogs), [displayLogs]);
     const insights = useMemo(() => generateInsights(displayLogs), [displayLogs]);
+    
+    // New XP Stats Calculation
+    const xpStats = useMemo(() => calculateXpStats(displayLogs), [displayLogs]);
 
     // Enhanced Theme for Dark Mode
     const theme = useMemo(() => ({
@@ -166,16 +169,6 @@ const StatsView: React.FC<StatsViewProps> = ({ isDarkMode }) => {
             yMax: trendComparison === 'sleep' ? 12 : trendComparison === 'alcohol' ? 100 : 6 
         };
     }, [trendComparison, theme, isDarkMode]);
-
-    const xpRadarData = useMemo(() => {
-        const counts: Record<string, number> = {};
-        displayLogs.forEach(l => l.masturbation?.forEach(m => m.assets?.categories?.forEach(c => counts[c] = (counts[c] || 0) + 1)));
-        const sorted = Object.entries(counts).sort((a,b) => b[1] - a[1]).slice(0, 6);
-        return {
-            labels: sorted.map(s => s[0]),
-            data: sorted.map(s => s[1])
-        };
-    }, [displayLogs]);
 
     const activeHoursData = useMemo(() => {
         const buckets = { morning: 0, afternoon: 0, evening: 0, night: 0 };
@@ -372,59 +365,91 @@ const StatsView: React.FC<StatsViewProps> = ({ isDarkMode }) => {
 
                 {activeTab === 'behavior' && (
                     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
-                        <ChartCard title="性癖雷达" icon={Radar} subtext="基于自慰记录的标签频率分析">
-                            {xpRadarData.data.length > 2 ? (
-                                <RadarChart 
-                                    data={{
-                                        labels: privacyMode ? xpRadarData.labels.map((_, i) => `Tag ${i+1}`) : xpRadarData.labels,
-                                        datasets: [{
-                                            label: '偏好强度',
-                                            data: xpRadarData.data,
-                                            backgroundColor: 'rgba(236, 72, 153, 0.2)', // Pink-500
-                                            borderColor: '#ec4899',
-                                            pointBackgroundColor: '#ec4899',
-                                            pointBorderColor: '#fff',
-                                            pointHoverBackgroundColor: '#fff',
-                                            pointHoverBorderColor: '#ec4899'
-                                        }]
-                                    }}
-                                    options={{
-                                        ...commonOptions,
-                                        scales: {
-                                            r: {
-                                                angleLines: { color: theme.grid },
-                                                grid: { color: theme.grid },
-                                                pointLabels: { color: theme.text, font: { size: 12, weight: 'bold' } },
-                                                ticks: { display: false, backdropColor: 'transparent' }
+                        {/* New XP Analysis Section */}
+                        <ChartCard title="偏好雷达 (6维度)" icon={Radar} subtext="基于自慰记录的 XP 维度分布">
+                            <div className="w-full h-[300px] flex items-center justify-center">
+                                {Object.values(xpStats.dimensionStats).some(d => d.recordCount > 0) ? (
+                                    <RadarChart 
+                                        data={{
+                                            labels: ['角色', '身体', '装扮', '玩法', '剧情', '风格'],
+                                            datasets: [{
+                                                label: '维度强度',
+                                                data: [
+                                                    xpStats.dimensionStats['角色'].recordCount,
+                                                    xpStats.dimensionStats['身体'].recordCount,
+                                                    xpStats.dimensionStats['装扮'].recordCount,
+                                                    xpStats.dimensionStats['玩法'].recordCount,
+                                                    xpStats.dimensionStats['剧情'].recordCount,
+                                                    xpStats.dimensionStats['风格'].recordCount
+                                                ],
+                                                backgroundColor: 'rgba(236, 72, 153, 0.2)', // Pink
+                                                borderColor: '#ec4899',
+                                                pointBackgroundColor: '#ec4899',
+                                                pointBorderColor: '#fff',
+                                            }]
+                                        }}
+                                        options={{
+                                            ...commonOptions,
+                                            scales: {
+                                                r: {
+                                                    angleLines: { color: theme.grid },
+                                                    grid: { color: theme.grid },
+                                                    pointLabels: { color: theme.text, font: { size: 12, weight: 'bold' } },
+                                                    ticks: { display: false, backdropColor: 'transparent' }
+                                                }
                                             }
-                                        }
-                                    } as any}
-                                />
-                            ) : xpRadarData.data.length > 0 ? (
-                                <Bar 
-                                    data={{
-                                        labels: privacyMode ? xpRadarData.labels.map((_, i) => `Tag ${i+1}`) : xpRadarData.labels,
-                                        datasets: [{
-                                            label: '偏好强度',
-                                            data: xpRadarData.data,
-                                            backgroundColor: 'rgba(236, 72, 153, 0.6)',
-                                            borderRadius: 4,
-                                            barThickness: 20
-                                        }]
-                                    }}
-                                    options={{
-                                        ...commonOptions,
-                                        indexAxis: 'y' as const,
-                                        plugins: { legend: { display: false } }
-                                    }}
-                                />
-                            ) : (
-                                <div className="flex flex-col items-center justify-center h-full text-slate-400">
-                                    <Layers size={32} className="mb-2 opacity-50"/>
-                                    <p className="text-xs">记录更多自慰标签以解锁雷达图</p>
-                                </div>
-                            )}
+                                        } as any}
+                                    />
+                                ) : (
+                                    <div className="text-center text-slate-400">
+                                        <Layers size={32} className="mx-auto mb-2 opacity-50"/>
+                                        <p className="text-xs">暂无维度数据，请在自慰记录中添加标签</p>
+                                    </div>
+                                )}
+                            </div>
                         </ChartCard>
+
+                        {/* Top Tags Bar Chart */}
+                        <ChartCard title="高频偏好 Top 10" icon={Tag} subtext="统计口径：按记录去重 (Record-level)">
+                            <div className="w-full h-[300px]">
+                                {xpStats.topTags.length > 0 ? (
+                                    <Bar 
+                                        data={{
+                                            labels: privacyMode ? xpStats.topTags.slice(0, 10).map((_, i) => `XP ${i+1}`) : xpStats.topTags.slice(0, 10).map(t => t.tag),
+                                            datasets: [{
+                                                label: '出现频次',
+                                                data: xpStats.topTags.slice(0, 10).map(t => t.count),
+                                                backgroundColor: 'rgba(139, 92, 246, 0.7)', // Violet
+                                                borderRadius: 4,
+                                                barThickness: 16
+                                            }]
+                                        }}
+                                        options={{
+                                            ...commonOptions,
+                                            indexAxis: 'y' as const,
+                                            plugins: { legend: { display: false } }
+                                        }}
+                                    />
+                                ) : (
+                                    <div className="flex flex-col items-center justify-center h-full text-slate-400">
+                                        <Tag size={32} className="mb-2 opacity-50"/>
+                                        <p className="text-xs">暂无标签数据</p>
+                                    </div>
+                                )}
+                            </div>
+                        </ChartCard>
+
+                        {/* Diversity & Noise Note */}
+                        <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 flex justify-between items-center text-xs text-slate-500">
+                            <div className="flex items-center gap-2">
+                                <span className="font-bold text-brand-text dark:text-slate-300">丰富度: {xpStats.diversityScore}</span>
+                                <span className="text-[10px] bg-slate-200 dark:bg-slate-800 px-1.5 py-0.5 rounded">Unique Tags</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                                <Info size={12} className="text-slate-400"/>
+                                <span>已自动过滤复合/低频噪声</span>
+                            </div>
+                        </div>
 
                         <ChartCard title="活跃时段分布" icon={Clock} subtext="早 (5-12) / 中 (12-18) / 晚 (18-22) / 夜 (22-5)">
                             <Bar 
