@@ -27,19 +27,19 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, footer 
 
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4 backdrop-blur-sm"
       aria-labelledby="modal-title"
       role="dialog"
       aria-modal="true"
       onClick={onClose}
     >
       <div 
-        className="relative bg-brand-primary w-full max-w-md rounded-2xl shadow-xl flex flex-col max-h-[90vh] overflow-hidden transition-all"
+        className="relative bg-white dark:bg-slate-900 w-full max-w-md rounded-2xl shadow-xl flex flex-col max-h-[90vh] overflow-hidden transition-all"
         onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside the modal
       >
         {/* Header - Fixed */}
         <div className="flex-none flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800">
-          <h2 id="modal-title" className="text-xl font-bold text-brand-text truncate pr-4">{title}</h2>
+          <h2 id="modal-title" className="text-xl font-bold text-brand-text dark:text-slate-100 truncate pr-4">{title}</h2>
           <button
             onClick={onClose}
             className="flex-none p-1.5 rounded-full text-brand-muted hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-brand-text transition-colors"
@@ -50,13 +50,13 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, footer 
         </div>
 
         {/* Content - Scrollable */}
-        <div className="flex-1 overflow-y-auto px-6 py-4 custom-scrollbar text-brand-text">
+        <div className="flex-1 overflow-y-auto px-6 py-4 custom-scrollbar text-brand-text dark:text-slate-300">
           {children}
         </div>
 
         {/* Footer - Fixed (if present) */}
         {footer && (
-          <div className="flex-none px-6 py-4 border-t border-slate-100 dark:border-slate-800 flex justify-end space-x-3 bg-brand-primary">
+          <div className="flex-none px-6 py-4 border-t border-slate-100 dark:border-slate-800 flex justify-end space-x-3 bg-white dark:bg-slate-900">
             {footer}
           </div>
         )}
