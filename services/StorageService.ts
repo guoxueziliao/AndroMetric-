@@ -115,8 +115,28 @@ export const StorageService = {
             }
 
             // Pipeline 2: Logical Constraint Repairs
-            // REMOVED: Auto-clamping ranges and swapping times violates Data Constitution (Section 5.4).
-            // "System must not modify original user data even if it appears logically contradictory."
+
+            // Repair 2.1: Clamp numeric ranges
+            if (newLog.morning?.hardness) {
+                if (newLog.morning.hardness < 1) { newLog.morning.hardness = 1; modified = true; }
+                if (newLog.morning.hardness > 5) { newLog.morning.hardness = 5; modified = true; }
+            }
+            if (newLog.stressLevel) {
+                if (newLog.stressLevel < 1) { newLog.stressLevel = 1; modified = true; }
+                if (newLog.stressLevel > 5) { newLog.stressLevel = 5; modified = true; }
+            }
+
+            // Repair 2.2: Fix inverted sleep times (Swap if Wake < Sleep)
+            if (newLog.sleep && newLog.sleep.startTime && newLog.sleep.endTime) {
+                const s = new Date(newLog.sleep.startTime).getTime();
+                const e = new Date(newLog.sleep.endTime).getTime();
+                if (e < s) {
+                    const temp = newLog.sleep.startTime;
+                    newLog.sleep.startTime = newLog.sleep.endTime;
+                    newLog.sleep.endTime = temp;
+                    modified = true;
+                }
+            }
 
             // Repair 2.3: Ensure IDs on sub-records
             const ensureId = (arr: any[], prefix: string) => {

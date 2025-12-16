@@ -394,7 +394,7 @@ const MyView: React.FC<MyViewProps> = ({ settings, onUpdateSettings, installProm
               {/* 1. Theme Settings */}
               <section>
                   <h3 className="text-xs font-bold text-brand-muted uppercase tracking-wider mb-3">外观</h3>
-                  <div className="bg-slate-100 dark:bg-slate-800 p-1 rounded-xl flex">
+                  <div className="bg-slate-50 dark:bg-slate-900/50 p-1 rounded-xl flex">
                       {[
                           { id: 'system', icon: Smartphone, label: '跟随系统' },
                           { id: 'light', icon: Sun, label: '浅色' },
@@ -403,7 +403,7 @@ const MyView: React.FC<MyViewProps> = ({ settings, onUpdateSettings, installProm
                           <button
                             key={opt.id}
                             onClick={() => onUpdateSettings({ ...settings, theme: opt.id as any })}
-                            className={`flex-1 py-2 flex items-center justify-center text-xs font-bold rounded-lg transition-all ${settings.theme === opt.id ? 'bg-white dark:bg-slate-700 text-brand-accent shadow-sm' : 'text-slate-500'}`}
+                            className={`flex-1 py-2 flex items-center justify-center text-xs font-bold rounded-lg transition-all ${settings.theme === opt.id ? 'bg-white dark:bg-slate-800 text-brand-accent shadow-sm' : 'text-slate-500'}`}
                           >
                               <opt.icon size={14} className="mr-1.5"/>{opt.label}
                           </button>

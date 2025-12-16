@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { ShieldCheck, BarChart3, BrainCircuit, Flame } from 'lucide-react';
 
@@ -12,7 +11,7 @@ const FeatureCard: React.FC<{ icon: React.ElementType, title: string, descriptio
             <Icon size={24} />
         </div>
         <div>
-            <h3 className="font-semibold text-lg text-brand-text dark:text-slate-100">{title}</h3>
+            <h3 className="font-semibold text-lg">{title}</h3>
             <p className="text-brand-muted">{description}</p>
         </div>
     </div>
@@ -20,10 +19,10 @@ const FeatureCard: React.FC<{ icon: React.ElementType, title: string, descriptio
 
 const Welcome: React.FC<WelcomeProps> = ({ onGetStarted }) => {
     return (
-        <div className="min-h-screen bg-brand-bg dark:bg-slate-950 text-brand-text flex flex-col items-center justify-center p-6 text-center animate-fade-in">
+        <div className="min-h-screen bg-brand-primary text-brand-text flex flex-col items-center justify-center p-6 text-center animate-fade-in">
             <main className="max-w-md w-full">
                 <Flame size={64} className="mx-auto text-brand-accent mb-4" />
-                <h1 className="text-4xl font-bold text-brand-accent mb-2">Welcome to Hardness Diary</h1>
+                <h1 className="text-4xl font-bold text-brand-accent mb-2">Welcome to AndroMetric</h1>
                 <p className="text-brand-muted mb-8">专为您打造的、科学的男性健康指标追踪工具。</p>
 
                 <div className="space-y-6 text-left mb-10">

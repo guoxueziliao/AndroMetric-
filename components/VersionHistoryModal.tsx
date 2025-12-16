@@ -205,7 +205,7 @@ const VersionHistoryModal: React.FC<VersionHistoryModalProps> = ({ isOpen, onClo
             onClose={onClose}
             title="版本记录"
             footer={
-                <button onClick={onClose} className="w-full py-3 bg-slate-100 dark:bg-slate-800 text-brand-text dark:text-slate-200 font-bold rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+                <button onClick={onClose} className="w-full py-3 bg-brand-primary dark:bg-slate-800 text-brand-text dark:text-slate-200 font-bold rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
                     关闭
                 </button>
             }
