@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useMemo, Suspense, lazy } from 'react';
-import { X, Check, Clock, Smile, PenLine, Tag, Smartphone, User, Target, Layers, Plus, Zap, Minus, FilePlus, Bookmark, ShieldCheck, Trash2, ArrowLeft, ArrowRight, MapPin, AlertTriangle, Search, Battery, Droplets, BatteryCharging, Wind, Film, Edit2, Globe, Activity, Thermometer, BrainCircuit, ChevronDown, UserCheck, Shirt, Gamepad2, BookOpen, MonitorPlay, Sparkles, Hash, Settings, Users } from 'lucide-react';
-import { MasturbationRecordDetails, LogEntry, PartnerProfile, Mood, MasturbationMaterial } from '../types';
+import { X, Check, Clock, Film, PenLine, Plus, Minus, Search, BatteryCharging, Wind, Sparkles, Hash, Settings, Users, ChevronRight, ArrowLeft, Trash2, Tag, Play } from 'lucide-react';
+import { MasturbationRecordDetails, LogEntry, PartnerProfile, MasturbationMaterial } from '../types';
 import Modal from './Modal';
 import { calculateInventory } from '../utils/helpers';
 import { useToast } from '../contexts/ToastContext';
@@ -26,9 +26,6 @@ const SOURCES = ['视频', '直播', '图片', '文爱', '回忆', '幻想', '�
 const PLATFORMS = ['Telegram', 'ONE', 'Pornhub', 'Twitter', 'Xvideos', 'OnlyFans', 'Jable', 'TikTok', '微信/QQ', '本地硬盘', '91', 'MissAV'];
 
 const TOOL_OPTIONS = ['手', '润滑液', '飞机杯', '名器/倒模', '电动玩具', '前列腺按摩器', '枕头'];
-const SCENE_OPTIONS = ['书桌/电脑前', '卧室/床上', '浴室/洗澡', '厕所/马桶', '客厅/沙发', '阳台', '车里', '公司/学校', '野外', '站立'];
-const INTERRUPTION_OPTIONS = ['🚪 有人敲门', '📞 电话/微信', '🐱 猫/狗捣乱', '🚴‍♂️ 外卖/快递', '👁️ 突然被看到', '🔊 噪音干扰'];
-
 const LUBRICANT_TYPES = ['水溶性', '油性', '硅基', '唾液', '乳液'];
 
 const FORCE_LEVELS = [
@@ -73,6 +70,10 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
         fatigue: '无明显疲劳'
     });
 
+    // Material Editor State
+    const [editingMaterial, setEditingMaterial] = useState<MasturbationMaterial | null>(null);
+    
+    // Tag Manager State
     const [activeCategoryTab, setActiveCategoryTab] = useState<string>('常用');
     const [categorySearch, setCategorySearch] = useState('');
     const [isTagManagerOpen, setIsTagManagerOpen] = useState(false);
@@ -84,12 +85,12 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
         const counts: Record<string, number> = {};
         logs.forEach(log => {
             log.masturbation?.forEach(m => {
+                // Count from existing aggregated categories
                 m.assets?.categories?.forEach(c => {
                     counts[c] = (counts[c] || 0) + 1;
                 });
             });
         });
-        // Sort descending
         return Object.entries(counts)
             .sort((a, b) => b[1] - a[1])
             .slice(0, 30)
@@ -98,13 +99,12 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
 
     const activeTags = useMemo(() => {
         if (categorySearch) {
-            // Search across all groups
             const allTags = new Set<string>();
             Object.values(XP_GROUPS).forEach(list => list.forEach(t => allTags.add(t)));
             return Array.from(allTags).filter(t => t.toLowerCase().includes(categorySearch.toLowerCase()));
         }
         if (activeCategoryTab === '常用') {
-            return frequentTags.length > 0 ? frequentTags : XP_GROUPS['角色']; // Fallback if no history
+            return frequentTags.length > 0 ? frequentTags : XP_GROUPS['角色'];
         }
         return XP_GROUPS[activeCategoryTab] || [];
     }, [activeCategoryTab, frequentTags, categorySearch]);
@@ -112,7 +112,6 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
     useEffect(() => {
         if (isOpen) {
             if (initialData) {
-                // Ensure Assets object structure is fully populated even if legacy data is missing it
                 const baseAssets = (initialData.assets || {}) as any;
                 setData({
                     ...initialData,
@@ -123,14 +122,10 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                         target: baseAssets.target || '', 
                         actors: baseAssets.actors || [] 
                     },
-                    // Ensure materials array exists
-                    materials: initialData.materials || [],
                     materialsList: initialData.materialsList || [],
-                    // V2 defaults
                     volumeForceLevel: initialData.volumeForceLevel || (initialData.ejaculation ? 3 : undefined),
                     postMood: initialData.postMood || '平静/贤者',
                     fatigue: initialData.fatigue || '无明显疲劳',
-                    // Restore state sliders defaults if missing
                     stressLevel: initialData.stressLevel ?? 3,
                     energyLevel: initialData.energyLevel ?? 3,
                     edgingCount: initialData.edgingCount ?? 0
@@ -165,6 +160,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
             }
             setCategorySearch('');
             setActiveCategoryTab('常用');
+            setEditingMaterial(null);
         }
     }, [initialData, isOpen]);
 
@@ -181,15 +177,10 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
         }));
     };
 
-    const toggleAssetItem = (field: 'sources' | 'platforms' | 'categories', item: string) => {
+    const toggleAssetItem = (field: 'sources' | 'platforms', item: string) => {
         const current = data.assets?.[field] || [];
         const next = current.includes(item) ? current.filter(x => x !== item) : [...current, item];
         updateAssets(field, next);
-    };
-
-    const handleSelectTagFromManager = (tag: string) => {
-        toggleAssetItem('categories', tag);
-        setIsTagManagerOpen(false);
     };
 
     const toggleTool = (tool: string) => {
@@ -199,39 +190,228 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
     };
 
     const handleSave = () => {
-        // Sync edging status based on count
+        // 1. Sync Edging
         const finalData = { ...data };
         if (finalData.edgingCount && finalData.edgingCount > 0) {
             finalData.edging = finalData.edgingCount === 1 ? 'once' : 'multiple';
         } else {
             finalData.edging = 'none';
         }
+
+        // 2. Aggregate Tags and Actors from MaterialsList to Global Assets
+        // This ensures the stats engine (which reads assets.categories/actors) works correctly
+        const allTags = new Set<string>();
+        const allActors = new Set<string>();
+
+        // Add existing manual global tags/actors if any (though UI mainly drives this via materials now)
+        // We preserve existing global tags that might not be in materials list
+        data.assets?.categories.forEach(t => allTags.add(t));
+        data.assets?.actors?.forEach(a => allActors.add(a));
+
+        data.materialsList?.forEach(m => {
+            m.tags?.forEach(t => allTags.add(t));
+            m.actors?.forEach(a => allActors.add(a));
+        });
+
+        finalData.assets = {
+            ...finalData.assets,
+            categories: Array.from(allTags),
+            actors: Array.from(allActors),
+            // Legacy mapping: first material title to materials[0]
+            // This is for backward compat if any other system reads `materials` array
+        };
+        
+        if (data.materialsList && data.materialsList.length > 0) {
+            finalData.materials = data.materialsList.map(m => m.label || '').filter(Boolean);
+        }
+
         onSave(finalData);
     };
 
     const incrementEdging = () => updateData('edgingCount', (data.edgingCount || 0) + 1);
     const decrementEdging = () => updateData('edgingCount', Math.max(0, (data.edgingCount || 0) - 1));
 
-    // Helper for Material Code
-    const handleMaterialChange = (val: string) => {
-        // We use the first element of materials array for the code/title
-        const newMaterials = [...(data.materials || [])];
-        newMaterials[0] = val;
-        // Filter out empty strings if needed, but for index 0 we might want to keep it empty if cleared
-        updateData('materials', newMaterials);
+    // --- Material Management ---
+
+    const handleAddMaterial = () => {
+        setEditingMaterial({
+            id: Date.now().toString(),
+            label: '',
+            actors: [],
+            tags: [],
+            publisher: ''
+        });
     };
 
-    // Helper for Actors (split string to array)
-    const handleActorsChange = (val: string) => {
-        const actors = val.split(/[,，\s]+/).filter(s => s.trim() !== '');
-        updateAssets('actors', actors);
+    const handleEditMaterial = (m: MasturbationMaterial) => {
+        setEditingMaterial({ ...m });
     };
 
-    // Safe string representation for actors input
-    const actorsInputValue = (data.assets?.actors || []).join(' ');
+    const handleDeleteMaterial = (id: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (confirm('确定删除此素材记录？')) {
+            const newList = (data.materialsList || []).filter(m => m.id !== id);
+            updateData('materialsList', newList);
+        }
+    };
+
+    const handleSaveMaterial = () => {
+        if (!editingMaterial) return;
+        const newList = [...(data.materialsList || [])];
+        const idx = newList.findIndex(m => m.id === editingMaterial.id);
+        if (idx >= 0) newList[idx] = editingMaterial;
+        else newList.push(editingMaterial);
+        
+        updateData('materialsList', newList);
+        setEditingMaterial(null);
+    };
+
+    // --- Tag Manager Integration ---
+    const handleSelectTagFromManager = (tag: string) => {
+        if (editingMaterial) {
+            // Add to editing material
+            const currentTags = editingMaterial.tags || [];
+            if (!currentTags.includes(tag)) {
+                setEditingMaterial({ ...editingMaterial, tags: [...currentTags, tag] });
+            }
+        }
+        // If not editing specific material, we could add to global assets, 
+        // but current UI flow mainly uses manager inside material editor.
+        // If the manager was opened from the main view (not implemented yet), we would handle it there.
+        setIsTagManagerOpen(false);
+    };
+
+    // --- Helper to update specific material fields ---
+    const updateMaterialField = (field: keyof MasturbationMaterial, value: any) => {
+        if (editingMaterial) {
+            setEditingMaterial({ ...editingMaterial, [field]: value });
+        }
+    };
+
+    const toggleMaterialTag = (tag: string) => {
+        if (!editingMaterial) return;
+        const current = editingMaterial.tags || [];
+        const next = current.includes(tag) ? current.filter(t => t !== tag) : [...current, tag];
+        setEditingMaterial({ ...editingMaterial, tags: next });
+    };
 
     if (!isOpen) return null;
 
+    // --- RENDER: Material Editor (Sub-view) ---
+    if (editingMaterial) {
+        return (
+            <Modal isOpen={true} onClose={() => setEditingMaterial(null)} title="编辑素材详情">
+                <div className="space-y-5 pb-20">
+                    <div className="flex items-center gap-2 text-sm text-slate-500 mb-2">
+                        <button onClick={() => setEditingMaterial(null)} className="flex items-center hover:text-brand-accent">
+                            <ArrowLeft size={16} className="mr-1"/> 返回
+                        </button>
+                    </div>
+
+                    {/* Title / Code */}
+                    <div>
+                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">标题 / 番号</label>
+                        <div className="relative">
+                            <span className="absolute left-3 top-3 text-slate-400"><Hash size={16}/></span>
+                            <input 
+                                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl py-2.5 pl-10 pr-4 text-sm focus:border-brand-accent outline-none font-medium placeholder-slate-400"
+                                placeholder="输入标题、番号或链接..."
+                                value={editingMaterial.label || ''}
+                                onChange={e => updateMaterialField('label', e.target.value)}
+                                autoFocus
+                            />
+                        </div>
+                    </div>
+
+                    {/* Actors */}
+                    <div>
+                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">主演 / 角色</label>
+                        <div className="relative">
+                            <span className="absolute left-3 top-3 text-slate-400"><Users size={16}/></span>
+                            <input 
+                                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl py-2.5 pl-10 pr-4 text-sm focus:border-brand-accent outline-none font-medium placeholder-slate-400"
+                                placeholder="多个演员用空格分隔..."
+                                value={(editingMaterial.actors || []).join(' ')}
+                                onChange={e => updateMaterialField('actors', e.target.value.split(/[,，\s]+/).filter(Boolean))}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Tags */}
+                    <div>
+                        <div className="flex justify-between items-center mb-2">
+                            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">类型 / 性癖 ({editingMaterial.tags?.length || 0})</label>
+                            <button onClick={() => setIsTagManagerOpen(true)} className="text-[10px] text-brand-accent font-bold flex items-center bg-blue-50 dark:bg-blue-900/30 px-2 py-1 rounded">
+                                <Settings size={12} className="mr-1"/> 管理
+                            </button>
+                        </div>
+
+                        {/* XP Tabs */}
+                        <div className="flex gap-1 overflow-x-auto scrollbar-hide mb-2 border-b border-slate-200 dark:border-slate-700 pb-1">
+                            {['常用', '角色', '身体', '装扮', '玩法', '剧情', '风格'].map(tab => (
+                                <button
+                                    key={tab}
+                                    onClick={() => { setActiveCategoryTab(tab); setCategorySearch(''); }}
+                                    className={`px-3 py-1.5 text-xs font-bold rounded-t-lg transition-colors whitespace-nowrap ${
+                                        activeCategoryTab === tab 
+                                        ? 'bg-white dark:bg-slate-900 text-brand-accent border-b-2 border-brand-accent' 
+                                        : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                                    }`}
+                                >
+                                    {tab}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Search Bar */}
+                        <div className="relative mb-2">
+                            <Search className="absolute left-2 top-2 text-slate-400" size={12}/>
+                            <input 
+                                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg py-1.5 pl-7 pr-2 text-xs focus:border-brand-accent outline-none"
+                                placeholder="搜索标签..."
+                                value={categorySearch}
+                                onChange={e => setCategorySearch(e.target.value)}
+                            />
+                        </div>
+
+                        {/* Tags Grid */}
+                        <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto custom-scrollbar content-start p-1 bg-slate-50/50 dark:bg-slate-900/50 rounded-lg">
+                            {activeTags.map(cat => (
+                                <button 
+                                    key={cat}
+                                    onClick={() => toggleMaterialTag(cat)}
+                                    className={`px-2.5 py-1.5 rounded-md text-xs font-medium transition-all duration-200 border ${
+                                        editingMaterial.tags?.includes(cat) 
+                                        ? 'bg-brand-accent text-white border-brand-accent shadow-sm' 
+                                        : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-brand-accent/50'
+                                    }`}
+                                >
+                                    {cat}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
+                <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-t border-slate-100 dark:border-slate-800 flex justify-end z-20">
+                    <button onClick={handleSaveMaterial} className="w-full py-3 bg-brand-accent text-white font-bold rounded-xl shadow-lg shadow-blue-500/30">
+                        确认保存素材
+                    </button>
+                </div>
+
+                <Suspense fallback={null}>
+                    <TagManager 
+                        isOpen={isTagManagerOpen} 
+                        onClose={() => setIsTagManagerOpen(false)} 
+                        onSelectTag={handleSelectTagFromManager}
+                        initialSearch={categorySearch}
+                    />
+                </Suspense>
+            </Modal>
+        );
+    }
+
+    // --- RENDER: Main Modal ---
     return (
         <Modal 
             isOpen={isOpen} 
@@ -289,7 +469,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                 <div className="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-4 border border-slate-200 dark:border-slate-700 space-y-4">
                     <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center"><Film size={14} className="mr-1.5"/> 施法素材 (Content)</h3>
                     
-                    {/* Basic Tags */}
+                    {/* Basic Tags (Source/Platform) */}
                     <div className="space-y-3">
                         {/* Source */}
                         <div className="flex flex-wrap gap-2">
@@ -319,103 +499,66 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                         )}
                     </div>
 
-                    {/* Meta Input Card (Code/Title & Actors) - Moved Here & Enhanced */}
-                    <div className="bg-white dark:bg-slate-900 rounded-xl p-3 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
-                        {/* Title / Code */}
-                        <div className="relative">
-                            <span className="absolute left-3 top-2.5 text-slate-400"><Hash size={14}/></span>
-                            <input 
-                                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-lg py-2 pl-9 pr-3 text-xs focus:border-brand-accent outline-none font-medium placeholder-slate-400"
-                                placeholder="番号 / 标题 (e.g. SSIS-123)..."
-                                value={data.materials?.[0] || ''}
-                                onChange={e => handleMaterialChange(e.target.value)}
-                            />
-                        </div>
-                        {/* Actors */}
-                        <div className="relative">
-                            <span className="absolute left-3 top-2.5 text-slate-400"><Users size={14}/></span>
-                            <input 
-                                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-lg py-2 pl-9 pr-3 text-xs focus:border-brand-accent outline-none font-medium placeholder-slate-400"
-                                placeholder="主演 / 演员 (空格分隔)..."
-                                value={actorsInputValue}
-                                onChange={e => handleActorsChange(e.target.value)}
-                            />
-                        </div>
-                    </div>
-
-                    {/* XP Categories (Improved) */}
-                    <div>
-                        <label className="text-xs font-bold text-slate-400 mb-2 flex items-center justify-between">
-                            <span>类型 / 性癖</span>
-                            <span className="text-[10px] font-normal">{data.assets?.categories?.length || 0} selected</span>
-                        </label>
-                        
-                        {/* XP Tabs */}
-                        <div className="flex gap-1 overflow-x-auto scrollbar-hide mb-2 border-b border-slate-200 dark:border-slate-700 pb-1">
-                            {['常用', '角色', '身体', '装扮', '玩法', '剧情', '风格'].map(tab => (
-                                <button
-                                    key={tab}
-                                    onClick={() => { setActiveCategoryTab(tab); setCategorySearch(''); }}
-                                    className={`px-3 py-1.5 text-xs font-bold rounded-t-lg transition-colors whitespace-nowrap ${
-                                        activeCategoryTab === tab 
-                                        ? 'bg-white dark:bg-slate-900 text-brand-accent border-b-2 border-brand-accent' 
-                                        : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
-                                    }`}
-                                >
-                                    {tab}
-                                </button>
-                            ))}
-                        </div>
-
-                        {/* Search Bar */}
-                        <div className="relative mb-2 flex gap-2">
-                            <div className="relative flex-1">
-                                <Search className="absolute left-2 top-2 text-slate-400" size={12}/>
-                                <input 
-                                    className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg py-1.5 pl-7 pr-2 text-xs focus:border-brand-accent outline-none"
-                                    placeholder="搜索标签..."
-                                    value={categorySearch}
-                                    onChange={e => setCategorySearch(e.target.value)}
-                                />
-                            </div>
-                            <button onClick={() => setIsTagManagerOpen(true)} className="px-3 bg-slate-200 dark:bg-slate-700 text-slate-500 rounded-lg text-xs font-bold hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors" title="管理或创建标签">
-                                <Settings size={14}/>
-                            </button>
-                        </div>
-
-                        {/* Tags Grid */}
-                        <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto custom-scrollbar content-start p-1">
-                            {activeTags.map(cat => (
-                                <button 
-                                    key={cat}
-                                    onClick={() => toggleAssetItem('categories', cat)}
-                                    className={`px-2.5 py-1.5 rounded-md text-xs font-medium transition-all duration-200 border ${
-                                        data.assets?.categories?.includes(cat) 
-                                        ? 'bg-brand-accent text-white border-brand-accent shadow-sm' 
-                                        : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-brand-accent/50'
-                                    }`}
-                                >
-                                    {cat}
-                                </button>
-                            ))}
-                            {activeTags.length === 0 && (
-                                <div className="w-full text-center py-4">
-                                    <p className="text-xs text-slate-400 mb-2">无匹配标签</p>
-                                    <button 
-                                        onClick={() => setIsTagManagerOpen(true)}
-                                        className="text-brand-accent text-xs font-bold hover:underline"
+                    {/* Materials List */}
+                    <div className="space-y-3">
+                        {data.materialsList && data.materialsList.length > 0 ? (
+                            <div className="space-y-2">
+                                {data.materialsList.map((m) => (
+                                    <div 
+                                        key={m.id} 
+                                        onClick={() => handleEditMaterial(m)}
+                                        className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 flex flex-col gap-2 cursor-pointer hover:border-brand-accent transition-colors group relative"
                                     >
-                                        前往标签管理创建 "{categorySearch}"
-                                    </button>
-                                </div>
-                            )}
-                        </div>
+                                        <div className="flex justify-between items-start">
+                                            <div className="font-bold text-sm text-brand-text dark:text-slate-200 truncate pr-6">
+                                                {m.label || '无标题素材'}
+                                            </div>
+                                            <ChevronRight size={16} className="text-slate-300 absolute right-2 top-3"/>
+                                        </div>
+                                        
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {m.actors && m.actors.length > 0 && m.actors.map(a => (
+                                                <span key={a} className="text-[10px] bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-300 px-1.5 py-0.5 rounded flex items-center">
+                                                    <Users size={8} className="mr-1"/> {a}
+                                                </span>
+                                            ))}
+                                            {m.tags && m.tags.length > 0 && m.tags.slice(0, 5).map(t => (
+                                                <span key={t} className="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-500 px-1.5 py-0.5 rounded flex items-center">
+                                                    <Tag size={8} className="mr-1"/> {t}
+                                                </span>
+                                            ))}
+                                            {m.tags && m.tags.length > 5 && (
+                                                <span className="text-[10px] text-slate-400 px-1">+{m.tags.length - 5}</span>
+                                            )}
+                                        </div>
+                                        
+                                        <button 
+                                            onClick={(e) => handleDeleteMaterial(m.id, e)}
+                                            className="absolute top-2 right-8 p-1.5 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                        >
+                                            <Trash2 size={12}/>
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="text-center py-6 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50/50 dark:bg-slate-900/20">
+                                <p className="text-xs text-slate-400 mb-2">暂无素材详情</p>
+                                <p className="text-[10px] text-slate-300">添加具体的视频、演员或标签</p>
+                            </div>
+                        )}
+                        
+                        <button 
+                            onClick={handleAddMaterial}
+                            className="w-full py-2.5 rounded-xl border-2 border-dashed border-blue-200 dark:border-blue-900 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors text-xs font-bold flex items-center justify-center gap-1"
+                        >
+                            <Plus size={14}/> 添加素材 / 详情
+                        </button>
                     </div>
 
-                    {/* Target/Partner */}
+                    {/* Target/Partner (Global Context) */}
                     <div className="pt-3 border-t border-slate-200 dark:border-slate-700">
                         <label className="text-xs font-bold text-slate-400 mb-2 block">施法对象 (Target)</label>
-                        {/* Partner Quick Select */}
                         {partners.length > 0 && (
                             <div className="flex gap-2 overflow-x-auto pb-2 mb-2 scrollbar-hide">
                                 {partners.map(p => (
@@ -460,7 +603,8 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                     {/* Lubricant & Condom */}
                     <div className="flex gap-2">
                         <div className="flex-1 bg-slate-50 dark:bg-slate-800 p-2 rounded-xl flex items-center gap-2 border border-slate-100 dark:border-slate-700">
-                            <Droplets size={16} className="text-blue-400 ml-1"/>
+                            {/* Icon Placeholder */}
+                            <div className="w-4 h-4 rounded-full bg-blue-400/20 flex items-center justify-center text-blue-500 font-bold text-[10px]">L</div>
                             <select 
                                 className="bg-transparent w-full text-xs font-bold outline-none text-slate-600 dark:text-slate-300"
                                 value={data.lubricant || ''}
@@ -474,14 +618,14 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                             onClick={() => updateData('useCondom', !data.useCondom)}
                             className={`px-3 py-2 rounded-xl text-xs font-bold border transition-all flex items-center gap-1 ${data.useCondom ? 'bg-green-100 text-green-700 border-green-200' : 'bg-slate-50 text-slate-400 border-transparent'}`}
                         >
-                            <ShieldCheck size={14}/> 戴套
+                            <span className="w-3 h-3 rounded-full border border-current"></span> 戴套
                         </button>
                     </div>
 
                     {/* Edging */}
                     <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700 flex justify-between items-center">
                         <div className="flex items-center gap-2">
-                            <Activity size={16} className="text-purple-500"/>
+                            <BatteryCharging size={16} className="text-purple-500"/>
                             <div>
                                 <div className="text-xs font-bold text-slate-600 dark:text-slate-300">边缘控制 (Edging)</div>
                                 <div className="text-[10px] text-slate-400">快射时停下</div>
@@ -597,16 +741,6 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                     />
                 </div>
             </div>
-
-            {/* Tag Manager Modal (Nested) */}
-            <Suspense fallback={null}>
-                <TagManager 
-                    isOpen={isTagManagerOpen} 
-                    onClose={() => setIsTagManagerOpen(false)} 
-                    onSelectTag={handleSelectTagFromManager}
-                    initialSearch={categorySearch}
-                />
-            </Suspense>
         </Modal>
     );
 };
