@@ -1,6 +1,7 @@
 
 import { LogEntry, PartnerProfile, ContentItem } from '../types';
 import { validateLogEntry } from './validators';
+import { validateTag } from './tagValidators';
 
 // Defined in UI Notice System Spec
 export interface ContentNoticeDef {
@@ -43,51 +44,76 @@ export interface DataHealthReport {
     canRepair: boolean;
 }
 
-// Reusable validation for a single ContentItem (UI & Backend) based on C-M1 to C-M7
+// Reusable validation for a single ContentItem (UI & Backend) based on C-E1 to C-I3
 export const validateContentItem = (item: ContentItem): ContentNoticeDef[] => {
     const issues: ContentNoticeDef[] = [];
 
-    // C-M7: Missing ID (Error)
+    // C-E1: Missing ID (Error)
     if (!item.id) {
         issues.push({ 
-            ruleId: 'C-M7', 
+            ruleId: 'C-E1', 
             level: 'error', 
             title: '素材缺少唯一标识', 
-            detail: '可能影响编辑与迁移', 
+            detail: '无法定位、编辑或迁移', 
             actionLabel: '一键修复' 
         });
     }
 
-    // C-M1: Missing Type (Error)
+    // C-W1: Missing Type (Warn)
     if (!item.type) {
         issues.push({ 
-            ruleId: 'C-M1', 
-            level: 'error', 
+            ruleId: 'C-W1', 
+            level: 'warn', 
             title: '未选择素材类型', 
             detail: '无法区分视频、图片或文字素材', 
             actionLabel: '去选择' 
         });
     }
 
-    // C-M2: Missing Platform (Warn)
-    // C-M3: Platform Empty but not caught by C-M2 (covered if logic ensures platform exists)
-    // Note: If type is '回忆' or '幻想', platform might not be strictly required or is implied '无来源'.
-    // The spec says: C-M2 | 未选择来源平台.
+    // C-W2: Missing Platform (Warn)
+    // Only if type is NOT memory/fantasy
     const isImmersion = item.type === '回忆' || item.type === '幻想';
     if (!isImmersion && !item.platform) {
         issues.push({ 
-            ruleId: 'C-M2', 
+            ruleId: 'C-W2', 
             level: 'warn', 
             title: '未选择来源平台', 
-            detail: '无法统计平台偏好', 
+            detail: '平台统计将失效', 
             actionLabel: '去选择' 
         });
     }
 
-    // C-M4: No Title/Notes (Info)
-    if (!item.title && !item.notes) {
+    // C-W3: Platform Name Empty (Warn)
+    // Note: Our current ContentItem type uses 'platform' string directly. 
+    // If we support 'Other', user likely enters it in platform field. 
+    // Checking if platform is literally '其他' or 'Other' with no specific detail might be relevant if we had platformName.
+    // For now, if platform is just "其他" without further info in title/notes, it's vague.
+    if (item.platform === '其他' || item.platform === 'Other') {
+         issues.push({
+            ruleId: 'C-W3',
+            level: 'warn',
+            title: '平台名称模糊',
+            detail: '建议填写具体来源名称',
+            actionLabel: '去补充'
+        });
+    }
+
+    // C-W4: Multiple Platforms (Warn) - Legacy Migration Check
+    // Detected by checking specific notes from migration or comma separated values
+    if ((item.notes && item.notes.includes('多选结构迁移')) || (item.platform && item.platform.includes(','))) {
         issues.push({ 
-            ruleId: 'C-M4', 
+            ruleId: 'C-W4', 
+            level: 'warn', 
+            title: '一个素材包含多个平台', 
+            detail: '建议拆分为多个素材单元', 
+            actionLabel: '拆分素材' 
+        });
+    }
+
+    // C-I1: Title & Actors Empty (Info)
+    if (!item.title && (!item.actors || item.actors.length === 0)) {
+        issues.push({ 
+            ruleId: 'C-I1', 
             level: 'info', 
             title: '未填写素材备注', 
             detail: '回顾时可能难以识别内容', 
@@ -95,27 +121,33 @@ export const validateContentItem = (item: ContentItem): ContentNoticeDef[] => {
         });
     }
 
-    // C-M5: XP Tags Empty (Info)
+    // C-I2: XP Tags Empty (Info)
     if (!item.xpTags || item.xpTags.length === 0) {
         issues.push({ 
-            ruleId: 'C-M5', 
+            ruleId: 'C-I2', 
             level: 'info', 
             title: '未添加性癖标签', 
             detail: '不影响记录，仅影响偏好统计', 
             actionLabel: '去添加' 
         });
-    }
-
-    // C-M6: Legacy Migration (Warn)
-    // Detected by checking specific notes from migration
-    if (item.notes && item.notes.includes('多选结构迁移')) {
-        issues.push({ 
-            ruleId: 'C-M6', 
-            level: 'warn', 
-            title: '一个素材包含多个平台', 
-            detail: '建议拆分为多个素材单元', 
-            actionLabel: '拆分素材' 
+    } else {
+        // C-I3: XP Tags Semantics Check (Info)
+        // Check if any tag is flagged as 'state' or 'invalid' by validator
+        const hasNoise = item.xpTags.some(t => {
+            const res = validateTag(t, 'xp');
+            // If Level is P0 or message contains specific keywords about state/result
+            return res.level === 'P0' || (res.message && res.message.includes('状态'));
         });
+
+        if (hasNoise) {
+            issues.push({
+                ruleId: 'C-I3',
+                level: 'info',
+                title: '标签可能混入非性癖内容',
+                detail: '检测到状态或评价类标签',
+                actionLabel: '去检查'
+            });
+        }
     }
 
     return issues;
@@ -205,9 +237,9 @@ export const checkDataHealth = (logs: LogEntry[], partners: PartnerProfile[]): D
                                 path: `masturbation[${mIdx}].contentItems[${cIdx}]`
                             });
 
-                            if (def.ruleId === 'C-M1') contentStats.missingType++;
-                            if (def.ruleId === 'C-M2') contentStats.missingPlatform++;
-                            if (def.ruleId === 'C-M7') missingIds++;
+                            if (def.ruleId === 'C-W1') contentStats.missingType++;
+                            if (def.ruleId === 'C-W2') contentStats.missingPlatform++;
+                            if (def.ruleId === 'C-E1') missingIds++;
                         });
                     });
                 } else {

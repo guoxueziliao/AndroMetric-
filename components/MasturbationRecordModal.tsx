@@ -180,8 +180,6 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
             onAction: (e) => { 
                 e.stopPropagation(); 
                 if (onAction) onAction();
-                // Special handling for C-M7 (Fix ID) could be added here if needed
-                // Currently onAction usually just opens the editor or focuses a field
             }
         } : undefined
     });
@@ -295,27 +293,58 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                                 const maxSeverity = notices.some(i => i.level === 'error') ? 'error' : notices.some(i => i.level === 'warn') ? 'warn' : 'info';
                                 
                                 return (
-                                    <div key={item.id} onClick={() => handleEditContent(item)} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 flex flex-col gap-2 cursor-pointer hover:border-brand-accent transition-all group relative active:scale-[0.98]">
+                                    <div 
+                                        key={item.id} 
+                                        onClick={() => handleEditContent(item)} 
+                                        className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 flex flex-col gap-2 cursor-pointer hover:border-brand-accent transition-all group relative active:scale-[0.98]"
+                                    >
+                                        {/* Header Row: Type & Platform + Badge */}
                                         <div className="flex justify-between items-start">
                                             <div className="flex items-center gap-2">
                                                 <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold uppercase ${!item.type ? 'bg-slate-200 text-slate-500' : (item.type === '幻想' || item.type === '回忆' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700')}`}>{item.type || '未选择'}</span>
                                                 <span className={`text-[10px] px-1.5 py-0.5 rounded ${!item.platform ? 'text-slate-400 bg-slate-100' : 'text-slate-500 bg-slate-100 dark:bg-slate-800'}`}>{item.platform || '无来源'}</span>
                                             </div>
+                                            
+                                            {/* Badge or Arrow */}
                                             <div className="flex items-center gap-2">
-                                                {hasIssues ? <NoticeBadge level={maxSeverity} count={notices.length} expanded={expandedHintId === item.id} onToggle={(e) => setExpandedHintId(expandedHintId === item.id ? null : item.id)}/> : <ChevronRight size={16} className="text-slate-300"/>}
+                                                {hasIssues ? (
+                                                    <NoticeBadge 
+                                                        level={maxSeverity} 
+                                                        count={notices.length} 
+                                                        expanded={expandedHintId === item.id}
+                                                        onToggle={(e) => setExpandedHintId(expandedHintId === item.id ? null : item.id)}
+                                                    />
+                                                ) : (
+                                                    <ChevronRight size={16} className="text-slate-300"/>
+                                                )}
                                             </div>
                                         </div>
-                                        {expandedHintId === item.id && <div onClick={(e) => e.stopPropagation()}><NoticeStack items={notices} /></div>}
-                                        <div className="font-bold text-sm text-brand-text dark:text-slate-200 truncate pr-6">{item.title || <span className="text-slate-400 italic">未填写标题</span>}</div>
+                                        
+                                        {/* Body: Title */}
+                                        <div className="font-bold text-sm text-brand-text dark:text-slate-200 truncate pr-6">
+                                            {item.title || <span className="text-slate-400 italic">未填写标题</span>}
+                                        </div>
+                                        
+                                        {/* Footer: Tags & Actors */}
                                         <div className="flex flex-wrap gap-1.5">
                                             {item.actors.slice(0, 3).map(a => <span key={a} className="text-[10px] bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-300 px-1.5 py-0.5 rounded flex items-center"><Users size={8} className="mr-1"/> {a}</span>)}
                                             {item.xpTags.slice(0, 5).map(t => <span key={t} className="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-500 px-1.5 py-0.5 rounded flex items-center border border-slate-200 dark:border-slate-700"><Tag size={8} className="mr-1"/> {t}</span>)}
                                             {(item.actors.length === 0 && item.xpTags.length === 0) && <span className="text-[10px] text-slate-300 italic">未添加标签/演员</span>}
                                         </div>
-                                        <div className="pt-2 mt-1 border-t border-slate-50 dark:border-slate-800 text-[10px] text-slate-400 flex justify-between">
-                                            <span>{item.type || '未选择'} · {item.platform || (item.type === '回忆' || item.type === '幻想' ? '无来源(合理)' : '未选择')}</span>
-                                        </div>
-                                        <button onClick={(e) => handleDeleteContent(item.id, e)} className="absolute top-2 right-8 p-1.5 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={12}/></button>
+
+                                        {/* NoticeStack (Conditional Bottom) */}
+                                        {expandedHintId === item.id && (
+                                            <div onClick={(e) => e.stopPropagation()} className="pt-2 mt-1 border-t border-slate-50 dark:border-slate-800">
+                                                <NoticeStack items={notices} />
+                                            </div>
+                                        )}
+
+                                        <button 
+                                            onClick={(e) => handleDeleteContent(item.id, e)}
+                                            className="absolute top-2 right-8 p-1.5 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                        >
+                                            <Trash2 size={12}/>
+                                        </button>
                                     </div>
                                 );
                             })}

@@ -43,7 +43,7 @@ export const NoticeBadge: React.FC<{
     return (
         <button 
             onClick={(e) => { e.stopPropagation(); onToggle && onToggle(e); }}
-            className={`flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-bold transition-all ${conf.bg} ${conf.border} ${conf.color} ${className}`}
+            className={`flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-bold transition-all hover:opacity-80 ${conf.bg} ${conf.border} ${conf.color} ${className}`}
         >
             <Icon size={12} strokeWidth={2.5} />
             <span>{count}</span>
@@ -74,15 +74,17 @@ export const InlineNotice: React.FC<{
     };
 
     return (
-        <div className={`p-3 rounded-xl border flex items-start gap-2 text-xs transition-all ${conf.bg} ${conf.border} ${className}`}>
-            <Icon size={16} className={`flex-shrink-0 mt-0.5 ${conf.color}`} />
+        <div className={`p-2.5 rounded-lg border flex items-start gap-2.5 transition-all ${conf.bg} ${conf.border} ${className}`}>
+            <Icon size={14} className={`flex-shrink-0 mt-0.5 ${conf.color}`} />
             <div className="flex-1 min-w-0">
                 <div className="flex justify-between items-start gap-2">
-                    <span className={`font-medium ${conf.color} leading-5`}>{item.title}</span>
+                    {/* Spec: title text-xs semibold */}
+                    <span className={`text-xs font-semibold ${conf.color} leading-5`}>{item.title}</span>
                     {item.action && (
+                        /* Spec: action text-[11px] bold */
                         <button 
                             onClick={handleClick}
-                            className={`flex-shrink-0 px-2 py-1 rounded-lg text-[10px] font-bold transition-colors whitespace-nowrap ${
+                            className={`flex-shrink-0 px-2 py-0.5 rounded-md text-[11px] font-bold transition-colors whitespace-nowrap ${
                                 item.action.intent === 'primary' 
                                 ? 'bg-brand-accent text-white hover:bg-brand-accent/90 shadow-sm' 
                                 : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
@@ -92,8 +94,9 @@ export const InlineNotice: React.FC<{
                         </button>
                     )}
                 </div>
+                {/* Spec: detail text-[11px] normal */}
                 {!compact && item.detail && (
-                    <p className="mt-1 opacity-80 leading-relaxed text-slate-600 dark:text-slate-400">
+                    <p className="mt-1 text-[11px] opacity-90 leading-relaxed text-slate-600 dark:text-slate-400 font-normal">
                         {item.detail}
                     </p>
                 )}
