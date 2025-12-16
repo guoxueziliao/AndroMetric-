@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo, Suspense } from 'react';
 import { LogEntry } from '../types';
-import { Tag, Edit2, Trash2, X, Check, Activity, ShieldAlert, Hash, Stethoscope, Plus, Search } from 'lucide-react';
+import { Tag, Edit2, Trash2, X, Check, Activity, ShieldAlert, Stethoscope, Plus, Search } from 'lucide-react';
 import Modal from './Modal';
 import { useData } from '../contexts/DataContext';
 import { useToast } from '../contexts/ToastContext';
@@ -19,6 +19,10 @@ interface TagManagerProps {
 
 type TagType = 'xp' | 'event' | 'symptom' | 'health_check';
 
+// System Presets (Sync with LogForm/HealthSection)
+const SYSTEM_EVENTS = ['加班', '吵架', '出差', '聚会', '家庭烦心事', '生病'];
+const SYSTEM_SYMPTOMS = ['头痛', '咽喉痛', '胃不适', '肌肉酸痛', '腹泻', '发烧', '鼻塞', '乏力'];
+
 const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, initialSearch = '' }) => {
     const { logs, addOrUpdateLog } = useData();
     const { showToast } = useToast();
@@ -27,8 +31,10 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
     const [editingTag, setEditingTag] = useState<string | null>(null);
     const [newTagName, setNewTagName] = useState('');
     
-    // Persistent Custom Tags (User added but not yet in logs)
-    const [customTags, setCustomTags] = useLocalStorage<string[]>('custom_xp_tags', []);
+    // Persistent Custom Tags
+    const [customXpTags, setCustomXpTags] = useLocalStorage<string[]>('custom_xp_tags', []);
+    const [customEventTags, setCustomEventTags] = useLocalStorage<string[]>('custom_event_tags', []);
+    const [customSymptomTags, setCustomSymptomTags] = useLocalStorage<string[]>('custom_symptom_tags', []);
     
     // Creation State
     const [isCreating, setIsCreating] = useState(false);
@@ -41,36 +47,37 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
 
         // 1. Initialize XP map with all system presets (count 0)
         Object.values(XP_GROUPS).forEach(group => {
-            group.forEach(tag => {
-                xp[tag] = 0;
-            });
+            group.forEach(tag => xp[tag] = 0);
         });
         
-        // 2. Add Custom User Tags (count 0)
-        customTags.forEach(tag => {
-            if (xp[tag] === undefined) xp[tag] = 0;
-        });
+        // 2. Initialize Events/Symptoms with System Presets (count 0)
+        SYSTEM_EVENTS.forEach(tag => events[tag] = 0);
+        SYSTEM_SYMPTOMS.forEach(tag => symptoms[tag] = 0);
+        
+        // 3. Add Custom User Tags (count 0)
+        customXpTags.forEach(tag => { if (xp[tag] === undefined) xp[tag] = 0; });
+        customEventTags.forEach(tag => { if (events[tag] === undefined) events[tag] = 0; });
+        customSymptomTags.forEach(tag => { if (symptoms[tag] === undefined) symptoms[tag] = 0; });
 
-        // 3. Count usage from logs (Count Days, not just array entries)
+        // 4. Count usage from logs
         logs.forEach(log => {
             // XP (Masturbation Categories)
-            // Flatten all tags for this day first to avoid double counting same tag in one day (though unlikely for XP in different records, logical day count vs frequency count is debatable for XP. For now, let's keep frequency for XP as it's 'times used')
             log.masturbation?.forEach(m => {
                 const uniqueCategories = new Set(m.assets?.categories || []);
                 uniqueCategories.forEach(c => xp[c] = (xp[c] || 0) + 1);
             });
             
-            // Events (Daily Events) - Deduplicate per day
+            // Events (Daily Events)
             const uniqueEvents = new Set(log.dailyEvents || []);
             uniqueEvents.forEach(e => events[e] = (events[e] || 0) + 1);
             
-            // Symptoms (Health) - Deduplicate per day
+            // Symptoms (Health)
             const uniqueSymptoms = new Set(log.health?.symptoms || []);
             uniqueSymptoms.forEach(s => symptoms[s] = (symptoms[s] || 0) + 1);
         });
 
         return { xp, event: events, symptom: symptoms };
-    }, [logs, customTags]);
+    }, [logs, customXpTags, customEventTags, customSymptomTags]);
 
     const currentTags = useMemo(() => {
         if (activeTab === 'health_check') return [];
@@ -117,17 +124,18 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
             onSelectTag(tag);
             onClose();
         } else {
-            // Management Mode: Persist to custom tags list
+            // Management Mode: Persist to respective custom list
             if (activeTab === 'xp') {
-                setCustomTags(prev => [...prev, tag]);
-                showToast(`已添加标签 "${tag}"`, 'success');
-                setSearchTerm(tag);
-                setIsCreating(false);
-            } else {
-                // For other types, we don't have a persistent store yet other than logs
-                showToast('提示: 该类型标签仅在被记录使用时才会保存。', 'info');
-                setIsCreating(false);
+                setCustomXpTags(prev => [...prev, tag]);
+            } else if (activeTab === 'event') {
+                setCustomEventTags(prev => [...prev, tag]);
+            } else if (activeTab === 'symptom') {
+                setCustomSymptomTags(prev => [...prev, tag]);
             }
+            
+            showToast(`已添加标签 "${tag}"`, 'success');
+            setSearchTerm(tag);
+            setIsCreating(false);
         }
     };
 
@@ -164,8 +172,12 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
         const targetType = activeTab;
 
         // Update Custom Tags List if applicable
-        if (customTags.includes(oldName)) {
-            setCustomTags(prev => prev.map(t => t === oldName ? newName : t));
+        if (targetType === 'xp' && customXpTags.includes(oldName)) {
+            setCustomXpTags(prev => prev.map(t => t === oldName ? newName : t));
+        } else if (targetType === 'event' && customEventTags.includes(oldName)) {
+            setCustomEventTags(prev => prev.map(t => t === oldName ? newName : t));
+        } else if (targetType === 'symptom' && customSymptomTags.includes(oldName)) {
+            setCustomSymptomTags(prev => prev.map(t => t === oldName ? newName : t));
         }
 
         // Perform Bulk Update on Logs
@@ -206,23 +218,27 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
 
     const handleDelete = async (tag: string) => {
         const usageCount = tagsMap[activeTab][tag] || 0;
+        const targetType = activeTab;
         
         if (usageCount > 0) {
             if (!confirm(`确定要删除标签 "${tag}" 吗？这会从 ${usageCount} 条历史记录中移除它。`)) return;
         } else {
-            // Unused tag (custom)
-            if (!confirm(`确定要删除预设标签 "${tag}" 吗？`)) return;
+            // Unused tag (custom or preset)
+            // if (!confirm(`确定要删除标签 "${tag}" 吗？`)) return; // Optional for quick cleanup
         }
 
         // Remove from Custom Tags
-        if (customTags.includes(tag)) {
-            setCustomTags(prev => prev.filter(t => t !== tag));
+        if (targetType === 'xp' && customXpTags.includes(tag)) {
+            setCustomXpTags(prev => prev.filter(t => t !== tag));
+        } else if (targetType === 'event' && customEventTags.includes(tag)) {
+            setCustomEventTags(prev => prev.filter(t => t !== tag));
+        } else if (targetType === 'symptom' && customSymptomTags.includes(tag)) {
+            setCustomSymptomTags(prev => prev.filter(t => t !== tag));
         }
 
         // Remove from Logs
         if (usageCount > 0) {
             let updateCount = 0;
-            const targetType = activeTab;
 
             for (const log of logs) {
                 let modified = false;
@@ -277,7 +293,7 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
                 {/* Tabs */}
                 <div className="flex bg-slate-50 dark:bg-slate-800/50 p-1 rounded-xl mb-4 border border-slate-200 dark:border-slate-800 shrink-0">
                     <button onClick={() => setActiveTab('xp')} className={`flex-1 py-2 text-xs font-bold rounded-lg flex items-center justify-center gap-2 ${activeTab === 'xp' ? 'bg-white dark:bg-slate-700 shadow-sm text-brand-accent' : 'text-slate-400 hover:text-slate-600'}`}>
-                        <Hash size={14} /> 题材/类型
+                        <Tag size={14} /> 题材/XP
                     </button>
                     <button onClick={() => setActiveTab('event')} className={`flex-1 py-2 text-xs font-bold rounded-lg flex items-center justify-center gap-2 ${activeTab === 'event' ? 'bg-white dark:bg-slate-700 shadow-sm text-brand-accent' : 'text-slate-400 hover:text-slate-600'}`}>
                         <Activity size={14} /> 事件
@@ -321,12 +337,11 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
                                         <Search className="absolute left-3 top-2.5 text-slate-400" size={16} />
                                         <input 
                                             className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2 pl-9 pr-4 text-sm outline-none focus:border-brand-accent"
-                                            placeholder="搜索标签..."
+                                            placeholder={`搜索${activeTab === 'event' ? '事件' : activeTab === 'symptom' ? '症状' : 'XP'}...`}
                                             value={searchTerm}
                                             onChange={e => setSearchTerm(e.target.value)}
                                         />
                                     </div>
-                                    {/* Always show Add button for visibility */}
                                     <button 
                                         onClick={() => { setIsCreating(true); setCreateInput(searchTerm); }} 
                                         className="px-3 bg-slate-100 dark:bg-slate-800 text-brand-muted dark:text-slate-400 hover:text-brand-accent hover:bg-blue-50 dark:hover:bg-slate-700 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700"
