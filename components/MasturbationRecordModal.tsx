@@ -18,7 +18,7 @@ interface MasturbationRecordModalProps {
 // --- CONSTANTS ---
 
 const SOURCES = ['视频', '直播', '图片', '文爱', '回忆', '幻想', '音声', '漫画'];
-const PLATFORMS = ['Telegram', 'Pornhub', 'Twitter', 'Xvideos', 'OnlyFans', 'Jable', '抖音/TikTok', '微信/QQ', '本地硬盘', '91', 'MissAV', 'Bilibili', 'YouTube', 'Instagram'];
+// Platforms removed to match screenshot
 const CATEGORIES = [
     '巨乳', '贫乳', '长腿', '丝袜', '足交', '人妻/熟女', '母子', '学生/JK', 
     '女上司/OL', '颜射', '口交', '内射', 'SM/调教', '群P', 'NTR', '纯爱', 
@@ -238,29 +238,32 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
         >
             <div className="space-y-6 pb-4">
                 
-                {/* 0. Inventory (New in v0.0.6) */}
+                {/* 0. Inventory */}
                 <div className="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl p-3 text-white flex items-center justify-between shadow-md">
                     <div className="flex items-center gap-2">
                         <BatteryCharging size={20} className="text-yellow-300 animate-pulse"/>
-                        <span className="text-xs font-bold uppercase tracking-wider opacity-90">当前蓄力 (Inventory)</span>
+                        <span className="text-xs font-bold uppercase tracking-wider opacity-90">当前蓄力 (INVENTORY)</span>
                     </div>
                     <span className="font-black text-lg tracking-tight">{inventoryTime}</span>
                 </div>
 
                 {/* 1. Time & Duration */}
                 <div className="flex gap-4">
-                    <div className="flex-1 bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
+                    <div className="flex-1 bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
                         <label className="text-[10px] text-slate-500 font-bold uppercase block mb-1">开始时间</label>
-                        <input 
-                            type="time" 
-                            value={data.startTime} 
-                            onChange={e => updateData('startTime', e.target.value)}
-                            className="bg-transparent text-xl font-mono font-bold text-brand-text dark:text-slate-200 outline-none w-full"
-                        />
+                        <div className="flex items-center justify-between">
+                            <input 
+                                type="time" 
+                                value={data.startTime} 
+                                onChange={e => updateData('startTime', e.target.value)}
+                                className="bg-transparent text-xl font-mono font-bold text-brand-text dark:text-slate-200 outline-none w-full"
+                            />
+                            <Clock size={18} className="text-slate-400" />
+                        </div>
                     </div>
-                    <div className="flex-1 bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
+                    <div className="flex-1 bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
                         <label className="text-[10px] text-slate-500 font-bold uppercase block mb-1">时长 (分钟)</label>
-                        <div className="flex items-center">
+                        <div className="flex items-center justify-between">
                             <input 
                                 type="number" 
                                 value={data.duration} 
@@ -291,24 +294,9 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                                 </button>
                             ))}
                         </div>
-
-                        {/* Platforms */}
-                        {data.assets?.sources?.some(s => ['视频', '直播', '图片'].includes(s)) && (
-                            <div className="flex flex-wrap gap-2 pt-2 border-t border-dashed border-slate-200 dark:border-slate-700">
-                                {PLATFORMS.map(p => (
-                                    <button
-                                        key={p}
-                                        onClick={() => toggleAssetItem('platforms', p)}
-                                        className={`px-2 py-1 text-[10px] rounded border transition-all ${data.assets?.platforms?.includes(p) ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-300 border-blue-200 dark:border-blue-800' : 'bg-slate-50 dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700'}`}
-                                    >
-                                        {p}
-                                    </button>
-                                ))}
-                            </div>
-                        )}
                         
                         {/* Categories / Tags */}
-                        <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
+                        <div className="bg-white dark:bg-slate-800/50 p-3 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
                             <label className="text-[10px] text-slate-500 font-bold uppercase block mb-2">性癖 / 类型 (多选)</label>
                             <div className="flex flex-wrap gap-2 h-32 overflow-y-auto custom-scrollbar content-start">
                                 {CATEGORIES.map(c => (
@@ -323,27 +311,13 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                             </div>
                         </div>
 
-                        {/* Target / Partner */}
+                        {/* Target Object */}
                         <div>
                             <label className="text-[10px] text-slate-500 font-bold uppercase block mb-2">施法对象</label>
-                            <div className="flex gap-2 mb-2 overflow-x-auto pb-1">
-                                {partners.map(p => (
-                                    <button
-                                        key={p.id}
-                                        onClick={() => updateAssets('target', p.name)}
-                                        className={`flex-shrink-0 flex flex-col items-center gap-1 opacity-80 hover:opacity-100 ${data.assets?.target === p.name ? 'opacity-100 scale-105' : ''}`}
-                                    >
-                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs text-white ${p.avatarColor || 'bg-slate-400'} ${data.assets?.target === p.name ? 'ring-2 ring-brand-accent ring-offset-1 dark:ring-offset-slate-900' : ''}`}>
-                                            {p.name[0]}
-                                        </div>
-                                        <span className={`text-[10px] ${data.assets?.target === p.name ? 'text-brand-accent font-bold' : 'text-slate-500'}`}>{p.name}</span>
-                                    </button>
-                                ))}
-                            </div>
                             <div className="relative">
                                 <Target size={14} className="absolute left-3 top-3 text-slate-400"/>
                                 <input 
-                                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg py-2 pl-9 pr-4 text-xs"
+                                    className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg py-2 pl-9 pr-4 text-xs shadow-sm focus:border-brand-accent outline-none"
                                     placeholder="或输入临时对象 (如: 某网黄, 前任...)"
                                     value={data.assets?.target || ''}
                                     onChange={e => updateAssets('target', e.target.value)}
@@ -426,7 +400,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
 
                     <div className="space-y-2">
                         {data.materialsList?.length === 0 && !isAddingMaterial && (
-                            <div className="text-center py-4 text-xs text-slate-400 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl">
+                            <div className="text-center py-4 text-xs text-slate-400 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-900">
                                 暂无详细清单，可点击上方添加
                             </div>
                         )}
@@ -434,7 +408,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                             <div 
                                 key={m.id} 
                                 onClick={() => handleEditMaterialClick(m)}
-                                className="bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700 relative group cursor-pointer hover:border-brand-accent hover:shadow-sm transition-all"
+                                className="bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700 relative group cursor-pointer hover:border-brand-accent hover:shadow-sm transition-all"
                             >
                                 <div className="flex gap-3">
                                     <div className="w-10 h-10 bg-slate-200 dark:bg-slate-700 rounded-lg flex items-center justify-center text-slate-400 shrink-0">
@@ -443,7 +417,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                                     <div className="flex-1 min-w-0">
                                         <div className="font-bold text-sm text-brand-text dark:text-slate-200 truncate pr-10">{m.label}</div>
                                         <div className="flex flex-wrap gap-1 mt-1">
-                                            {m.publisher && <span className="text-[10px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-1.5 rounded flex items-center"><Smartphone size={8} className="mr-1"/>{m.publisher}</span>}
+                                            {m.publisher && <span className="text-[10px] bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-1.5 rounded flex items-center"><Smartphone size={8} className="mr-1"/>{m.publisher}</span>}
                                             {m.tags.slice(0,3).map(t => <span key={t} className="text-[10px] text-blue-500">#{t}</span>)}
                                         </div>
                                     </div>
@@ -468,7 +442,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                                 <button
                                     key={t}
                                     onClick={() => toggleTool(t)}
-                                    className={`px-3 py-1.5 text-xs rounded-lg border transition-all ${data.tools?.includes(t) ? 'bg-orange-500 text-white border-orange-600 shadow-sm' : 'bg-slate-50 dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700'}`}
+                                    className={`px-3 py-1.5 text-xs rounded-lg border transition-all ${data.tools?.includes(t) ? 'bg-orange-500 text-white border-orange-600 shadow-sm' : 'bg-white dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700'}`}
                                 >
                                     {t}
                                 </button>
@@ -482,7 +456,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                             <div className="relative">
                                 <MapPin size={14} className="absolute left-2.5 top-2.5 text-slate-400"/>
                                 <select 
-                                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg py-2 pl-8 pr-4 text-xs outline-none appearance-none"
+                                    className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg py-2 pl-8 pr-4 text-xs outline-none appearance-none shadow-sm"
                                     value={data.location || ''}
                                     onChange={e => updateData('location', e.target.value)}
                                 >
@@ -496,7 +470,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                             <div className="relative">
                                 <Droplets size={14} className="absolute left-2.5 top-2.5 text-slate-400"/>
                                 <select 
-                                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg py-2 pl-8 pr-4 text-xs outline-none appearance-none"
+                                    className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg py-2 pl-8 pr-4 text-xs outline-none appearance-none shadow-sm"
                                     value={data.lubricant || ''}
                                     onChange={e => updateData('lubricant', e.target.value)}
                                 >
@@ -509,13 +483,13 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                 </div>
 
                 {/* 5. Edging & Outcome */}
-                <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-200 dark:border-slate-700 space-y-4">
+                <div className="bg-white dark:bg-slate-800/50 p-4 rounded-xl border border-slate-200 dark:border-slate-700 space-y-4 shadow-sm">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                             <span className="text-sm font-bold text-slate-600 dark:text-slate-300">边缘控制 (Edging)</span>
                             <span className="text-[10px] px-1.5 py-0.5 bg-yellow-100 text-yellow-700 rounded border border-yellow-200 font-bold">推荐</span>
                         </div>
-                        <div className="flex bg-white dark:bg-slate-900 rounded-lg p-1 border border-slate-200 dark:border-slate-700">
+                        <div className="flex bg-slate-100 dark:bg-slate-900 rounded-lg p-1 border border-slate-200 dark:border-slate-700">
                             {['none', 'once', 'multiple'].map(opt => (
                                 <button
                                     key={opt}
@@ -528,7 +502,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                         </div>
                     </div>
 
-                    <div className="border-t border-slate-200 dark:border-slate-700 pt-4 space-y-4">
+                    <div className="border-t border-slate-100 dark:border-slate-700 pt-4 space-y-4">
                         <div className="flex items-center justify-between">
                             <label className="text-sm font-bold text-slate-600 dark:text-slate-300">最终射精</label>
                             <input 
@@ -583,7 +557,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                     <div>
                         <label className="text-[10px] text-slate-500 font-bold uppercase block mb-2">贤者时间 (心理)</label>
                         <select 
-                            className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2 text-xs outline-none"
+                            className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2 text-xs outline-none shadow-sm"
                             value={data.postMood || ''}
                             onChange={e => updateData('postMood', e.target.value)}
                         >
@@ -593,7 +567,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                     <div>
                         <label className="text-[10px] text-slate-500 font-bold uppercase block mb-2">身体疲劳度</label>
                         <select 
-                            className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2 text-xs outline-none"
+                            className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2 text-xs outline-none shadow-sm"
                             value={data.fatigue || ''}
                             onChange={e => updateData('fatigue', e.target.value)}
                         >
@@ -636,7 +610,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                 <div className="relative">
                     <PenLine size={14} className="absolute left-3 top-3 text-slate-400"/>
                     <input 
-                        className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-2.5 pl-9 pr-4 text-xs outline-none focus:border-brand-accent"
+                        className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-2.5 pl-9 pr-4 text-xs outline-none focus:border-brand-accent shadow-sm"
                         placeholder="其他备注..."
                         value={data.notes || ''}
                         onChange={e => updateData('notes', e.target.value)}
