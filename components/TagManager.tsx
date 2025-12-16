@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, Suspense } from 'react';
 import { LogEntry } from '../types';
 import { Tag, Edit2, Trash2, X, Check, Activity, ShieldAlert, Hash, Stethoscope, Plus, Search } from 'lucide-react';
@@ -6,6 +7,7 @@ import { useData } from '../contexts/DataContext';
 import { useToast } from '../contexts/ToastContext';
 import { validateTag } from '../utils/tagValidators';
 import TagHealthCheck from './TagHealthCheck';
+import { XP_GROUPS } from '../utils/constants';
 
 interface TagManagerProps {
     isOpen: boolean;
@@ -33,6 +35,15 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
         const events: Record<string, number> = {};
         const symptoms: Record<string, number> = {};
 
+        // 1. Initialize XP map with all system presets (count 0)
+        // This ensures they are visible even if unused
+        Object.values(XP_GROUPS).forEach(group => {
+            group.forEach(tag => {
+                xp[tag] = 0;
+            });
+        });
+
+        // 2. Count usage from logs
         logs.forEach(log => {
             // XP (Masturbation Categories)
             log.masturbation?.forEach(m => {
@@ -52,6 +63,7 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
         const map = tagsMap[activeTab];
         return Object.entries(map)
             .filter(([name]) => name.toLowerCase().includes(searchTerm.toLowerCase()))
+            // Sort: High frequency first, then unused (0)
             .sort((a: [string, number], b: [string, number]) => b[1] - a[1]);
     }, [tagsMap, activeTab, searchTerm]);
 
@@ -60,7 +72,7 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
         if (!tag) return;
 
         // 1. Check if exists
-        if (tagsMap[activeTab][tag]) {
+        if (tagsMap[activeTab][tag] !== undefined) {
             if (onSelectTag) {
                 onSelectTag(tag);
                 onClose();
@@ -322,12 +334,19 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
                                                         }
                                                     }}
                                                 >
-                                                    <span className="font-bold text-brand-text dark:text-slate-200 text-sm">{tag}</span>
-                                                    <span className="text-[10px] bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full text-slate-500">{count}次</span>
+                                                    <span className={`font-bold text-sm ${count === 0 ? 'text-slate-400 dark:text-slate-500' : 'text-brand-text dark:text-slate-200'}`}>
+                                                        {tag}
+                                                    </span>
+                                                    {count > 0 ? (
+                                                        <span className="text-[10px] bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded-full text-slate-500">{count}次</span>
+                                                    ) : (
+                                                        <span className="text-[10px] bg-slate-50 dark:bg-slate-800/50 px-1.5 py-0.5 rounded-full text-slate-300 border border-slate-100 dark:border-slate-800">系统预设</span>
+                                                    )}
                                                 </div>
                                                 <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    {/* Rename allowed on all tags, Delete only on used tags */}
                                                     <button onClick={() => { setEditingTag(tag); setNewTagName(tag); }} className="p-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-slate-400 hover:text-blue-500 rounded-lg"><Edit2 size={14}/></button>
-                                                    <button onClick={() => handleDelete(tag)} className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-400 hover:text-red-500 rounded-lg"><Trash2 size={14}/></button>
+                                                    {count > 0 && <button onClick={() => handleDelete(tag)} className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-400 hover:text-red-500 rounded-lg"><Trash2 size={14}/></button>}
                                                 </div>
                                             </>
                                         )}

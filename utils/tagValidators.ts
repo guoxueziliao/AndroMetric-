@@ -59,6 +59,9 @@ export const validateTag = (tagName: string): ValidationResult => {
 
     // 5. P1: Synonyms - PRD 8.2
     for (const [key, standard] of Object.entries(SYNONYMS)) {
+        // Prevent false positives (e.g., "Cosplay" contains "sp")
+        if (key === 'sp' && lower.includes('cosplay')) continue;
+        
         if (lower === key || lower.includes(key)) {
             return { level: 'P1', message: `已存在含义相近的常用标签，建议统一为 "${standard}"。`, suggestion: standard };
         }
