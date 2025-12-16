@@ -306,16 +306,13 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
             </section>
         )}
 
-        {/* Widgets Grid */}
-        <div className="grid grid-cols-2 gap-4">
-            <SleepWidget log={latestLog} />
-            <ActivityWidget log={latestLog} />
-        </div>
-
-        {/* Calendar */}
-        <section className="bg-white dark:bg-slate-900 p-2 rounded-[2rem] shadow-soft border border-slate-100 dark:border-slate-800">
-            <CalendarHeatmap logs={logs} onDateClick={handleDateClickForSummary} />
-        </section>
+        {/* Calendar with Widgets & Stats */}
+        <CalendarHeatmap logs={logs} onDateClick={handleDateClickForSummary}>
+            <div className="grid grid-cols-2 gap-4 mt-2">
+                <SleepWidget log={latestLog} />
+                <ActivityWidget log={latestLog} />
+            </div>
+        </CalendarHeatmap>
       </div>
       
       {/* Modal Definitions (Summary, Actions, etc.) */}
