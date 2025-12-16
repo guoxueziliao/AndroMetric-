@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo, useRef } from 'react';
 import { LogEntry } from '../types';
-import { ChevronLeft, ChevronRight, Heart, Hand, ShieldAlert, Zap, Activity, Moon, Beer, Film, BrainCircuit, Star, Dumbbell, Clock, BatteryWarning, TrendingUp, TrendingDown, Minus, Flame, Sparkles, Calendar as CalendarIcon, ChevronDown as ChevronDownIcon, SunMedium, Footprints } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Heart, Hand, ShieldAlert, Zap, Activity, Moon, Beer, Film, BrainCircuit, Star, Dumbbell, Clock, BatteryWarning, TrendingUp, TrendingDown, Minus, Flame, Sparkles, Calendar as CalendarIcon, ChevronDown as ChevronDownIcon, SunMedium, Footprints, X } from 'lucide-react';
 import { analyzeSleep, calculateDataQuality } from '../utils/helpers';
 
 interface ActivityCalendarProps {
@@ -137,7 +137,7 @@ const CalendarHeatmap: React.FC<ActivityCalendarProps> = ({ logs, onDateClick, c
             morningWoodRate, 
             exerciseDays, 
             masturbationCount, 
-            sexCount,
+            sexCount, 
             trend, 
             topXP: topXP ? topXP[0] : '无', 
             alcoholImpact, 
@@ -156,10 +156,8 @@ const CalendarHeatmap: React.FC<ActivityCalendarProps> = ({ logs, onDateClick, c
         let visual = { bg: "bg-white dark:bg-slate-900", border: "border-slate-100 dark:border-slate-800", text: "text-slate-400 dark:text-slate-600" };
         let opacityClass = "opacity-100";
         let ringClass = isToday ? 'ring-2 ring-brand-accent z-10' : '';
-        let qualityScore = 0;
         
         if (log) {
-            qualityScore = calculateDataQuality(log);
             const sleepAnalysis = analyzeSleep(log.sleep?.startTime, log.sleep?.endTime);
             const checks: Record<FilterType, boolean> = {
                 all: true,
@@ -223,24 +221,54 @@ const CalendarHeatmap: React.FC<ActivityCalendarProps> = ({ logs, onDateClick, c
     return (
         <div className="w-full space-y-4">
             <div className="flex items-center justify-between px-2">
-                <div className="flex items-center space-x-2 relative group">
-                    <div className="relative">
-                        <h2 className="text-2xl font-black text-brand-text dark:text-slate-100 tracking-tight cursor-pointer flex items-center gap-2">
+                {/* Year/Month Capsule */}
+                <div className="relative group">
+                    <button className="flex items-center gap-2 px-4 py-2 rounded-full bg-white dark:bg-slate-800 shadow-sm border border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+                        <span className="text-xl font-black text-brand-text dark:text-slate-100 tracking-tight leading-none">
                             {year}.{String(month).padStart(2,'0')}
-                            <ChevronDownIcon size={16} className="text-slate-300"/>
-                        </h2>
-                        <input 
-                            type="month" 
-                            className="absolute inset-0 opacity-0 cursor-pointer"
-                            value={monthValue}
-                            onChange={handleMonthChange}
-                        />
-                    </div>
+                        </span>
+                        <ChevronDownIcon size={16} className="text-slate-400"/>
+                    </button>
+                    <input 
+                        type="month" 
+                        className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                        value={monthValue}
+                        onChange={handleMonthChange}
+                    />
                 </div>
-                <div className="flex gap-2">
-                    <button onClick={prevMonth} className="p-2 rounded-full bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"><ChevronLeft size={18} className="text-slate-500"/></button>
-                    <button onClick={nextMonth} className="p-2 rounded-full bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"><ChevronRight size={18} className="text-slate-500"/></button>
+                
+                {/* Navigation Capsule */}
+                <div className="flex items-center bg-white dark:bg-slate-800 rounded-full shadow-sm border border-slate-100 dark:border-slate-700 p-1">
+                    <button onClick={prevMonth} className="p-2 rounded-full hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-400 hover:text-brand-text transition-colors">
+                        <ChevronLeft size={18}/>
+                    </button>
+                    <div className="w-px h-4 bg-slate-200 dark:bg-slate-700 mx-1"></div>
+                    <button onClick={nextMonth} className="p-2 rounded-full hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-400 hover:text-brand-text transition-colors">
+                        <ChevronRight size={18}/>
+                    </button>
                 </div>
+            </div>
+            
+            {/* Filter Capsules */}
+            <div className="flex gap-2 overflow-x-auto scrollbar-hide px-1 pb-1">
+                {FILTERS.map(f => {
+                    const isActive = activeFilter === f.id;
+                    const Icon = f.icon;
+                    return (
+                        <button
+                            key={f.id}
+                            onClick={() => setActiveFilter(f.id)}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap border ${
+                                isActive 
+                                ? 'bg-brand-accent text-white border-brand-accent shadow-sm' 
+                                : 'bg-white dark:bg-slate-900 text-slate-500 border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800'
+                            }`}
+                        >
+                            {Icon && <Icon size={12}/>}
+                            {f.label}
+                        </button>
+                    );
+                })}
             </div>
             
             <div className="touch-pan-y" onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
