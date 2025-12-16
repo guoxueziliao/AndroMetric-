@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useMemo, Suspense, lazy } from 'react';
-import { X, Check, Clock, Film, PenLine, Plus, Minus, Search, BatteryCharging, Wind, Sparkles, Hash, Settings, Users, ChevronRight, ArrowLeft, Trash2, Tag, Play } from 'lucide-react';
-import { MasturbationRecordDetails, LogEntry, PartnerProfile, MasturbationMaterial } from '../types';
+import { X, Check, Clock, Film, PenLine, Plus, Minus, BatteryCharging, Wind, Sparkles, Hash, Settings, Users, ChevronRight, ArrowLeft, Trash2, Tag, Play, MonitorPlay, Search, AlertTriangle } from 'lucide-react';
+import { MasturbationRecordDetails, LogEntry, PartnerProfile, ContentItem } from '../types';
 import Modal from './Modal';
 import { calculateInventory } from '../utils/helpers';
 import { useToast } from '../contexts/ToastContext';
@@ -22,7 +22,8 @@ interface MasturbationRecordModalProps {
 
 // --- CONSTANTS ---
 
-const SOURCES = ['视频', '直播', '图片', '文爱', '回忆', '幻想', '音声', '漫画'];
+// Updated to match docs/content-item-schema-final.md
+const CONTENT_TYPES = ['视频', '直播', '图片', '小说', '回忆', '幻想', '音频', '漫画'];
 const PLATFORMS = ['Telegram', 'ONE', 'Pornhub', 'Twitter', 'Xvideos', 'OnlyFans', 'Jable', 'TikTok', '微信/QQ', '本地硬盘', '91', 'MissAV'];
 
 const TOOL_OPTIONS = ['手', '润滑液', '飞机杯', '名器/倒模', '电动玩具', '前列腺按摩器', '枕头'];
@@ -49,10 +50,14 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
         duration: 15,
         status: 'completed',
         tools: ['手'],
-        materials: [],
-        props: [],
+        // v0.0.6: Content Items
+        contentItems: [],
+        
+        // Legacy/Deprecated fields kept for type safety but not used in UI
+        materials: [], props: [],
         assets: { sources: [], platforms: [], categories: [], target: '', actors: [] },
         materialsList: [],
+
         edging: 'none',
         edgingCount: 0,
         lubricant: '',
@@ -70,8 +75,8 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
         fatigue: '无明显疲劳'
     });
 
-    // Material Editor State
-    const [editingMaterial, setEditingMaterial] = useState<MasturbationMaterial | null>(null);
+    // Content Item Editor State
+    const [editingItem, setEditingItem] = useState<ContentItem | null>(null);
     
     // Tag Manager State
     const [activeCategoryTab, setActiveCategoryTab] = useState<string>('常用');
@@ -85,10 +90,9 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
         const counts: Record<string, number> = {};
         logs.forEach(log => {
             log.masturbation?.forEach(m => {
-                // Count from existing aggregated categories
-                m.assets?.categories?.forEach(c => {
-                    counts[c] = (counts[c] || 0) + 1;
-                });
+                m.contentItems?.forEach(c => c.xpTags.forEach(t => counts[t] = (counts[t] || 0) + 1));
+                // Legacy fallback for freq stats
+                m.assets?.categories?.forEach(c => counts[c] = (counts[c] || 0) + 1);
             });
         });
         return Object.entries(counts)
@@ -112,17 +116,10 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
     useEffect(() => {
         if (isOpen) {
             if (initialData) {
-                const baseAssets = (initialData.assets || {}) as any;
+                // Ensure contentItems is populated (handled by hydration usually, but double check)
                 setData({
                     ...initialData,
-                    assets: { 
-                        sources: baseAssets.sources || [], 
-                        platforms: baseAssets.platforms || [], 
-                        categories: baseAssets.categories || [], 
-                        target: baseAssets.target || '', 
-                        actors: baseAssets.actors || [] 
-                    },
-                    materialsList: initialData.materialsList || [],
+                    contentItems: initialData.contentItems || [],
                     volumeForceLevel: initialData.volumeForceLevel || (initialData.ejaculation ? 3 : undefined),
                     postMood: initialData.postMood || '平静/贤者',
                     fatigue: initialData.fatigue || '无明显疲劳',
@@ -137,30 +134,18 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                     duration: 15,
                     status: 'completed',
                     tools: ['手'],
-                    materials: [],
-                    props: [],
-                    assets: { sources: [], platforms: [], categories: [], target: '', actors: [] },
-                    materialsList: [],
-                    edging: 'none',
-                    edgingCount: 0,
-                    lubricant: '',
-                    useCondom: false,
-                    ejaculation: true,
-                    orgasmIntensity: 3,
-                    mood: 'neutral',
-                    stressLevel: 3,
-                    energyLevel: 3,
-                    interrupted: false,
-                    interruptionReasons: [],
-                    notes: '',
-                    volumeForceLevel: 3,
-                    postMood: '平静/贤者',
-                    fatigue: '无明显疲劳'
+                    contentItems: [],
+                    // Defaults
+                    materials: [], props: [], assets: { sources: [], platforms: [], categories: [], target: '', actors: [] }, materialsList: [],
+                    edging: 'none', edgingCount: 0, lubricant: '', useCondom: false, ejaculation: true,
+                    orgasmIntensity: 3, mood: 'neutral', stressLevel: 3, energyLevel: 3,
+                    interrupted: false, interruptionReasons: [], notes: '',
+                    volumeForceLevel: 3, postMood: '平静/贤者', fatigue: '无明显疲劳'
                 });
             }
             setCategorySearch('');
             setActiveCategoryTab('常用');
-            setEditingMaterial(null);
+            setEditingItem(null);
         }
     }, [initialData, isOpen]);
 
@@ -170,19 +155,6 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
         setData(prev => ({ ...prev, [field]: value }));
     };
 
-    const updateAssets = (field: keyof typeof data.assets, value: any) => {
-        setData(prev => ({
-            ...prev,
-            assets: { ...(prev.assets || {}), [field]: value } as any
-        }));
-    };
-
-    const toggleAssetItem = (field: 'sources' | 'platforms', item: string) => {
-        const current = data.assets?.[field] || [];
-        const next = current.includes(item) ? current.filter(x => x !== item) : [...current, item];
-        updateAssets(field, next);
-    };
-
     const toggleTool = (tool: string) => {
         const current = data.tools || [];
         const next = current.includes(tool) ? current.filter(x => x !== tool) : [...current, tool];
@@ -190,40 +162,35 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
     };
 
     const handleSave = () => {
-        // 1. Sync Edging
+        // Sync Edging Logic
         const finalData = { ...data };
         if (finalData.edgingCount && finalData.edgingCount > 0) {
             finalData.edging = finalData.edgingCount === 1 ? 'once' : 'multiple';
         } else {
             finalData.edging = 'none';
         }
-
-        // 2. Aggregate Tags and Actors from MaterialsList to Global Assets
-        // This ensures the stats engine (which reads assets.categories/actors) works correctly
+        
+        // Populate Legacy Assets for backward compat (Analytics/Search)
+        // Aggregate from contentItems
         const allTags = new Set<string>();
         const allActors = new Set<string>();
-
-        // Add existing manual global tags/actors if any (though UI mainly drives this via materials now)
-        // We preserve existing global tags that might not be in materials list
-        data.assets?.categories.forEach(t => allTags.add(t));
-        data.assets?.actors?.forEach(a => allActors.add(a));
-
-        data.materialsList?.forEach(m => {
-            m.tags?.forEach(t => allTags.add(t));
-            m.actors?.forEach(a => allActors.add(a));
+        const allSources = new Set<string>();
+        const allPlatforms = new Set<string>();
+        
+        finalData.contentItems.forEach(item => {
+            if (item.type) allSources.add(item.type);
+            if (item.platform) allPlatforms.add(item.platform);
+            item.xpTags.forEach(t => allTags.add(t));
+            item.actors.forEach(a => allActors.add(a));
         });
 
         finalData.assets = {
-            ...finalData.assets,
             categories: Array.from(allTags),
             actors: Array.from(allActors),
-            // Legacy mapping: first material title to materials[0]
-            // This is for backward compat if any other system reads `materials` array
+            sources: Array.from(allSources),
+            platforms: Array.from(allPlatforms),
+            target: '', // Legacy field
         };
-        
-        if (data.materialsList && data.materialsList.length > 0) {
-            finalData.materials = data.materialsList.map(m => m.label || '').filter(Boolean);
-        }
 
         onSave(finalData);
     };
@@ -231,117 +198,161 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
     const incrementEdging = () => updateData('edgingCount', (data.edgingCount || 0) + 1);
     const decrementEdging = () => updateData('edgingCount', Math.max(0, (data.edgingCount || 0) - 1));
 
-    // --- Material Management ---
+    // --- Content Item Management ---
 
-    const handleAddMaterial = () => {
-        setEditingMaterial({
+    const handleAddContent = () => {
+        setEditingItem({
             id: Date.now().toString(),
-            label: '',
+            type: '视频', // Default
+            platform: undefined,
             actors: [],
-            tags: [],
-            publisher: ''
+            xpTags: [],
+            title: ''
         });
     };
 
-    const handleEditMaterial = (m: MasturbationMaterial) => {
-        setEditingMaterial({ ...m });
+    const handleEditContent = (item: ContentItem) => {
+        setEditingItem({ ...item });
     };
 
-    const handleDeleteMaterial = (id: string, e: React.MouseEvent) => {
+    const handleDeleteContent = (id: string, e: React.MouseEvent) => {
         e.stopPropagation();
         if (confirm('确定删除此素材记录？')) {
-            const newList = (data.materialsList || []).filter(m => m.id !== id);
-            updateData('materialsList', newList);
+            const newList = data.contentItems.filter(m => m.id !== id);
+            updateData('contentItems', newList);
         }
     };
 
-    const handleSaveMaterial = () => {
-        if (!editingMaterial) return;
-        const newList = [...(data.materialsList || [])];
-        const idx = newList.findIndex(m => m.id === editingMaterial.id);
-        if (idx >= 0) newList[idx] = editingMaterial;
-        else newList.push(editingMaterial);
+    const handleSaveContentItem = () => {
+        if (!editingItem) return;
         
-        updateData('materialsList', newList);
-        setEditingMaterial(null);
+        // Simple Validation per Interaction Spec
+        if (!editingItem.type) {
+            showToast('未选择内容形式', 'error');
+            return;
+        }
+        // Basic check for platform if not memory/fantasy
+        if (!['回忆', '幻想'].includes(editingItem.type) && !editingItem.platform) {
+             showToast('建议选择素材来源 (可选)', 'info');
+        }
+
+        const newList = [...data.contentItems];
+        const idx = newList.findIndex(m => m.id === editingItem.id);
+        if (idx >= 0) newList[idx] = editingItem;
+        else newList.push(editingItem);
+        
+        updateData('contentItems', newList);
+        setEditingItem(null);
+    };
+
+    // --- Content Item Editor Helpers ---
+    
+    const updateItemField = (field: keyof ContentItem, value: any) => {
+        if (editingItem) setEditingItem({ ...editingItem, [field]: value });
+    };
+
+    const toggleItemTag = (tag: string) => {
+        if (!editingItem) return;
+        const current = editingItem.xpTags || [];
+        const next = current.includes(tag) ? current.filter(t => t !== tag) : [...current, tag];
+        setEditingItem({ ...editingItem, xpTags: next });
     };
 
     // --- Tag Manager Integration ---
     const handleSelectTagFromManager = (tag: string) => {
-        if (editingMaterial) {
-            // Add to editing material
-            const currentTags = editingMaterial.tags || [];
+        if (editingItem) {
+            const currentTags = editingItem.xpTags || [];
             if (!currentTags.includes(tag)) {
-                setEditingMaterial({ ...editingMaterial, tags: [...currentTags, tag] });
+                setEditingItem({ ...editingItem, xpTags: [...currentTags, tag] });
             }
         }
-        // If not editing specific material, we could add to global assets, 
-        // but current UI flow mainly uses manager inside material editor.
-        // If the manager was opened from the main view (not implemented yet), we would handle it there.
         setIsTagManagerOpen(false);
-    };
-
-    // --- Helper to update specific material fields ---
-    const updateMaterialField = (field: keyof MasturbationMaterial, value: any) => {
-        if (editingMaterial) {
-            setEditingMaterial({ ...editingMaterial, [field]: value });
-        }
-    };
-
-    const toggleMaterialTag = (tag: string) => {
-        if (!editingMaterial) return;
-        const current = editingMaterial.tags || [];
-        const next = current.includes(tag) ? current.filter(t => t !== tag) : [...current, tag];
-        setEditingMaterial({ ...editingMaterial, tags: next });
     };
 
     if (!isOpen) return null;
 
-    // --- RENDER: Material Editor (Sub-view) ---
-    if (editingMaterial) {
+    // --- SUB-VIEW: Content Item Editor ---
+    if (editingItem) {
         return (
-            <Modal isOpen={true} onClose={() => setEditingMaterial(null)} title="编辑素材详情">
-                <div className="space-y-5 pb-20">
+            <Modal isOpen={true} onClose={() => setEditingItem(null)} title="编辑素材详情">
+                <div className="space-y-6 pb-20">
                     <div className="flex items-center gap-2 text-sm text-slate-500 mb-2">
-                        <button onClick={() => setEditingMaterial(null)} className="flex items-center hover:text-brand-accent">
+                        <button onClick={() => setEditingItem(null)} className="flex items-center hover:text-brand-accent">
                             <ArrowLeft size={16} className="mr-1"/> 返回
                         </button>
                     </div>
 
-                    {/* Title / Code */}
-                    <div>
-                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">标题 / 番号</label>
-                        <div className="relative">
-                            <span className="absolute left-3 top-3 text-slate-400"><Hash size={16}/></span>
-                            <input 
-                                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl py-2.5 pl-10 pr-4 text-sm focus:border-brand-accent outline-none font-medium placeholder-slate-400"
-                                placeholder="输入标题、番号或链接..."
-                                value={editingMaterial.label || ''}
-                                onChange={e => updateMaterialField('label', e.target.value)}
-                                autoFocus
-                            />
+                    {/* 1. Type & Platform */}
+                    <div className="space-y-4">
+                        <div>
+                            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">素材类型 (必选)</label>
+                            <div className="flex flex-wrap gap-2">
+                                {CONTENT_TYPES.map(type => (
+                                    <button 
+                                        key={type}
+                                        onClick={() => updateItemField('type', type)}
+                                        className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${editingItem.type === type ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-500'}`}
+                                    >
+                                        {type}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {(['视频', '直播', '图片', '漫画', '音频', '小说'].includes(editingItem.type)) && (
+                            <div className="animate-in fade-in slide-in-from-top-1">
+                                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">平台 / 来源</label>
+                                <div className="flex flex-wrap gap-2">
+                                    {PLATFORMS.map(pf => (
+                                        <button 
+                                            key={pf}
+                                            onClick={() => updateItemField('platform', editingItem.platform === pf ? undefined : pf)}
+                                            className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${editingItem.platform === pf ? 'bg-purple-600 text-white border-purple-600 shadow-md' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-500'}`}
+                                        >
+                                            {pf}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* 2. Details */}
+                    <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+                        {/* Title */}
+                        <div>
+                            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">标题 / 番号</label>
+                            <div className="relative">
+                                <span className="absolute left-3 top-3 text-slate-400"><Hash size={16}/></span>
+                                <input 
+                                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl py-2.5 pl-10 pr-4 text-sm focus:border-brand-accent outline-none font-medium placeholder-slate-400"
+                                    placeholder="输入标题、番号或链接..."
+                                    value={editingItem.title || ''}
+                                    onChange={e => updateItemField('title', e.target.value)}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Actors */}
+                        <div>
+                            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">主演 / 角色</label>
+                            <div className="relative">
+                                <span className="absolute left-3 top-3 text-slate-400"><Users size={16}/></span>
+                                <input 
+                                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl py-2.5 pl-10 pr-4 text-sm focus:border-brand-accent outline-none font-medium placeholder-slate-400"
+                                    placeholder="多个演员用空格分隔..."
+                                    value={(editingItem.actors || []).join(' ')}
+                                    onChange={e => updateItemField('actors', e.target.value.split(/[,，\s]+/).filter(Boolean))}
+                                />
+                            </div>
                         </div>
                     </div>
 
-                    {/* Actors */}
-                    <div>
-                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">主演 / 角色</label>
-                        <div className="relative">
-                            <span className="absolute left-3 top-3 text-slate-400"><Users size={16}/></span>
-                            <input 
-                                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl py-2.5 pl-10 pr-4 text-sm focus:border-brand-accent outline-none font-medium placeholder-slate-400"
-                                placeholder="多个演员用空格分隔..."
-                                value={(editingMaterial.actors || []).join(' ')}
-                                onChange={e => updateMaterialField('actors', e.target.value.split(/[,，\s]+/).filter(Boolean))}
-                            />
-                        </div>
-                    </div>
-
-                    {/* Tags */}
-                    <div>
+                    {/* 3. XP Tags */}
+                    <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
                         <div className="flex justify-between items-center mb-2">
-                            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">类型 / 性癖 ({editingMaterial.tags?.length || 0})</label>
-                            <button onClick={() => setIsTagManagerOpen(true)} className="text-[10px] text-brand-accent font-bold flex items-center bg-blue-50 dark:bg-blue-900/30 px-2 py-1 rounded">
+                            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">XP 标签 ({editingItem.xpTags?.length || 0})</label>
+                            <button onClick={() => setIsTagManagerOpen(true)} className="text-[10px] text-brand-accent font-bold flex items-center bg-blue-50 dark:bg-blue-900/30 px-2 py-1 rounded hover:bg-blue-100 transition-colors">
                                 <Settings size={12} className="mr-1"/> 管理
                             </button>
                         </div>
@@ -375,13 +386,13 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                         </div>
 
                         {/* Tags Grid */}
-                        <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto custom-scrollbar content-start p-1 bg-slate-50/50 dark:bg-slate-900/50 rounded-lg">
+                        <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto custom-scrollbar content-start p-2 bg-slate-50/50 dark:bg-slate-900/50 rounded-lg border border-slate-100 dark:border-slate-800">
                             {activeTags.map(cat => (
                                 <button 
                                     key={cat}
-                                    onClick={() => toggleMaterialTag(cat)}
+                                    onClick={() => toggleItemTag(cat)}
                                     className={`px-2.5 py-1.5 rounded-md text-xs font-medium transition-all duration-200 border ${
-                                        editingMaterial.tags?.includes(cat) 
+                                        editingItem.xpTags?.includes(cat) 
                                         ? 'bg-brand-accent text-white border-brand-accent shadow-sm' 
                                         : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-brand-accent/50'
                                     }`}
@@ -391,10 +402,20 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                             ))}
                         </div>
                     </div>
+                    
+                    {/* System Note Display (Migration Hint) */}
+                    {editingItem.notes && (
+                        <div className="bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded-xl border border-yellow-200 dark:border-yellow-800 flex items-start gap-2">
+                            <AlertTriangle size={16} className="text-yellow-600 flex-shrink-0 mt-0.5"/>
+                            <div className="text-xs text-yellow-700 dark:text-yellow-400">
+                                {editingItem.notes}
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-t border-slate-100 dark:border-slate-800 flex justify-end z-20">
-                    <button onClick={handleSaveMaterial} className="w-full py-3 bg-brand-accent text-white font-bold rounded-xl shadow-lg shadow-blue-500/30">
+                    <button onClick={handleSaveContentItem} className="w-full py-3 bg-brand-accent text-white font-bold rounded-xl shadow-lg shadow-blue-500/30">
                         确认保存素材
                     </button>
                 </div>
@@ -465,124 +486,83 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                     </div>
                 </div>
 
-                {/* 2. Content (Material & XP) */}
-                <div className="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-4 border border-slate-200 dark:border-slate-700 space-y-4">
-                    <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center"><Film size={14} className="mr-1.5"/> 施法素材 (Content)</h3>
+                {/* 2. Content Items List (New v0.0.6) */}
+                <div className="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-4 border border-slate-200 dark:border-slate-700 space-y-3">
+                    <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center justify-between">
+                        <span className="flex items-center"><Film size={14} className="mr-1.5"/> 施法素材</span>
+                        <span className="text-[10px] bg-slate-200 dark:bg-slate-700 px-1.5 rounded-full text-slate-500">{data.contentItems.length}</span>
+                    </h3>
                     
-                    {/* Basic Tags (Source/Platform) */}
-                    <div className="space-y-3">
-                        {/* Source */}
-                        <div className="flex flex-wrap gap-2">
-                            {SOURCES.map(src => (
-                                <button 
-                                    key={src} 
-                                    onClick={() => toggleAssetItem('sources', src)}
-                                    className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${data.assets?.sources?.includes(src) ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300' : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-500'}`}
+                    {data.contentItems.length > 0 ? (
+                        <div className="space-y-2">
+                            {data.contentItems.map((item) => (
+                                <div 
+                                    key={item.id} 
+                                    onClick={() => handleEditContent(item)}
+                                    className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 flex flex-col gap-2 cursor-pointer hover:border-brand-accent transition-all group relative active:scale-[0.98]"
                                 >
-                                    {src}
-                                </button>
+                                    <div className="flex justify-between items-start">
+                                        <div className="flex items-center gap-2">
+                                            <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold uppercase ${item.type === '幻想' || item.type === '回忆' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
+                                                {item.type}
+                                            </span>
+                                            {item.platform && <span className="text-[10px] text-slate-500 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">{item.platform}</span>}
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            {/* Migration Warning Flag */}
+                                            {item.notes && item.notes.includes('迁移') && (
+                                                <AlertTriangle size={14} className="text-yellow-500 animate-pulse" />
+                                            )}
+                                            <ChevronRight size={16} className="text-slate-300"/>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="font-bold text-sm text-brand-text dark:text-slate-200 truncate pr-6">
+                                        {item.title || '无标题素材'}
+                                    </div>
+                                    
+                                    <div className="flex flex-wrap gap-1.5">
+                                        {item.actors.slice(0, 3).map(a => (
+                                            <span key={a} className="text-[10px] bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-300 px-1.5 py-0.5 rounded flex items-center">
+                                                <Users size={8} className="mr-1"/> {a}
+                                            </span>
+                                        ))}
+                                        {item.xpTags.slice(0, 5).map(t => (
+                                            <span key={t} className="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-500 px-1.5 py-0.5 rounded flex items-center border border-slate-200 dark:border-slate-700">
+                                                <Tag size={8} className="mr-1"/> {t}
+                                            </span>
+                                        ))}
+                                        {(item.xpTags.length > 5) && (
+                                            <span className="text-[10px] text-slate-400 px-1">+{item.xpTags.length - 5}</span>
+                                        )}
+                                    </div>
+                                    
+                                    <button 
+                                        onClick={(e) => handleDeleteContent(item.id, e)}
+                                        className="absolute top-2 right-8 p-1.5 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                    >
+                                        <Trash2 size={12}/>
+                                    </button>
+                                </div>
                             ))}
                         </div>
-                        {/* Platform */}
-                        {(data.assets?.sources?.includes('视频') || data.assets?.sources?.includes('直播')) && (
-                            <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-200 dark:border-slate-700">
-                                {PLATFORMS.map(pf => (
-                                    <button 
-                                        key={pf} 
-                                        onClick={() => toggleAssetItem('platforms', pf)}
-                                        className={`px-2 py-1 rounded text-[10px] font-medium transition-all ${data.assets?.platforms?.includes(pf) ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-300' : 'text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
-                                    >
-                                        {pf}
-                                    </button>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Materials List */}
-                    <div className="space-y-3">
-                        {data.materialsList && data.materialsList.length > 0 ? (
-                            <div className="space-y-2">
-                                {data.materialsList.map((m) => (
-                                    <div 
-                                        key={m.id} 
-                                        onClick={() => handleEditMaterial(m)}
-                                        className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 flex flex-col gap-2 cursor-pointer hover:border-brand-accent transition-colors group relative"
-                                    >
-                                        <div className="flex justify-between items-start">
-                                            <div className="font-bold text-sm text-brand-text dark:text-slate-200 truncate pr-6">
-                                                {m.label || '无标题素材'}
-                                            </div>
-                                            <ChevronRight size={16} className="text-slate-300 absolute right-2 top-3"/>
-                                        </div>
-                                        
-                                        <div className="flex flex-wrap gap-1.5">
-                                            {m.actors && m.actors.length > 0 && m.actors.map(a => (
-                                                <span key={a} className="text-[10px] bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-300 px-1.5 py-0.5 rounded flex items-center">
-                                                    <Users size={8} className="mr-1"/> {a}
-                                                </span>
-                                            ))}
-                                            {m.tags && m.tags.length > 0 && m.tags.slice(0, 5).map(t => (
-                                                <span key={t} className="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-500 px-1.5 py-0.5 rounded flex items-center">
-                                                    <Tag size={8} className="mr-1"/> {t}
-                                                </span>
-                                            ))}
-                                            {m.tags && m.tags.length > 5 && (
-                                                <span className="text-[10px] text-slate-400 px-1">+{m.tags.length - 5}</span>
-                                            )}
-                                        </div>
-                                        
-                                        <button 
-                                            onClick={(e) => handleDeleteMaterial(m.id, e)}
-                                            className="absolute top-2 right-8 p-1.5 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                                        >
-                                            <Trash2 size={12}/>
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <div className="text-center py-6 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50/50 dark:bg-slate-900/20">
-                                <p className="text-xs text-slate-400 mb-2">暂无素材详情</p>
-                                <p className="text-[10px] text-slate-300">添加具体的视频、演员或标签</p>
-                            </div>
-                        )}
-                        
-                        <button 
-                            onClick={handleAddMaterial}
-                            className="w-full py-2.5 rounded-xl border-2 border-dashed border-blue-200 dark:border-blue-900 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors text-xs font-bold flex items-center justify-center gap-1"
-                        >
-                            <Plus size={14}/> 添加素材 / 详情
-                        </button>
-                    </div>
-
-                    {/* Target/Partner (Global Context) */}
-                    <div className="pt-3 border-t border-slate-200 dark:border-slate-700">
-                        <label className="text-xs font-bold text-slate-400 mb-2 block">施法对象 (Target)</label>
-                        {partners.length > 0 && (
-                            <div className="flex gap-2 overflow-x-auto pb-2 mb-2 scrollbar-hide">
-                                {partners.map(p => (
-                                    <button 
-                                        key={p.id}
-                                        onClick={() => updateAssets('target', p.name)}
-                                        className={`flex-shrink-0 flex items-center gap-1.5 px-2 py-1 rounded-full border transition-all ${data.assets?.target === p.name ? 'bg-pink-100 text-pink-700 border-pink-200' : 'bg-white text-slate-500 border-slate-200'}`}
-                                    >
-                                        <div className={`w-4 h-4 rounded-full ${p.avatarColor || 'bg-slate-400'}`}></div>
-                                        <span className="text-[10px] font-bold">{p.name}</span>
-                                    </button>
-                                ))}
-                            </div>
-                        )}
-                        <input 
-                            className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-xs focus:border-brand-accent outline-none"
-                            placeholder="对象名称 (网黄 / 角色 / 伴侣)..."
-                            value={data.assets?.target || ''}
-                            onChange={e => updateAssets('target', e.target.value)}
-                        />
-                    </div>
+                    ) : (
+                        <div className="text-center py-6 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50/50 dark:bg-slate-900/20">
+                            <MonitorPlay size={32} className="mx-auto text-slate-300 mb-2"/>
+                            <p className="text-xs text-slate-400 mb-2">暂无素材详情</p>
+                            <p className="text-[10px] text-slate-300">添加具体的视频、演员或标签</p>
+                        </div>
+                    )}
+                    
+                    <button 
+                        onClick={handleAddContent}
+                        className="w-full py-2.5 rounded-xl border-2 border-dashed border-blue-200 dark:border-blue-900 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors text-xs font-bold flex items-center justify-center gap-1"
+                    >
+                        <Plus size={14}/> 添加素材
+                    </button>
                 </div>
 
-                {/* 3. Action & Tools */}
+                {/* 3. Tools & Edging */}
                 <div className="space-y-4">
                     {/* Tools */}
                     <div>
@@ -603,7 +583,6 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                     {/* Lubricant & Condom */}
                     <div className="flex gap-2">
                         <div className="flex-1 bg-slate-50 dark:bg-slate-800 p-2 rounded-xl flex items-center gap-2 border border-slate-100 dark:border-slate-700">
-                            {/* Icon Placeholder */}
                             <div className="w-4 h-4 rounded-full bg-blue-400/20 flex items-center justify-center text-blue-500 font-bold text-[10px]">L</div>
                             <select 
                                 className="bg-transparent w-full text-xs font-bold outline-none text-slate-600 dark:text-slate-300"

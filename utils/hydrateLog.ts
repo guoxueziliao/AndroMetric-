@@ -34,7 +34,12 @@ export const hydrateLog = (raw: any): LogEntry => {
         // Activity Arrays
         exercise: Array.isArray(raw.exercise) ? raw.exercise.map((e: any) => ({...e, feeling: e.feeling || 'ok'})) : [],
         sex: Array.isArray(raw.sex) ? raw.sex : [],
-        masturbation: Array.isArray(raw.masturbation) ? raw.masturbation.map((m: any) => ({...m, status: m.status || 'completed'})) : [],
+        masturbation: Array.isArray(raw.masturbation) ? raw.masturbation.map((m: any) => ({
+            ...m, 
+            status: m.status || 'completed',
+            // v0.0.6 ContentItems
+            contentItems: Array.isArray(m.contentItems) ? m.contentItems : [] 
+        })) : [],
         
         changeHistory: Array.isArray(raw.changeHistory) ? raw.changeHistory : [],
     };

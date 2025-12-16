@@ -252,7 +252,9 @@ const AppContent: React.FC<{ data: any }> = ({ data }) => {
           duration: 0,
           status: 'inProgress',
           // Defaults
-          tools: ['手'], materials: [], props: [], assets: { sources: [], platforms: [], categories: [], target: '', actors: [] },
+          tools: ['手'],
+          contentItems: [],
+          materials: [], props: [], assets: { sources: [], platforms: [], categories: [], target: '', actors: [] },
           materialsList: [], edging: 'none', edgingCount: 0, lubricant: '', useCondom: false,
           ejaculation: true, orgasmIntensity: 3, mood: 'neutral', stressLevel: 3, energyLevel: 3, interrupted: false, interruptionReasons: [], notes: ''
       };

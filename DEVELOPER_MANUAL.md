@@ -1,3 +1,4 @@
+
 # 🛠️ 开发者技术文档 (Developer Documentation)
 
 **版本**: 0.0.6
@@ -143,3 +144,25 @@ npm run dev
 ## 6.6 结语
 **数据主权在用户。系统必须诚实、克制、可解释。**
 当功能需求与数据可信性发生冲突时，**数据可信性永远优先**。
+
+---
+
+# 7. ContentItem 迁移与结构重构说明 (Migration V37)
+
+**最高原则**: 系统永远不猜内容语义，只做结构性拆分。
+
+### 1. 旧结构 → 新结构
+旧：`assets` (Object with arrays)
+新：`contentItems: ContentItem[]`
+
+### 2. 迁移策略 (No Guessing)
+*   **Rule A**: 若存在 `materialsList` (v0.0.5 structured data)，直接使用。
+*   **Rule B**: 若 `types.length > 1` 或 `platforms.length > 1`，必须拆分。
+*   **Rule C**: 拆分时执行笛卡尔最大值匹配 (`max(types.length, platforms.length)`)。
+    *   不做语义猜测。
+    *   按索引匹配 (Type[0] -> Platform[0])。
+    *   若单一维度长度为 1，则重复使用。
+*   **Rule D**: XP Tags (`categories`) 和 Actors 复制到所有拆分后的 Item。
+*   **Rule E**: 凡是发生拆分的 Item，自动写入 Note 提示用户检查。
+
+此策略确保了数据**一分不少**，且**结构清晰**，将语义纠正的责任交给用户在未来逐步完成。

@@ -125,14 +125,30 @@ export interface MasturbationMaterial {
     tags: string[];
 }
 
+// v0.0.6 Content Item (Replaces assets/materials)
+export interface ContentItem {
+    id: string;
+    type: string; // was source (video, image...)
+    platform?: string; // was platform (pornhub, twitter...)
+    title?: string;
+    actors: string[];
+    xpTags: string[]; // was categories/tags
+    notes?: string;
+}
+
 export interface MasturbationRecordDetails {
   id: string;
   startTime?: string | null;
   duration?: number;
   location?: string | null; // Scene/Place
   tools: string[];
-  materials: string[];
-  props: string[];
+  
+  // v0.0.6: The new single source of truth for content
+  contentItems: ContentItem[];
+
+  // Legacy / Deprecated fields (kept for migration safety)
+  materials?: string[]; // Old strings
+  materialsList?: MasturbationMaterial[]; // v0.0.5 object
   assets?: {
       sources: string[];
       platforms: string[];
@@ -140,7 +156,8 @@ export interface MasturbationRecordDetails {
       actors?: string[];
       target?: string | null;
   };
-  materialsList?: MasturbationMaterial[];
+  props?: string[];
+
   edging?: 'none' | 'once' | 'multiple';
   edgingCount?: number;
   lubricant?: string | null;

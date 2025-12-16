@@ -1,8 +1,8 @@
 
-import { StoredData, LogEntry, SexRecordDetails, MasturbationRecordDetails, SexInteraction, SexAction, ExerciseRecord, MorningRecord, SleepRecord } from '../types';
+import { StoredData, LogEntry, SexRecordDetails, MasturbationRecordDetails, SexInteraction, SexAction, ExerciseRecord, MorningRecord, SleepRecord, ContentItem } from '../types';
 
 // The latest version of our data structure.
-export const LATEST_VERSION = 36;
+export const LATEST_VERSION = 37;
 
 /**
  * MIGRATION UTILITIES
@@ -48,7 +48,7 @@ function migrateV1toV2(logs: any[]): any[] {
 // ... Keep existing migrations ...
 function migrateV3toV4(logs: any[]): any[] { return logs.map(log => ({ ...log, updatedAt: log.updatedAt || Date.now(), tags: log.tags || [] })); }
 function migrateV5toV6(logs: any[]): any[] { return logs.map(log => { if (log.sex && !Array.isArray(log.sex)) { const oldSex = log.sex; const newSexArray: SexRecordDetails[] = []; if (oldSex.details) { newSexArray.push({ ...oldSex.details, id: `migrated-${Date.now()}-${Math.random()}`, ejaculation: oldSex.ejaculation ?? true, interactions: [] }); } else if (oldSex.count > 0) { for (let i = 0; i < oldSex.count; i++) { newSexArray.push({ id: `migrated-placeholder-${Date.now()}-${i}`, startTime: '22:00', duration: 15, ejaculation: oldSex.ejaculation ?? true, protection: '无保护措施', indicators: { lingerie: false, orgasm: true, partnerOrgasm: false, squirting: false, toys: false }, interactions: [] }); } } return { ...log, sex: newSexArray.length > 0 ? newSexArray : undefined }; } return log; }); }
-function migrateV6toV7(logs: any[]): any[] { return logs.map(log => { if (log.masturbation && !Array.isArray(log.masturbation)) { const oldMb = log.masturbation; const newMbArray: MasturbationRecordDetails[] = []; if (oldMb.count > 0) { for (let i = 0; i < oldMb.count; i++) { newMbArray.push({ id: `migrated-mb-${Date.now()}-${i}`, startTime: '23:00', duration: 10, tools: ['手'], materials: [], props: [], ejaculation: oldMb.ejaculation ?? true, orgasmIntensity: 3, notes: '' }); } } return { ...log, masturbation: newMbArray.length > 0 ? newMbArray : undefined }; } return log; }); }
+function migrateV6toV7(logs: any[]): any[] { return logs.map(log => { if (log.masturbation && !Array.isArray(log.masturbation)) { const oldMb = log.masturbation; const newMbArray: MasturbationRecordDetails[] = []; if (oldMb.count > 0) { for (let i = 0; i < oldMb.count; i++) { newMbArray.push({ id: `migrated-mb-${Date.now()}-${i}`, startTime: '23:00', duration: 10, tools: ['手'], materials: [], props: [], ejaculation: oldMb.ejaculation ?? true, orgasmIntensity: 3, notes: '', contentItems: [] }); } } return { ...log, masturbation: newMbArray.length > 0 ? newMbArray : undefined }; } return log; }); }
 function migrateV7toV8(logs: any[]): any[] { return logs.map(log => { if (log.sex && Array.isArray(log.sex)) { const newSex = log.sex.map((record: any) => ({ ...record, acts: record.acts || [], interactions: record.interactions || [] })); return { ...log, sex: newSex }; } return log; }); }
 function migrateV8toV9(logs: any[]): any[] { return logs.map(log => { if (log.sex && Array.isArray(log.sex)) { const newSex = log.sex.map((record: any) => { if (record.interactions && record.interactions.length > 0) { return record; } const chain: SexAction[] = []; if (record.acts && Array.isArray(record.acts)) { record.acts.forEach((act: string) => { chain.push({ id: `mig-act-${Math.random()}`, type: 'act', name: act }); }); } if (record.positions && Array.isArray(record.positions)) { record.positions.forEach((pos: string) => { chain.push({ id: `mig-pos-${Math.random()}`, type: 'position', name: pos }); }); } const interaction: SexInteraction = { id: `mig-int-${Math.random()}`, partner: record.partner || '', location: record.location || '', chain: chain }; return { ...record, interactions: [interaction] }; }); return { ...log, sex: newSex }; } return log; }); }
 function migrateV9toV10(logs: any[]): any[] { return logs.map(log => { if (log.sex && Array.isArray(log.sex)) { const newSex = log.sex.map((record: SexRecordDetails) => ({ ...record, interactions: (record.interactions || []).map(i => ({ ...i, role: i.role || '' })) })); return { ...log, sex: newSex }; } return log; }); }
@@ -204,6 +204,74 @@ function migrateV35toV36(logs: any[]): LogEntry[] {
     });
 }
 
+// V37: Migrate Content Assets to ContentItem[] (Strict No-Guessing)
+function migrateV36toV37(logs: any[]): LogEntry[] {
+    return logs.map(log => {
+        if (!log.masturbation) return log;
+
+        const newMasturbation = log.masturbation.map((m: any) => {
+            // If already migrated, skip
+            if (m.contentItems && m.contentItems.length > 0) return m;
+
+            const contentItems: ContentItem[] = [];
+            const assets = m.assets || {};
+            const materialsList = m.materialsList || [];
+
+            // Case A: Has materialsList (v0.0.5 structured data) -> Prefer this
+            if (materialsList.length > 0) {
+                materialsList.forEach((mat: any) => {
+                    contentItems.push({
+                        id: mat.id || `mig_${Date.now()}_${Math.random()}`,
+                        type: '视频', // Default fallback, user can edit
+                        platform: mat.publisher || undefined, // publisher maps somewhat to platform/studio
+                        title: mat.label,
+                        actors: mat.actors || [],
+                        xpTags: mat.tags || [],
+                        notes: '由旧版素材列表迁移'
+                    });
+                });
+            } 
+            // Case B: No materialsList, check assets (legacy flat arrays)
+            else if (assets.sources || assets.platforms) {
+                const types = assets.sources || [];
+                const platforms = assets.platforms || [];
+                
+                const count = Math.max(types.length, platforms.length, 1);
+                
+                // If we need to split (count > 1), check logic
+                const didSplit = count > 1 && (types.length > 1 || platforms.length > 1);
+
+                for (let i = 0; i < count; i++) {
+                    // Logic: If array length is 1, repeat it. If >1, index map. If index out of bounds, undefined.
+                    const typeVal = types.length === 1 ? types[0] : types[i];
+                    const platVal = platforms.length === 1 ? platforms[0] : platforms[i];
+                    
+                    // Skip empty creations if source arrays were empty
+                    if (!typeVal && !platVal && count === 1) continue;
+
+                    contentItems.push({
+                        id: `mig_asset_${Date.now()}_${i}`,
+                        type: typeVal || 'unknown',
+                        platform: platVal,
+                        title: assets.target || undefined, // target was often title/name
+                        actors: assets.actors || [],
+                        xpTags: assets.categories || [],
+                        // Updated note text based on docs/content-item-migration-notes.md
+                        notes: didSplit ? '此素材由旧版多选结构迁移生成，请检查类型与平台是否正确。' : undefined
+                    });
+                }
+            }
+
+            return {
+                ...m,
+                contentItems
+            };
+        });
+
+        return { ...log, masturbation: newMasturbation };
+    });
+}
+
 /**
  * REPAIR UTILS
  */
@@ -242,7 +310,8 @@ const MIGRATION_REGISTRY: Record<number, (logs: any[]) => any[]> = {
     33: migrateV32toV33,
     34: migrateV33toV34,
     35: migrateV34toV35,
-    36: migrateV35toV36
+    36: migrateV35toV36,
+    37: migrateV36toV37
 };
 
 export function runMigrations(data: any): StoredData {
