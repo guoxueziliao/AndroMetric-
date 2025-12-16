@@ -43,30 +43,30 @@ const FAB: React.FC<FABProps> = ({ onSleep, onSex, onMasturbation, onExercise, o
 
           <button
             onClick={() => { onExercise(); setIsOpen(false); }}
-            className={`${subButtonClass} ${isExerciseOngoing ? 'bg-orange-500 text-white animate-pulse' : 'bg-palette-yellow hover:bg-yellow-300'} focus:ring-yellow-300`}
+            className={`${subButtonClass} ${isExerciseOngoing ? 'bg-orange-500 text-white animate-pulse' : 'bg-yellow-100 hover:bg-yellow-200'} focus:ring-yellow-300`}
             aria-label="记录运动"
             title="记录运动"
           >
-            <Dumbbell size={20} />
+            <Dumbbell size={20} className={isExerciseOngoing ? "text-white" : "text-yellow-600"} />
           </button>
 
           {/* Group 2: Sexual Activity (Middle) */}
           <button
             onClick={() => { onMasturbation(); setIsOpen(false); }}
-            className={`${subButtonClass} ${isMbOngoing ? 'bg-blue-500 text-white animate-pulse' : 'bg-palette-ice hover:bg-palette-blue'} focus:ring-blue-300`}
+            className={`${subButtonClass} ${isMbOngoing ? 'bg-blue-500 text-white animate-pulse' : 'bg-sky-100 hover:bg-sky-200'} focus:ring-sky-300`}
             aria-label={isMbOngoing ? "结束自慰" : "记录自慰"}
             title={isMbOngoing ? "结束自慰" : "记录自慰"}
           >
-            <Banana size={20} />
+            <Banana size={20} className={isMbOngoing ? "text-white" : "text-sky-600"} />
           </button>
           
           <button
             onClick={() => { onSex(); setIsOpen(false); }}
-            className={`${subButtonClass} bg-palette-pink hover:bg-pink-300 focus:ring-pink-300`}
+            className={`${subButtonClass} bg-pink-100 hover:bg-pink-200 focus:ring-pink-300`}
             aria-label="记录性爱"
             title="记录性爱"
           >
-            <Users size={20} />
+            <Users size={20} className="text-pink-600" />
           </button>
           
           {/* Group 1: Rest (Bottom - Most accessible) */}
@@ -85,7 +85,7 @@ const FAB: React.FC<FABProps> = ({ onSleep, onSex, onMasturbation, onExercise, o
             aria-label={isSleepPending ? '取消睡眠' : '记录睡眠'}
             title={isSleepPending ? '取消睡眠' : '记录睡眠'}
           >
-            <Bed size={20} />
+            <Bed size={20} className={isSleepPending ? "text-white" : "text-purple-600"} />
           </button>
         </div>
 
