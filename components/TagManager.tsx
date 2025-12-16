@@ -5,12 +5,12 @@ import { Tag, Edit2, Trash2, X, Check, Activity, ShieldAlert, Stethoscope, Plus,
 import Modal from './Modal';
 import { useData } from '../contexts/DataContext';
 import { useToast } from '../contexts/ToastContext';
-import { validateTag } from '../utils/tagValidators';
+import { validateTag, TagType } from '../utils/tagValidators';
 import TagHealthCheck from './TagHealthCheck';
 import { XP_GROUPS } from '../utils/constants';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 
-export type TagType = 'xp' | 'event' | 'symptom' | 'health_check';
+export type { TagType }; // Re-export for compatibility
 
 interface TagManagerProps {
     isOpen: boolean;
@@ -116,8 +116,8 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
             return;
         }
 
-        // 2. Validate
-        const res = validateTag(tag);
+        // 2. Validate with Type Context
+        const res = validateTag(tag, activeTab === 'health_check' ? 'xp' : activeTab);
         if (res.level === 'P0') {
             showToast(`禁止创建: ${res.message}`, 'error');
             return;
@@ -165,7 +165,7 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
         const newName = newTagName.trim();
 
         // 1. Run Validation
-        const res = validateTag(newName);
+        const res = validateTag(newName, activeTab === 'health_check' ? 'xp' : activeTab);
         if (res.level === 'P0') {
             showToast(`无效名称: ${res.message}`, 'error');
             return;
@@ -283,8 +283,8 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
         }
     };
 
-    const handleNavigateToTag = (tag: string) => {
-        setActiveTab('xp');
+    const handleNavigateToTag = (tag: string, type: TagType) => {
+        setActiveTab(type);
         setSearchTerm(tag);
         setEditingTag(tag);
         setNewTagName(tag);
