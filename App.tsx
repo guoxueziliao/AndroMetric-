@@ -62,6 +62,22 @@ const AppContent: React.FC<{ data: any }> = ({ data }) => {
       }
   };
 
+  const handleCancelAlcohol = async () => {
+      if (!ongoingAlcohol) return;
+      if (confirm('确定取消本次饮酒记录吗？(误触删除)')) {
+          try {
+              await data.addOrUpdateLog({
+                  ...ongoingAlcohol,
+                  alcoholRecord: null,
+                  alcohol: 'none'
+              });
+              showToast('已移除饮酒计时', 'info');
+          } catch (e: any) {
+              showToast(e.message, 'error');
+          }
+      }
+  };
+
   if (isInitializing) return <div className="min-h-screen flex items-center justify-center">加载中...</div>;
 
   return (
@@ -69,7 +85,15 @@ const AppContent: React.FC<{ data: any }> = ({ data }) => {
       <div className="container mx-auto max-w-lg p-4 pb-32">
         {view === 'dashboard' && (
           <main>
-            {activeMainView === 'calendar' && <Dashboard onEdit={d => { setEditingLogDate(d); setView('form'); }} onDateClick={d => { setEditingLogDate(d); setView('form'); }} onNavigateToBackup={() => setActiveMainView('my')} />}
+            {activeMainView === 'calendar' && (
+              <Dashboard 
+                onEdit={d => { setEditingLogDate(d); setView('form'); }} 
+                onDateClick={d => { setEditingLogDate(d); setView('form'); }} 
+                onNavigateToBackup={() => setActiveMainView('my')}
+                onEditAlcohol={() => setIsAlcoholModalOpen(true)}
+                onCancelAlcohol={handleCancelAlcohol}
+              />
+            )}
             <Suspense fallback={<div>Loading...</div>}>
                 {activeMainView === 'stats' && <StatsView isDarkMode={false} />}
                 {activeMainView === 'sexlife' && <SexLifeView />}
