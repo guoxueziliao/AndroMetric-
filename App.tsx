@@ -1,6 +1,6 @@
 
 import React, { useState, useCallback, useMemo, useEffect, Suspense, lazy } from 'react';
-import { LogEntry, AppSettings, ExerciseRecord, MasturbationRecordDetails } from './types';
+import { LogEntry, AppSettings, ExerciseRecord, MasturbationRecordDetails, AlcoholRecord } from './types';
 import Dashboard from './components/Dashboard';
 import LogForm from './components/LogForm';
 import BottomNav from './components/BottomNav';
@@ -48,7 +48,7 @@ const LoadingFallback = () => (
 );
 
 const AppContent: React.FC<{ data: any }> = ({ data }) => {
-  const { logs, partners, quickAddSex, quickAddMasturbation, saveExercise, saveAlcoholRecord, isInitializing } = data;
+  const { logs, partners, quickAddSex, quickAddMasturbation, saveExercise, saveAlcoholRecord, toggleAlcohol, isInitializing } = data;
   const { showToast } = useToast();
   
   const [settings, setSettings] = useLocalStorage<AppSettings>('appSettings', defaultSettings);
@@ -86,6 +86,7 @@ const AppContent: React.FC<{ data: any }> = ({ data }) => {
   const ongoingExercise = useMemo(() => safeLogs.flatMap((l: LogEntry) => l.exercise || []).find((e: ExerciseRecord) => e.ongoing), [safeLogs]);
   const ongoingNap = useMemo(() => safeLogs.flatMap((l: LogEntry) => l.sleep?.naps || []).find((n: any) => n.ongoing), [safeLogs]);
   const ongoingMb = useMemo(() => safeLogs.flatMap((l: LogEntry) => l.masturbation || []).find((m: MasturbationRecordDetails) => m.status === 'inProgress'), [safeLogs]);
+  const ongoingAlcohol = useMemo(() => safeLogs.find((l: LogEntry) => l.alcoholRecord?.ongoing), [safeLogs]);
 
   // --- Effects ---
   useEffect(() => {
@@ -269,6 +270,19 @@ const AppContent: React.FC<{ data: any }> = ({ data }) => {
       setIsQuickMbModalOpen(true);
   };
 
+  // Alcohol Logic
+  const handleStartAlcohol = async () => {
+      if (ongoingAlcohol) {
+          setIsAlcoholModalOpen(true); // Open modal to edit/finish
+      } else {
+          wrapAction(async () => {
+              await toggleAlcohol(); // Creates new session
+              // Optional: immediately open modal to add first drink?
+              // For now, just start timer. The user can click the banner to add drinks.
+          }, '开始饮酒 (已启动计时)');
+      }
+  };
+
   // Migration Loading Screen
   if (isInitializing) {
       return (
@@ -349,11 +363,16 @@ const AppContent: React.FC<{ data: any }> = ({ data }) => {
                 onMasturbation={handleStartMasturbation}
                 onExercise={handleStartExercise}
                 onNap={() => wrapAction(async () => await data.toggleNap(), '午休状态更新')}
-                onAlcohol={() => setIsAlcoholModalOpen(true)} 
+                onAlcohol={() => {
+                    // Logic: If ongoing, open modal. If not, start new (via modal open as creation)
+                    // The Modal handles initialization logic
+                    setIsAlcoholModalOpen(true);
+                }} 
                 isSleepPending={!!pendingLog} 
                 isExerciseOngoing={!!ongoingExercise}
                 isNapOngoing={!!ongoingNap}
                 isMbOngoing={!!ongoingMb}
+                isAlcoholOngoing={!!ongoingAlcohol}
             />
             <BottomNav activeView={activeMainView} onViewChange={setActiveMainView} />
           </>
@@ -400,6 +419,7 @@ const AppContent: React.FC<{ data: any }> = ({ data }) => {
             isOpen={isAlcoholModalOpen}
             onClose={() => setIsAlcoholModalOpen(false)}
             onSave={(r) => wrapAction(async () => await saveAlcoholRecord(r), '饮酒记录已保存')}
+            initialData={ongoingAlcohol?.alcoholRecord || undefined}
         />
       </div>
     </div>

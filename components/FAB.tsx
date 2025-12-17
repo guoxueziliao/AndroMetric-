@@ -8,14 +8,15 @@ interface FABProps {
   onMasturbation: () => void;
   onExercise: () => void;
   onNap: () => void;
-  onAlcohol?: () => void; // New
+  onAlcohol?: () => void; 
   isSleepPending: boolean;
   isExerciseOngoing?: boolean;
   isNapOngoing?: boolean;
-  isMbOngoing?: boolean; // Add prop
+  isMbOngoing?: boolean;
+  isAlcoholOngoing?: boolean; // New prop
 }
 
-const FAB: React.FC<FABProps> = ({ onSleep, onSex, onMasturbation, onExercise, onNap, onAlcohol, isSleepPending, isExerciseOngoing, isNapOngoing, isMbOngoing }) => {
+const FAB: React.FC<FABProps> = ({ onSleep, onSex, onMasturbation, onExercise, onNap, onAlcohol, isSleepPending, isExerciseOngoing, isNapOngoing, isMbOngoing, isAlcoholOngoing }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const toggleOpen = () => setIsOpen(!isOpen);
@@ -33,11 +34,11 @@ const FAB: React.FC<FABProps> = ({ onSleep, onSex, onMasturbation, onExercise, o
           {onAlcohol && (
               <button
                 onClick={() => { onAlcohol(); setIsOpen(false); }}
-                className={`${subButtonClass} bg-amber-100 hover:bg-amber-200 focus:ring-amber-300`}
-                aria-label="记录饮酒"
-                title="记录饮酒"
+                className={`${subButtonClass} ${isAlcoholOngoing ? 'bg-amber-500 text-white animate-pulse' : 'bg-amber-100 hover:bg-amber-200'} focus:ring-amber-300`}
+                aria-label={isAlcoholOngoing ? "饮酒中" : "记录饮酒"}
+                title={isAlcoholOngoing ? "饮酒中" : "记录饮酒"}
               >
-                <Beer size={20} className="text-amber-600"/>
+                <Beer size={20} className={isAlcoholOngoing ? "text-white" : "text-amber-600"}/>
               </button>
           )}
 

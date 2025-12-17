@@ -248,14 +248,14 @@ export function useLogs() {
     const saveAlcoholRecord = useCallback(async (record: AlcoholRecord) => {
         const targetDateStr = getActivityTargetDate();
         const existingLog = await StorageService.logs.get(targetDateStr);
-        const summaryText = `饮酒: ${record.totalGrams}g纯酒精`;
+        const actionSummary = record.ongoing ? '开始饮酒' : `完成饮酒 (${record.totalGrams}g)`;
         const alcoholLevel = record.totalGrams > 50 ? 'high' : record.totalGrams > 20 ? 'medium' : record.totalGrams > 0 ? 'low' : 'none';
 
         try {
             if (existingLog) {
                 const historyEntry: ChangeRecord = { 
                     timestamp: Date.now(), 
-                    summary: summaryText,
+                    summary: actionSummary,
                     details: [{ field: '酒精摄入', oldValue: existingLog.alcoholRecord ? `${existingLog.alcoholRecord.totalGrams}g` : '0g', newValue: `${record.totalGrams}g` }],
                     type: 'quick'
                 };
@@ -266,7 +266,7 @@ export function useLogs() {
                     changeHistory: [...(existingLog.changeHistory || []), historyEntry]
                 });
             } else {
-                const historyEntry: ChangeRecord = { timestamp: Date.now(), summary: summaryText, details: [], type: 'quick' };
+                const historyEntry: ChangeRecord = { timestamp: Date.now(), summary: actionSummary, details: [], type: 'quick' };
                 const skeleton = hydrateLog({ date: targetDateStr });
                 const newLog: LogEntry = {
                     ...skeleton,
@@ -279,6 +279,40 @@ export function useLogs() {
             }
         } catch (e) { throw e; }
     }, [addOrUpdateLog, getActivityTargetDate]);
+
+    // NEW: Trigger Alcohol Logic (From FAB or Dashboard)
+    const toggleAlcohol = useCallback(async (isEditing = false) => {
+        // Find existing ongoing session
+        const allLogs = await StorageService.logs.getAll();
+        const ongoingLog = allLogs.find(l => l.alcoholRecord?.ongoing);
+        
+        if (ongoingLog) {
+            // Already drinking -> Open Modal to edit/finish (Handled by UI state lifting, but we pass the data)
+            // This hook just exposes the data, UI component handles the modal open.
+            // But if we want FAB to "Start" when no session exists:
+            // This function is mainly for "Start"
+            return; // UI will handle opening modal for ongoing
+        } else if (!isEditing) {
+            // Start New Session
+            const targetDateStr = getActivityTargetDate();
+            const nowStr = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+            
+            const newRecord: AlcoholRecord = {
+                id: Date.now().toString(),
+                startTime: nowStr,
+                ongoing: true,
+                totalGrams: 0,
+                durationMinutes: 0,
+                items: [],
+                isLate: false,
+                drunkLevel: 'none',
+                alcoholScene: '独自',
+                time: nowStr
+            };
+
+            await saveAlcoholRecord(newRecord);
+        }
+    }, [getActivityTargetDate, saveAlcoholRecord]);
 
     const toggleNap = useCallback(async () => {
         // Use raw query here since we need to check ongoing status across all logs
@@ -412,6 +446,7 @@ export function useLogs() {
         addOrUpdatePartner, deletePartner,
         quickAddSex, quickAddMasturbation,
         saveExercise, saveNap, saveAlcoholRecord,
+        toggleAlcohol,
         toggleNap, toggleSleepLog, importLogs
     };
 }

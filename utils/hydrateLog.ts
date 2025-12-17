@@ -120,13 +120,15 @@ export const hydrateLog = (raw: any): LogEntry => {
     };
     log.health = { ...defaultHealth, ...(raw.health || {}) };
 
-    // 5. Alcohol Record
+    // 5. Alcohol Record (Updated v0.0.8)
     if (raw.alcoholRecord) {
         log.alcoholRecord = {
             ...raw.alcoholRecord,
+            id: raw.alcoholRecord.id || `alc_${log.date}_${Date.now()}`,
             drunkLevel: raw.alcoholRecord.drunkLevel || 'none',
             alcoholScene: raw.alcoholRecord.alcoholScene || '',
-            time: raw.alcoholRecord.time || '20:00' // v0.0.6 default
+            time: raw.alcoholRecord.time || '20:00', // Legacy fallback
+            ongoing: raw.alcoholRecord.ongoing ?? false
         };
     } else {
         log.alcoholRecord = null;

@@ -16,6 +16,7 @@ interface DataContextType {
     saveAlcoholRecord: (record: AlcoholRecord) => Promise<void>;
     toggleNap: () => Promise<void>;
     toggleSleepLog: (pendingLog?: LogEntry) => Promise<void>;
+    toggleAlcohol: (isEditing?: boolean) => Promise<void>;
     importLogs: (importedLogs: LogEntry[], importedPartners?: PartnerProfile[]) => Promise<void>;
 }
 

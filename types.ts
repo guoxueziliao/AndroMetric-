@@ -222,13 +222,17 @@ export interface AlcoholItem {
 }
 
 export interface AlcoholRecord {
+    id?: string; // New for v0.0.8 continuous tracking
+    startTime?: string; // New for v0.0.8
+    endTime?: string; // New for v0.0.8
+    ongoing?: boolean; // New for v0.0.8
     totalGrams: number;
-    durationMinutes: number;
-    isLate: boolean;
+    durationMinutes: number; // Calculated from start/end if available
+    isLate: boolean; // Auto-calculated now
     items: AlcoholItem[];
     drunkLevel?: DrunkLevel;
     alcoholScene?: string;
-    // v0.0.6
+    // v0.0.6 Legacy
     time?: string; // HH:mm
 }
 
