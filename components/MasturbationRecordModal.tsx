@@ -1,13 +1,12 @@
-
 import React, { useState, useEffect, useMemo, Suspense, lazy } from 'react';
-import { X, Check, Clock, Film, PenLine, Plus, Minus, BatteryCharging, Wind, Sparkles, Hash, Settings, Users, ChevronRight, ArrowLeft, Trash2, Tag, MonitorPlay, Search } from 'lucide-react';
+import { X, Check, Clock, Film, PenLine, Plus, Minus, BatteryCharging, Wind, Sparkles, Hash, Settings, Users, ChevronRight, ArrowLeft, Trash2, Tag, MonitorPlay, Search, AlertTriangle } from 'lucide-react';
 import { MasturbationRecordDetails, LogEntry, PartnerProfile, ContentItem } from '../types';
 import Modal from './Modal';
 import { calculateInventory } from '../utils/helpers';
 import { useToast } from '../contexts/ToastContext';
 import { XP_GROUPS } from '../utils/constants';
 import { validateContentItem, ContentNoticeDef } from '../utils/dataHealthCheck';
-import { NoticeBadge, NoticeStack, NoticeItem, NoticeLevel } from './NoticeSystem';
+import { NoticeBadge, NoticeStack, NoticeItem } from './NoticeSystem';
 
 const TagManager = lazy(() => import('./TagManager'));
 
@@ -272,12 +271,16 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                 <div className="flex gap-4">
                     <div className="flex-1 bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
                         <label className="text-[10px] text-slate-500 font-bold uppercase block mb-1">开始时间</label>
-                        <div className="flex items-center justify-between"><input type="time" value={data.startTime} onChange={e => updateData('startTime', e.target.value)} className="bg-transparent text-xl font-mono font-bold text-brand-text dark:text-slate-200 outline-none w-full"/><Clock size={18} className="text-slate-300"/></div>
+                        <div className="flex items-center justify-between">
+                            <input type="time" value={data.startTime} onChange={e => updateData('startTime', e.target.value)} className="bg-transparent text-xl font-mono font-bold text-brand-text dark:text-slate-200 outline-none w-full"/>
+                        </div>
                     </div>
                     <div className="flex-1 bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
                         <label className="text-[10px] text-slate-500 font-bold uppercase block mb-1">持续时长 (分)</label>
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center w-full"><button type="button" onClick={() => updateData('duration', Math.max(1, (data.duration||0)-5))} className="p-1 rounded-full hover:bg-slate-100 text-slate-400"><Minus size={14}/></button><input type="number" value={data.duration} onChange={e => updateData('duration', parseInt(e.target.value) || 0)} className="bg-transparent text-xl font-mono font-bold text-brand-text dark:text-slate-200 outline-none w-full text-center"/><button type="button" onClick={() => updateData('duration', (data.duration||0)+5)} className="p-1 rounded-full hover:bg-slate-100 text-slate-400"><Plus size={14}/></button></div>
+                        <div className="flex items-center justify-between w-full gap-2">
+                            <button type="button" onClick={() => updateData('duration', Math.max(1, (data.duration||0)-1))} className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-700 text-slate-500 hover:text-brand-accent transition-colors"><Minus size={16}/></button>
+                            <input type="number" value={data.duration} onChange={e => updateData('duration', parseInt(e.target.value) || 0)} className="bg-transparent text-xl font-mono font-bold text-brand-text dark:text-slate-200 outline-none w-full text-center"/>
+                            <button type="button" onClick={() => updateData('duration', (data.duration||0)+1)} className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-700 text-slate-500 hover:text-brand-accent transition-colors"><Plus size={16}/></button>
                         </div>
                     </div>
                 </div>
@@ -298,14 +301,12 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                                         onClick={() => handleEditContent(item)} 
                                         className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 flex flex-col gap-2 cursor-pointer hover:border-brand-accent transition-all group relative active:scale-[0.98]"
                                     >
-                                        {/* Header Row: Type & Platform + Actions */}
                                         <div className="flex justify-between items-start">
                                             <div className="flex items-center gap-2">
                                                 <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold uppercase ${!item.type ? 'bg-slate-200 text-slate-500' : (item.type === '幻想' || item.type === '回忆' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700')}`}>{item.type || '未选择'}</span>
                                                 <span className={`text-[10px] px-1.5 py-0.5 rounded ${!item.platform ? 'text-slate-400 bg-slate-100' : 'text-slate-500 bg-slate-100 dark:bg-slate-800'}`}>{item.platform || '无来源'}</span>
                                             </div>
                                             
-                                            {/* Action Group: Delete + Badge/Arrow */}
                                             <div className="flex items-center gap-3 shrink-0">
                                                 <button 
                                                     onClick={(e) => handleDeleteContent(item.id, e)}
@@ -328,19 +329,16 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                                             </div>
                                         </div>
                                         
-                                        {/* Body: Title */}
                                         <div className="font-bold text-sm text-brand-text dark:text-slate-200 truncate pr-2">
                                             {item.title || <span className="text-slate-400 italic">未填写标题</span>}
                                         </div>
                                         
-                                        {/* Footer: Tags & Actors */}
                                         <div className="flex flex-wrap gap-1.5">
                                             {item.actors.slice(0, 3).map(a => <span key={a} className="text-[10px] bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-300 px-1.5 py-0.5 rounded flex items-center"><Users size={8} className="mr-1"/> {a}</span>)}
                                             {item.xpTags.slice(0, 5).map(t => <span key={t} className="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-500 px-1.5 py-0.5 rounded flex items-center border border-slate-200 dark:border-slate-700"><Tag size={8} className="mr-1"/> {t}</span>)}
                                             {(item.actors.length === 0 && item.xpTags.length === 0) && <span className="text-[10px] text-slate-300 italic">未添加标签/演员</span>}
                                         </div>
 
-                                        {/* NoticeStack (Conditional Bottom) */}
                                         {expandedHintId === item.id && (
                                             <div onClick={(e) => e.stopPropagation()} className="pt-2 mt-1 border-t border-slate-50 dark:border-slate-800">
                                                 <NoticeStack items={notices} />
@@ -361,22 +359,72 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                 <div className="space-y-4">
                     <div><h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">辅助工具 (Tools)</h4><div className="flex flex-wrap gap-2">{TOOL_OPTIONS.map(tool => <button key={tool} onClick={() => toggleTool(tool)} className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${data.tools?.includes(tool) ? 'bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800' : 'bg-slate-50 dark:bg-slate-800 border-transparent text-slate-500'}`}>{tool}</button>)}</div></div>
                     <div className="flex gap-2"><div className="flex-1 bg-slate-50 dark:bg-slate-800 p-2 rounded-xl flex items-center gap-2 border border-slate-100 dark:border-slate-700"><div className="w-4 h-4 rounded-full bg-blue-400/20 flex items-center justify-center text-blue-500 font-bold text-[10px]">L</div><select className="bg-transparent w-full text-xs font-bold outline-none text-slate-600 dark:text-slate-300" value={data.lubricant || ''} onChange={e => updateData('lubricant', e.target.value)}><option value="">无润滑</option>{LUBRICANT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}</select></div><button onClick={() => updateData('useCondom', !data.useCondom)} className={`px-3 py-2 rounded-xl text-xs font-bold border transition-all flex items-center gap-1 ${data.useCondom ? 'bg-green-100 text-green-700 border-green-200' : 'bg-slate-50 text-slate-400 border-transparent'}`}><span className="w-3 h-3 rounded-full border border-current"></span> 戴套</button></div>
-                    <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700 flex justify-between items-center"><div className="flex items-center gap-2"><BatteryCharging size={16} className="text-purple-500"/><div><div className="text-xs font-bold text-slate-600 dark:text-slate-300">边缘控制 (Edging)</div><div className="text-[10px] text-slate-400">快射时停下</div></div></div><div className="flex items-center gap-3"><button onClick={decrementEdging} className="w-8 h-8 rounded-full bg-white dark:bg-slate-700 shadow flex items-center justify-center text-slate-500"><Minus size={14}/></button><span className="font-mono font-bold text-lg w-4 text-center">{data.edgingCount || 0}</span><button onClick={incrementEdging} className="w-8 h-8 rounded-full bg-white dark:bg-slate-700 shadow flex items-center justify-center text-purple-500"><Plus size={14}/></button></div></div>
-                </div>
+                    
+                    {/* Edging Section */}
+                    <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700 flex justify-between items-center">
+                        <div className="flex items-center gap-2">
+                            <BatteryCharging size={16} className="text-purple-500"/>
+                            <div>
+                                <div className="text-xs font-bold text-slate-600 dark:text-slate-300">边缘控制 (Edging)</div>
+                                <div className="text-[10px] text-slate-400">延时与耐力训练</div>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <button onClick={decrementEdging} className="w-8 h-8 flex items-center justify-center rounded-full bg-white dark:bg-slate-700 text-slate-500 hover:text-brand-accent shadow-sm"><Minus size={16}/></button>
+                            <span className="font-mono font-black text-lg text-brand-text dark:text-slate-200">{data.edgingCount}</span>
+                            <button onClick={incrementEdging} className="w-8 h-8 flex items-center justify-center rounded-full bg-white dark:bg-slate-700 text-slate-500 hover:text-brand-accent shadow-sm"><Plus size={16}/></button>
+                        </div>
+                    </div>
 
-                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 space-y-4 shadow-sm">
-                    <div className="flex justify-between items-center"><h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider">最终结局</h4><div className="flex gap-2"><button onClick={() => updateData('ejaculation', !data.ejaculation)} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${data.ejaculation ? 'bg-blue-500 text-white border-blue-600' : 'bg-slate-100 text-slate-400 border-transparent'}`}>{data.ejaculation ? '已射精' : '未射精 (寸止)'}</button></div></div>
-                    {data.ejaculation && (<div className="space-y-3 animate-in fade-in pt-2 border-t border-slate-100 dark:border-slate-800"><div className="flex justify-between items-center"><label className="text-xs font-bold text-blue-600 flex items-center"><Wind size={12} className="mr-1"/> 射精强度 (量/力)</label><span className="text-xs font-mono font-bold bg-blue-100 text-blue-700 px-1.5 rounded">Lv.{data.volumeForceLevel}</span></div><div className="flex justify-between gap-1">{FORCE_LEVELS.map(l => (<button key={l.lvl} onClick={() => updateData('volumeForceLevel', l.lvl)} className={`flex-1 h-10 rounded-lg flex flex-col items-center justify-center transition-all border ${data.volumeForceLevel === l.lvl ? 'bg-blue-50 border-blue-400 text-blue-600 shadow-sm' : 'bg-slate-50 border-transparent text-slate-300'}`} title={l.desc}><div className={`w-2 h-2 rounded-full mb-1 ${data.volumeForceLevel! >= l.lvl ? 'bg-blue-500' : 'bg-slate-300'}`}></div><span className="text-[9px] font-bold scale-90">{l.label.split('/')[0]}</span></button>))}</div><p className="text-[10px] text-slate-400 text-center italic">{FORCE_LEVELS.find(l => l.lvl === data.volumeForceLevel)?.desc}</p></div>)}
-                    <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800"><div className="flex justify-between text-xs font-bold text-slate-500"><span>愉悦感 ({data.orgasmIntensity})</span><span>{data.orgasmIntensity! >= 5 ? '🔥 极乐升天' : data.orgasmIntensity! >= 4 ? '😍 很爽' : data.orgasmIntensity! >= 3 ? '🙂 舒服' : '😐 一般'}</span></div><input type="range" min="1" max="5" step="1" value={data.orgasmIntensity || 3} onChange={e => updateData('orgasmIntensity', parseInt(e.target.value))} className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-pink-500"/></div>
-                </div>
+                    {/* Completion Info */}
+                    {data.ejaculation && (
+                        <div className="space-y-3 animate-in fade-in">
+                            <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
+                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2 block">射精强度 (Volume & Force)</label>
+                                <div className="flex justify-between gap-1">
+                                    {FORCE_LEVELS.map(l => (
+                                        <button 
+                                            key={l.lvl} 
+                                            onClick={() => updateData('volumeForceLevel', l.lvl)} 
+                                            className={`flex-1 py-2 rounded-lg flex flex-col items-center gap-1 transition-all ${data.volumeForceLevel === l.lvl ? 'bg-white dark:bg-slate-700 shadow-md ring-1 ring-blue-400' : 'hover:bg-slate-100 dark:hover:bg-slate-700/50'}`}
+                                            title={l.desc}
+                                        >
+                                            <span className={`text-sm font-black ${data.volumeForceLevel === l.lvl ? 'text-blue-500' : 'text-slate-300'}`}>{l.lvl}</span>
+                                            <span className="text-[9px] text-slate-500 font-bold scale-90">{l.label.split('/')[0]}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                                <div className="text-center mt-2 text-[10px] text-blue-400 font-medium">
+                                    {FORCE_LEVELS.find(l => l.lvl === data.volumeForceLevel)?.desc}
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
-                <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl space-y-4">
-                    <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center"><Sparkles size={12} className="mr-1"/> 贤者时间 (Sage Mode)</h4>
-                    <div className="space-y-2"><label className="text-[10px] text-slate-400 block">心理状态</label><div className="flex flex-wrap gap-2">{POST_MOOD_OPTIONS.map(opt => (<button key={opt} onClick={() => updateData('postMood', opt)} className={`px-2 py-1 rounded text-xs transition-all border ${data.postMood === opt ? 'bg-indigo-100 text-indigo-700 border-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300' : 'bg-white text-slate-500 border-slate-200 dark:bg-slate-900 dark:border-slate-700'}`}>{opt}</button>))}</div></div>
-                    <div className="space-y-2"><label className="text-[10px] text-slate-400 block">身体疲劳度</label><div className="flex flex-wrap gap-2">{FATIGUE_OPTIONS.map(opt => (<button key={opt} onClick={() => updateData('fatigue', opt)} className={`px-2 py-1 rounded text-xs transition-all border ${data.fatigue === opt ? 'bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-900/30 dark:text-orange-300' : 'bg-white text-slate-500 border-slate-200 dark:bg-slate-900 dark:border-slate-700'}`}>{opt}</button>))}</div></div>
-                </div>
+                    {/* Post Clarity */}
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 block">贤者时间 (Post Clarity)</label>
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="bg-slate-50 dark:bg-slate-800 p-2 rounded-xl border border-slate-200 dark:border-slate-700">
+                                <div className="text-[10px] text-slate-400 mb-1 flex items-center"><Wind size={10} className="mr-1"/> 心理状态</div>
+                                <select className="w-full bg-transparent text-xs font-bold outline-none text-slate-600 dark:text-slate-300" value={data.postMood} onChange={e => updateData('postMood', e.target.value)}>
+                                    {POST_MOOD_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
+                                </select>
+                            </div>
+                            <div className="bg-slate-50 dark:bg-slate-800 p-2 rounded-xl border border-slate-200 dark:border-slate-700">
+                                <div className="text-[10px] text-slate-400 mb-1 flex items-center"><Sparkles size={10} className="mr-1"/> 身体疲劳</div>
+                                <select className="w-full bg-transparent text-xs font-bold outline-none text-slate-600 dark:text-slate-300" value={data.fatigue} onChange={e => updateData('fatigue', e.target.value)}>
+                                    {FATIGUE_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
 
-                <div className="relative"><PenLine size={14} className="absolute left-3 top-3 text-slate-400" /><textarea className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl py-2.5 pl-9 pr-4 text-xs outline-none focus:border-brand-accent min-h-[60px]" placeholder="更多备注 / 链接 / 特殊感受..." value={data.notes || ''} onChange={e => updateData('notes', e.target.value)}/></div>
+                    <div className="relative">
+                        <PenLine size={14} className="absolute left-3 top-3 text-slate-400" />
+                        <input className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-2.5 pl-9 pr-4 text-xs outline-none focus:border-brand-accent text-brand-text dark:text-slate-200" placeholder="备注..." value={data.notes || ''} onChange={e => updateData('notes', e.target.value)}/>
+                    </div>
+                </div>
             </div>
         </Modal>
     );
