@@ -2,11 +2,11 @@
 import React, { useState, useMemo } from 'react';
 import { LogEntry, ExerciseRecord, MasturbationRecordDetails, ChangeRecord } from '../types';
 import CalendarHeatmap from './CalendarHeatmap';
-import { Moon, Hand, CloudSun, Heart, StopCircle, X, Dumbbell, User, Clock, List, Route, Edit3, Trash2 } from 'lucide-react';
+import { Moon, Hand, CloudSun, Heart, StopCircle, X, Dumbbell, User, Clock, List, Route, Edit3, Trash2, Activity, Zap, SunMedium, ArrowRight } from 'lucide-react';
 import Modal from './Modal';
 import SafeDeleteModal from './SafeDeleteModal';
 import CancelReasonModal from './CancelReasonModal';
-import { formatTime, calculateSleepDuration, analyzeSleep, LABELS } from '../utils/helpers';
+import { formatTime, calculateSleepDuration, analyzeSleep, LABELS, getTodayDateString } from '../utils/helpers';
 import { useData } from '../contexts/DataContext';
 import { useToast } from '../contexts/ToastContext';
 import { LogHistory } from './LogHistory';
@@ -127,10 +127,12 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
   const [cancelTarget, setCancelTarget] = useState<'mb' | 'exercise' | null>(null);
 
   const completedLogs = useMemo(() => logs.filter(log => log.status !== 'pending'), [logs]);
-  const pendingLog = useMemo(() => logs.find(log => log.status === 'pending'), [logs]);
   const ongoingExercise = useMemo(() => logs.flatMap(l => l.exercise || []).find(e => e.ongoing), [logs]);
-  const ongoingNap = useMemo(() => logs.flatMap(l => l.sleep?.naps || []).find(n => n.ongoing), [logs]);
   const ongoingMb = useMemo(() => logs.flatMap(l => l.masturbation || []).find(m => m.status === 'inProgress'), [logs]);
+
+  // Today's specific log
+  const todayStr = getTodayDateString();
+  const todayLog = useMemo(() => logs.find(l => l.date === todayStr), [logs, todayStr]);
 
   // Stats for the monthly dashboard cards
   const currentMonthStats = useMemo(() => {
@@ -143,7 +145,19 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
           return d.getFullYear() === currentYear && d.getMonth() === currentMonth;
       });
 
+      // Avg Hardness
+      const validHardnessLogs = monthLogs.filter(l => l.morning?.wokeWithErection && l.morning.hardness);
+      const totalHardness = validHardnessLogs.reduce((acc, l) => acc + (l.morning?.hardness || 0), 0);
+      const avgHardness = validHardnessLogs.length ? (totalHardness / validHardnessLogs.length).toFixed(1) : '-';
+
+      // Morning Wood Rate
+      const recordedDays = monthLogs.filter(l => l.status === 'completed').length;
+      const woodDays = monthLogs.filter(l => l.morning?.wokeWithErection).length;
+      const rate = recordedDays > 0 ? Math.round((woodDays / recordedDays) * 100) : 0;
+
       return {
+          avgHardness,
+          rate,
           mbCount: monthLogs.reduce((acc, l) => acc + (l.masturbation?.length || 0), 0),
           sexCount: monthLogs.reduce((acc, l) => acc + (l.sex?.length || 0), 0)
       };
@@ -187,15 +201,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
     }
   };
 
-  const handleToggleNap = async () => {
-      try {
-          await toggleNap();
-          showToast('午休状态已更新', 'success');
-      } catch (e: any) {
-          showToast(e.message, 'error');
-      }
-  };
-  
   const handleCancelActivity = (type: 'mb' | 'exercise') => {
       setCancelTarget(type);
       setIsCancelModalOpen(true);
@@ -248,9 +253,11 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
     <div className="space-y-6">
       <div className="flex justify-between items-center pt-2">
         <div>
-          <h1 className="text-3xl font-black tracking-tight text-brand-text dark:text-slate-100">{greeting}</h1>
+          <h1 className="text-3xl font-black tracking-tight text-brand-text dark:text-slate-100 flex items-center">
+              {greeting} <span className="text-2xl ml-2">👋</span>
+          </h1>
           <p className="text-sm text-brand-muted font-medium mt-1">
-            {pendingLog ? '记录进行中...' : '今天感觉如何？'}
+            今天也要保持好状态
           </p>
         </div>
         <button 
@@ -261,7 +268,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
         </button>
       </div>
 
-      {/* Ongoing Activity Card */}
+      {/* Ongoing Activity Banner (System Status) */}
       {(ongoingMb || ongoingExercise) && (
           <div className="animate-in slide-in-from-top-2 fade-in">
               {ongoingMb && (
@@ -310,82 +317,131 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
         <CalendarHeatmap logs={completedLogs} onDateClick={handleDateClickForSummary} />
       </div>
 
-      {/* Stats & Quick Actions Grid (Restored based on screenshot) */}
-      <div className="grid grid-cols-2 gap-4">
-          
-          {/* Masturbation Stats Card */}
-          <div className="bg-brand-card dark:bg-slate-900 p-4 rounded-3xl shadow-soft border border-slate-100 dark:border-slate-800 relative overflow-hidden flex flex-col justify-between h-32">
-              <div className="flex justify-between items-start">
-                  <div>
-                      <span className="text-xs font-bold text-slate-400 block mb-1">自慰次数</span>
-                      <div className="text-2xl font-black text-brand-text dark:text-slate-100">
-                          {currentMonthStats.mbCount}<span className="text-sm font-bold text-slate-400 ml-1">次</span>
-                      </div>
-                  </div>
-                  <div className="p-2 bg-purple-50 dark:bg-purple-900/20 rounded-full">
-                      <Hand size={18} className="text-purple-500" />
-                  </div>
-              </div>
-              <div className="text-[10px] text-slate-400 font-medium">本月释放</div>
-          </div>
-
-          {/* Sex Stats Card */}
-          <div className="bg-brand-card dark:bg-slate-900 p-4 rounded-3xl shadow-soft border border-slate-100 dark:border-slate-800 relative overflow-hidden flex flex-col justify-between h-32">
-              <div className="flex justify-between items-start">
-                  <div>
-                      <span className="text-xs font-bold text-slate-400 block mb-1">性爱次数</span>
-                      <div className="text-2xl font-black text-brand-text dark:text-slate-100">
-                          {currentMonthStats.sexCount}<span className="text-sm font-bold text-slate-400 ml-1">次</span>
-                      </div>
-                  </div>
-                  <div className="p-2 bg-pink-50 dark:bg-pink-900/20 rounded-full">
-                      <Heart size={18} className="text-pink-500" />
-                  </div>
-              </div>
-              <div className="text-[10px] text-slate-400 font-medium">High Quality</div>
-          </div>
-
-          {/* Nap Card */}
+      {/* Today's Status Cards (2-Col Layout) */}
+      <div className="grid grid-cols-2 gap-3">
+          {/* Sleep Card */}
           <div 
-            onClick={handleToggleNap}
-            className={`p-4 rounded-3xl border transition-all cursor-pointer relative overflow-hidden h-32 flex flex-col justify-between ${ongoingNap ? 'bg-orange-500 text-white border-orange-600 shadow-lg shadow-orange-500/20' : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 shadow-sm'}`}
+            onClick={() => onEdit(todayStr)}
+            className="bg-[#0f172a] dark:bg-slate-900 p-4 rounded-3xl shadow-sm border border-slate-800 flex flex-col justify-between h-36 relative overflow-hidden group cursor-pointer"
           >
-              <div className="relative z-10 w-full">
-                  <div className="flex justify-between items-start mb-2">
-                      <div className={`p-2 rounded-xl ${ongoingNap ? 'bg-white/20' : 'bg-slate-100 dark:bg-slate-800'}`}>
-                          <CloudSun size={20} className={ongoingNap ? 'text-white' : 'text-slate-500'} />
-                      </div>
-                      {ongoingNap && <span className="text-[10px] font-bold bg-white/20 px-2 py-0.5 rounded-full animate-pulse">进行中</span>}
+              <div className="flex justify-between items-start z-10">
+                  <div className="p-2 bg-indigo-500/20 rounded-xl text-indigo-400">
+                      <Moon size={20} />
                   </div>
-                  <h3 className={`font-bold ${ongoingNap ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>午休小憩</h3>
-                  <p className={`text-xs mt-1 font-medium ${ongoingNap ? 'text-orange-100' : 'text-slate-400'}`}>
-                      {ongoingNap ? `${ongoingNap.startTime} 开始` : '点击开始/结束'}
-                  </p>
+              </div>
+              <div className="z-10">
+                  <h3 className="text-sm font-bold text-slate-400 mb-1">睡眠</h3>
+                  {todayLog?.sleep?.startTime && todayLog?.sleep?.endTime ? (
+                      <div>
+                          <div className="text-2xl font-black text-white flex items-baseline">
+                              {analyzeSleep(todayLog.sleep.startTime, todayLog.sleep.endTime)?.durationHours.toFixed(1)}
+                              <span className="text-sm font-bold text-slate-500 ml-1">h</span>
+                          </div>
+                          <div className="text-[10px] text-slate-500 font-mono mt-1">
+                              {formatTime(todayLog.sleep.startTime)} - {formatTime(todayLog.sleep.endTime)}
+                          </div>
+                          {analyzeSleep(todayLog.sleep.startTime, todayLog.sleep.endTime)?.isLate && (
+                              <span className="absolute bottom-4 right-4 text-[10px] bg-yellow-500/20 text-yellow-500 px-2 py-0.5 rounded font-bold">熬夜</span>
+                          )}
+                      </div>
+                  ) : (
+                      <div>
+                          <div className="text-xl font-bold text-slate-600">未记录</div>
+                          <div className="text-[10px] text-slate-700 mt-1">点击补全数据</div>
+                      </div>
+                  )}
               </div>
           </div>
 
-          {/* Night Sleep Card (Strict adherence to docs: "未记录" instead of "无") */}
-          {pendingLog ? (
-              <div onClick={() => onEdit(pendingLog.date)} className="bg-purple-600 p-4 rounded-3xl shadow-lg shadow-purple-500/30 text-white cursor-pointer relative overflow-hidden group h-32 flex flex-col justify-between">
-                  <div className="absolute top-0 right-0 w-16 h-16 bg-white/10 rounded-full blur-xl -translate-y-1/2 translate-x-1/2"></div>
-                  <div className="flex justify-between items-start mb-2 relative z-10 w-full">
-                      <div className="p-2 bg-white/20 rounded-xl"><Moon size={20} fill="currentColor"/></div>
-                      <span className="text-[10px] font-bold bg-white/20 px-2 py-0.5 rounded-full">记录中</span>
-                  </div>
-                  <div className="relative z-10">
-                      <h3 className="font-bold">睡眠记录</h3>
-                      <p className="text-xs text-purple-200 mt-1 font-mono">
-                          入睡: {formatTime(pendingLog.sleep?.startTime)}
-                      </p>
+          {/* Vitality Card */}
+          <div className="bg-[#0f172a] dark:bg-slate-900 p-4 rounded-3xl shadow-sm border border-slate-800 flex flex-col justify-between h-36 relative overflow-hidden">
+              <div className="flex justify-between items-start z-10">
+                  <div className="p-2 bg-rose-500/20 rounded-xl text-rose-500">
+                      <Activity size={20} />
                   </div>
               </div>
-          ) : (
-              <div className="bg-white dark:bg-slate-900 p-4 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col justify-center items-center text-slate-400 h-32">
-                  <Moon size={24} className="mb-2 opacity-50"/>
-                  {/* Per docs/ui-state-semantics.md: Night sleep should show "未记录" if missing */}
-                  <span className="text-xs font-bold">未记录</span>
+              <div className="z-10 w-full">
+                  <div className="flex justify-between items-end mb-2">
+                      <h3 className="text-sm font-bold text-slate-400">活力</h3>
+                      <span className="text-[10px] text-slate-600">今日释放</span>
+                  </div>
+                  
+                  <div className="space-y-2">
+                      <div className="flex items-center justify-between text-xs">
+                          <span className="flex items-center text-orange-400 font-bold"><Dumbbell size={12} className="mr-1.5"/> 运动</span>
+                          <span className="text-slate-300 font-medium">
+                              {todayLog?.exercise && todayLog.exercise.length > 0 ? '已完成' : '未完成'}
+                          </span>
+                      </div>
+                      <div className="flex items-center justify-between text-xs">
+                          <span className="flex items-center text-pink-400 font-bold"><Heart size={12} className="mr-1.5"/> 性/手</span>
+                          <span className="text-slate-300 font-medium">
+                              {(todayLog?.sex?.length || 0) + (todayLog?.masturbation?.length || 0) > 0 ? `${(todayLog?.sex?.length || 0) + (todayLog?.masturbation?.length || 0)}次` : '无'}
+                          </span>
+                      </div>
+                  </div>
               </div>
-          )}
+          </div>
+      </div>
+
+      {/* Monthly Stats Grid (4-Col Layout) */}
+      <div className="grid grid-cols-2 gap-3">
+          
+          {/* Avg Hardness */}
+          <div className="bg-[#0f172a] dark:bg-slate-900 p-4 rounded-3xl shadow-sm border border-slate-800 h-28 flex flex-col justify-between">
+              <div className="flex justify-between items-start">
+                  <div>
+                      <span className="text-xs font-bold text-slate-500 block mb-1">平均硬度</span>
+                      <div className="text-2xl font-black text-brand-accent">
+                          {currentMonthStats.avgHardness}
+                      </div>
+                  </div>
+                  <Zap size={16} className="text-brand-accent opacity-50"/>
+              </div>
+              <div className="text-[10px] text-slate-600 font-medium">- 稳定</div>
+          </div>
+
+          {/* Morning Rate */}
+          <div className="bg-[#0f172a] dark:bg-slate-900 p-4 rounded-3xl shadow-sm border border-slate-800 h-28 flex flex-col justify-between">
+              <div className="flex justify-between items-start">
+                  <div>
+                      <span className="text-xs font-bold text-slate-500 block mb-1">晨勃率</span>
+                      <div className="text-2xl font-black text-brand-accent">
+                          {currentMonthStats.rate}<span className="text-sm font-bold text-slate-600 ml-0.5">%</span>
+                      </div>
+                  </div>
+                  <SunMedium size={16} className="text-brand-accent opacity-50"/>
+              </div>
+              <div className="text-[10px] text-slate-600 font-medium">出现概率</div>
+          </div>
+
+          {/* Masturbation Count */}
+          <div className="bg-[#0f172a] dark:bg-slate-900 p-4 rounded-3xl shadow-sm border border-slate-800 h-28 flex flex-col justify-between">
+              <div className="flex justify-between items-start">
+                  <div>
+                      <span className="text-xs font-bold text-slate-500 block mb-1">自慰次数</span>
+                      <div className="text-2xl font-black text-purple-400">
+                          {currentMonthStats.mbCount}<span className="text-sm font-bold text-slate-600 ml-0.5">次</span>
+                      </div>
+                  </div>
+                  <Hand size={16} className="text-purple-500 opacity-50"/>
+              </div>
+              <div className="text-[10px] text-slate-600 font-medium">本月释放</div>
+          </div>
+
+          {/* Sex Count */}
+          <div className="bg-[#0f172a] dark:bg-slate-900 p-4 rounded-3xl shadow-sm border border-slate-800 h-28 flex flex-col justify-between">
+              <div className="flex justify-between items-start">
+                  <div>
+                      <span className="text-xs font-bold text-slate-500 block mb-1">性爱次数</span>
+                      <div className="text-2xl font-black text-pink-400">
+                          {currentMonthStats.sexCount}<span className="text-sm font-bold text-slate-600 ml-0.5">次</span>
+                      </div>
+                  </div>
+                  <Heart size={16} className="text-pink-500 opacity-50"/>
+              </div>
+              <div className="text-[10px] text-slate-600 font-medium">High Quality</div>
+          </div>
       </div>
 
       {/* Summary Modal */}
