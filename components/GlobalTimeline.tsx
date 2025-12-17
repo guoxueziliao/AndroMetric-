@@ -22,12 +22,10 @@ export const GlobalTimeline: React.FC<GlobalTimelineProps> = ({ log }) => {
     // Helper to extract local HH:mm from ISO string or return as is
     const getLocalTime = (isoString?: string): string | undefined => {
         if (!isoString) return undefined;
-        // Check if it matches ISO format roughly (contains T)
         if (isoString.includes('T')) {
             try {
                 const date = new Date(isoString);
                 if (isNaN(date.getTime())) return isoString.split('T')[1]?.slice(0, 5);
-                
                 const h = date.getHours().toString().padStart(2, '0');
                 const m = date.getMinutes().toString().padStart(2, '0');
                 return `${h}:${m}`;
@@ -44,8 +42,6 @@ export const GlobalTimeline: React.FC<GlobalTimelineProps> = ({ log }) => {
         const getTimestamp = (timeStr: string) => {
             if (!timeStr) return 0;
             const [h, m] = timeStr.split(':').map(Number);
-            // Handle logical day: 00:00 - 04:59 are technically next day but visually last
-            // We want chronological order 05:00 -> 23:59 -> 00:00 -> 04:59
             let sortH = h;
             if (h < 5) sortH += 24; 
             return sortH * 60 + m;
@@ -82,7 +78,7 @@ export const GlobalTimeline: React.FC<GlobalTimelineProps> = ({ log }) => {
 
         // 3. Exercise
         log.exercise?.forEach(ex => {
-            const time = ex.startTime.includes(':') ? ex.startTime : '18:00'; // Fallback
+            const time = ex.startTime.includes(':') ? ex.startTime : '18:00'; 
             list.push({
                 time,
                 type: 'exercise',
@@ -154,31 +150,35 @@ export const GlobalTimeline: React.FC<GlobalTimelineProps> = ({ log }) => {
         return list.sort((a, b) => a.timestamp - b.timestamp);
     }, [log]);
 
-    if (events.length === 0) return null;
+    if (events.length === 0) return (
+        <div className="flex flex-col items-center justify-center py-10 text-slate-400">
+            <Clock size={32} className="mb-2 opacity-50"/>
+            <p className="text-xs">暂无时间轴数据</p>
+        </div>
+    );
 
     return (
-        <div className="mt-6 border-t border-slate-100 dark:border-slate-800 pt-6">
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center">
-                <Clock size={14} className="mr-1.5"/> 全局时间轴
-            </h3>
-            <div className="relative pl-4 border-l-2 border-slate-100 dark:border-slate-800 space-y-6">
+        <div className="mt-4 pt-4">
+            <div className="relative border-l-2 border-slate-100 dark:border-slate-800 ml-4 space-y-6">
                 {events.map((e, i) => (
-                    <div key={i} className="relative flex items-start gap-3 group">
-                        {/* Dot */}
-                        <div className={`absolute -left-[21px] top-1 w-3 h-3 rounded-full border-2 border-white dark:border-slate-900 ${e.color.split(' ')[0].replace('text-', 'bg-')}`}></div>
+                    <div key={i} className="relative flex items-start gap-4 group">
+                        {/* Timeline Connector */}
+                        <div className={`absolute -left-[9px] top-1.5 w-4 h-4 rounded-full border-4 border-white dark:border-slate-900 bg-white dark:bg-slate-800 z-10 flex items-center justify-center`}>
+                            <div className={`w-2 h-2 rounded-full ${e.color.split(' ')[0].replace('text-', 'bg-')}`}></div>
+                        </div>
                         
-                        {/* Time */}
-                        <div className="text-xs font-mono font-bold text-slate-400 pt-0.5 min-w-[36px]">{e.time}</div>
+                        {/* Time Column */}
+                        <div className="text-xs font-mono font-bold text-slate-400 pt-1.5 min-w-[40px] text-right">{e.time}</div>
                         
-                        {/* Card */}
-                        <div className={`flex-1 p-2.5 rounded-xl flex items-center justify-between transition-colors ${e.color.split(' ')[1]}`}>
+                        {/* Card Content */}
+                        <div className={`flex-1 p-3 rounded-2xl flex items-center justify-between transition-all bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md`}>
                             <div className="flex items-center gap-3">
-                                <div className={`p-1.5 rounded-full bg-white/50 dark:bg-black/20 ${e.color.split(' ')[0]}`}>
-                                    <e.icon size={16}/>
+                                <div className={`p-2 rounded-xl bg-slate-50 dark:bg-slate-800 ${e.color.split(' ')[0]}`}>
+                                    <e.icon size={18}/>
                                 </div>
                                 <div>
-                                    <div className={`text-xs font-bold ${e.color.split(' ')[0]}`}>{e.title}</div>
-                                    <div className="text-[10px] opacity-80 font-medium">{e.desc}</div>
+                                    <div className={`text-sm font-bold text-slate-700 dark:text-slate-200`}>{e.title}</div>
+                                    <div className="text-xs text-slate-500 font-medium">{e.desc}</div>
                                 </div>
                             </div>
                         </div>
