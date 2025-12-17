@@ -64,7 +64,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
   const [summaryLog, setSummaryLog] = useState<LogEntry | null>(null);
   const [activeSummaryTab, setActiveSummaryTab] = useState<'diary' | 'track' | 'trace'>('diary');
   
-  // Logical Ongoing States (All 6 Icons)
+  // 6路并发横幅状态
   const ongoingAlcohol = useMemo(() => logs.find(l => l.alcoholRecord?.ongoing), [logs]);
   const ongoingMb = useMemo(() => logs.flatMap(l => l.masturbation || []).find(m => m.status === 'inProgress'), [logs]);
   const ongoingExercise = useMemo(() => logs.flatMap(l => l.exercise || []).find(e => e.ongoing), [logs]);
@@ -75,12 +75,12 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
   const todayStr = getTodayDateString();
   const greeting = useMemo(() => { const hour = new Date().getHours(); if (hour < 5) return '夜深了'; if (hour < 12) return '早上好'; if (hour < 18) return '下午好'; return '晚上好'; }, []);
 
+  // 统计修正：包含“进行中”的数据
   const activityStats = useMemo(() => {
-      const logsToUse = logs.filter(l => l.status === 'completed' || l.date === todayStr);
-      const totalMb = logsToUse.reduce((acc, l) => acc + (l.masturbation?.length || 0), 0);
-      const totalSex = logsToUse.reduce((acc, l) => acc + (l.sex?.length || 0), 0);
+      const totalMb = logs.reduce((acc, l) => acc + (l.masturbation?.length || 0), 0);
+      const totalSex = logs.reduce((acc, l) => acc + (l.sex?.length || 0), 0);
       return { totalMb, totalSex };
-  }, [logs, todayStr]);
+  }, [logs]);
 
   const handleDateClickForSummary = (date: string) => { const log = logs.find(l => l.date === date); if (log) { if (log.status === 'pending' && date !== todayStr) { onEdit(log.date); } else { setSummaryLog(log); setActiveSummaryTab('diary'); setIsSummaryModalOpen(true); } } else { onDateClick(date); } };
 
@@ -94,7 +94,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
         <button onClick={onNavigateToBackup} className="p-3 bg-white dark:bg-slate-800 rounded-full shadow-sm border border-slate-100 dark:border-slate-800 hover:scale-105 transition-transform"><User size={24} className="text-brand-accent"/></button>
       </div>
 
-      {/* Ongoing Banners System (All 6) */}
+      {/* 进行中横幅堆栈 */}
       <div className="flex flex-col gap-3">
           {ongoingSleep && (
               <div className="bg-indigo-600 rounded-2xl p-4 text-white shadow-lg shadow-indigo-500/30 flex items-center justify-between animate-in slide-in-from-top-2 fade-in">
@@ -102,7 +102,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                       <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center animate-pulse"><BedDouble size={20}/></div>
                       <div>
                           <div className="text-xs font-bold opacity-80 uppercase tracking-wider">正在睡觉</div>
-                          <div className="text-lg font-black">睡眠记录中... <span className="ml-1 font-mono text-sm opacity-60">{formatTime(ongoingSleep.sleep?.startTime || '')} 睡下</span></div>
+                          <div className="text-lg font-black">记录中... <span className="ml-1 font-mono text-sm opacity-60">{formatTime(ongoingSleep.sleep?.startTime || '')} 睡下</span></div>
                       </div>
                   </div>
                   <div className="flex items-center gap-2">
@@ -123,7 +123,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                   </div>
                   <div className="flex items-center gap-2">
                       <button onClick={(e) => { e.stopPropagation(); onCancelSex?.(); }} className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors text-white/80"><X size={16}/></button>
-                      <button onClick={(e) => { e.stopPropagation(); onFinishSex?.(ongoingSex); }} className="bg-white text-pink-600 px-4 py-2 rounded-xl font-bold text-sm shadow-sm flex items-center"><StopCircle size={16} className="mr-1.5"/>详情</button>
+                      <button onClick={(e) => { e.stopPropagation(); onFinishSex?.(ongoingSex); }} className="bg-white text-pink-600 px-4 py-2 rounded-xl font-bold text-sm shadow-sm flex items-center"><StopCircle size={16} className="mr-1.5"/>完成</button>
                   </div>
               </div>
           )}
@@ -155,7 +155,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                   </div>
                   <div className="flex items-center gap-2">
                       <button onClick={(e) => { e.stopPropagation(); onCancelAlcohol?.(); }} className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors text-white/80"><X size={16}/></button>
-                      <button onClick={(e) => { e.stopPropagation(); onEditAlcohol?.(); }} className="bg-white text-amber-600 px-4 py-2 rounded-xl font-bold text-sm shadow-sm flex items-center"><StopCircle size={16} className="mr-1.5"/>详情</button>
+                      <button onClick={(e) => { e.stopPropagation(); onEditAlcohol?.(); }} className="bg-white text-amber-600 px-4 py-2 rounded-xl font-bold text-sm shadow-sm flex items-center"><StopCircle size={16} className="mr-1.5"/>完成</button>
                   </div>
               </div>
           )}
@@ -193,12 +193,12 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
           )}
       </div>
 
-      {/* Main Calendar Card */}
+      {/* 主日历卡片 */}
       <div className="bg-brand-card dark:bg-slate-900 rounded-3xl p-4 shadow-soft border border-slate-100 dark:border-slate-800 mb-6">
-        <CalendarHeatmap logs={logs.filter(l => l.status === 'completed')} onDateClick={handleDateClickForSummary} />
+        <CalendarHeatmap logs={logs.filter(l => l.status === 'completed' || l.date === todayStr)} onDateClick={handleDateClickForSummary} />
       </div>
 
-      {/* Quick Summary Grid */}
+      {/* 统计网格 */}
       <div className="grid grid-cols-2 gap-3">
           <div className="bg-white dark:bg-slate-900 p-4 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 h-28 flex flex-col justify-between">
               <div className="flex justify-between items-start">
