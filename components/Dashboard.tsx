@@ -2,10 +2,10 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { LogEntry, ExerciseRecord, SexRecordDetails, MasturbationRecordDetails } from '../types';
 import CalendarHeatmap from './CalendarHeatmap';
-import { Moon, Zap, Activity, Hand, HeartPulse, Clock, Dumbbell, Footprints, Timer, CloudSun, Swords, TrendingUp, Beer, Film, ChevronLeft, ChevronRight, MapPin, Target, Play, ShieldAlert, Edit3, Trash2, FastForward, Coffee, Bed, ArrowRight, User, List, Route } from 'lucide-react';
+import { Moon, Zap, Activity, Hand, HeartPulse, Clock, Dumbbell, Footprints, Timer, CloudSun, Swords, TrendingUp, Beer, Film, ChevronLeft, ChevronRight, MapPin, Target, Play, ShieldAlert, Edit3, Trash2, FastForward, Coffee, Bed, ArrowRight, User } from 'lucide-react';
 import Modal from './Modal';
 import SafeDeleteModal from './SafeDeleteModal';
-import { formatTime, calculateSleepDuration, analyzeSleep, generateLogSummary } from '../utils/helpers';
+import { formatTime, calculateSleepDuration, analyzeSleep } from '../utils/helpers';
 import { getPrediction } from '../utils/alcoholHelpers';
 import { useData } from '../contexts/DataContext';
 import { useToast } from '../contexts/ToastContext';
@@ -166,16 +166,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [logToDelete, setLogToDelete] = useState<string | null>(null);
-  
-  // Summary Modal State
   const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
   const [summaryLog, setSummaryLog] = useState<LogEntry | null>(null);
   const [isHistoryView, setIsHistoryView] = useState(false);
-  
-  // New: Tabbed View State
-  const [activeSummaryTab, setActiveSummaryTab] = useState<'overview' | 'timeline'>('overview');
-  const [summaryList, setSummaryList] = useState<Array<{ label: string, value: string }>>([]);
-  const summaryTouchStart = useRef<number | null>(null);
   
   // Masturbation Action Modal
   const [isMbActionModalOpen, setIsMbActionModalOpen] = useState(false);
@@ -212,39 +205,11 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
   const handleDateClickForSummary = (date: string) => {
     const log = logs.find(l => l.date === date);
     if (log) {
-        if (log.status === 'pending') {
-            onEdit(log.date);
-        } else { 
-            setSummaryLog(log); 
-            setSummaryList(generateLogSummary(log)); // Generate summary immediately
-            setActiveSummaryTab('overview'); // Default tab
-            setIsSummaryModalOpen(true); 
-            setIsHistoryView(false); 
-        }
+        if (log.status === 'pending') onEdit(log.date);
+        else { setSummaryLog(log); setIsSummaryModalOpen(true); setIsHistoryView(false); }
     } else {
         onDateClick(date);
     }
-  };
-
-  const onSummaryTouchStart = (e: React.TouchEvent) => {
-      summaryTouchStart.current = e.targetTouches[0].clientX;
-  };
-
-  const onSummaryTouchEnd = (e: React.TouchEvent) => {
-      if (!summaryTouchStart.current) return;
-      const end = e.changedTouches[0].clientX;
-      const diff = summaryTouchStart.current - end;
-      
-      // Right to Left Swipe -> Next Tab (Overview to Timeline)
-      if (diff > 50 && activeSummaryTab === 'overview') {
-          setActiveSummaryTab('timeline');
-      }
-      // Left to Right Swipe -> Prev Tab (Timeline to Overview)
-      if (diff < -50 && activeSummaryTab === 'timeline') {
-          setActiveSummaryTab('overview');
-      }
-      
-      summaryTouchStart.current = null;
   };
 
   const handleToggleNap = async () => {
@@ -377,59 +342,24 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                 )}
                 
                 {isHistoryView ? <LogHistory log={summaryLog} /> : (
-                    // New Tabbed View Logic
-                    <div className="flex flex-col h-full">
-                        {/* Tab Switcher */}
-                        <div className="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-xl mb-4">
-                            <button 
-                                onClick={() => setActiveSummaryTab('overview')}
-                                className={`flex-1 py-2 text-xs font-bold rounded-lg flex items-center justify-center gap-1 transition-all ${
-                                    activeSummaryTab === 'overview' 
-                                    ? 'bg-white dark:bg-slate-700 text-brand-accent shadow-sm' 
-                                    : 'text-slate-500'
-                                }`}
-                            >
-                                <List size={14}/> 概览
-                            </button>
-                            <button 
-                                onClick={() => setActiveSummaryTab('timeline')}
-                                className={`flex-1 py-2 text-xs font-bold rounded-lg flex items-center justify-center gap-1 transition-all ${
-                                    activeSummaryTab === 'timeline' 
-                                    ? 'bg-white dark:bg-slate-700 text-brand-accent shadow-sm' 
-                                    : 'text-slate-500'
-                                }`}
-                            >
-                                <Route size={14}/> 时间轴
-                            </button>
-                        </div>
-
-                        {/* Content Area with Swipe */}
-                        <div 
-                            className="bg-slate-50 dark:bg-slate-950 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 min-h-[300px] touch-pan-y"
-                            onTouchStart={onSummaryTouchStart}
-                            onTouchEnd={onSummaryTouchEnd}
-                        >
-                            {activeSummaryTab === 'overview' ? (
-                                <div className="space-y-4 animate-in fade-in slide-in-from-left-4 duration-300">
-                                    {summaryList.map(({ label, value }, idx) => (
-                                        <div key={idx} className="grid grid-cols-[70px_1fr] gap-4">
-                                            <span className="text-xs font-bold text-slate-400 uppercase tracking-wide pt-0.5">{label}</span>
-                                            <span className="text-sm font-medium text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">{value}</span>
-                                        </div>
-                                    ))}
-                                    {summaryList.length === 0 && (
-                                        <div className="text-center text-slate-400 py-10 italic">暂无记录详情</div>
-                                    )}
-                                </div>
-                            ) : (
-                                <div className="animate-in fade-in slide-in-from-right-4 duration-300">
-                                    <div className="mb-4 text-center text-[10px] text-slate-400 flex items-center justify-center gap-2">
-                                        <ChevronLeft size={12}/> 滑动切换视图 <ChevronRight size={12}/>
+                    // Simple Summary View (Can be elaborate)
+                    <div className="bg-slate-50 dark:bg-slate-950 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 text-sm leading-relaxed whitespace-pre-wrap text-slate-600 dark:text-slate-300">
+                        {/* Reuse the helper to generate text, or build a custom UI here */}
+                        {/* For brevity, using the text generator logic or custom */}
+                        <div className="space-y-4">
+                            {summaryLog.morning?.wokeWithErection && (
+                                <div>
+                                    <div className="text-xs font-bold text-slate-400 uppercase mb-1">晨勃</div>
+                                    <div className="flex items-center gap-2">
+                                        <Zap size={16} className="text-brand-accent"/>
+                                        <span className="font-bold">Level {summaryLog.morning.hardness}</span>
                                     </div>
-                                    <GlobalTimeline log={summaryLog} />
                                 </div>
                             )}
+                            {/* ... more details ... */}
                         </div>
+                        
+                        <GlobalTimeline log={summaryLog} />
 
                         <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-800 text-center">
                             <button onClick={() => { setIsSummaryModalOpen(false); onEdit(summaryLog.date); }} className="px-6 py-2 bg-brand-accent text-white rounded-full font-bold shadow-md hover:bg-blue-600 transition-colors">
