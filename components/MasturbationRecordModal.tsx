@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useMemo, Suspense, lazy } from 'react';
 import { X, Check, Clock, Film, PenLine, Plus, Minus, BatteryCharging, Wind, Sparkles, Hash, Settings, Users, ChevronRight, ArrowLeft, Trash2, Tag, MonitorPlay, Search, AlertTriangle } from 'lucide-react';
 import { MasturbationRecordDetails, LogEntry, PartnerProfile, ContentItem } from '../types';
@@ -39,6 +40,9 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
     const { showToast } = useToast();
     
     // --- State ---
+    /**
+     * Updated default state to match defined types.
+     */
     const [data, setData] = useState<MasturbationRecordDetails>({
         id: '', startTime: '', duration: 15, status: 'completed', tools: ['手'], contentItems: [],
         materials: [], props: [], assets: { sources: [], platforms: [], categories: [], target: '', actors: [] }, materialsList: [],
@@ -60,7 +64,12 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
         logs.forEach(log => {
             log.masturbation?.forEach(m => {
                 m.contentItems?.forEach(c => c.xpTags.forEach(t => counts[t] = (counts[t] || 0) + 1));
-                m.assets?.categories?.forEach(c => counts[c] = (counts[c] || 0) + 1);
+                /**
+                 * Fixed Property access: m.assets?.categories is now defined.
+                 */
+                m.assets?.categories?.forEach(c => {
+                    if (c) counts[c] = (counts[c] || 0) + 1;
+                });
             });
         });
         return Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 30).map(x => x[0]);
@@ -100,10 +109,17 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                     }
                 }
 
+                /**
+                 * Fixed properties during state initialization.
+                 */
                 setData({
                     ...initialData,
                     duration: initialDuration,
                     contentItems: initialData.contentItems || [],
+                    materials: initialData.materials || [],
+                    props: initialData.props || [],
+                    assets: initialData.assets || { sources: [], platforms: [], categories: [], target: '', actors: [] },
+                    materialsList: initialData.materialsList || [],
                     volumeForceLevel: initialData.volumeForceLevel || (initialData.ejaculation ? 3 : undefined),
                     postMood: initialData.postMood || '平静/贤者',
                     fatigue: initialData.fatigue || '无明显疲劳',
@@ -153,6 +169,9 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
             item.xpTags.forEach(t => allTags.add(t));
             item.actors.forEach(a => allActors.add(a));
         });
+        /**
+         * Fixed Property access for assets creation.
+         */
         finalData.assets = { categories: Array.from(allTags), actors: Array.from(allActors), sources: Array.from(allSources), platforms: Array.from(allPlatforms), target: '' };
         onSave(finalData);
     };
@@ -160,7 +179,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
     const incrementEdging = () => updateData('edgingCount', (data.edgingCount || 0) + 1);
     const decrementEdging = () => updateData('edgingCount', Math.max(0, (data.edgingCount || 0) - 1));
 
-    const handleAddContent = () => setEditingItem({ id: Date.now().toString(), type: undefined, platform: undefined, actors: [], xpTags: [], title: '' });
+    const handleAddContent = () => setEditingItem({ id: Date.now().toString(), type: '', platform: undefined, actors: [], xpTags: [], title: '' });
     const handleEditContent = (item: ContentItem) => setEditingItem({ ...item });
     const handleDeleteContent = (id: string, e: React.MouseEvent) => {
         e.stopPropagation();
@@ -300,14 +319,14 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                     <div className="flex-1 bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
                         <label className="text-[10px] text-slate-500 font-bold uppercase block mb-1">开始时间</label>
                         <div className="flex items-center justify-between">
-                            <input type="time" value={data.startTime} onChange={e => updateData('startTime', e.target.value)} className="bg-transparent text-xl font-mono font-bold text-brand-text dark:text-slate-200 outline-none w-full"/>
+                            <input type="time" value={data.startTime || ''} onChange={e => updateData('startTime', e.target.value)} className="bg-transparent text-xl font-mono font-bold text-brand-text dark:text-slate-200 outline-none w-full"/>
                         </div>
                     </div>
                     <div className="flex-1 bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
                         <label className="text-[10px] text-slate-500 font-bold uppercase block mb-1">持续时长 (分)</label>
                         <div className="flex items-center justify-between w-full gap-2">
                             <button type="button" onClick={() => updateData('duration', Math.max(1, (data.duration||0)-1))} className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-700 text-slate-500 hover:text-brand-accent transition-colors"><Minus size={16}/></button>
-                            <input type="number" value={data.duration} onChange={e => updateData('duration', parseInt(e.target.value) || 0)} className="bg-transparent text-xl font-mono font-bold text-brand-text dark:text-slate-200 outline-none w-full text-center"/>
+                            <input type="number" value={data.duration || 0} onChange={e => updateData('duration', parseInt(e.target.value) || 0)} className="bg-transparent text-xl font-mono font-bold text-brand-text dark:text-slate-200 outline-none w-full text-center"/>
                             <button type="button" onClick={() => updateData('duration', (data.duration||0)+1)} className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-700 text-slate-500 hover:text-brand-accent transition-colors"><Plus size={16}/></button>
                         </div>
                     </div>
@@ -346,7 +365,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
 
                                                 {hasIssues ? (
                                                     <NoticeBadge 
-                                                        level={maxSeverity} 
+                                                        level={maxSeverity as any} 
                                                         count={notices.length} 
                                                         expanded={expandedHintId === item.id}
                                                         onToggle={(e) => setExpandedHintId(expandedHintId === item.id ? null : item.id)}
@@ -413,7 +432,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                                     {FORCE_LEVELS.map(l => (
                                         <button 
                                             key={l.lvl} 
-                                            onClick={() => updateData('volumeForceLevel', l.lvl)} 
+                                            onClick={() => updateData('volumeForceLevel', l.lvl as any)} 
                                             className={`flex-1 py-2 rounded-lg flex flex-col items-center gap-1 transition-all ${data.volumeForceLevel === l.lvl ? 'bg-white dark:bg-slate-700 shadow-md ring-1 ring-blue-400' : 'hover:bg-slate-100 dark:hover:bg-slate-700/50'}`}
                                             title={l.desc}
                                         >

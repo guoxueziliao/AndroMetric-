@@ -1,4 +1,5 @@
 
+
 export type HardnessLevel = 1 | 2 | 3 | 4 | 5;
 export type StressLevel = 1 | 2 | 3 | 4 | 5;
 export type ErectionDurationImpression = 'brief' | 'long' | 'unsure';
@@ -28,6 +29,17 @@ export type CaffeineIntake = 'none' | 'low' | 'medium' | 'high';
 export type HistoryCategory = 'sleep' | 'morning' | 'nap' | 'exercise' | 'masturbation' | 'sex' | 'health' | 'lifestyle' | 'meta' | 'system';
 export type HistoryEventType = 'manual' | 'quick' | 'auto';
 export type ChangeType = 'add' | 'mod' | 'del';
+
+/**
+ * Added missing ChangeDetail type used in helper functions and history repair.
+ */
+export interface ChangeDetail {
+    field: string;
+    oldValue: string;
+    newValue: string;
+    category?: HistoryCategory;
+    changeType?: ChangeType;
+}
 
 // --- Unified Event Model (Analytics Layer) ---
 export type EventType = 'morning_wood' | 'sleep' | 'sex' | 'masturbation' | 'exercise' | 'alcohol' | 'stress' | 'emotion' | 'health';
@@ -71,22 +83,102 @@ export interface AppSettings {
   lastExportAt?: number;
 }
 
-export type SexActionType = 'act' | 'position';
-
-export interface SexAction {
-  id: string;
-  type: SexActionType;
-  name: string;
+/**
+ * Added missing BackupState type used in MyView.
+ */
+export interface BackupState {
+    lastBackupAt?: number;
+    isCloudSynced?: boolean;
 }
 
-export interface SexInteraction {
-  id: string;
-  partner: string;
-  role?: string | null;
-  location: string;
-  costumes?: string[];
-  toys?: string[];
-  chain: SexAction[];
+export interface AlcoholItem {
+    key: string;
+    name: string;
+    volume: number;
+    abv: number;
+    pureAlcohol: number;
+    count: number;
+}
+
+export interface AlcoholRecord {
+    id?: string;
+    startTime?: string;
+    endTime?: string;
+    ongoing?: boolean;
+    isInstant?: boolean; // v0.0.9 新增：是否为一口/一杯式饮酒
+    totalGrams: number;
+    durationMinutes: number;
+    isLate: boolean;
+    items: AlcoholItem[];
+    drunkLevel?: DrunkLevel;
+    
+    // v0.0.9 Context Fields
+    location?: string; // Where
+    people?: string;   // Who
+    reason?: string;   // Why
+    
+    // Legacy
+    time?: string;
+    alcoholScene?: string;
+}
+
+export interface MorningRecord {
+    id: string;
+    timestamp?: number;
+    wokeWithErection: boolean;
+    hardness?: HardnessLevel | null;
+    retention?: MorningWoodRetention | null;
+    wokenByErection?: boolean;
+    durationImpression?: ErectionDurationImpression | null;
+}
+
+export interface SleepRecord {
+    id: string;
+    startTime?: string | null;
+    endTime?: string | null;
+    quality: number;
+    attire?: SleepAttire | null;
+    naturalAwakening?: boolean;
+    nocturnalEmission?: boolean;
+    withPartner?: boolean;
+    preSleepState?: PreSleepState | null;
+    naps: NapRecord[];
+    hasDream?: boolean;
+    dreamTypes?: string[];
+    environment?: {
+        location: SleepLocation;
+        temperature: SleepTemperature;
+    };
+}
+
+export interface NapRecord {
+    id: string;
+    startTime: string;
+    endTime?: string | null;
+    duration?: number;
+    ongoing?: boolean;
+    hasDream?: boolean;
+    dreamTypes?: string[];
+    wokeWithErection?: boolean;
+    hardness?: HardnessLevel | null;
+    quality?: number;
+    environment?: {
+        location: SleepLocation;
+        temperature: SleepTemperature;
+    };
+}
+
+export interface ExerciseRecord {
+    id: string;
+    type: string;
+    startTime: string;
+    duration?: number;
+    intensity?: ExerciseIntensity | null;
+    bodyParts?: string[];
+    ongoing?: boolean;
+    steps?: number | null;
+    notes?: string | null;
+    feeling?: ExerciseFeeling;
 }
 
 export interface SexRecordDetails {
@@ -96,8 +188,8 @@ export interface SexRecordDetails {
   protection?: string | null;
   state?: string | null;
   interactions: SexInteraction[];
-  partner?: string | null; // Legacy/Fallback
-  location?: string | null; // Legacy/Fallback
+  partner?: string | null;
+  location?: string | null;
   role?: string | null;
   costumes?: string[];
   acts?: string[];
@@ -118,47 +210,34 @@ export interface SexRecordDetails {
   notes?: string | null;
 }
 
-export interface MasturbationMaterial {
-    id: string;
-    label?: string | null;
-    publisher?: string | null;
-    actors: string[];
-    tags: string[];
+export interface SexInteraction {
+  id: string;
+  partner: string;
+  role?: string | null;
+  location: string;
+  costumes?: string[];
+  toys?: string[];
+  chain: SexAction[];
 }
 
-// v0.0.6 Content Item (Replaces assets/materials)
-export interface ContentItem {
-    id: string;
-    type: string; // was source (video, image...)
-    platform?: string; // was platform (pornhub, twitter...)
-    title?: string;
-    actors: string[];
-    xpTags: string[]; // was categories/tags
-    notes?: string;
+export interface SexAction {
+  id: string;
+  type: SexActionType;
+  name: string;
 }
+
+/**
+ * Added missing SexActionType.
+ */
+export type SexActionType = 'act' | 'position';
 
 export interface MasturbationRecordDetails {
   id: string;
   startTime?: string | null;
   duration?: number;
-  location?: string | null; // Scene/Place
+  location?: string | null;
   tools: string[];
-  
-  // v0.0.6: The new single source of truth for content
   contentItems: ContentItem[];
-
-  // Legacy / Deprecated fields (kept for migration safety)
-  materials?: string[]; // Old strings
-  materialsList?: MasturbationMaterial[]; // v0.0.5 object
-  assets?: {
-      sources: string[];
-      platforms: string[];
-      categories: string[];
-      actors?: string[];
-      target?: string | null;
-  };
-  props?: string[];
-
   edging?: 'none' | 'once' | 'multiple';
   edgingCount?: number;
   lubricant?: string | null;
@@ -172,87 +251,44 @@ export interface MasturbationRecordDetails {
   interruptionReasons?: string[];
   notes?: string | null;
   status?: 'completed' | 'inProgress'; 
-  
-  // v0.0.6 New Fields
-  volumeForceLevel?: 1 | 2 | 3 | 4 | 5; // 纸巾测试
-  postMood?: string;    // 贤者时间 - 心理
-  fatigue?: string;     // 贤者时间 - 身体
-  quickLog?: boolean;   // 标记是否为快速记录生成
+  volumeForceLevel?: 1 | 2 | 3 | 4 | 5;
+  postMood?: string;
+  fatigue?: string;
+  /**
+   * Added missing legacy/internal properties used in UI and migrations.
+   */
+  materialsList?: any[];
+  assets?: {
+      sources?: string[];
+      platforms?: string[];
+      categories?: string[];
+      target?: string;
+      actors?: string[];
+  };
+  materials?: string[];
+  props?: string[];
 }
 
-export interface ExerciseRecord {
+export interface ContentItem {
     id: string;
     type: string;
-    startTime: string;
-    duration?: number;
-    intensity?: ExerciseIntensity | null;
-    bodyParts?: string[];
-    ongoing?: boolean;
-    steps?: number | null;
-    notes?: string | null;
-    feeling?: ExerciseFeeling;
+    platform?: string;
+    title?: string;
+    actors: string[];
+    xpTags: string[];
+    notes?: string;
 }
 
-export interface NapRecord {
-    id: string;
-    startTime: string;
-    endTime?: string | null;
-    duration?: number;
-    ongoing?: boolean;
-    hasDream?: boolean;
-    dreamTypes?: string[];
-    // v0.0.7 Nap Wood
-    wokeWithErection?: boolean;
-    hardness?: HardnessLevel | null;
-    // v0.0.8 Nap Quality & Env
-    quality?: number; // 1-5
-    environment?: {
-        location: SleepLocation;
-        temperature: SleepTemperature;
-    };
-}
-
-export interface AlcoholItem {
-    key: string;
-    name: string;
-    volume: number;
-    abv: number;
-    pureAlcohol: number;
-    count: number;
-}
-
-export interface AlcoholRecord {
-    id?: string; // New for v0.0.8 continuous tracking
-    startTime?: string; // New for v0.0.8
-    endTime?: string; // New for v0.0.8
-    ongoing?: boolean; // New for v0.0.8
-    totalGrams: number;
-    durationMinutes: number; // Calculated from start/end if available
-    isLate: boolean; // Auto-calculated now
-    items: AlcoholItem[];
-    drunkLevel?: DrunkLevel;
-    
-    // v0.0.9 Context Fields
-    location?: string; // Place (e.g. Home, BBQ)
-    people?: string;   // Who (e.g. Friends, Alone)
-    reason?: string;   // Why (e.g. Social, Relax)
-    
-    // v0.0.6 Legacy
-    time?: string; // HH:mm
-    alcoholScene?: string; // Deprecated
-}
-
-// v0.0.6 Caffeine (Updated to use Cups)
 export interface CaffeineItem {
     id: string;
     name: string;
-    time: string; // HH:mm
-    count: number; // cups
-    volume?: number; // ml (size of cup)
+    time: string;
+    count: number;
+    volume?: number;
 }
 
 export interface CaffeineRecord {
-    totalCount: number; // total cups
+    totalCount: number;
     items: CaffeineItem[];
 }
 
@@ -288,110 +324,53 @@ export interface PartnerProfile {
     squirtingAbility?: boolean;
 }
 
-export interface ChangeDetail {
-    field: string;
-    oldValue: string;
-    newValue: string;
-    category?: HistoryCategory;
-    changeType?: ChangeType; // New in v0.0.6+: 'add' | 'mod' | 'del'
-}
-
-export interface ChangeRecord {
-    id?: string; // New: Version ID (short hash)
-    timestamp: number;
-    summary: string;
-    details: ChangeDetail[];
-    type?: HistoryEventType;
-    relatedDate?: string; // New: For cross-day links (e.g., Previous Day for Sleep)
-}
-
-// --- Standardized Domain Models (Schema v1.0) ---
-
-export interface MorningRecord {
-    id: string;
-    timestamp?: number; // Time of recording
-    wokeWithErection: boolean;
-    hardness?: HardnessLevel | null;
-    retention?: MorningWoodRetention | null;
-    wokenByErection?: boolean;
-    durationImpression?: ErectionDurationImpression | null;
-}
-
-export interface SleepRecord {
-    id: string;
-    startTime?: string | null; // sleepDateTime
-    endTime?: string | null; // wakeUpDateTime
-    quality: number; // 1-5
-    attire?: SleepAttire | null;
-    naturalAwakening?: boolean;
-    nocturnalEmission?: boolean;
-    withPartner?: boolean;
-    preSleepState?: PreSleepState | null;
-    naps: NapRecord[];
-    hasDream?: boolean;
-    dreamTypes?: string[];
-    environment?: {
-        location: SleepLocation;
-        temperature: SleepTemperature;
-    };
-}
-
-export interface Health {
-    isSick: boolean; // Corresponds to hasDiscomfort
-    discomfortLevel?: DiscomfortLevel | null;
-    symptoms?: string[];
-    medications?: string[];
-    
-    // Legacy fields (Deprecated in v0.0.6)
-    feeling?: HealthFeeling | null;
-    illnessType?: IllnessType | null;
-    medicationTaken?: boolean | null;
-    medicationName?: string | null;
-}
-
-// Aliases for Schema v1.0 Compliance
-export type ExerciseEntry = ExerciseRecord;
-export type MasturbationEntry = MasturbationRecordDetails;
-export type NapEntry = NapRecord;
-export type ChangeHistoryEntry = ChangeRecord;
-
 export interface LogEntry {
-    date: string; // ID (YYYY-MM-DD)
+    date: string;
     status: 'pending' | 'completed';
     updatedAt: number;
-    
-    // Domain Objects
     morning?: MorningRecord | null;
     sleep?: SleepRecord | null;
-    
-    // Environment / State
     location?: Location | null;
     weather?: Weather | null;
     mood?: Mood | null;
     stressLevel?: StressLevel | null;
-    
-    // Health (Explicit Object)
     health?: Health | null;
-    
-    // Lifestyle
     alcohol?: AlcoholConsumption | null;
     alcoholRecord?: AlcoholRecord | null;
     pornConsumption?: PornConsumption | null;
-    
-    // v0.0.6 New Fields
-    caffeineIntake?: CaffeineIntake | null; // Legacy enum
-    caffeineRecord?: CaffeineRecord | null; // New object (Cups based)
+    caffeineRecord?: CaffeineRecord | null;
+    /**
+     * Added missing caffeineIntake used in hydrateLog.
+     */
+    caffeineIntake?: CaffeineIntake | null;
     dailyEvents?: string[];
-    
-    // Activity Arrays
     exercise?: ExerciseRecord[];
     sex?: SexRecordDetails[];
     masturbation?: MasturbationRecordDetails[];
-    
-    // Meta
     tags?: string[];
     notes?: string | null;
     changeHistory?: ChangeRecord[];
+}
+
+export interface Health {
+    isSick: boolean;
+    discomfortLevel?: DiscomfortLevel | null;
+    symptoms?: string[];
+    medications?: string[];
+    /**
+     * Added missing properties used in hydrateLog and eventAdapter.
+     */
+    illnessType?: string | null;
+    medicationTaken?: boolean | null;
+    medicationName?: string | null;
+    feeling?: string;
+}
+
+export interface ChangeRecord {
+    timestamp: number;
+    summary: string;
+    details: ChangeDetail[];
+    type?: HistoryEventType;
 }
 
 export interface StoredData {
@@ -399,20 +378,11 @@ export interface StoredData {
     logs: LogEntry[];
 }
 
-export interface BackupState {
-    timestamp: string;
-    logs: LogEntry[];
-}
-
-// Internal Snapshot for Rollback
 export interface Snapshot {
     id?: number;
     timestamp: number;
     dataVersion: number;
     appVersion: string;
     description: string;
-    data: {
-        logs: LogEntry[];
-        partners: PartnerProfile[];
-    };
+    data: { logs: LogEntry[]; partners: PartnerProfile[]; };
 }

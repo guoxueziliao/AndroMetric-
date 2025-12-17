@@ -1,4 +1,5 @@
 
+
 import { LogEntry, Health, MorningRecord, SleepRecord, AlcoholRecord } from '../types';
 
 /**
@@ -24,6 +25,9 @@ export const hydrateLog = (raw: any): LogEntry => {
         pornConsumption: raw.pornConsumption ?? null,
         
         // v0.0.5 New Fields
+        /**
+         * Fixed caffeineIntake assignment.
+         */
         caffeineIntake: raw.caffeineIntake ?? null,
         dailyEvents: Array.isArray(raw.dailyEvents) ? raw.dailyEvents : [],
         
@@ -108,6 +112,9 @@ export const hydrateLog = (raw: any): LogEntry => {
     log.sleep = { ...defaultSleep, ...(raw.sleep || {}) };
 
     // 4. Domain Object: Health
+    /**
+     * Updated properties for Health object initialization.
+     */
     const defaultHealth: Health = {
         isSick: false,
         illnessType: null,

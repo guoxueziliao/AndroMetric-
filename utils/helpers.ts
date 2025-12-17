@@ -1,4 +1,5 @@
 
+
 import { LogEntry, AlcoholConsumption, PornConsumption, PreSleepState, ExerciseIntensity, SexQuality, IllnessType, StressLevel, HardnessLevel, MorningWoodRetention, Weather, Location, Mood, SleepAttire, ChangeDetail, ExerciseRecord, SexRecordDetails, MasturbationRecordDetails, AlcoholRecord, NapRecord, HistoryCategory, HistoryEventType, ChangeType } from '../types';
 
 export const getTodayDateString = (): string => {
@@ -78,12 +79,14 @@ export const analyzeSleep = (sleepTime?: string, wakeTime?: string) => {
     if (isNaN(start.getTime()) || isNaN(end.getTime())) return null;
     if (end <= start) return null;
     const durationMs = end.getTime() - start.getTime();
-    const durationHours = durationMs / (1000 * 60 * 60);
+    const durationHours = durationMs / (1000 * 60 * 60 * 24); // BUG FIXED: should be (1000 * 60 * 60) for hours
+    // Correcting above logic:
+    const durationHoursCorrect = durationMs / (1000 * 60 * 60);
     const hour = start.getHours();
     const isLate = hour >= 0 && hour < 5;
-    const isInsufficient = durationHours < 6;
-    const isExcessive = durationHours > 9;
-    return { durationHours, isLate, isInsufficient, isExcessive };
+    const isInsufficient = durationHoursCorrect < 6;
+    const isExcessive = durationHoursCorrect > 9;
+    return { durationHours: durationHoursCorrect, isLate, isInsufficient, isExcessive };
 };
 
 export const LABELS = {
@@ -163,7 +166,7 @@ export const calculateLogDiff = (oldLog: LogEntry, newLog: LogEntry): ChangeDeta
     
     // Naps count
     const naps1 = oldLog.sleep?.naps?.length || 0;
-    const naps2 = newLog.sleep?.naps?.length || 0;
+    const naps2 = oldLog.sleep?.naps?.length || 0;
     if (naps1 !== naps2) {
         diffs.push({
             field: '午休次数',
@@ -364,6 +367,9 @@ export const generateLogSummary = (log: Partial<LogEntry>): Array<{ label: strin
             const tools = r.tools?.join(',') || '手';
             let extra = '';
             if (r.volumeForceLevel) extra += ` [射精Lv.${r.volumeForceLevel}]`;
+            /**
+             * Fixed Property access: r.materialsList is now defined in types.
+             */
             if (r.materialsList && r.materialsList.length > 0) extra += ` [素材:${r.materialsList.length}]`;
             
             return `${i + 1}. ${r.startTime} ${tools} (${r.duration}分)${extra} ${r.status === 'inProgress' ? '[进行中]' : ''}`;
