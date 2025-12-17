@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Check, Minus, Plus, Beer, Clock, X, StopCircle, ChevronDown, ChevronUp, MapPin, Users, Target, Zap, Trash2, Sliders } from 'lucide-react';
+import { Check, Minus, Plus, Beer, Clock, StopCircle, ChevronDown, ChevronUp, MapPin, Users, Target, Zap, Trash2, SlidersHorizontal } from 'lucide-react';
 import Modal from './Modal';
 import { AlcoholRecord, AlcoholItem, DrunkLevel } from '../types';
 import { DRINK_TYPES } from '../utils/alcoholHelpers';
@@ -13,16 +13,16 @@ interface AlcoholRecordModalProps {
 }
 
 const DRUNK_LEVELS: { id: DrunkLevel, label: string, emoji: string }[] = [
-    { id: 'none', label: '无感', emoji: '😐' },
+    { id: 'none', label: '没感觉', emoji: '😐' },
     { id: 'tipsy', label: '微醺', emoji: '☺️' },
     { id: 'drunk', label: '醉酒', emoji: '🥴' },
     { id: 'wasted', label: '断片', emoji: '🤮' },
 ];
 
-const TAGS = {
+const CONTEXT_TAGS = {
     location: ['家', '烧烤摊', '大排档', '饭店', '餐厅', '酒吧', 'KTV', '夜店', '公司', '户外'],
     people: ['独自', '朋友', '伴侣', '同事', '客户', '家人', '同学'],
-    reason: ['放松', '聚会', '应酬', '佐餐', '助兴', '借酒浇愁', '庆祝', '品鉴']
+    reason: ['放松', '应酬', '聚会', '助兴', '借酒浇愁', '庆祝', '品鉴']
 };
 
 const AlcoholRecordModal: React.FC<AlcoholRecordModalProps> = ({ isOpen, onClose, onSave, initialData }) => {
@@ -54,7 +54,6 @@ const AlcoholRecordModal: React.FC<AlcoholRecordModalProps> = ({ isOpen, onClose
                 setIsOngoing(initialData.ongoing ?? false);
                 setIsInstant(initialData.isInstant ?? false);
                 setItems(JSON.parse(JSON.stringify(initialData.items || [])));
-                
                 setDrunkLevel(initialData.drunkLevel || 'none');
                 setLocation(initialData.location || '家');
                 setPeople(initialData.people || '独自');
@@ -103,6 +102,7 @@ const AlcoholRecordModal: React.FC<AlcoholRecordModalProps> = ({ isOpen, onClose
                 abv: drink.abv, pureAlcohol: drink.pure, count: 1
             }];
         });
+        setExpandedItemIdx(items.length); // 自动展开新添加的项
     };
 
     const updateItem = (idx: number, field: keyof AlcoholItem, val: number) => {
@@ -118,6 +118,10 @@ const AlcoholRecordModal: React.FC<AlcoholRecordModalProps> = ({ isOpen, onClose
     };
 
     const handleFinish = () => {
+        if (items.length === 0) {
+            alert('请先添加饮品');
+            return;
+        }
         if (isInstant) {
             setEndTime(startTime);
         } else if (isOngoing) {
@@ -148,138 +152,171 @@ const AlcoholRecordModal: React.FC<AlcoholRecordModalProps> = ({ isOpen, onClose
         <Modal
             isOpen={isOpen}
             onClose={onClose}
-            title={step === 'recording' ? "正在饮酒..." : "饮酒总结"}
+            title={step === 'recording' ? "饮酒清单" : "饮酒总结"}
             footer={
-                step === 'recording' ? (
-                    <button onClick={handleFinish} className="w-full py-4 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-2xl shadow-lg flex items-center justify-center">
-                        {isInstant ? <Check size={20} className="mr-2"/> : <StopCircle size={20} className="mr-2"/>}
-                        {isInstant ? "记录完成" : "结束本次饮酒"}
-                    </button>
-                ) : (
-                    <div className="flex gap-2 w-full">
-                        <button onClick={() => setStep('recording')} className="flex-1 py-3 bg-slate-100 dark:bg-slate-800 text-slate-500 font-bold rounded-xl">修改饮品</button>
-                        <button onClick={handleSave} className="flex-1 py-3 bg-amber-500 text-white font-bold rounded-xl shadow-lg">保存记录</button>
-                    </div>
-                )
+                <div className="w-full flex flex-col gap-3">
+                    {step === 'recording' ? (
+                        <button 
+                            onClick={handleFinish} 
+                            className="w-full py-4 bg-amber-500 hover:bg-amber-600 text-white font-black rounded-2xl shadow-lg shadow-amber-500/20 flex items-center justify-center transition-all active:scale-[0.98]"
+                        >
+                            {isInstant ? <Check size={20} className="mr-2"/> : <StopCircle size={20} className="mr-2"/>}
+                            {isInstant ? "记录完成" : "结束本次饮酒"}
+                        </button>
+                    ) : (
+                        <div className="flex gap-2 w-full">
+                            <button onClick={() => setStep('recording')} className="flex-1 py-3 bg-slate-100 dark:bg-slate-800 text-slate-500 font-bold rounded-xl">修改饮品</button>
+                            <button onClick={handleSave} className="flex-1 py-3 bg-amber-500 text-white font-black rounded-xl shadow-lg">确认保存</button>
+                        </div>
+                    )}
+                </div>
             }
         >
-            <div className="h-[75vh] flex flex-col -mx-2 relative">
+            <div className="flex flex-col h-full -mx-4">
                 
-                {/* Header Info */}
-                <div className="mx-2 mb-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 shadow-sm">
-                    <div className="flex justify-between items-center">
-                        <div className="flex items-center gap-3">
-                            <div className={`p-2.5 rounded-full ${isOngoing ? 'bg-amber-100 text-amber-600 animate-pulse' : 'bg-slate-100 text-slate-400'}`}><Beer size={20}/></div>
-                            <div>
-                                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">总摄入量</div>
-                                <div className="text-2xl font-black">{totalGrams}<span className="text-xs text-slate-400 ml-1">g</span></div>
+                {/* 1. Session Status Banner */}
+                <div className="px-4 mb-4">
+                    <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-3xl p-5 shadow-sm">
+                        <div className="flex justify-between items-center">
+                            <div className="flex items-center gap-3">
+                                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${isOngoing ? 'bg-amber-100 text-amber-600 animate-pulse' : 'bg-slate-100 text-slate-400'}`}>
+                                    <Beer size={24}/>
+                                </div>
+                                <div>
+                                    <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">酒精摄入量</div>
+                                    <div className="text-3xl font-black text-brand-text dark:text-slate-100">{totalGrams}<span className="text-sm font-bold ml-1 opacity-40">g</span></div>
+                                </div>
                             </div>
-                        </div>
-                        <div className="text-right">
-                             <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-900 px-3 py-1 rounded-full border border-slate-100 dark:border-slate-800">
-                                <Clock size={12} className="text-slate-400"/>
-                                <span className="font-mono font-bold text-sm">{isInstant ? '一次性' : durationDisplay}</span>
-                             </div>
-                             <div className="text-[10px] text-slate-400 mt-1 font-mono">{startTime} {isOngoing ? '...' : `- ${endTime}`}</div>
+                            <div className="text-right">
+                                <div className="inline-flex items-center gap-2 bg-white dark:bg-slate-700 px-3 py-1.5 rounded-full border border-slate-100 dark:border-slate-600 shadow-sm">
+                                    <Clock size={14} className="text-slate-400"/>
+                                    <span className="font-mono font-black text-sm">{isInstant ? '一次性' : durationDisplay}</span>
+                                </div>
+                                <div className="text-[10px] font-bold text-slate-400 mt-2 font-mono">{startTime} {isOngoing ? '...' : `- ${endTime}`}</div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                {/* STEP 1: RECORDING */}
-                {step === 'recording' && (
-                    <div className="flex-1 overflow-y-auto custom-scrollbar px-2 space-y-6 pb-10">
-                        
-                        {/* Mode Switch */}
-                        <div className="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-xl">
-                            <button onClick={() => setIsInstant(false)} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${!isInstant ? 'bg-white dark:bg-slate-700 text-amber-600 shadow-sm' : 'text-slate-400'}`}>持续性饮酒</button>
-                            <button onClick={() => setIsInstant(true)} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${isInstant ? 'bg-white dark:bg-slate-700 text-amber-600 shadow-sm' : 'text-slate-400'}`}>一口/一杯</button>
-                        </div>
+                {/* 2. Content Area */}
+                <div className="flex-1 overflow-y-auto px-4 custom-scrollbar min-h-[40vh] pb-10">
+                    {step === 'recording' ? (
+                        <div className="space-y-6">
+                            {/* Mode Picker */}
+                            <div className="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl">
+                                <button onClick={() => setIsInstant(false)} className={`flex-1 py-2.5 text-xs font-black rounded-xl transition-all ${!isInstant ? 'bg-white dark:bg-slate-700 text-amber-600 shadow-sm' : 'text-slate-400'}`}>持续性饮酒</button>
+                                <button onClick={() => setIsInstant(true)} className={`flex-1 py-2.5 text-xs font-black rounded-xl transition-all ${isInstant ? 'bg-white dark:bg-slate-700 text-amber-600 shadow-sm' : 'text-slate-400'}`}>一口/一杯</button>
+                            </div>
 
-                        {/* Drink List with Inline Expansion */}
-                        <div className="space-y-3">
-                            {items.map((item, idx) => (
-                                <div key={idx} className={`bg-white dark:bg-slate-800 border rounded-2xl overflow-hidden transition-all ${expandedItemIdx === idx ? 'ring-2 ring-amber-400 border-amber-400 shadow-md' : 'border-slate-100 dark:border-slate-700'}`}>
-                                    <div className="p-3 flex items-center justify-between cursor-pointer" onClick={() => setExpandedItemIdx(expandedItemIdx === idx ? null : idx)}>
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center text-xl">{DRINK_TYPES.find(d => d.key === item.key)?.icon || '🍺'}</div>
-                                            <div>
-                                                <div className="text-sm font-bold flex items-center gap-1">{item.name} {expandedItemIdx === idx ? <ChevronUp size={12}/> : <ChevronDown size={12}/>}</div>
-                                                <div className="text-[10px] text-slate-400 font-mono">{item.volume}ml · {item.abv}%</div>
+                            {/* Active Items */}
+                            {items.length > 0 && (
+                                <div className="space-y-3">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">已添加 ({items.length})</label>
+                                    {items.map((item, idx) => (
+                                        <div key={idx} className={`bg-white dark:bg-slate-900 border rounded-2xl overflow-hidden transition-all ${expandedItemIdx === idx ? 'ring-2 ring-amber-400 border-amber-400 shadow-md' : 'border-slate-100 dark:border-slate-800'}`}>
+                                            <div className="p-4 flex items-center justify-between cursor-pointer" onClick={() => setExpandedItemIdx(expandedItemIdx === idx ? null : idx)}>
+                                                <div className="flex items-center gap-4">
+                                                    <div className="text-2xl">{DRINK_TYPES.find(d => d.key === item.key)?.icon || '🍺'}</div>
+                                                    <div>
+                                                        <div className="text-sm font-black text-brand-text dark:text-slate-100 flex items-center gap-2">
+                                                            {item.name}
+                                                            {expandedItemIdx === idx ? <ChevronUp size={14}/> : <ChevronDown size={14}/>}
+                                                        </div>
+                                                        <div className="text-[10px] font-bold text-slate-400 mt-0.5">{item.volume}ml · {item.abv}% ABV</div>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-3" onClick={e => e.stopPropagation()}>
+                                                    <button onClick={() => updateItem(idx, 'count', Math.max(0, item.count - 1))} className="w-9 h-9 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 flex items-center justify-center hover:bg-white transition-colors shadow-sm"><Minus size={16}/></button>
+                                                    <span className="w-4 text-center font-black text-lg">{item.count}</span>
+                                                    <button onClick={() => updateItem(idx, 'count', item.count + 1)} className="w-9 h-9 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 flex items-center justify-center hover:bg-white transition-colors shadow-sm"><Plus size={16}/></button>
+                                                </div>
                                             </div>
+                                            {expandedItemIdx === idx && (
+                                                <div className="px-5 pb-5 pt-2 bg-slate-50/50 dark:bg-slate-950/30 border-t border-slate-50 dark:border-slate-800 space-y-5 animate-in slide-in-from-top-2">
+                                                    <div>
+                                                        <div className="flex justify-between text-[10px] font-black text-slate-500 mb-2"><span>单杯精确容量</span><span className="text-amber-600 font-mono">{item.volume}ml</span></div>
+                                                        <input type="range" min="10" max="1000" step="10" value={item.volume} onChange={e => updateItem(idx, 'volume', Number(e.target.value))} className="w-full h-2 accent-amber-500 cursor-pointer"/>
+                                                    </div>
+                                                    <div>
+                                                        <div className="flex justify-between text-[10px] font-black text-slate-500 mb-2"><span>酒精浓度 (ABV)</span><span className="text-red-500 font-mono">{item.abv}%</span></div>
+                                                        <input type="range" min="1" max="80" step="0.5" value={item.abv} onChange={e => updateItem(idx, 'abv', Number(e.target.value))} className="w-full h-2 accent-red-500 cursor-pointer"/>
+                                                    </div>
+                                                    <div className="flex justify-end pt-2 border-t border-slate-100 dark:border-slate-800">
+                                                        <button onClick={() => setItems(prev => prev.filter((_, i) => i !== idx))} className="text-[10px] text-red-500 font-black flex items-center gap-1.5 hover:bg-red-50 px-3 py-1.5 rounded-lg transition-colors"><Trash2 size={12}/> 移除此项</button>
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
-                                        <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
-                                            <button onClick={() => updateItem(idx, 'count', Math.max(0, item.count - 1))} className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-900 flex items-center justify-center"><Minus size={14}/></button>
-                                            <span className="w-4 text-center font-bold text-sm">{item.count}</span>
-                                            <button onClick={() => updateItem(idx, 'count', item.count + 1)} className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-900 flex items-center justify-center"><Plus size={14}/></button>
-                                        </div>
-                                    </div>
-                                    {expandedItemIdx === idx && (
-                                        <div className="px-4 pb-4 pt-2 bg-slate-50/50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-700 space-y-4 animate-in slide-in-from-top-2">
-                                            <div>
-                                                <div className="flex justify-between text-[10px] font-bold text-slate-500 mb-1"><span>单杯容量</span><span className="text-amber-600">{item.volume}ml</span></div>
-                                                <input type="range" min="10" max="1000" step="10" value={item.volume} onChange={e => updateItem(idx, 'volume', Number(e.target.value))} className="w-full h-1.5 accent-amber-500"/>
-                                            </div>
-                                            <div>
-                                                <div className="flex justify-between text-[10px] font-bold text-slate-500 mb-1"><span>酒精浓度 (ABV)</span><span className="text-red-500">{item.abv}%</span></div>
-                                                <input type="range" min="1" max="80" step="0.5" value={item.abv} onChange={e => updateItem(idx, 'abv', Number(e.target.value))} className="w-full h-1.5 accent-red-500"/>
-                                            </div>
-                                            <div className="flex justify-end"><button onClick={() => setItems(prev => prev.filter((_, i) => i !== idx))} className="text-[10px] text-red-500 font-bold flex items-center gap-1"><Trash2 size={10}/>删除</button></div>
-                                        </div>
-                                    )}
+                                    ))}
                                 </div>
-                            ))}
-                        </div>
+                            )}
 
-                        {/* Presets Grid */}
-                        <div>
-                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 block">快速加酒</label>
-                            <div className="grid grid-cols-3 gap-3">
-                                {DRINK_TYPES.map(d => (
-                                    <button key={d.key} onClick={() => handleAddPreset(d)} className="p-3 rounded-2xl border border-slate-200 dark:border-slate-700 flex flex-col items-center gap-1 hover:bg-amber-50 dark:hover:bg-amber-900/20 active:scale-95 transition-all">
-                                        <span className="text-2xl">{d.icon}</span>
-                                        <span className="text-xs font-bold truncate w-full text-center">{d.name}</span>
-                                        <span className="text-[9px] text-slate-400 font-mono">{d.volume}ml</span>
-                                    </button>
-                                ))}
+                            {/* Preset Grid */}
+                            <div>
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-3 block">快速加酒 (点击添加)</label>
+                                <div className="grid grid-cols-3 gap-3">
+                                    {DRINK_TYPES.map(d => (
+                                        <button 
+                                            key={d.key} 
+                                            onClick={() => handleAddPreset(d)} 
+                                            className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-3 rounded-2xl flex flex-col items-center gap-1.5 hover:border-amber-400 hover:bg-amber-50/30 dark:hover:bg-amber-900/10 active:scale-95 transition-all shadow-sm group"
+                                        >
+                                            <span className="text-2xl group-hover:scale-110 transition-transform">{d.icon}</span>
+                                            <span className="text-[10px] font-black truncate w-full text-center text-brand-text dark:text-slate-300">{d.name}</span>
+                                            <span className="text-[9px] text-slate-400 font-mono font-bold">{d.volume}ml</span>
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
                         </div>
-                    </div>
-                )}
+                    ) : (
+                        /* STEP 2: SUMMARY */
+                        <div className="space-y-8 animate-in slide-in-from-right-5">
+                            {/* Where */}
+                            <section>
+                                <label className="text-xs font-black text-slate-400 uppercase flex items-center gap-2 mb-4"><MapPin size={14} className="text-indigo-500"/> 1. 哪里喝的？ (Where)</label>
+                                <div className="flex flex-wrap gap-2">
+                                    {CONTEXT_TAGS.location.map(t => (
+                                        <button key={t} onClick={() => setLocation(t)} className={`px-4 py-2.5 text-xs font-bold rounded-2xl border transition-all ${location === t ? 'bg-indigo-600 text-white border-indigo-600 shadow-md ring-2 ring-indigo-600/20' : 'bg-white dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700 hover:border-indigo-200'}`}>{t}</button>
+                                    ))}
+                                </div>
+                            </section>
 
-                {/* STEP 2: SUMMARY */}
-                {step === 'summary' && (
-                    <div className="flex-1 overflow-y-auto custom-scrollbar px-2 space-y-6 pb-10 animate-in slide-in-from-right-4">
-                        <section>
-                            <label className="text-xs font-bold text-slate-400 uppercase flex items-center gap-1 mb-3"><MapPin size={12}/> 饮酒地点 (Where)</label>
-                            <div className="flex flex-wrap gap-2">
-                                {TAGS.location.map(t => <button key={t} onClick={() => setLocation(t)} className={`px-3 py-2 text-xs rounded-xl border transition-all ${location === t ? 'bg-indigo-600 text-white border-indigo-600 shadow-md' : 'bg-white dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700'}`}>{t}</button>)}
-                            </div>
-                        </section>
-                        <section>
-                            <label className="text-xs font-bold text-slate-400 uppercase flex items-center gap-1 mb-3"><Users size={12}/> 与谁共饮 (Who)</label>
-                            <div className="flex flex-wrap gap-2">
-                                {TAGS.people.map(t => <button key={t} onClick={() => setPeople(t)} className={`px-3 py-2 text-xs rounded-xl border transition-all ${people === t ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700'}`}>{t}</button>)}
-                            </div>
-                        </section>
-                        <section>
-                            <label className="text-xs font-bold text-slate-400 uppercase flex items-center gap-1 mb-3"><Target size={12}/> 饮酒目的 (Why)</label>
-                            <div className="flex flex-wrap gap-2">
-                                {TAGS.reason.map(t => <button key={t} onClick={() => setReason(t)} className={`px-3 py-2 text-xs rounded-xl border transition-all ${reason === t ? 'bg-emerald-600 text-white border-emerald-600 shadow-md' : 'bg-white dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700'}`}>{t}</button>)}
-                            </div>
-                        </section>
-                        <section className="pt-4 border-t border-slate-100 dark:border-slate-800">
-                            <label className="text-xs font-bold text-slate-400 uppercase flex items-center gap-1 mb-4"><Zap size={12}/> 醉意程度</label>
-                            <div className="flex gap-2">
-                                {DRUNK_LEVELS.map(lvl => (
-                                    <button key={lvl.id} onClick={() => setDrunkLevel(lvl.id)} className={`flex-1 py-4 rounded-2xl border flex flex-col items-center gap-1 transition-all ${drunkLevel === lvl.id ? 'bg-amber-100 border-amber-400 shadow-sm ring-1 ring-amber-400' : 'bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 opacity-60'}`}>
-                                        <span className="text-2xl">{lvl.emoji}</span>
-                                        <span className={`text-[10px] font-black ${drunkLevel === lvl.id ? 'text-amber-700' : 'text-slate-500'}`}>{lvl.label}</span>
-                                    </button>
-                                ))}
-                            </div>
-                        </section>
-                    </div>
-                )}
+                            {/* Who */}
+                            <section>
+                                <label className="text-xs font-black text-slate-400 uppercase flex items-center gap-2 mb-4"><Users size={14} className="text-blue-500"/> 2. 和谁喝的？ (Who)</label>
+                                <div className="flex flex-wrap gap-2">
+                                    {CONTEXT_TAGS.people.map(t => (
+                                        <button key={t} onClick={() => setPeople(t)} className={`px-4 py-2.5 text-xs font-bold rounded-2xl border transition-all ${people === t ? 'bg-blue-600 text-white border-blue-600 shadow-md ring-2 ring-blue-600/20' : 'bg-white dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700 hover:border-blue-200'}`}>{t}</button>
+                                    ))}
+                                </div>
+                            </section>
+
+                            {/* Why */}
+                            <section>
+                                <label className="text-xs font-black text-slate-400 uppercase flex items-center gap-2 mb-4"><Target size={14} className="text-emerald-500"/> 3. 为什么喝？ (Why)</label>
+                                <div className="flex flex-wrap gap-2">
+                                    {CONTEXT_TAGS.reason.map(t => (
+                                        <button key={t} onClick={() => setReason(t)} className={`px-4 py-2.5 text-xs font-bold rounded-2xl border transition-all ${reason === t ? 'bg-emerald-600 text-white border-emerald-600 shadow-md ring-2 ring-emerald-600/20' : 'bg-white dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700 hover:border-emerald-200'}`}>{t}</button>
+                                    ))}
+                                </div>
+                            </section>
+
+                            {/* Drunk Level */}
+                            <section className="pt-6 border-t border-slate-100 dark:border-slate-800">
+                                <label className="text-xs font-black text-slate-400 uppercase flex items-center gap-2 mb-5"><Zap size={14} className="text-amber-500"/> 4. 醉到什么程度？</label>
+                                <div className="grid grid-cols-4 gap-2">
+                                    {DRUNK_LEVELS.map(lvl => (
+                                        <button key={lvl.id} onClick={() => setDrunkLevel(lvl.id)} className={`py-4 rounded-2xl border flex flex-col items-center gap-2 transition-all ${drunkLevel === lvl.id ? 'bg-amber-100 border-amber-400 shadow-sm ring-1 ring-amber-400 scale-105' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 opacity-60'}`}>
+                                            <span className="text-3xl">{lvl.emoji}</span>
+                                            <span className={`text-[10px] font-black ${drunkLevel === lvl.id ? 'text-amber-700' : 'text-slate-500'}`}>{lvl.label}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            </section>
+                        </div>
+                    )}
+                </div>
             </div>
         </Modal>
     );

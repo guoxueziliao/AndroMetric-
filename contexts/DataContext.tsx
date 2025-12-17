@@ -5,6 +5,8 @@ import { LogEntry, PartnerProfile, SexRecordDetails, MasturbationRecordDetails, 
 interface DataContextType {
     logs: LogEntry[];
     partners: PartnerProfile[];
+    // Added missing isInitializing property to match useLogs return value
+    isInitializing: boolean;
     addOrUpdateLog: (log: LogEntry) => Promise<void>;
     deleteLog: (date: string) => Promise<void>;
     addOrUpdatePartner: (partner: PartnerProfile) => Promise<void>;
@@ -16,7 +18,11 @@ interface DataContextType {
     saveAlcoholRecord: (record: AlcoholRecord) => Promise<void>;
     toggleNap: () => Promise<void>;
     toggleSleepLog: (pendingLog?: LogEntry) => Promise<void>;
-    toggleAlcohol: (isEditing?: boolean) => Promise<void>;
+    /**
+     * Corrected toggleAlcohol signature.
+     * It returns Promise<boolean> to indicate if a session was started, and accepts no parameters.
+     */
+    toggleAlcohol: () => Promise<boolean>;
     importLogs: (importedLogs: LogEntry[], importedPartners?: PartnerProfile[]) => Promise<void>;
 }
 
