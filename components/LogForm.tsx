@@ -82,8 +82,6 @@ const LogForm: React.FC<{
 
     const [log, setLog] = useState<LogEntry>(() => initializeLog(existingLog));
     const [activeDetailTab, setActiveDetailTab] = useState<'lifestyle' | 'environment' | 'health'>('lifestyle');
-    const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
-    const [summaryData, setSummaryData] = useState<Array<{ label: string, value: string }>>([]);
     const [qualityScore, setQualityScore] = useState(0);
     
     // Modals state
@@ -133,26 +131,30 @@ const LogForm: React.FC<{
         }
         
         // Generate Change History
+        let diffs: ChangeDetail[] = [];
+        let summary = '';
+
         if (existingLog) {
-            const diffs: ChangeDetail[] = calculateLogDiff(existingLog, log);
-            if (diffs.length > 0) {
-                const historyEntry: ChangeRecord = {
-                    timestamp: Date.now(),
-                    summary: '编辑记录',
-                    details: diffs,
-                    type: 'manual'
-                };
-                log.changeHistory = [...(log.changeHistory || []), historyEntry];
-            }
+            diffs = calculateLogDiff(existingLog, log);
+            summary = '编辑记录';
         } else {
-             // New Log
-             const historyEntry: ChangeRecord = {
+             // New Log: Compare against a clean empty log template (hydrated defaults) to identify user inputs
+             // This ensures that values like "Hardness: 3" are captured as "Additions" relative to the default null/empty state
+             const baseline = hydrateLog({ date: log.date });
+             diffs = calculateLogDiff(baseline, log);
+             summary = '创建新记录';
+        }
+
+        // Add history entry if there are changes or it's a new record
+        // Note: For new records, we now include `diffs` so the history shows what was initially populated
+        if (diffs.length > 0 || !existingLog) {
+            const historyEntry: ChangeRecord = {
                 timestamp: Date.now(),
-                summary: '创建新记录',
-                details: [],
+                summary,
+                details: diffs,
                 type: 'manual'
             };
-            log.changeHistory = [historyEntry];
+            log.changeHistory = existingLog ? [...(log.changeHistory || []), historyEntry] : [historyEntry];
         }
 
         onSave(log);
