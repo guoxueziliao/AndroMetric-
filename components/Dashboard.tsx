@@ -134,6 +134,34 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
   const todayStr = getTodayDateString();
   const todayLog = useMemo(() => logs.find(l => l.date === todayStr), [logs, todayStr]);
 
+  // Last 7 Days Sleep Stats for the Chart
+  const recentSleepStats = useMemo(() => {
+      const stats = [];
+      const today = new Date();
+      for (let i = 6; i >= 0; i--) {
+          const d = new Date();
+          d.setDate(today.getDate() - i);
+          const y = d.getFullYear();
+          const m = String(d.getMonth() + 1).padStart(2, '0');
+          const day = String(d.getDate()).padStart(2, '0');
+          const dateStr = `${y}-${m}-${day}`;
+          
+          const log = logs.find(l => l.date === dateStr);
+          let duration = 0;
+          let isLate = false;
+          
+          if (log?.sleep?.startTime && log?.sleep?.endTime) {
+              const analysis = analyzeSleep(log.sleep.startTime, log.sleep.endTime);
+              if (analysis) {
+                  duration = analysis.durationHours;
+                  isLate = analysis.isLate;
+              }
+          }
+          stats.push({ date: dateStr, duration, isLate, isToday: i === 0 });
+      }
+      return stats;
+  }, [logs]);
+
   // Stats for the monthly dashboard cards
   const currentMonthStats = useMemo(() => {
       const now = new Date();
@@ -319,42 +347,65 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
 
       {/* Today's Status Cards (2-Col Layout) */}
       <div className="grid grid-cols-2 gap-3 mb-6">
-          {/* Sleep Card */}
+          {/* Sleep Card - Refactored */}
           <div 
             onClick={() => onEdit(todayStr)}
-            className="bg-[#0f172a] dark:bg-slate-900 p-4 rounded-3xl shadow-sm border border-slate-800 flex flex-col justify-between h-36 relative overflow-hidden group cursor-pointer"
+            className="bg-[#0f172a] dark:bg-slate-900 p-4 rounded-3xl shadow-sm border border-slate-800 flex flex-col h-40 relative overflow-hidden group cursor-pointer"
           >
-              <div className="flex justify-between items-start z-10">
-                  <div className="p-2 bg-indigo-500/20 rounded-xl text-indigo-400">
-                      <Moon size={20} />
+              <div className="flex justify-between items-start z-10 mb-1">
+                  <div className="flex flex-col">
+                      <div className="flex items-center gap-2 mb-1">
+                          <div className="w-7 h-7 rounded-lg bg-indigo-500/20 flex items-center justify-center text-indigo-400">
+                              <Moon size={14} />
+                          </div>
+                          <span className="text-sm font-bold text-slate-300">睡眠</span>
+                      </div>
+                      <div className="text-[10px] text-slate-500 font-mono font-medium pl-1">
+                          {todayLog?.sleep?.startTime && todayLog?.sleep?.endTime 
+                              ? `${formatTime(todayLog.sleep.startTime)} - ${formatTime(todayLog.sleep.endTime)}` 
+                              : '未记录时间'}
+                      </div>
                   </div>
-              </div>
-              <div className="z-10">
-                  <h3 className="text-sm font-bold text-slate-400 mb-1">睡眠</h3>
-                  {todayLog?.sleep?.startTime && todayLog?.sleep?.endTime ? (
-                      <div>
-                          <div className="text-2xl font-black text-white flex items-baseline">
+                  <div>
+                      {todayLog?.sleep?.startTime && todayLog?.sleep?.endTime ? (
+                          <div className="text-3xl font-black text-white tracking-tight">
                               {analyzeSleep(todayLog.sleep.startTime, todayLog.sleep.endTime)?.durationHours.toFixed(1)}
                               <span className="text-sm font-bold text-slate-500 ml-1">h</span>
                           </div>
-                          <div className="text-[10px] text-slate-500 font-mono mt-1">
-                              {formatTime(todayLog.sleep.startTime)} - {formatTime(todayLog.sleep.endTime)}
-                          </div>
-                          {analyzeSleep(todayLog.sleep.startTime, todayLog.sleep.endTime)?.isLate && (
-                              <span className="absolute bottom-4 right-4 text-[10px] bg-yellow-500/20 text-yellow-500 px-2 py-0.5 rounded font-bold">熬夜</span>
-                          )}
-                      </div>
-                  ) : (
-                      <div>
-                          <div className="text-xl font-bold text-slate-600">未记录</div>
-                          <div className="text-[10px] text-slate-700 mt-1">点击补全数据</div>
-                      </div>
-                  )}
+                      ) : (
+                          <div className="text-2xl font-black text-slate-700">--</div>
+                      )}
+                  </div>
               </div>
+
+              {/* Bottom Chart: Last 7 Days */}
+              <div className="flex-1 flex items-end justify-between gap-1.5 pt-2">
+                  {recentSleepStats.map((stat, i) => {
+                      const heightPercent = Math.min(100, (stat.duration / 10) * 100); // Scale: 10h = 100%
+                      return (
+                          <div key={i} className="flex-1 flex flex-col justify-end h-full relative group/bar">
+                              <div 
+                                  className={`w-full rounded-sm transition-all duration-500 ${
+                                      stat.isToday ? 'bg-indigo-500' : 
+                                      stat.duration > 0 ? (stat.isLate ? 'bg-yellow-600/60' : 'bg-slate-700') : 'bg-slate-800/50'
+                                  }`}
+                                  style={{ height: `${Math.max(8, heightPercent)}%` }}
+                              ></div>
+                          </div>
+                      );
+                  })}
+              </div>
+              
+              {/* Late Tag Overlay */}
+              {todayLog?.sleep && analyzeSleep(todayLog.sleep.startTime, todayLog.sleep.endTime)?.isLate && (
+                   <div className="absolute top-12 right-0 bg-yellow-500/10 text-yellow-500 text-[9px] font-bold px-1.5 py-0.5 rounded-l border-l border-yellow-500/20">
+                       熬夜
+                   </div>
+              )}
           </div>
 
           {/* Vitality Card */}
-          <div className="bg-[#0f172a] dark:bg-slate-900 p-4 rounded-3xl shadow-sm border border-slate-800 flex flex-col justify-between h-36 relative overflow-hidden">
+          <div className="bg-[#0f172a] dark:bg-slate-900 p-4 rounded-3xl shadow-sm border border-slate-800 flex flex-col justify-between h-40 relative overflow-hidden">
               <div className="flex justify-between items-start z-10">
                   <div className="p-2 bg-rose-500/20 rounded-xl text-rose-500">
                       <Activity size={20} />
@@ -366,7 +417,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                       <span className="text-[10px] text-slate-600">今日释放</span>
                   </div>
                   
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                       <div className="flex items-center justify-between text-xs">
                           <span className="flex items-center text-orange-400 font-bold"><Dumbbell size={12} className="mr-1.5"/> 运动</span>
                           <span className="text-slate-300 font-medium">
