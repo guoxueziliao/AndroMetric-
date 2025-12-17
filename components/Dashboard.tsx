@@ -2,7 +2,7 @@
 import React, { useState, useMemo } from 'react';
 import { LogEntry, ExerciseRecord, MasturbationRecordDetails, ChangeRecord } from '../types';
 import CalendarHeatmap from './CalendarHeatmap';
-import { Moon, Hand, CloudSun, Heart, StopCircle, X, Dumbbell, User, Clock, List, Route, Edit3, Trash2, Activity, Zap, SunMedium, ArrowRight } from 'lucide-react';
+import { Moon, Hand, CloudSun, Heart, StopCircle, X, Dumbbell, User, Clock, List, Route, Edit3, Trash2, Activity, Zap, SunMedium, ArrowRight, BedDouble } from 'lucide-react';
 import Modal from './Modal';
 import SafeDeleteModal from './SafeDeleteModal';
 import CancelReasonModal from './CancelReasonModal';
@@ -147,20 +147,48 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
           const dateStr = `${y}-${m}-${day}`;
           
           const log = logs.find(l => l.date === dateStr);
-          let duration = 0;
+          let nightDuration = 0;
+          let napDuration = 0;
           let isLate = false;
           
+          // Night Sleep
           if (log?.sleep?.startTime && log?.sleep?.endTime) {
               const analysis = analyzeSleep(log.sleep.startTime, log.sleep.endTime);
               if (analysis) {
-                  duration = analysis.durationHours;
+                  nightDuration = analysis.durationHours;
                   isLate = analysis.isLate;
               }
           }
-          stats.push({ date: dateStr, duration, isLate, isToday: i === 0 });
+
+          // Nap Sleep
+          if (log?.sleep?.naps) {
+              napDuration = log.sleep.naps.reduce((acc, n) => acc + (n.duration || 0), 0) / 60;
+          }
+
+          stats.push({ 
+              date: dateStr, 
+              nightDuration, 
+              napDuration,
+              totalDuration: nightDuration + napDuration,
+              isLate, 
+              isToday: i === 0 
+          });
       }
       return stats;
   }, [logs]);
+
+  // Calculate Total Sleep for Today Card
+  const todayTotalSleep = useMemo(() => {
+      if (!todayLog) return 0;
+      let total = 0;
+      if (todayLog.sleep?.startTime && todayLog.sleep?.endTime) {
+          total += analyzeSleep(todayLog.sleep.startTime, todayLog.sleep.endTime)?.durationHours || 0;
+      }
+      if (todayLog.sleep?.naps) {
+          total += todayLog.sleep.naps.reduce((acc, n) => acc + (n.duration || 0), 0) / 60;
+      }
+      return total;
+  }, [todayLog]);
 
   // Stats for the monthly dashboard cards
   const currentMonthStats = useMemo(() => {
@@ -347,12 +375,13 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
 
       {/* Today's Status Cards (2-Col Layout) */}
       <div className="grid grid-cols-2 gap-3 mb-6">
-          {/* Sleep Card - Refactored */}
+          {/* Sleep Card - Refactored for Total Sleep + Naps */}
           <div 
             onClick={() => onEdit(todayStr)}
             className="bg-[#0f172a] dark:bg-slate-900 p-4 rounded-3xl shadow-sm border border-slate-800 flex flex-col h-40 relative overflow-hidden group cursor-pointer"
           >
-              <div className="flex justify-between items-start z-10 mb-1">
+              {/* Header: Label + Total Time */}
+              <div className="flex justify-between items-start z-10 mb-2">
                   <div className="flex flex-col">
                       <div className="flex items-center gap-2 mb-1">
                           <div className="w-7 h-7 rounded-lg bg-indigo-500/20 flex items-center justify-center text-indigo-400">
@@ -367,9 +396,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                       </div>
                   </div>
                   <div>
-                      {todayLog?.sleep?.startTime && todayLog?.sleep?.endTime ? (
+                      {todayTotalSleep > 0 ? (
                           <div className="text-3xl font-black text-white tracking-tight">
-                              {analyzeSleep(todayLog.sleep.startTime, todayLog.sleep.endTime)?.durationHours.toFixed(1)}
+                              {todayTotalSleep.toFixed(1)}
                               <span className="text-sm font-bold text-slate-500 ml-1">h</span>
                           </div>
                       ) : (
@@ -378,19 +407,41 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                   </div>
               </div>
 
-              {/* Bottom Chart: Last 7 Days */}
+              {/* Bottom Chart: Stacked Bar (Night + Naps) */}
               <div className="flex-1 flex items-end justify-between gap-1.5 pt-2">
                   {recentSleepStats.map((stat, i) => {
-                      const heightPercent = Math.min(100, (stat.duration / 10) * 100); // Scale: 10h = 100%
+                      const maxScale = 10; // 10 hours is full height
+                      const totalHeightPercent = Math.min(100, (stat.totalDuration / maxScale) * 100);
+                      
+                      // Calculate proportional heights for the stack
+                      const nightPercent = stat.totalDuration > 0 ? (stat.nightDuration / stat.totalDuration) * 100 : 0;
+                      const napPercent = stat.totalDuration > 0 ? (stat.napDuration / stat.totalDuration) * 100 : 0;
+
                       return (
                           <div key={i} className="flex-1 flex flex-col justify-end h-full relative group/bar">
-                              <div 
-                                  className={`w-full rounded-sm transition-all duration-500 ${
-                                      stat.isToday ? 'bg-indigo-500' : 
-                                      stat.duration > 0 ? (stat.isLate ? 'bg-yellow-600/60' : 'bg-slate-700') : 'bg-slate-800/50'
-                                  }`}
-                                  style={{ height: `${Math.max(8, heightPercent)}%` }}
-                              ></div>
+                              {stat.totalDuration > 0 ? (
+                                  <div className="w-full flex flex-col justify-end gap-[1px]" style={{ height: `${Math.max(10, totalHeightPercent)}%` }}>
+                                      {/* Nap Segment (Top) */}
+                                      {stat.napDuration > 0 && (
+                                          <div 
+                                              className="w-full bg-amber-400 rounded-t-sm rounded-b-[1px] opacity-90"
+                                              style={{ height: `${napPercent}%` }} 
+                                          />
+                                      )}
+                                      {/* Night Segment (Bottom) */}
+                                      <div 
+                                          className={`w-full rounded-b-sm ${stat.napDuration > 0 ? 'rounded-t-[1px]' : 'rounded-t-sm'} transition-colors duration-300 ${
+                                              stat.isLate 
+                                              ? 'bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.4)]' // Late: Purple glow
+                                              : 'bg-indigo-500' // Normal: Indigo
+                                          }`}
+                                          style={{ height: `${nightPercent}%` }}
+                                      />
+                                  </div>
+                              ) : (
+                                  /* Empty Placeholder */
+                                  <div className="w-full h-1 bg-slate-800/50 rounded-full"></div>
+                              )}
                           </div>
                       );
                   })}
@@ -398,7 +449,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
               
               {/* Late Tag Overlay */}
               {todayLog?.sleep && analyzeSleep(todayLog.sleep.startTime, todayLog.sleep.endTime)?.isLate && (
-                   <div className="absolute top-12 right-0 bg-yellow-500/10 text-yellow-500 text-[9px] font-bold px-1.5 py-0.5 rounded-l border-l border-yellow-500/20">
+                   <div className="absolute top-12 right-0 bg-purple-500/20 text-purple-400 text-[9px] font-bold px-1.5 py-0.5 rounded-l border-l border-purple-500/30">
                        熬夜
                    </div>
               )}
