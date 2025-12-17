@@ -68,7 +68,7 @@ const SleepSection: React.FC<SleepSectionProps> = ({ sleep, onChange, onEditNap,
         <div className={`bg-brand-card dark:bg-slate-900 rounded-card p-5 shadow-soft border ${timeError ? 'border-red-300 dark:border-red-900' : 'border-slate-100 dark:border-slate-800'} space-y-5 transition-colors`}>
             <div className="flex justify-between items-center">
                 <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center">
-                    <div className="p-1.5 bg-blue-100 dark:bg-blue-900/30 rounded-lg mr-2 text-blue-600">
+                    <div className="p-1.5 bg-blue-100 dark:bg-blue-900/30 rounded-lg mr-2 text-blue-600 dark:text-blue-400">
                         <BedDouble size={16} />
                     </div>
                     睡眠周期
@@ -96,9 +96,9 @@ const SleepSection: React.FC<SleepSectionProps> = ({ sleep, onChange, onEditNap,
             {/* Event Toggles */}
             <div className="flex gap-2">
                 {[
-                    { key: 'naturalAwakening', label: '自然醒', icon: Leaf, color: 'text-green-600' },
-                    { key: 'nocturnalEmission', label: '梦遗', icon: CloudDrizzle, color: 'text-blue-600' },
-                    { key: 'withPartner', label: '同睡', icon: Heart, color: 'text-pink-600' },
+                    { key: 'naturalAwakening', label: '自然醒', icon: Leaf, color: 'text-green-600 dark:text-green-400' },
+                    { key: 'nocturnalEmission', label: '梦遗', icon: CloudDrizzle, color: 'text-blue-600 dark:text-blue-400' },
+                    { key: 'withPartner', label: '同睡', icon: Heart, color: 'text-pink-600 dark:text-pink-400' },
                 ].map((item) => (
                     <button 
                         key={item.key}
@@ -107,7 +107,7 @@ const SleepSection: React.FC<SleepSectionProps> = ({ sleep, onChange, onEditNap,
                         className={`flex-1 flex flex-col items-center justify-center py-2 px-1 rounded-xl border transition-all ${
                             (sleep as any)[item.key] 
                             ? 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 shadow-inner' 
-                            : 'bg-white dark:bg-slate-900 border-transparent hover:bg-slate-50'
+                            : 'bg-white dark:bg-slate-900 border-transparent hover:bg-slate-50 dark:hover:bg-slate-800'
                         }`}
                     >
                         <item.icon size={18} className={`mb-1 ${(sleep as any)[item.key] ? item.color : 'text-slate-400'}`}/> 
@@ -150,9 +150,9 @@ const SleepSection: React.FC<SleepSectionProps> = ({ sleep, onChange, onEditNap,
                         <select 
                             value={sleep.environment?.location || 'home'} 
                             onChange={e => updateEnv('location', e.target.value)}
-                            className="bg-transparent text-xs w-full outline-none text-brand-text dark:text-slate-300 appearance-none font-medium"
+                            className="bg-transparent text-xs w-full outline-none text-brand-text dark:text-slate-300 appearance-none font-medium cursor-pointer"
                         >
-                            {LOCATIONS.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
+                            {LOCATIONS.map(l => <option key={l.value} value={l.value} className="dark:bg-slate-800">{l.label}</option>)}
                         </select>
                     </div>
                     <div className="flex-1 bg-slate-50 dark:bg-slate-800 p-2 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center gap-2">
@@ -160,9 +160,9 @@ const SleepSection: React.FC<SleepSectionProps> = ({ sleep, onChange, onEditNap,
                         <select 
                             value={sleep.environment?.temperature || 'comfortable'} 
                             onChange={e => updateEnv('temperature', e.target.value)}
-                            className="bg-transparent text-xs w-full outline-none text-brand-text dark:text-slate-300 appearance-none font-medium"
+                            className="bg-transparent text-xs w-full outline-none text-brand-text dark:text-slate-300 appearance-none font-medium cursor-pointer"
                         >
-                            {TEMPS.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+                            {TEMPS.map(t => <option key={t.value} value={t.value} className="dark:bg-slate-800">{t.label}</option>)}
                         </select>
                     </div>
                 </div>
@@ -172,7 +172,7 @@ const SleepSection: React.FC<SleepSectionProps> = ({ sleep, onChange, onEditNap,
             <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
                 <div className="flex justify-between items-center mb-3">
                     <h4 className="text-xs font-bold text-slate-400 uppercase flex items-center"><CloudSun size={14} className="mr-1"/>午休</h4>
-                    <button type="button" onClick={onAddNap} className="text-[10px] bg-orange-50 text-orange-600 px-2 py-1 rounded-lg font-bold">+ 添加</button>
+                    <button type="button" onClick={onAddNap} className="text-[10px] bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 px-2 py-1 rounded-lg font-bold hover:bg-orange-100 dark:hover:bg-orange-900/30 transition-colors">+ 添加</button>
                 </div>
                 <div className="space-y-2">
                     {sleep.naps?.map(r => (
@@ -191,7 +191,7 @@ const SleepSection: React.FC<SleepSectionProps> = ({ sleep, onChange, onEditNap,
                         </div>
                     ))}
                     {(!sleep.naps || sleep.naps.length === 0) && (
-                        <button type="button" onClick={onAddNap} className="w-full h-12 border-2 border-dashed border-slate-200 rounded-xl flex items-center justify-center text-slate-400 text-xs font-medium hover:border-orange-300 hover:text-orange-500 transition-colors">
+                        <button type="button" onClick={onAddNap} className="w-full h-12 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl flex items-center justify-center text-slate-400 text-xs font-medium hover:border-orange-300 hover:text-orange-500 transition-colors">
                             暂无记录，点击添加
                         </button>
                     )}

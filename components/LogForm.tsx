@@ -54,9 +54,9 @@ const QualityRing = ({ score }: { score: number }) => {
 };
 
 const CardSection: React.FC<{ title: string, icon: React.ElementType, children: React.ReactNode, className?: string }> = ({ title, icon: Icon, children, className }) => (
-    <div className={`bg-brand-card dark:bg-slate-900 rounded-card p-5 shadow-soft border border-slate-100 dark:border-slate-800 ${className}`}>
+    <div className={`bg-brand-card dark:bg-slate-900 rounded-card p-5 shadow-soft border border-slate-100 dark:border-slate-800 transition-colors ${className}`}>
         <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center mb-4">
-            <div className="p-1.5 bg-slate-100 dark:bg-slate-800 rounded-lg mr-2 text-brand-muted">
+            <div className="p-1.5 bg-slate-100 dark:bg-slate-800 rounded-lg mr-2 text-brand-muted dark:text-slate-400">
                 <Icon size={16} />
             </div>
             {title}
@@ -84,383 +84,448 @@ const LogForm: React.FC<{
     const [activeDetailTab, setActiveDetailTab] = useState<'lifestyle' | 'environment' | 'health'>('lifestyle');
     const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
     const [summaryData, setSummaryData] = useState<Array<{ label: string, value: string }>>([]);
-    const [eventInput, setEventInput] = useState('');
+    const [qualityScore, setQualityScore] = useState(0);
     
-    // Tag Manager State
-    const [isTagManagerOpen, setIsTagManagerOpen] = useState(false);
-    const [tagManagerMode, setTagManagerMode] = useState<TagType>('xp');
-    const [tagSearch, setTagSearch] = useState('');
-
-    // Modals
+    // Modals state
     const [isSexModalOpen, setIsSexModalOpen] = useState(false);
-    const [editingSexRecord, setEditingSexRecord] = useState<SexRecordDetails | undefined>(undefined);
     const [isMbModalOpen, setIsMbModalOpen] = useState(false);
-    const [editingMbRecord, setEditingMbRecord] = useState<MasturbationRecordDetails | undefined>(undefined);
-    const [isNapModalOpen, setIsNapModalOpen] = useState(false);
-    const [editingNapRecord, setEditingNapRecord] = useState<NapRecord | undefined>(undefined);
-    const [isAlcoholModalOpen, setIsAlcoholModalOpen] = useState(false);
     const [isExerciseModalOpen, setIsExerciseModalOpen] = useState(false);
-    const [editingExerciseRecord, setEditingExerciseRecord] = useState<ExerciseRecord | undefined>(undefined);
+    const [isNapModalOpen, setIsNapModalOpen] = useState(false);
+    const [isAlcoholModalOpen, setIsAlcoholModalOpen] = useState(false);
+    const [isTagManagerOpen, setIsTagManagerOpen] = useState(false);
+    
+    // Edit targets
+    const [editingSexId, setEditingSexId] = useState<string | null>(null);
+    const [editingMbId, setEditingMbId] = useState<string | null>(null);
+    const [editingExerciseId, setEditingExerciseId] = useState<string | null>(null);
+    const [editingNapId, setEditingNapId] = useState<string | null>(null);
 
-    const [isAddingCaffeine, setIsAddingCaffeine] = useState(false);
-    const [caffeineInput, setCaffeineInput] = useState({ time: '09:00', name: '美式咖啡', count: 1, volume: 350 });
-
-    const initialLogState = useRef(JSON.stringify(log));
-    const qualityScore = calculateDataQuality(log);
+    const isDirtyRef = useRef(false);
 
     useEffect(() => {
-        const freshLog = initializeLog(existingLog);
-        const currentString = JSON.stringify(log);
-        const initialString = initialLogState.current;
-        if (log.date !== freshLog.date) {
-            setLog(freshLog);
-            initialLogState.current = JSON.stringify(freshLog);
+        setQualityScore(calculateDataQuality(log));
+    }, [log]);
+
+    const updateLog = (field: keyof LogEntry, value: any) => {
+        setLog(prev => {
+            const next = { ...prev, [field]: value };
+            isDirtyRef.current = true;
+            onDirtyStateChange(true);
+            return next;
+        });
+    };
+
+    const updateDeepLog = (parent: keyof LogEntry, field: string, value: any) => {
+        setLog(prev => {
+            const parentObj = prev[parent] as any || {};
+            const next = { ...prev, [parent]: { ...parentObj, [field]: value } };
+            isDirtyRef.current = true;
+            onDirtyStateChange(true);
+            return next;
+        });
+    };
+
+    const handlePreSave = () => {
+        const { valid, errors } = validateLogEntry(log);
+        if (!valid) {
+            showToast(errors[0], 'error');
             return;
         }
-        if (currentString === initialString && JSON.stringify(freshLog) !== initialString) {
-            setLog(freshLog);
-            initialLogState.current = JSON.stringify(freshLog);
-        }
-    }, [existingLog, logDate]);
-
-    useEffect(() => { onDirtyStateChange(JSON.stringify(log) !== initialLogState.current); }, [log, onDirtyStateChange]);
-
-    const handleChange = (field: keyof LogEntry, value: any) => setLog(prev => ({ ...prev, [field]: value }));
-    const handleDeepChange = (parent: keyof LogEntry, field: string, value: any) => setLog(prev => ({ ...prev, [parent]: { ...((prev[parent] as any) || {}), [field]: value } }));
-    const handleMorningChange = (field: keyof MorningRecord, value: any) => setLog(prev => ({ ...prev, morning: { ...prev.morning!, [field]: value } }));
-    const handleSleepChange = (field: keyof SleepRecord, value: any) => setLog(prev => ({ ...prev, sleep: { ...prev.sleep!, [field]: value } }));
-    const handleSaveAlcohol = (record: AlcoholRecord) => {
-        const alcoholLevel = record.totalGrams > 50 ? 'high' : record.totalGrams > 20 ? 'medium' : record.totalGrams > 0 ? 'low' : 'none';
-        setLog(prev => ({ ...prev, alcoholRecord: record, alcohol: alcoholLevel }));
-    };
-
-    const addCaffeine = () => {
-        const id = Date.now().toString();
-        const newItem = { id, ...caffeineInput };
-        setLog(prev => {
-            const current = prev.caffeineRecord || { totalCount: 0, items: [] };
-            const newItems = [...current.items, newItem];
-            const totalCount = newItems.reduce((acc, i) => acc + i.count, 0);
-            return { ...prev, caffeineRecord: { totalCount, items: newItems }, caffeineIntake: totalCount > 3 ? 'high' : totalCount > 1 ? 'medium' : totalCount > 0 ? 'low' : 'none' };
-        });
-        setIsAddingCaffeine(false);
-    };
-    const removeCaffeine = (id: string) => {
-        setLog(prev => {
-            const current = prev.caffeineRecord || { totalCount: 0, items: [] };
-            const newItems = current.items.filter(i => i.id !== id);
-            const totalCount = newItems.reduce((acc, i) => acc + i.count, 0);
-            return { ...prev, caffeineRecord: { totalCount, items: newItems } };
-        });
-    };
-
-    const handleReview = () => {
-        const { valid, errors } = validateLogEntry(log as LogEntry);
-        if (!valid) { showToast(errors[0], 'error'); return; }
-        setSummaryData(generateLogSummary(log));
-        setIsSummaryModalOpen(true);
-    };
-
-    const handleConfirmSave = () => {
-        const { valid, errors } = validateLogEntry(log as LogEntry);
-        if (!valid) { showToast(errors[0], 'error'); return; }
-        let diffs: ChangeDetail[] = existingLog ? calculateLogDiff(existingLog, log) : [{ field: '记录', oldValue: '无', newValue: '新创建' }];
-        const historyEntry: ChangeRecord = { timestamp: Date.now(), summary: existingLog ? '更新详细记录' : '完成详细记录', details: diffs, type: 'manual' };
-        onSave({ ...log, status: 'completed', changeHistory: [...(log.changeHistory || []), historyEntry] } as LogEntry);
-    }
-    
-    const handleSaveDraft = () => {
-        const historyEntry: ChangeRecord = { timestamp: Date.now(), summary: '保存草稿 (部分记录)', details: [], type: 'manual' };
-        onSave({ ...log, status: 'pending', changeHistory: [...(log.changeHistory || []), historyEntry] } as LogEntry);
-    };
-
-    const handleSaveRecord = (type: 'sex' | 'masturbation' | 'exercise', record: any) => {
-        setLog(prev => {
-            const list = prev[type] || [];
-            const idx = list.findIndex((r: any) => r.id === record.id);
-            const newList = idx >= 0 ? [...list] : [...list, record];
-            if (idx >= 0) newList[idx] = record;
-            return { ...prev, [type]: newList };
-        });
-    };
-
-    const handleSaveNap = (record: NapRecord) => {
-        setLog(prev => {
-            const list = prev.sleep?.naps || [];
-            const idx = list.findIndex((r: any) => r.id === record.id);
-            const newList = idx >= 0 ? [...list] : [...list, record];
-            if (idx >= 0) newList[idx] = record;
-            return { ...prev, sleep: { ...prev.sleep!, naps: newList } };
-        });
-    };
-
-    const deleteRecord = (type: 'sex' | 'masturbation' | 'exercise' | 'naps', id: string) => {
-        if(confirm('删除此记录?')) {
-            if (type === 'naps') setLog(prev => ({ ...prev, sleep: { ...prev.sleep!, naps: prev.sleep?.naps.filter(n => n.id !== id) || [] } }));
-            else setLog(prev => ({ ...prev, [type]: (prev[type] as any[]).filter(r => r.id !== id) }));
-        }
-    };
-
-    const toggleEvent = (evt: string) => {
-        const events = log.dailyEvents || [];
-        const next = events.includes(evt) ? events.filter(e => e !== evt) : [...events, evt];
-        handleChange('dailyEvents', next);
-    };
-
-    const handleManageTags = (type: TagType, initialSearch = '') => {
-        setTagManagerMode(type);
-        setTagSearch(initialSearch);
-        setIsTagManagerOpen(true);
-    };
-
-    const handleTagSelect = (tag: string) => {
-        if (tagManagerMode === 'event') {
-            toggleEvent(tag);
-        } else if (tagManagerMode === 'symptom') {
-            const current = log.health?.symptoms || [];
-            if (!current.includes(tag)) {
-                handleDeepChange('health', 'symptoms', [...current, tag]);
+        
+        // Generate Change History
+        if (existingLog) {
+            const diffs: ChangeDetail[] = calculateLogDiff(existingLog, log);
+            if (diffs.length > 0) {
+                const historyEntry: ChangeRecord = {
+                    timestamp: Date.now(),
+                    summary: '编辑记录',
+                    details: diffs,
+                    type: 'manual'
+                };
+                log.changeHistory = [...(log.changeHistory || []), historyEntry];
             }
+        } else {
+             // New Log
+             const historyEntry: ChangeRecord = {
+                timestamp: Date.now(),
+                summary: '创建新记录',
+                details: [],
+                type: 'manual'
+            };
+            log.changeHistory = [historyEntry];
+        }
+
+        onSave(log);
+    };
+
+    const handleSaveDraft = () => {
+        onSave({ ...log, status: 'pending' });
+    };
+
+    // --- Sub-Record Handlers ---
+    const saveSubRecord = (field: 'sex' | 'masturbation' | 'exercise' | 'naps', item: any) => {
+        if (field === 'naps') {
+            const currentNaps = log.sleep?.naps || [];
+            const idx = currentNaps.findIndex((x: any) => x.id === item.id);
+            const newNaps = idx >= 0 ? currentNaps.map((x: any) => x.id === item.id ? item : x) : [...currentNaps, item];
+            updateDeepLog('sleep', 'naps', newNaps);
+        } else {
+            const list = (log[field] as any[]) || [];
+            const idx = list.findIndex((x: any) => x.id === item.id);
+            const newList = idx >= 0 ? list.map((x: any) => x.id === item.id ? item : x) : [...list, item];
+            updateLog(field, newList);
+        }
+        isDirtyRef.current = true;
+        onDirtyStateChange(true);
+    };
+
+    const deleteSubRecord = (field: 'sex' | 'masturbation' | 'exercise' | 'naps', id: string) => {
+        if (confirm('确定删除此条记录吗？')) {
+            if (field === 'naps') {
+                const currentNaps = log.sleep?.naps || [];
+                updateDeepLog('sleep', 'naps', currentNaps.filter((x: any) => x.id !== id));
+            } else {
+                const list = (log[field] as any[]) || [];
+                updateLog(field, list.filter((x: any) => x.id !== id));
+            }
+            isDirtyRef.current = true;
+            onDirtyStateChange(true);
+        }
+    };
+
+    // --- Render Helpers ---
+    const renderTag = (tag: string) => (
+        <span key={tag} className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 mr-2 mb-2">
+            {tag}
+            <button onClick={() => updateLog('tags', (log.tags || []).filter(t => t !== tag))} className="ml-1.5 text-slate-400 hover:text-red-500"><X size={12}/></button>
+        </span>
+    );
+
+    const toggleDailyEvent = (evt: string) => {
+        const current = log.dailyEvents || [];
+        const next = current.includes(evt) ? current.filter(e => e !== evt) : [...current, evt];
+        updateLog('dailyEvents', next);
+    };
+    
+    const handleAddEventTag = (tag: string) => {
+        if (!log.dailyEvents?.includes(tag)) {
+            updateLog('dailyEvents', [...(log.dailyEvents || []), tag]);
         }
         setIsTagManagerOpen(false);
     };
 
-    if (!log.date) return <div>Loading...</div>;
-
-    const renderWeatherIcon = (v: string) => v === 'sunny' ? <Sun size={20}/> : v === 'cloudy' ? <Cloud size={20}/> : v === 'rainy' ? <CloudRain size={20}/> : v === 'snowy' ? <Snowflake size={20}/> : v === 'windy' ? <Wind size={20}/> : <CloudFog size={20}/>;
-    const renderLocationIcon = (v: string) => v === 'home' ? <Home size={20}/> : v === 'partner' ? <Users size={20}/> : v === 'hotel' ? <Hotel size={20}/> : v === 'travel' ? <Plane size={20}/> : <MapPin size={20}/>;
-    const renderAttireIcon = (v: string) => <Shirt size={20}/>; 
-
     return (
-        <form onSubmit={(e) => { e.preventDefault(); handleReview(); }} className="space-y-6 pb-24 relative">
-             {/* Date Header with Quality Score */}
-             <div className="flex justify-between items-center bg-brand-card dark:bg-slate-900 py-3 px-5 rounded-card shadow-soft border border-slate-100 dark:border-slate-800">
-                 <p className="text-xl font-black text-brand-text dark:text-slate-200 tracking-tight">
-                     {new Date(log.date).toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })}
-                 </p>
-                 <div className="flex items-center gap-3">
-                     <div className="text-right">
-                         <span className="block text-[10px] text-brand-muted font-bold uppercase tracking-wider">Quality Score</span>
-                     </div>
-                     <QualityRing score={qualityScore} />
-                 </div>
-             </div>
-
-            <MorningSection morning={log.morning!} onChange={handleMorningChange} />
-            <SleepSection sleep={log.sleep!} onChange={handleSleepChange} onEditNap={(r) => { setEditingNapRecord(r); setIsNapModalOpen(true); }} onDeleteNap={(id) => deleteRecord('naps', id)} onAddNap={() => { setEditingNapRecord(undefined); setIsNapModalOpen(true); }} />
-
-            {/* Tabbed Card for Details */}
-            <div className="bg-brand-card dark:bg-slate-900 rounded-card shadow-soft border border-slate-100 dark:border-slate-800 overflow-hidden">
-                <div className="flex border-b border-slate-100 dark:border-slate-800 px-2 pt-2">
-                     {['lifestyle', 'environment', 'health'].map(tab => (
-                         <button key={tab} type="button" onClick={() => setActiveDetailTab(tab as any)} className={`flex-1 py-3 text-xs font-bold uppercase tracking-wide rounded-t-xl transition-all ${activeDetailTab === tab ? 'bg-slate-50 dark:bg-slate-800 text-brand-accent' : 'text-brand-muted hover:bg-slate-50/50'}`}>{tab === 'lifestyle' ? '生活' : tab === 'environment' ? '环境' : '健康'}</button>
-                     ))}
+        <div className="pb-32 space-y-6">
+            {/* Header: Date & Score */}
+            <div className="bg-brand-card dark:bg-slate-900 rounded-3xl p-5 shadow-soft border border-slate-100 dark:border-slate-800 flex items-center justify-between transition-colors">
+                <div>
+                    <h2 className="text-2xl font-black text-brand-text dark:text-slate-100 tracking-tight flex items-center">
+                        {new Date(log.date).toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' })}
+                    </h2>
+                    <p className="text-sm font-bold text-brand-muted uppercase tracking-wider mt-1">{new Date(log.date).toLocaleDateString('zh-CN', { weekday: 'long' })}</p>
                 </div>
-                <div className="p-5">
-                    {/* TAB: LIFESTYLE */}
+                <div className="flex items-center gap-3 bg-slate-50 dark:bg-slate-800 p-2 pr-4 rounded-2xl border border-slate-100 dark:border-slate-700">
+                    <QualityRing score={qualityScore} />
+                    <div className="flex flex-col">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">QUALITY SCORE</span>
+                        <span className={`text-xs font-bold ${qualityScore >= 80 ? 'text-green-500' : 'text-slate-500'}`}>{qualityScore >= 80 ? 'Excellent' : qualityScore >= 60 ? 'Good' : 'Incomplete'}</span>
+                    </div>
+                </div>
+            </div>
+
+            {/* 1. Morning Section */}
+            {log.morning && <MorningSection morning={log.morning} onChange={(f, v) => updateDeepLog('morning', f as string, v)} />}
+
+            {/* 2. Sleep Section */}
+            {log.sleep && (
+                <SleepSection 
+                    sleep={log.sleep} 
+                    onChange={(f, v) => updateDeepLog('sleep', f as string, v)} 
+                    onEditNap={(n) => { setEditingNapId(n.id); setIsNapModalOpen(true); }}
+                    onDeleteNap={(id) => deleteSubRecord('naps', id)}
+                    onAddNap={() => { setEditingNapId(null); setIsNapModalOpen(true); }}
+                />
+            )}
+
+            {/* 3. Detailed Records (Tabs) */}
+            <div className="bg-brand-card dark:bg-slate-900 rounded-card shadow-soft border border-slate-100 dark:border-slate-800 overflow-hidden transition-colors">
+                <div className="flex border-b border-slate-100 dark:border-slate-800">
+                    {[
+                        { id: 'lifestyle', label: '生活', icon: Coffee },
+                        { id: 'environment', label: '环境', icon: Cloud },
+                        { id: 'health', label: '健康', icon: HeartPulse }
+                    ].map(tab => (
+                        <button
+                            key={tab.id}
+                            onClick={() => setActiveDetailTab(tab.id as any)}
+                            className={`flex-1 py-4 text-xs font-bold flex items-center justify-center gap-2 transition-all ${activeDetailTab === tab.id ? 'text-brand-accent bg-blue-50/50 dark:bg-slate-800 border-b-2 border-brand-accent' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
+                        >
+                            <tab.icon size={14} />
+                            {tab.label}
+                        </button>
+                    ))}
+                </div>
+
+                <div className="p-5 animate-in fade-in">
+                    {/* Tab: Lifestyle */}
                     {activeDetailTab === 'lifestyle' && (
-                        <div className="space-y-6 animate-in fade-in">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold text-slate-400 uppercase">饮酒</label>
-                                    {log.alcoholRecord && log.alcoholRecord.totalGrams > 0 ? (
-                                        <div onClick={() => setIsAlcoholModalOpen(true)} className="p-3 bg-amber-50 rounded-xl border border-amber-100 cursor-pointer flex flex-col gap-1 items-center justify-center h-24">
-                                            <Beer size={20} className="text-amber-500"/>
-                                            <span className="font-bold text-amber-900">{log.alcoholRecord.totalGrams}g</span>
-                                        </div>
-                                    ) : (
-                                        <button type="button" onClick={() => setIsAlcoholModalOpen(true)} className="w-full h-24 border-2 border-dashed border-slate-200 rounded-xl flex flex-col items-center justify-center text-slate-400 hover:border-amber-300 hover:text-amber-500 transition-colors">
-                                            <Plus size={20}/>
-                                            <span className="text-xs font-bold mt-1">添加记录</span>
-                                        </button>
-                                    )}
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold text-slate-400 uppercase">看片</label>
-                                    <div className="grid grid-cols-2 gap-2 h-24">
-                                        {PORN_OPTS.map(opt => (
-                                            <button key={opt.value} onClick={() => handleChange('pornConsumption', opt.value)} className={`rounded-lg text-xs font-bold ${log.pornConsumption === opt.value ? 'bg-purple-100 text-purple-700 border border-purple-200' : 'bg-slate-50 text-slate-500'}`}>{opt.label}</button>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div className="space-y-3">
-                                <div className="flex justify-between items-center">
-                                    <label className="text-xs font-bold text-slate-400 uppercase">咖啡因</label>
-                                    <button type="button" onClick={() => setIsAddingCaffeine(true)} className="text-[10px] bg-blue-50 text-blue-600 px-2 py-1 rounded font-bold">+ 添加</button>
-                                </div>
-                                {isAddingCaffeine && (
-                                    <div className="bg-slate-50 p-3 rounded-xl border border-blue-100 animate-in fade-in space-y-2">
-                                        <div className="flex gap-2">
-                                            <input type="time" value={caffeineInput.time} onChange={e => setCaffeineInput({...caffeineInput, time: e.target.value})} className="w-20 p-2 text-xs rounded-lg border-none outline-none"/>
-                                            <input type="text" value={caffeineInput.name} onChange={e => setCaffeineInput({...caffeineInput, name: e.target.value})} className="flex-1 p-2 text-xs rounded-lg border-none outline-none" placeholder="品类"/>
-                                        </div>
-                                        <div className="flex items-center gap-2 justify-end">
-                                            <input type="number" step="50" value={caffeineInput.volume} onChange={e => setCaffeineInput({...caffeineInput, volume: parseInt(e.target.value)||0})} className="w-16 p-2 text-xs rounded-lg text-center" placeholder="ml"/>
-                                            <button onClick={addCaffeine} className="p-2 bg-brand-accent text-white rounded-lg"><Check size={14}/></button>
-                                        </div>
-                                    </div>
-                                )}
-                                <div className="flex flex-wrap gap-2">
-                                    {log.caffeineRecord?.items.map(c => (
-                                        <div key={c.id} className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 rounded-lg text-xs font-medium text-slate-600 border border-slate-100">
-                                            <Coffee size={12}/>
-                                            <span>{c.name} {c.volume}ml</span>
-                                            <button onClick={() => removeCaffeine(c.id)} className="text-slate-400 hover:text-red-500"><X size={12}/></button>
-                                        </div>
-                                    ))}
-                                    {(!log.caffeineRecord?.items || log.caffeineRecord.items.length === 0) && <span className="text-xs text-slate-300 italic">无记录</span>}
+                        <div className="space-y-6">
+                            {/* Alcohol */}
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block">饮酒 (Alcohol)</label>
+                                <div className="flex items-center gap-3">
+                                    <button onClick={() => setIsAlcoholModalOpen(true)} className="flex-1 bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-900/30 text-amber-700 dark:text-amber-400 p-3 rounded-xl flex items-center justify-center gap-2 transition-colors border border-amber-100 dark:border-amber-900/30 font-bold">
+                                        <Beer size={18}/>
+                                        {log.alcoholRecord && log.alcoholRecord.totalGrams > 0 ? `${log.alcoholRecord.totalGrams}g 纯酒精` : '记录饮酒'}
+                                    </button>
                                 </div>
                             </div>
 
-                            {/* Exercises */}
-                            <div className="pt-2 border-t border-slate-100">
-                                <div className="flex justify-between items-center mb-3">
-                                    <label className="text-xs font-bold text-slate-400 uppercase">运动</label>
-                                    <button type="button" onClick={() => { setEditingExerciseRecord(undefined); setIsExerciseModalOpen(true); }} className="text-[10px] bg-green-50 text-green-600 px-2 py-1 rounded font-bold">+ 添加</button>
-                                </div>
-                                <div className="space-y-2">
-                                    {log.exercise?.map(r => (
-                                        <div key={r.id} className="bg-green-50/50 border border-green-100 p-3 rounded-xl flex justify-between items-center group">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-green-500 shadow-sm"><Dumbbell size={14}/></div>
-                                                <div>
-                                                    <div className="text-sm font-bold text-green-900">{r.type}</div>
-                                                    <div className="text-xs text-green-600">{r.steps ? `${r.steps}步` : `${r.duration}分钟`}</div>
-                                                </div>
-                                            </div>
-                                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <button className="p-1.5 text-green-600 hover:bg-green-100 rounded" onClick={() => { setEditingExerciseRecord(r); setIsExerciseModalOpen(true); }}><Edit2 size={14}/></button>
-                                                <button className="p-1.5 text-green-600 hover:bg-green-100 rounded" onClick={() => deleteRecord('exercise', r.id)}><Trash2 size={14}/></button>
-                                            </div>
-                                        </div>
-                                    ))}
+                            {/* Caffeine */}
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block">咖啡因 (Caffeine)</label>
+                                <div className="bg-slate-50 dark:bg-slate-800 p-1 rounded-xl flex items-center">
+                                    <button 
+                                        type="button"
+                                        onClick={() => {
+                                            const current = log.caffeineRecord?.totalCount || 0;
+                                            updateDeepLog('caffeineRecord', 'totalCount', Math.max(0, current - 1));
+                                        }}
+                                        className="p-3 hover:bg-white dark:hover:bg-slate-700 rounded-lg shadow-sm text-slate-500 transition-all"
+                                    >
+                                        <Trash2 size={16}/>
+                                    </button>
+                                    <div className="flex-1 text-center font-black text-xl text-slate-700 dark:text-slate-200">
+                                        {log.caffeineRecord?.totalCount || 0} <span className="text-xs font-bold text-slate-400">杯</span>
+                                    </div>
+                                    <button 
+                                        type="button"
+                                        onClick={() => {
+                                            const current = log.caffeineRecord?.totalCount || 0;
+                                            updateDeepLog('caffeineRecord', 'totalCount', current + 1);
+                                        }}
+                                        className="p-3 bg-white dark:bg-slate-700 rounded-lg shadow-sm text-brand-accent transition-all hover:scale-105"
+                                    >
+                                        <Plus size={16} strokeWidth={3}/>
+                                    </button>
                                 </div>
                             </div>
 
-                            {/* Sex/MB */}
-                            <div className="pt-2 border-t border-slate-100">
-                                <label className="text-xs font-bold text-slate-400 uppercase mb-3 block">性活动</label>
-                                <div className="grid grid-cols-2 gap-3">
-                                    <button onClick={() => { setEditingSexRecord(undefined); setIsSexModalOpen(true); }} className="p-3 bg-pink-50 rounded-xl border border-pink-100 flex items-center justify-center gap-2 text-pink-600 font-bold text-xs hover:bg-pink-100 transition-colors">
-                                        <HeartPulse size={16}/> 记录性爱
-                                    </button>
-                                    <button onClick={() => { setEditingMbRecord(undefined); setIsMbModalOpen(true); }} className="p-3 bg-blue-50 rounded-xl border border-blue-100 flex items-center justify-center gap-2 text-blue-600 font-bold text-xs hover:bg-blue-100 transition-colors">
-                                        <Hand size={16}/> 记录自慰
-                                    </button>
-                                </div>
-                                <div className="mt-3 space-y-2">
-                                    {log.sex?.map(r => (
-                                        <div key={r.id} className="bg-pink-50/50 border border-pink-100 p-3 rounded-xl flex justify-between items-center text-sm">
-                                            <span className="font-bold text-pink-700">❤️ 性生活 ({r.startTime})</span>
-                                            <button className="text-pink-400 hover:text-pink-600" onClick={() => { setEditingSexRecord(r); setIsSexModalOpen(true); }}><Edit2 size={14}/></button>
-                                        </div>
-                                    ))}
-                                    {log.masturbation?.map(r => (
-                                        <div key={r.id} className="bg-blue-50/50 border border-blue-100 p-3 rounded-xl flex justify-between items-center text-sm">
-                                            <span className="font-bold text-blue-700">🖐️ 自慰 ({r.startTime})</span>
-                                            <button className="text-blue-400 hover:text-blue-600" onClick={() => { setEditingMbRecord(r); setIsMbModalOpen(true); }}><Edit2 size={14}/></button>
-                                        </div>
-                                    ))}
-                                </div>
+                            {/* Porn */}
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block">看片 (Porn)</label>
+                                <IconToggleButton 
+                                    options={PORN_OPTS} 
+                                    selected={log.pornConsumption || 'none'} 
+                                    onSelect={v => updateLog('pornConsumption', v)} 
+                                    renderIcon={(v) => <Film size={18} className={v !== 'none' ? 'text-purple-500' : 'text-slate-300'} />}
+                                />
                             </div>
                         </div>
                     )}
 
-                    {/* TAB: ENVIRONMENT */}
+                    {/* Tab: Environment */}
                     {activeDetailTab === 'environment' && (
-                        <div className="space-y-6 animate-in fade-in">
-                            <div className="space-y-3">
-                                <label className="text-xs font-bold text-slate-400 uppercase">天气</label>
-                                <IconToggleButton options={WEATHER_OPTS} selected={log.weather || 'sunny'} onSelect={v => handleChange('weather', v)} renderIcon={renderWeatherIcon}/>
+                        <div className="space-y-6">
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block">天气 (Weather)</label>
+                                <IconToggleButton 
+                                    options={WEATHER_OPTS} 
+                                    selected={log.weather || 'sunny'} 
+                                    onSelect={v => updateLog('weather', v)} 
+                                    renderIcon={(v) => {
+                                        if (v === 'rainy') return <CloudRain size={18} className="text-blue-400"/>;
+                                        if (v === 'cloudy') return <Cloud size={18} className="text-slate-400"/>;
+                                        if (v === 'snowy') return <Snowflake size={18} className="text-cyan-300"/>;
+                                        return <Sun size={18} className="text-orange-400"/>;
+                                    }}
+                                />
                             </div>
-                            <div className="space-y-3">
-                                <label className="text-xs font-bold text-slate-400 uppercase">地点</label>
-                                <IconToggleButton options={LOCATION_OPTS} selected={log.location || 'home'} onSelect={v => handleChange('location', v)} renderIcon={renderLocationIcon}/>
-                            </div>
-                            <div className="space-y-3">
-                                <label className="text-xs font-bold text-slate-400 uppercase">睡衣</label>
-                                <IconToggleButton options={ATTIRE_OPTS} selected={log.sleep?.attire || 'light'} onSelect={v => handleSleepChange('attire', v)} renderIcon={renderAttireIcon}/>
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block">地点 (Location)</label>
+                                <IconToggleButton 
+                                    options={LOCATION_OPTS} 
+                                    selected={log.location || 'home'} 
+                                    onSelect={v => updateLog('location', v)} 
+                                    renderIcon={(v) => {
+                                        if (v === 'hotel') return <Hotel size={18} className="text-indigo-400"/>;
+                                        if (v === 'travel') return <Plane size={18} className="text-sky-400"/>;
+                                        if (v === 'partner') return <Users size={18} className="text-pink-400"/>;
+                                        return <Home size={18} className="text-green-400"/>;
+                                    }}
+                                />
                             </div>
                         </div>
                     )}
 
-                    {/* TAB: HEALTH */}
+                    {/* Tab: Health */}
                     {activeDetailTab === 'health' && (
                         <HealthSection 
                             log={log} 
-                            onChange={handleChange} 
-                            onDeepChange={handleDeepChange} 
-                            onManageTags={handleManageTags}
+                            onChange={updateLog} 
+                            onDeepChange={updateDeepLog}
+                            onManageTags={() => { setIsTagManagerOpen(true); }}
                         />
                     )}
                 </div>
             </div>
-            
-            {/* Daily Events & Tags */}
-            <CardSection title="备注与事件" icon={Calendar} className="space-y-4">
-                <div className="flex flex-wrap gap-2">
-                    {EVENT_PRESETS.map(evt => (
-                        <button key={evt} type="button" onClick={() => toggleEvent(evt)} className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-all ${log.dailyEvents?.includes(evt) ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-500 border-slate-200'}`}>{evt}</button>
-                    ))}
-                </div>
-                <div className="flex gap-2">
-                    <div className="relative flex-1">
-                        <input value={eventInput} onChange={e => setEventInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleManageTags('event', eventInput))} className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs" placeholder="搜索或创建事件标签..." />
-                        <button 
-                            type="button" 
-                            onClick={() => handleManageTags('event', eventInput)}
-                            className="absolute right-1 top-1 p-1 bg-slate-200 text-slate-600 rounded text-xs hover:bg-slate-300"
-                        >
-                            <Settings size={14}/>
-                        </button>
+
+            {/* 4. Activities (Grid Layout) */}
+            <div className="grid grid-cols-2 gap-4">
+                {/* Sex */}
+                <button onClick={() => { setEditingSexId(null); setIsSexModalOpen(true); }} className="bg-pink-50 dark:bg-pink-900/10 border border-pink-100 dark:border-pink-900/30 p-4 rounded-3xl text-left hover:scale-[1.02] transition-transform shadow-sm relative overflow-hidden group">
+                    <div className="absolute right-0 top-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity"><HeartPulse size={48} className="text-pink-500"/></div>
+                    <div className="relative z-10">
+                        <span className="text-xs font-bold text-pink-400 uppercase tracking-wider">性生活</span>
+                        <div className="text-2xl font-black text-pink-600 dark:text-pink-400 mt-1">{log.sex?.length || 0} <span className="text-sm font-bold opacity-60">次</span></div>
+                        <div className="mt-2 space-y-1">
+                            {log.sex?.map((s, i) => (
+                                <div key={s.id} onClick={(e) => { e.stopPropagation(); setEditingSexId(s.id); setIsSexModalOpen(true); }} className="text-[10px] bg-white/60 dark:bg-black/20 p-1.5 rounded-lg flex justify-between items-center text-pink-700 dark:text-pink-300 font-medium">
+                                    <span>{s.partner || '伴侣'} ({s.duration}m)</span>
+                                    <Edit2 size={10} className="opacity-50"/>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </button>
+
+                {/* Masturbation */}
+                <button onClick={() => { setEditingMbId(null); setIsMbModalOpen(true); }} className="bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/30 p-4 rounded-3xl text-left hover:scale-[1.02] transition-transform shadow-sm relative overflow-hidden group">
+                    <div className="absolute right-0 top-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity"><Hand size={48} className="text-blue-500"/></div>
+                    <div className="relative z-10">
+                        <span className="text-xs font-bold text-blue-400 uppercase tracking-wider">自慰</span>
+                        <div className="text-2xl font-black text-blue-600 dark:text-blue-400 mt-1">{log.masturbation?.length || 0} <span className="text-sm font-bold opacity-60">次</span></div>
+                        <div className="mt-2 space-y-1">
+                            {log.masturbation?.map((m, i) => (
+                                <div key={m.id} onClick={(e) => { e.stopPropagation(); setEditingMbId(m.id); setIsMbModalOpen(true); }} className="text-[10px] bg-white/60 dark:bg-black/20 p-1.5 rounded-lg flex justify-between items-center text-blue-700 dark:text-blue-300 font-medium">
+                                    <span>{m.startTime} ({m.duration}m)</span>
+                                    <Edit2 size={10} className="opacity-50"/>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </button>
+            </div>
+
+            {/* Exercise Button */}
+            <button onClick={() => { setEditingExerciseId(null); setIsExerciseModalOpen(true); }} className="w-full bg-orange-50 dark:bg-orange-900/10 border border-orange-100 dark:border-orange-900/30 p-4 rounded-3xl flex items-center justify-between hover:scale-[1.01] transition-transform shadow-sm">
+                <div className="flex items-center gap-3">
+                    <div className="p-2.5 bg-orange-100 dark:bg-orange-900/30 rounded-full text-orange-600 dark:text-orange-400"><Dumbbell size={20}/></div>
+                    <div className="text-left">
+                        <h3 className="font-bold text-orange-800 dark:text-orange-200">运动记录</h3>
+                        <p className="text-xs text-orange-600/70 dark:text-orange-400/70 font-medium">今日已运动 {log.exercise?.length || 0} 次</p>
                     </div>
                 </div>
-                {log.dailyEvents && log.dailyEvents.filter(e => !EVENT_PRESETS.includes(e)).length > 0 && (
-                    <div className="flex flex-wrap gap-2">
-                        {log.dailyEvents.filter(e => !EVENT_PRESETS.includes(e)).map(e => (
-                            <span key={e} className="px-2 py-1 text-xs rounded-lg bg-slate-100 text-slate-600 flex items-center border border-slate-200">{e} <button type="button" onClick={() => toggleEvent(e)} className="ml-1"><X size={10}/></button></span>
+                {log.exercise && log.exercise.length > 0 && (
+                    <div className="flex gap-2">
+                        {log.exercise.slice(0, 3).map(e => (
+                            <div key={e.id} onClick={(ev) => { ev.stopPropagation(); setEditingExerciseId(e.id); setIsExerciseModalOpen(true); }} className="w-8 h-8 rounded-full bg-white dark:bg-slate-800 border border-orange-200 dark:border-orange-800 flex items-center justify-center text-orange-500 shadow-sm cursor-pointer hover:scale-110 transition-transform">
+                                {e.steps ? <Footprints size={14}/> : <Dumbbell size={14}/>}
+                            </div>
                         ))}
                     </div>
                 )}
-                <div className="border-t border-slate-100 pt-3">
-                    <textarea value={log.notes || ''} onChange={(e) => handleChange('notes', e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm min-h-[80px] outline-none focus:border-brand-accent" placeholder="今天感觉如何？写点什么吧..."/>
+                {(!log.exercise || log.exercise.length === 0) && <Plus size={20} className="text-orange-400"/>}
+            </button>
+
+            {/* 5. Events & Notes */}
+            <CardSection title="事件与备注" icon={Tag}>
+                <div className="space-y-4">
+                    <div className="flex flex-wrap gap-2">
+                        {EVENT_PRESETS.map(evt => (
+                            <button
+                                key={evt}
+                                onClick={() => toggleDailyEvent(evt)}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${log.dailyEvents?.includes(evt) ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800' : 'bg-slate-50 dark:bg-slate-800 text-slate-500 border-slate-100 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700'}`}
+                            >
+                                {evt}
+                            </button>
+                        ))}
+                        <button onClick={() => setIsTagManagerOpen(true)} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-50 dark:bg-slate-800 text-slate-400 border border-dashed border-slate-300 dark:border-slate-700 flex items-center hover:text-slate-600 dark:hover:text-slate-300">
+                            <Plus size={12} className="mr-1"/> 更多事件
+                        </button>
+                    </div>
+                    
+                    {log.dailyEvents && log.dailyEvents.filter(e => !EVENT_PRESETS.includes(e)).length > 0 && (
+                        <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                            {log.dailyEvents.filter(e => !EVENT_PRESETS.includes(e)).map(tag => (
+                                <span key={tag} onClick={() => toggleDailyEvent(tag)} className="px-2.5 py-1 rounded-lg text-xs font-medium bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-300 border border-purple-100 dark:border-purple-900 cursor-pointer flex items-center hover:bg-red-50 hover:text-red-500 hover:border-red-100 transition-colors group">
+                                    {tag}
+                                    <X size={10} className="ml-1 opacity-0 group-hover:opacity-100"/>
+                                </span>
+                            ))}
+                        </div>
+                    )}
+
+                    <textarea
+                        value={log.notes || ''}
+                        onChange={e => updateLog('notes', e.target.value)}
+                        placeholder="记录今天的特殊情况、心情或备注..."
+                        className="w-full h-24 p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm outline-none focus:border-brand-accent focus:ring-1 focus:ring-brand-accent transition-all resize-none text-brand-text dark:text-slate-200 placeholder-slate-400"
+                    />
                 </div>
             </CardSection>
 
-            <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/90 backdrop-blur-md border-t border-slate-100 flex gap-3 z-30">
-                 <button type="button" onClick={handleSaveDraft} className="flex-1 py-3 font-bold text-slate-500 bg-slate-100 rounded-2xl">保存草稿</button>
-                <button type="submit" className="flex-[2] py-3 text-lg font-bold text-white bg-brand-accent rounded-2xl shadow-lg shadow-blue-500/30">完成记录</button>
+            {/* Sticky Bottom Actions */}
+            <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 flex justify-between items-center z-40 transition-colors">
+                <button onClick={handleSaveDraft} className="px-6 py-3 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold text-sm hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+                    保存草稿
+                </button>
+                <button 
+                    onClick={handlePreSave}
+                    className="flex-1 ml-4 py-3 rounded-2xl bg-brand-accent hover:bg-brand-accent-hover text-white font-bold shadow-lg shadow-blue-500/30 flex items-center justify-center transition-all active:scale-[0.98]"
+                >
+                    <CheckSquare size={18} className="mr-2" />
+                    完成记录
+                </button>
             </div>
 
-            <Modal isOpen={isSummaryModalOpen} onClose={() => setIsSummaryModalOpen(false)} title="确认记录" footer={<><button onClick={() => setIsSummaryModalOpen(false)} className="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-brand-text dark:text-slate-300 rounded">返回修改</button><button onClick={handleConfirmSave} className="px-4 py-2 bg-brand-accent text-white rounded font-bold">确认保存</button></>}>
-              <div className="space-y-3 text-sm text-brand-text dark:text-slate-300 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
-                  {summaryData.map(({ label, value }) => (
-                      <div key={label} className="grid grid-cols-[80px_1fr] gap-4 border-b border-slate-100 dark:border-slate-800 pb-2 last:border-0">
-                          <span className="font-bold text-brand-muted text-xs uppercase tracking-wide pt-0.5">{label}</span>
-                          <span className="text-right whitespace-pre-wrap font-medium leading-relaxed">{value}</span>
-                      </div>
-                  ))}
-              </div>
-            </Modal>
-            
+            {/* Modals */}
+            <SexRecordModal 
+                isOpen={isSexModalOpen} 
+                onClose={() => { setIsSexModalOpen(false); setEditingSexId(null); }} 
+                onSave={(data) => saveSubRecord('sex', data)} 
+                initialData={editingSexId ? log.sex?.find(s => s.id === editingSexId) : undefined} 
+                dateStr={log.date}
+                partners={partners}
+                logs={logs}
+            />
+            <MasturbationRecordModal 
+                isOpen={isMbModalOpen} 
+                onClose={() => { setIsMbModalOpen(false); setEditingMbId(null); }} 
+                onSave={(data) => saveSubRecord('masturbation', data)} 
+                initialData={editingMbId ? log.masturbation?.find(m => m.id === editingMbId) : undefined} 
+                dateStr={log.date}
+                logs={logs}
+                partners={partners}
+            />
+            <ExerciseRecordModal 
+                isOpen={isExerciseModalOpen} 
+                onClose={() => { setIsExerciseModalOpen(false); setEditingExerciseId(null); }} 
+                onSave={(data) => saveSubRecord('exercise', data)} 
+                initialData={editingExerciseId ? log.exercise?.find(e => e.id === editingExerciseId) : undefined} 
+            />
+            <NapRecordModal
+                isOpen={isNapModalOpen}
+                onClose={() => { setIsNapModalOpen(false); setEditingNapId(null); }}
+                onSave={(data) => saveSubRecord('naps', data)}
+                initialData={editingNapId ? log.sleep?.naps?.find(n => n.id === editingNapId) : undefined}
+            />
+            <AlcoholRecordModal
+                isOpen={isAlcoholModalOpen}
+                onClose={() => setIsAlcoholModalOpen(false)}
+                onSave={(record) => { updateLog('alcoholRecord', record); updateLog('alcohol', record.totalGrams > 50 ? 'high' : record.totalGrams > 20 ? 'medium' : record.totalGrams > 0 ? 'low' : 'none'); }}
+                initialData={log.alcoholRecord || undefined}
+            />
             <Suspense fallback={null}>
                 <TagManager 
                     isOpen={isTagManagerOpen} 
                     onClose={() => setIsTagManagerOpen(false)} 
-                    defaultTab={tagManagerMode}
-                    initialSearch={tagSearch}
-                    onSelectTag={handleTagSelect}
+                    onSelectTag={handleAddEventTag} 
+                    defaultTab="event" 
                 />
             </Suspense>
-
-            <SexRecordModal isOpen={isSexModalOpen} onClose={() => setIsSexModalOpen(false)} onSave={(r) => handleSaveRecord('sex', r)} initialData={editingSexRecord} dateStr={log.date || ''} partners={partners} logs={logs} />
-            <MasturbationRecordModal isOpen={isMbModalOpen} onClose={() => setIsMbModalOpen(false)} onSave={(r) => handleSaveRecord('masturbation', r)} initialData={editingMbRecord} dateStr={log.date || ''} logs={logs} partners={partners} />
-            <ExerciseRecordModal isOpen={isExerciseModalOpen} onClose={() => setIsExerciseModalOpen(false)} onSave={(r) => handleSaveRecord('exercise', r)} initialData={editingExerciseRecord} />
-            <NapRecordModal isOpen={isNapModalOpen} onClose={() => setIsNapModalOpen(false)} onSave={handleSaveNap} initialData={editingNapRecord} />
-            <AlcoholRecordModal isOpen={isAlcoholModalOpen} onClose={() => setIsAlcoholModalOpen(false)} onSave={handleSaveAlcohol} initialData={log.alcoholRecord} />
-        </form>
+        </div>
     );
 };
 
