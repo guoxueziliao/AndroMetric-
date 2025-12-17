@@ -55,14 +55,13 @@ export function useLogs() {
     };
 
     // 1. Alcohol
-    const saveAlcoholRecord = useCallback(async (record: AlcoholRecord) => {
-        const dateStr = getActivityTargetDate();
+    const saveAlcoholRecord = useCallback(async (record: AlcoholRecord, targetDate?: string) => {
+        const dateStr = targetDate || getActivityTargetDate();
         const existing = await StorageService.logs.get(dateStr);
         let log = existing || hydrateLog({ date: dateStr });
         log.alcoholRecord = record;
         log.alcohol = record.totalGrams > 50 ? 'high' : record.totalGrams > 20 ? 'medium' : record.totalGrams > 0 ? 'low' : 'none';
         
-        // 关键修复：结束计时即视为完成
         if (!record.ongoing) log.status = 'completed';
         
         log = logChange(log, record.ongoing ? '开始饮酒计时' : `完成饮酒记录 (${record.totalGrams}g)`);
@@ -70,19 +69,19 @@ export function useLogs() {
     }, [addOrUpdateLog, getActivityTargetDate]);
 
     const toggleAlcohol = useCallback(async () => {
-        const all = await StorageService.logs.getAll();
-        const ongoing = all.find(l => l.alcoholRecord?.ongoing);
-        if (ongoing) return false;
+        const ongoingLog = logs.find(l => l.alcoholRecord?.ongoing);
+        if (ongoingLog) return false;
+
         const nowStr = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
         await saveAlcoholRecord({
             id: Date.now().toString(), startTime: nowStr, ongoing: true, totalGrams: 0, durationMinutes: 0, items: [], isLate: false, drunkLevel: 'none', location: '家', people: '独自', reason: '放松', time: nowStr
         });
         return true;
-    }, [saveAlcoholRecord]);
+    }, [saveAlcoholRecord, logs]);
 
     // 2. Masturbation
-    const quickAddMasturbation = useCallback(async (record: MasturbationRecordDetails, cancelled?: boolean, reason?: string) => {
-        const dateStr = getActivityTargetDate();
+    const quickAddMasturbation = useCallback(async (record: MasturbationRecordDetails, targetDate?: string, cancelled?: boolean, reason?: string) => {
+        const dateStr = targetDate || getActivityTargetDate();
         const existing = await StorageService.logs.get(dateStr);
         let log = existing || hydrateLog({ date: dateStr });
         
@@ -96,7 +95,6 @@ export function useLogs() {
             else newList.push(record);
             log.masturbation = newList;
             
-            // 关键修复：只要不是进行中，就标记为已完成
             if (record.status !== 'inProgress') log.status = 'completed';
             
             log = logChange(log, record.status === 'inProgress' ? '开始自慰计时' : '完成自慰详情');
@@ -105,8 +103,8 @@ export function useLogs() {
     }, [addOrUpdateLog, getActivityTargetDate]);
 
     // 3. Sex
-    const quickAddSex = useCallback(async (record: SexRecordDetails, cancelled?: boolean) => {
-        const dateStr = getActivityTargetDate();
+    const quickAddSex = useCallback(async (record: SexRecordDetails, targetDate?: string, cancelled?: boolean) => {
+        const dateStr = targetDate || getActivityTargetDate();
         const existing = await StorageService.logs.get(dateStr);
         let log = existing || hydrateLog({ date: dateStr });
         
@@ -120,7 +118,6 @@ export function useLogs() {
             else newList.push(record);
             log.sex = newList;
             
-            // 关键修复
             if (!record.ongoing) log.status = 'completed';
             
             log = logChange(log, record.ongoing ? '开始性爱计时' : `性爱记录: ${record.partner || '伴侣'}`);
@@ -129,8 +126,8 @@ export function useLogs() {
     }, [addOrUpdateLog, getActivityTargetDate]);
 
     // 4. Exercise
-    const saveExercise = useCallback(async (record: ExerciseRecord) => {
-        const dateStr = getActivityTargetDate();
+    const saveExercise = useCallback(async (record: ExerciseRecord, targetDate?: string) => {
+        const dateStr = targetDate || getActivityTargetDate();
         const existing = await StorageService.logs.get(dateStr);
         let log = existing || hydrateLog({ date: dateStr });
         const newList = [...(log.exercise || [])];
@@ -139,7 +136,6 @@ export function useLogs() {
         else newList.push(record);
         log.exercise = newList;
         
-        // 关键修复
         if (!record.ongoing) log.status = 'completed';
         
         log = logChange(log, record.ongoing ? `开始${record.type}` : `完成${record.type}`);
@@ -155,11 +151,11 @@ export function useLogs() {
 
         if (log.sleep?.startTime && !log.sleep?.endTime) {
             log.sleep = { ...log.sleep!, endTime: isoNow };
-            log.status = 'completed'; // 醒来视为日记可以闭环
+            log.status = 'completed';
             log = logChange(log, '起床 (记录完成)', [], 'quick');
         } else {
             log.sleep = { ...log.sleep!, startTime: isoNow, endTime: null };
-            log.status = 'pending'; // 睡觉中，状态为待补全
+            log.status = 'pending';
             log = logChange(log, '入睡 (开始计时)', [], 'quick');
         }
         await addOrUpdateLog(log);
@@ -167,8 +163,8 @@ export function useLogs() {
     }, [addOrUpdateLog, getSleepTargetDate]);
 
     // 6. Nap
-    const saveNap = useCallback(async (record: NapRecord) => {
-        const dateStr = getActivityTargetDate();
+    const saveNap = useCallback(async (record: NapRecord, targetDate?: string) => {
+        const dateStr = targetDate || getActivityTargetDate();
         const existing = await StorageService.logs.get(dateStr);
         let log = existing || hydrateLog({ date: dateStr });
         const currentNaps = log.sleep?.naps || [];
@@ -177,7 +173,6 @@ export function useLogs() {
         
         log.sleep = { ...(log.sleep || hydrateLog({date: dateStr}).sleep!), naps: nextNaps };
         
-        // 关键修复：结束午休计时，标记日志为完成
         if (!record.ongoing) log.status = 'completed';
         
         log = logChange(log, record.ongoing ? '开始午休' : '结束午休');
@@ -185,19 +180,17 @@ export function useLogs() {
     }, [addOrUpdateLog, getActivityTargetDate]);
 
     const toggleNap = useCallback(async () => {
-        const dateStr = getActivityTargetDate();
-        const existing = await StorageService.logs.get(dateStr);
-        const currentNaps = existing?.sleep?.naps || [];
-        const ongoing = currentNaps.find(n => n.ongoing);
+        const ongoingLog = logs.find(l => l.sleep?.naps?.some(n => n.ongoing));
+        const ongoingNap = ongoingLog?.sleep?.naps.find(n => n.ongoing);
 
-        if (ongoing) {
-            const startTime = ongoing.startTime;
+        if (ongoingNap && ongoingLog) {
+            const startTime = ongoingNap.startTime;
             const endTime = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
             const [h1, m1] = startTime.split(':').map(Number);
             const [h2, m2] = endTime.split(':').map(Number);
             let diff = (h2 * 60 + m2) - (h1 * 60 + m1);
             if (diff < 0) diff += 1440;
-            await saveNap({ ...ongoing, ongoing: false, endTime, duration: diff });
+            await saveNap({ ...ongoingNap, ongoing: false, endTime, duration: diff }, ongoingLog.date);
         } else {
             await saveNap({
                 id: Date.now().toString(),
@@ -205,7 +198,7 @@ export function useLogs() {
                 ongoing: true, quality: 3, environment: { location: 'home', temperature: 'comfortable' }
             });
         }
-    }, [getActivityTargetDate, saveNap]);
+    }, [logs, saveNap]);
 
     return {
         logs, partners, isInitializing,

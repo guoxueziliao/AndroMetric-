@@ -49,27 +49,14 @@ const AppContent: React.FC<{ data: any }> = ({ data }) => {
   const isCurrentlyDark = useMemo(() => {
     if (settings.theme === 'dark') return true;
     if (settings.theme === 'light') return false;
-    // system
     return window.matchMedia('(prefers-color-scheme: dark)').matches;
   }, [settings.theme]);
 
   useEffect(() => {
     const root = window.document.documentElement;
-    const applyTheme = (isDark: boolean) => {
-      if (isDark) root.classList.add('dark');
-      else root.classList.remove('dark');
-    };
-
-    applyTheme(isCurrentlyDark);
-
-    // If set to system, listen for system preference changes
-    if (settings.theme === 'system') {
-      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-      const handleChange = (e: MediaQueryListEvent) => applyTheme(e.matches);
-      mediaQuery.addEventListener('change', handleChange);
-      return () => mediaQuery.removeEventListener('change', handleChange);
-    }
-  }, [settings.theme, isCurrentlyDark]);
+    if (isCurrentlyDark) root.classList.add('dark');
+    else root.classList.remove('dark');
+  }, [isCurrentlyDark]);
   
   // Modals Visibility
   const [isSexModalOpen, setIsSexModalOpen] = useState(false);
@@ -81,36 +68,59 @@ const AppContent: React.FC<{ data: any }> = ({ data }) => {
   const [isVersionHistoryOpen, setIsVersionHistoryOpen] = useState(false);
 
   // Cancellation Context
-  const [cancelTarget, setCancelTarget] = useState<{ type: 'alcohol' | 'mb' | 'exercise' | 'sleep' | 'nap' | 'sex', id?: string } | null>(null);
+  const [cancelTarget, setCancelTarget] = useState<{ type: 'alcohol' | 'mb' | 'exercise' | 'sleep' | 'nap' | 'sex', id?: string, date?: string } | null>(null);
 
-  // Ongoing references
-  const ongoingAlcohol = useMemo(() => logs.find((l: LogEntry) => l.alcoholRecord?.ongoing), [logs]);
-  const ongoingMb = useMemo(() => logs.flatMap((l: LogEntry) => l.masturbation || []).find((m: MasturbationRecordDetails) => m.status === 'inProgress'), [logs]);
-  const ongoingExercise = useMemo(() => logs.flatMap((l: LogEntry) => l.exercise || []).find((e: ExerciseRecord) => e.ongoing), [logs]);
-  const ongoingSleep = useMemo(() => logs.find((l: LogEntry) => l.sleep?.startTime && !l.sleep?.endTime), [logs]);
-  const ongoingNap = useMemo(() => logs.flatMap((l: LogEntry) => l.sleep?.naps || []).find((n: NapRecord) => n.ongoing), [logs]);
-  const ongoingSex = useMemo(() => logs.flatMap((l: LogEntry) => l.sex || []).find((s: SexRecordDetails) => s.ongoing), [logs]);
+  // Ongoing Data Finders (With Date context)
+  const ongoingAlcoholInfo = useMemo(() => {
+    const log = logs.find((l: LogEntry) => l.alcoholRecord?.ongoing);
+    return log ? { log, record: log.alcoholRecord! } : null;
+  }, [logs]);
+
+  const ongoingMbInfo = useMemo(() => {
+    const log = logs.find((l: LogEntry) => l.masturbation?.some(m => m.status === 'inProgress'));
+    return log ? { log, record: log.masturbation!.find(m => m.status === 'inProgress')! } : null;
+  }, [logs]);
+
+  const ongoingExerciseInfo = useMemo(() => {
+    const log = logs.find((l: LogEntry) => l.exercise?.some(e => e.ongoing));
+    return log ? { log, record: log.exercise!.find(e => e.ongoing)! } : null;
+  }, [logs]);
+
+  const ongoingSleepInfo = useMemo(() => {
+    const log = logs.find((l: LogEntry) => l.sleep?.startTime && !l.sleep?.endTime);
+    return log ? { log } : null;
+  }, [logs]);
+
+  const ongoingNapInfo = useMemo(() => {
+    const log = logs.find((l: LogEntry) => l.sleep?.naps?.some(n => n.ongoing));
+    return log ? { log, record: log.sleep!.naps.find(n => n.ongoing)! } : null;
+  }, [logs]);
+
+  const ongoingSexInfo = useMemo(() => {
+    const log = logs.find((l: LogEntry) => l.sex?.some(s => s.ongoing));
+    return log ? { log, record: log.sex!.find(s => s.ongoing)! } : null;
+  }, [logs]);
 
   // Handlers
-  const handleAlcoholAction = async () => { if (ongoingAlcohol) setIsAlcoholModalOpen(true); else { const ok = await toggleAlcohol(); if (ok) showToast('已开始饮酒计时', 'info'); } };
-  const handleMbAction = async () => { if (ongoingMb) setIsMbModalOpen(true); else { await quickAddMasturbation({ id: Date.now().toString(), status: 'inProgress', startTime: new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }), tools: ['手'], contentItems: [] }); showToast('已开始自慰计时', 'info'); } };
+  const handleAlcoholAction = async () => { if (ongoingAlcoholInfo) setIsAlcoholModalOpen(true); else { const ok = await toggleAlcohol(); if (ok) showToast('已开始饮酒计时', 'info'); } };
+  const handleMbAction = async () => { if (ongoingMbInfo) setIsMbModalOpen(true); else { await quickAddMasturbation({ id: Date.now().toString(), status: 'inProgress', startTime: new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }), tools: ['手'], contentItems: [] }); showToast('已开始自慰计时', 'info'); } };
   const handleExerciseAction = async () => { setIsExerciseModalOpen(true); };
-  const handleSleepAction = async () => { const targetDate = await toggleSleepLog(); if (ongoingSleep) { setEditingLogDate(targetDate); setView('form'); showToast('早安，补全记录', 'success'); } else { showToast('晚安', 'info'); } };
-  const handleNapAction = async () => { if (ongoingNap) setIsNapModalOpen(true); else { await toggleNap(); showToast('开始午休计时', 'info'); } };
-  const handleSexAction = async () => { if (ongoingSex) setIsSexModalOpen(true); else { const nowStr = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }); await quickAddSex({ id: Date.now().toString(), startTime: nowStr, ongoing: true, interactions: [], indicators: { lingerie: false, orgasm: true, partnerOrgasm: true, squirting: false, toys: false }, ejaculation: true, ejaculationLocation: '', semenSwallowed: false, postSexActivity: [], partnerScore: 0, mood: 'happy' }); showToast('已开始性爱计时', 'info'); } };
+  const handleSleepAction = async () => { const targetDate = await toggleSleepLog(); if (ongoingSleepInfo) { setEditingLogDate(targetDate); setView('form'); showToast('早安，补全记录', 'success'); } else { showToast('晚安', 'info'); } };
+  const handleNapAction = async () => { if (ongoingNapInfo) setIsNapModalOpen(true); else { await toggleNap(); showToast('开始午休计时', 'info'); } };
+  const handleSexAction = async () => { if (ongoingSexInfo) setIsSexModalOpen(true); else { const nowStr = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }); await quickAddSex({ id: Date.now().toString(), startTime: nowStr, ongoing: true, interactions: [], indicators: { lingerie: false, orgasm: true, partnerOrgasm: true, squirting: false, toys: false }, ejaculation: true, ejaculationLocation: '', semenSwallowed: false, postSexActivity: [], partnerScore: 0, mood: 'happy' }); showToast('已开始性爱计时', 'info'); } };
 
-  const triggerCancel = (type: any, id?: string) => { setCancelTarget({ type, id }); setIsCancelModalOpen(true); };
+  const triggerCancel = (type: any, id?: string, date?: string) => { setCancelTarget({ type, id, date }); setIsCancelModalOpen(true); };
 
   const confirmCancel = async (reason: string) => {
       if (!cancelTarget) return;
-      const { type } = cancelTarget;
+      const { type, id, date } = cancelTarget;
       try {
-          if (type === 'sleep' && ongoingSleep) { await addOrUpdateLog({ ...ongoingSleep, sleep: null, status: 'completed' }); } 
-          else if (type === 'nap' && ongoingNap) { const log = logs.find((l: LogEntry) => l.sleep?.naps?.some(n => n.id === ongoingNap.id)); if (log) await addOrUpdateLog({ ...log, sleep: { ...log.sleep!, naps: log.sleep!.naps.filter(n => n.id !== ongoingNap.id) } }); }
-          else if (type === 'mb' && ongoingMb) { await quickAddMasturbation(ongoingMb, true, reason); } 
-          else if (type === 'alcohol' && ongoingAlcohol) { await addOrUpdateLog({ ...ongoingAlcohol, alcoholRecord: null, alcohol: 'none' }); } 
-          else if (type === 'exercise' && ongoingExercise) { const log = logs.find((l: LogEntry) => l.exercise?.some(e => e.id === ongoingExercise.id)); if (log) await addOrUpdateLog({ ...log, exercise: log.exercise!.filter(e => e.id !== ongoingExercise.id) }); } 
-          else if (type === 'sex' && ongoingSex) { await quickAddSex(ongoingSex, true); }
+          if (type === 'sleep' && ongoingSleepInfo) { await addOrUpdateLog({ ...ongoingSleepInfo.log, sleep: null, status: 'completed' }); } 
+          else if (type === 'nap' && ongoingNapInfo) { await addOrUpdateLog({ ...ongoingNapInfo.log, sleep: { ...ongoingNapInfo.log.sleep!, naps: ongoingNapInfo.log.sleep!.naps.filter(n => n.id !== ongoingNapInfo.record.id) } }); }
+          else if (type === 'mb' && ongoingMbInfo) { await quickAddMasturbation(ongoingMbInfo.record, ongoingMbInfo.log.date, true, reason); } 
+          else if (type === 'alcohol' && ongoingAlcoholInfo) { await addOrUpdateLog({ ...ongoingAlcoholInfo.log, alcoholRecord: null, alcohol: 'none' }); } 
+          else if (type === 'exercise' && ongoingExerciseInfo) { await addOrUpdateLog({ ...ongoingExerciseInfo.log, exercise: ongoingExerciseInfo.log.exercise!.filter(e => e.id !== ongoingExerciseInfo.record.id) }); } 
+          else if (type === 'sex' && ongoingSexInfo) { await quickAddSex(ongoingSexInfo.record, ongoingSexInfo.log.date, true); }
           showToast(`已移除 (${reason})`, 'info');
       } catch (e: any) { showToast(e.message, 'error'); } finally { setIsCancelModalOpen(false); setCancelTarget(null); }
   };
@@ -119,7 +129,6 @@ const AppContent: React.FC<{ data: any }> = ({ data }) => {
 
   return (
     <div className="min-h-screen bg-brand-bg dark:bg-slate-950 text-brand-text dark:text-slate-200 flex flex-col">
-      {/* 滚动区域 */}
       <div className="flex-1 w-full overflow-y-auto custom-scrollbar">
         <div className="container mx-auto max-w-lg p-4 pb-32">
           {view === 'dashboard' ? (
@@ -158,24 +167,21 @@ const AppContent: React.FC<{ data: any }> = ({ data }) => {
         </div>
       </div>
 
-      {/* 持久悬浮 UI - 确保在 view === 'dashboard' 时始终可见 */}
       {view === 'dashboard' && (
         <>
           <FAB 
               onSleep={handleSleepAction} onSex={handleSexAction} onMasturbation={handleMbAction} onExercise={handleExerciseAction} onNap={handleNapAction} onAlcohol={handleAlcoholAction}
-              isSleepPending={!!ongoingSleep} isAlcoholOngoing={!!ongoingAlcohol} isMbOngoing={!!ongoingMb} isExerciseOngoing={!!ongoingExercise} isNapOngoing={!!ongoingNap} isSexOngoing={!!ongoingSex}
+              isSleepPending={!!ongoingSleepInfo} isAlcoholOngoing={!!ongoingAlcoholInfo} isMbOngoing={!!ongoingMbInfo} isExerciseOngoing={!!ongoingExerciseInfo} isNapOngoing={!!ongoingNapInfo} isSexOngoing={!!ongoingSexInfo}
           />
           <BottomNav activeView={activeMainView} onViewChange={setActiveMainView} />
         </>
       )}
 
-      {/* 弹窗层 */}
-      <SexRecordModal isOpen={isSexModalOpen} onClose={() => setIsSexModalOpen(false)} onSave={async r => { await quickAddSex({...r, ongoing: false}); setIsSexModalOpen(false); showToast('性爱记录已添加', 'success'); }} dateStr={new Date().toISOString()} partners={partners} logs={logs} initialData={ongoingSex} />
-      <MasturbationRecordModal isOpen={isMbModalOpen} onClose={() => setIsMbModalOpen(false)} onSave={async r => { await quickAddMasturbation({...r, status: 'completed'}); setIsMbModalOpen(false); showToast('记录已更新', 'success'); }} initialData={ongoingMb} dateStr={new Date().toISOString()} logs={logs} partners={partners} />
-      <ExerciseRecordModal isOpen={isExerciseModalOpen} onClose={() => setIsExerciseModalOpen(false)} onSave={async r => { await saveExercise({...r, ongoing: r.ongoing ?? false}); setIsExerciseModalOpen(false); showToast('运动记录已同步', 'success'); }} initialData={ongoingExercise} mode={ongoingExercise ? 'finish' : 'start'} />
-      <AlcoholRecordModal isOpen={isAlcoholModalOpen} onClose={() => setIsAlcoholModalOpen(false)} onSave={async r => { await saveAlcoholRecord({...r, ongoing: false}); setIsAlcoholModalOpen(false); showToast('饮酒详情已更新', 'success'); }} initialData={ongoingAlcohol?.alcoholRecord || undefined} />
-      <AlcoholRecordModal isOpen={isAlcoholModalOpen} onClose={() => setIsAlcoholModalOpen(false)} onSave={async r => { await saveAlcoholRecord({...r, ongoing: false}); setIsAlcoholModalOpen(false); showToast('饮酒详情已更新', 'success'); }} initialData={ongoingAlcohol?.alcoholRecord || undefined} />
-      <NapRecordModal isOpen={isNapModalOpen} onClose={() => setIsNapModalOpen(false)} onSave={async r => { await saveNap({...r, ongoing: false}); setIsNapModalOpen(false); showToast('午休已记录', 'success'); }} initialData={ongoingNap} />
+      <SexRecordModal isOpen={isSexModalOpen} onClose={() => setIsSexModalOpen(false)} onSave={async r => { await quickAddSex({...r, ongoing: false}, ongoingSexInfo?.log.date); setIsSexModalOpen(false); showToast('性爱记录已添加', 'success'); }} dateStr={new Date().toISOString()} partners={partners} logs={logs} initialData={ongoingSexInfo?.record} />
+      <MasturbationRecordModal isOpen={isMbModalOpen} onClose={() => setIsMbModalOpen(false)} onSave={async r => { await quickAddMasturbation({...r, status: 'completed'}, ongoingMbInfo?.log.date); setIsMbModalOpen(false); showToast('记录已更新', 'success'); }} initialData={ongoingMbInfo?.record} dateStr={new Date().toISOString()} logs={logs} partners={partners} />
+      <ExerciseRecordModal isOpen={isExerciseModalOpen} onClose={() => setIsExerciseModalOpen(false)} onSave={async r => { await saveExercise({...r, ongoing: false}, ongoingExerciseInfo?.log.date); setIsExerciseModalOpen(false); showToast('运动记录已同步', 'success'); }} initialData={ongoingExerciseInfo?.record} mode={ongoingExerciseInfo ? 'finish' : 'start'} />
+      <AlcoholRecordModal isOpen={isAlcoholModalOpen} onClose={() => setIsAlcoholModalOpen(false)} onSave={async r => { await saveAlcoholRecord({...r, ongoing: false}, ongoingAlcoholInfo?.log.date); setIsAlcoholModalOpen(false); showToast('饮酒详情已更新', 'success'); }} initialData={ongoingAlcoholInfo?.record} />
+      <NapRecordModal isOpen={isNapModalOpen} onClose={() => setIsNapModalOpen(false)} onSave={async r => { await saveNap({...r, ongoing: false}, ongoingNapInfo?.log.date); setIsNapModalOpen(false); showToast('午休已记录', 'success'); }} initialData={ongoingNapInfo?.record} />
       <CancelReasonModal isOpen={isCancelModalOpen} onClose={() => setIsCancelModalOpen(false)} onConfirm={confirmCancel} title="取消当前计时" />
       <VersionHistoryModal isOpen={isVersionHistoryOpen} onClose={() => setIsVersionHistoryOpen(false)} />
     </div>
