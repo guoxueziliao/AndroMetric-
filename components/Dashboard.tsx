@@ -1,10 +1,11 @@
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { LogEntry, ExerciseRecord, SexRecordDetails, MasturbationRecordDetails } from '../types';
+import { LogEntry, ExerciseRecord, SexRecordDetails, MasturbationRecordDetails, ChangeRecord } from '../types';
 import CalendarHeatmap from './CalendarHeatmap';
-import { Moon, Zap, Activity, Hand, HeartPulse, Clock, Dumbbell, Footprints, Timer, CloudSun, Swords, TrendingUp, Beer, Film, ChevronLeft, ChevronRight, MapPin, Target, Play, ShieldAlert, Edit3, Trash2, FastForward, Coffee, Bed, ArrowRight, User, List, Route, Thermometer, Smile, AlertTriangle, Wind } from 'lucide-react';
+import { Moon, Zap, Activity, Hand, HeartPulse, Clock, Dumbbell, Footprints, Timer, CloudSun, Swords, TrendingUp, Beer, Film, ChevronLeft, ChevronRight, MapPin, Target, Play, ShieldAlert, Edit3, Trash2, FastForward, Coffee, Bed, ArrowRight, User, List, Route, Thermometer, Smile, AlertTriangle, Wind, StopCircle, X } from 'lucide-react';
 import Modal from './Modal';
 import SafeDeleteModal from './SafeDeleteModal';
+import CancelReasonModal from './CancelReasonModal';
 import { formatTime, calculateSleepDuration, analyzeSleep, generateLogSummary, LABELS } from '../utils/helpers';
 import { getPrediction } from '../utils/alcoholHelpers';
 import { useData } from '../contexts/DataContext';
@@ -197,109 +198,6 @@ const DailyReportCard: React.FC<{ log: LogEntry }> = ({ log }) => {
     );
 };
 
-const SleepWidget = ({ log }: { log?: LogEntry | null }) => {
-    const sleep = log?.sleep;
-    const duration = calculateSleepDuration(sleep?.startTime, sleep?.endTime);
-    // Parse duration to hours for progress bar
-    let durationHours = 0;
-    if (duration) {
-        const match = duration.match(/(\d+)小时/);
-        if (match) durationHours = parseInt(match[1]);
-    }
-    const hasData = !!(sleep?.startTime && sleep?.endTime);
-    const analysis = analyzeSleep(sleep?.startTime, sleep?.endTime);
-
-    return (
-        <div className="bg-white dark:bg-slate-900 rounded-card p-5 shadow-card border border-slate-100 dark:border-slate-800 relative overflow-hidden group hover:shadow-soft transition-all duration-300">
-            <div className="flex justify-between items-start mb-4 relative z-10">
-                <div className="flex items-center gap-2">
-                    <div className="p-1.5 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg text-indigo-500">
-                        <Moon size={18} fill="currentColor"/>
-                    </div>
-                    <div>
-                        <h3 className="font-bold text-sm text-slate-700 dark:text-slate-200">睡眠</h3>
-                        <p className="text-[10px] text-slate-400 font-medium">
-                            {hasData ? `${formatTime(sleep?.startTime)} - ${formatTime(sleep?.endTime)}` : '未记录'}
-                        </p>
-                    </div>
-                </div>
-                {hasData && (
-                    <div className="text-right">
-                        <div className="text-xl font-black text-indigo-600 dark:text-indigo-400">
-                            {durationHours}<span className="text-xs font-bold text-slate-400 ml-0.5">h</span>
-                        </div>
-                    </div>
-                )}
-            </div>
-
-            {/* Visual Graph Area - Mini Bars */}
-            <div className="h-12 flex items-end gap-1 mb-2 px-1">
-                {[30, 50, 40, 70, 45, 90, 60, 40, 20].map((h, i) => (
-                    <div key={i} className="flex-1 bg-slate-100 dark:bg-slate-800 rounded-sm relative overflow-hidden">
-                        <div 
-                            className={`absolute bottom-0 left-0 right-0 transition-all duration-1000 ${hasData ? 'bg-indigo-400' : 'bg-slate-200 dark:bg-slate-700'}`} 
-                            style={{ height: hasData ? `${h}%` : '0%' }}
-                        ></div>
-                    </div>
-                ))}
-            </div>
-            
-            {/* Status Tags */}
-            <div className="flex gap-2 mt-2">
-                {analysis?.isLate && <span className="text-[9px] font-bold bg-amber-50 text-amber-600 px-1.5 py-0.5 rounded border border-amber-100">熬夜</span>}
-                {sleep?.quality && sleep.quality >= 4 && <span className="text-[9px] font-bold bg-green-50 text-green-600 px-1.5 py-0.5 rounded border border-green-100">安睡</span>}
-            </div>
-        </div>
-    );
-};
-
-const ActivityWidget = ({ log }: { log?: LogEntry | null }) => {
-    const hasWorkout = log?.exercise && log.exercise.length > 0;
-    const sexCount = log?.sex?.length || 0;
-    const mbCount = log?.masturbation?.length || 0;
-    const totalRelease = sexCount + mbCount;
-
-    return (
-        <div className="bg-white dark:bg-slate-900 rounded-card p-5 shadow-card border border-slate-100 dark:border-slate-800 relative overflow-hidden group hover:shadow-soft transition-all duration-300">
-             <div className="flex justify-between items-start mb-4 relative z-10">
-                <div className="flex items-center gap-2">
-                    <div className="p-1.5 bg-rose-50 dark:bg-rose-900/30 rounded-lg text-rose-500">
-                        <Activity size={18} />
-                    </div>
-                    <div>
-                        <h3 className="font-bold text-sm text-slate-700 dark:text-slate-200">活力</h3>
-                        <p className="text-[10px] text-slate-400 font-medium">
-                            {totalRelease > 0 ? `今日释放 ${totalRelease} 次` : '今日未释放'}
-                        </p>
-                    </div>
-                </div>
-             </div>
-
-             <div className="space-y-2 relative z-10">
-                <div className="flex items-center justify-between p-2 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
-                    <div className="flex items-center gap-2">
-                        <Dumbbell size={14} className="text-orange-500"/>
-                        <span className="text-xs font-bold text-slate-600 dark:text-slate-300">运动</span>
-                    </div>
-                    <div className={`text-xs font-bold ${hasWorkout ? 'text-green-500' : 'text-slate-300'}`}>
-                        {hasWorkout ? `${log?.exercise?.length}组` : '未完成'}
-                    </div>
-                </div>
-
-                <div className="flex items-center justify-between p-2 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
-                    <div className="flex items-center gap-2">
-                        <HeartPulse size={14} className="text-pink-500"/>
-                        <span className="text-xs font-bold text-slate-600 dark:text-slate-300">性/手</span>
-                    </div>
-                    <div className={`text-xs font-bold ${totalRelease > 0 ? 'text-rose-500' : 'text-slate-300'}`}>
-                        {totalRelease > 0 ? `${sexCount} / ${mbCount}` : '无'}
-                    </div>
-                </div>
-             </div>
-        </div>
-    );
-};
-
 const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateToBackup, onFinishExercise, onFinishMasturbation }) => {
   const { logs, deleteLog, toggleNap, addOrUpdateLog } = useData();
   const { showToast } = useToast();
@@ -315,8 +213,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
   // Tabbed View State inside Summary
   const [activeSummaryTab, setActiveSummaryTab] = useState<'overview' | 'timeline'>('overview');
   
-  // Masturbation Action Modal
-  const [isMbActionModalOpen, setIsMbActionModalOpen] = useState(false);
+  // Activity Cancel State
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const [cancelTarget, setCancelTarget] = useState<'mb' | 'exercise' | null>(null);
 
   const completedLogs = useMemo(() => logs.filter(log => log.status !== 'pending'), [logs]);
   const latestLog = useMemo(() => logs.length > 0 ? logs[0] : null, [logs]);
@@ -372,232 +271,263 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
       }
   };
   
-  // --- Masturbation Actions ---
-  const handleQuickFinishMb = async () => {
-      if (!ongoingMb) return;
-      const now = new Date();
-      const [h, m] = ongoingMb.startTime.split(':').map(Number);
-      const startDate = new Date(); startDate.setHours(h); startDate.setMinutes(m); startDate.setSeconds(0);
-      let duration = Math.round((now.getTime() - startDate.getTime()) / 60000);
-      if (duration < 0) duration += 24 * 60;
-      if (duration === 0) duration = 1;
-
-      const parentLog = logs.find(l => l.masturbation?.some(r => r.id === ongoingMb.id));
-      if (parentLog) {
-          const updatedMb = parentLog.masturbation?.map(r => 
-              r.id === ongoingMb.id 
-              ? { ...r, status: 'completed' as const, duration, quickLog: true } 
-              : r
-          );
-          await addOrUpdateLog({ ...parentLog, masturbation: updatedMb });
-          showToast(`已快速记录: ${duration}分钟`, 'success');
-      }
-      setIsMbActionModalOpen(false);
+  const handleCancelActivity = (type: 'mb' | 'exercise') => {
+      setCancelTarget(type);
+      setIsCancelModalOpen(true);
   };
 
-  const handleCancelMb = async () => {
-      if (!ongoingMb) return;
-      if (!confirm('确定要取消并删除这条开始记录吗？')) return;
+  const confirmCancelActivity = async (reason: string) => {
+      if (!cancelTarget) return;
       
-      const parentLog = logs.find(l => l.masturbation?.some(r => r.id === ongoingMb.id));
+      const targetRecord = cancelTarget === 'mb' ? ongoingMb : ongoingExercise;
+      if (!targetRecord) return;
+
+      const parentLog = logs.find(l => 
+          cancelTarget === 'mb' 
+          ? l.masturbation?.some(m => m.id === targetRecord.id)
+          : l.exercise?.some(e => e.id === targetRecord.id)
+      );
+
       if (parentLog) {
-          const updatedMb = parentLog.masturbation?.filter(r => r.id !== ongoingMb.id);
-          await addOrUpdateLog({ ...parentLog, masturbation: updatedMb });
-          showToast('记录已取消', 'info');
+          // Prepare history entry
+          const activityName = cancelTarget === 'mb' ? '自慰' : '运动';
+          const historyEntry: ChangeRecord = {
+              timestamp: Date.now(),
+              summary: `取消${activityName} (${reason})`,
+              details: [],
+              type: 'manual'
+          };
+
+          const updates: Partial<LogEntry> = {
+              changeHistory: [...(parentLog.changeHistory || []), historyEntry]
+          };
+
+          if (cancelTarget === 'mb') {
+              updates.masturbation = parentLog.masturbation?.filter(m => m.id !== targetRecord.id);
+          } else {
+              updates.exercise = parentLog.exercise?.filter(e => e.id !== targetRecord.id);
+          }
+
+          try {
+              await addOrUpdateLog({ ...parentLog, ...updates });
+              showToast('记录已取消', 'info');
+          } catch (e: any) {
+              showToast(e.message, 'error');
+          }
       }
-      setIsMbActionModalOpen(false);
+      setIsCancelModalOpen(false);
+      setCancelTarget(null);
   };
 
   return (
-    <>
-      <div className="space-y-6">
-        {/* New Glass Header */}
-        <div className="sticky top-0 z-20 -mx-4 px-4 py-4 bg-brand-bg/80 dark:bg-slate-950/80 backdrop-blur-md flex justify-between items-center transition-all">
-            <div>
-                <h1 className="text-2xl font-black text-brand-text dark:text-slate-100 tracking-tight flex items-center gap-2">
-                    {greeting}
-                    <span className="text-2xl animate-pulse">👋</span>
-                </h1>
-                <p className="text-brand-muted dark:text-slate-400 text-xs font-medium mt-0.5">今天也要保持好状态</p>
-            </div>
-            <div className="w-10 h-10 bg-white dark:bg-slate-800 rounded-full shadow-sm flex items-center justify-center border border-slate-100 dark:border-slate-700">
-                <User size={18} className="text-brand-muted"/>
-            </div>
+    <div className="space-y-6">
+      <div className="flex justify-between items-center pt-2">
+        <div>
+          <h1 className="text-3xl font-black tracking-tight text-brand-text dark:text-slate-100">{greeting}</h1>
+          <p className="text-sm text-brand-muted font-medium mt-1">
+            {pendingLog ? '记录进行中...' : '今天感觉如何？'}
+          </p>
         </div>
-
-        {/* Ongoing Tasks (Floating Cards) */}
-        {(ongoingNap || ongoingExercise || ongoingMb || pendingLog) && (
-            <section className="space-y-3 animate-in slide-in-from-top-2">
-                {pendingLog && !ongoingExercise && !ongoingNap && !ongoingMb && (
-                    <div onClick={() => onEdit(pendingLog.date)} className="bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-900/20 dark:to-amber-900/10 p-4 rounded-3xl border border-orange-100 dark:border-orange-900/30 flex items-center justify-between cursor-pointer active:scale-95 transition-transform shadow-sm">
-                        <div className="flex items-center gap-3">
-                            <div className="p-2.5 bg-orange-100 dark:bg-orange-800 rounded-full text-orange-600 dark:text-orange-200">
-                                <Bed size={18}/>
-                            </div>
-                            <div>
-                                <h4 className="font-bold text-orange-900 dark:text-orange-100 text-sm">补全昨日记录</h4>
-                                <p className="text-[10px] text-orange-700 dark:text-orange-300 opacity-80">睡眠数据待填写</p>
-                            </div>
-                        </div>
-                        <div className="bg-white dark:bg-slate-800 p-1.5 rounded-full text-orange-400 shadow-sm"><ArrowRight size={16}/></div>
-                    </div>
-                )}
-                
-                {ongoingNap && (
-                    <div className="bg-white dark:bg-slate-900 border border-purple-100 dark:border-purple-900 p-4 rounded-3xl shadow-sm flex justify-between items-center relative overflow-hidden">
-                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-purple-500"></div>
-                        <div className="flex items-center gap-3">
-                            <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-full text-purple-600"><CloudSun size={20}/></div>
-                            <div>
-                                <div className="font-bold text-sm text-slate-700 dark:text-slate-200">午休中...</div>
-                                <div className="text-[10px] text-slate-400 font-mono">{ongoingNap.startTime} 开始</div>
-                            </div>
-                        </div>
-                        <button onClick={handleToggleNap} className="px-4 py-2 bg-purple-600 text-white rounded-full text-xs font-bold shadow-md hover:bg-purple-700 transition-colors">醒了</button>
-                    </div>
-                )}
-
-                {ongoingMb && onFinishMasturbation && (
-                    <div className="bg-white dark:bg-slate-900 border border-blue-100 dark:border-blue-900 p-4 rounded-3xl shadow-sm flex justify-between items-center relative overflow-hidden">
-                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-500"></div>
-                        <div className="flex items-center gap-3">
-                            <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-full text-blue-600"><Hand size={20}/></div>
-                            <div>
-                                <div className="font-bold text-sm text-slate-700 dark:text-slate-200">施法中...</div>
-                                <div className="text-[10px] text-slate-400 font-mono">{ongoingMb.startTime} 开始</div>
-                            </div>
-                        </div>
-                        <button onClick={() => setIsMbActionModalOpen(true)} className="px-4 py-2 bg-blue-600 text-white rounded-full text-xs font-bold shadow-md hover:bg-blue-700 transition-colors">结束</button>
-                    </div>
-                )}
-            </section>
-        )}
-
-        {/* Calendar with Widgets */}
-        <CalendarHeatmap logs={logs} onDateClick={handleDateClickForSummary}>
-            <div className="grid grid-cols-2 gap-4 mt-4">
-                <SleepWidget log={latestLog} />
-                <ActivityWidget log={latestLog} />
-            </div>
-        </CalendarHeatmap>
+        <button 
+            onClick={onNavigateToBackup}
+            className="p-3 bg-white dark:bg-slate-800 rounded-full shadow-sm border border-slate-100 dark:border-slate-800 hover:scale-105 transition-transform"
+        >
+            <User size={24} className="text-brand-accent"/>
+        </button>
       </div>
-      
-      {/* Detail Modal */}
-      <Modal isOpen={isSummaryModalOpen} onClose={() => { setIsSummaryModalOpen(false); setIsHistoryView(false); }} title={isHistoryView ? "修改历史" : "记录详情"}>
-        {summaryLog && (
-            <div className="space-y-4 pb-4 h-full flex flex-col">
-                {!isHistoryView && (
-                    <div className="flex items-center justify-between mb-2 shrink-0">
-                        <div>
-                            <h3 className="font-black text-2xl text-brand-text dark:text-slate-200 tracking-tight">{new Date(summaryLog.date).toLocaleDateString('zh-CN', { month: 'long', day: 'numeric' })}</h3>
-                            <p className="text-xs text-brand-muted uppercase font-bold tracking-wider">{new Date(summaryLog.date).toLocaleDateString('zh-CN', { weekday: 'long' })}</p>
-                        </div>
-                        <div className="flex gap-2">
-                            <button onClick={() => setIsHistoryView(true)} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-500 hover:text-brand-accent transition-colors"><Clock size={18}/></button>
-                            <button onClick={() => { setIsSummaryModalOpen(false); handleDeleteRequest(summaryLog.date); }} className="p-2 bg-red-50 dark:bg-red-900/20 rounded-full text-red-500 hover:bg-red-100 transition-colors"><Trash2 size={18}/></button>
-                        </div>
-                    </div>
-                )}
-                
-                {isHistoryView ? <LogHistory log={summaryLog} /> : (
-                    <div className="flex flex-col h-full overflow-hidden">
-                        {/* Tab Switcher */}
-                        <div className="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-xl mb-4 shrink-0">
-                            <button 
-                                onClick={() => setActiveSummaryTab('overview')}
-                                className={`flex-1 py-2 text-xs font-bold rounded-lg flex items-center justify-center gap-1 transition-all ${
-                                    activeSummaryTab === 'overview' 
-                                    ? 'bg-white dark:bg-slate-700 text-brand-accent shadow-sm' 
-                                    : 'text-slate-500 hover:text-slate-700'
-                                }`}
-                            >
-                                <List size={14}/> 概览
-                            </button>
-                            <button 
-                                onClick={() => setActiveSummaryTab('timeline')}
-                                className={`flex-1 py-2 text-xs font-bold rounded-lg flex items-center justify-center gap-1 transition-all ${
-                                    activeSummaryTab === 'timeline' 
-                                    ? 'bg-white dark:bg-slate-700 text-brand-accent shadow-sm' 
-                                    : 'text-slate-500 hover:text-slate-700'
-                                }`}
-                            >
-                                <Route size={14}/> 时间轴
-                            </button>
-                        </div>
 
-                        {/* Content Area */}
-                        <div className="flex-1 overflow-y-auto custom-scrollbar pr-1">
-                            {activeSummaryTab === 'overview' ? (
-                                <div className="animate-in fade-in slide-in-from-left-4 duration-300">
-                                    <DailyReportCard log={summaryLog} />
-                                </div>
-                            ) : (
-                                <div className="animate-in fade-in slide-in-from-right-4 duration-300 pb-10">
-                                    <GlobalTimeline log={summaryLog} />
-                                </div>
-                            )}
-                        </div>
-
-                        <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 text-center shrink-0">
-                            <button 
-                                onClick={() => { setIsSummaryModalOpen(false); onEdit(summaryLog.date); }} 
-                                className="w-full py-3 bg-brand-primary dark:bg-slate-800 text-brand-text dark:text-slate-200 rounded-xl font-bold hover:bg-brand-accent hover:text-white dark:hover:bg-slate-700 transition-all flex items-center justify-center gap-2 border border-slate-200 dark:border-slate-700"
-                            >
-                                <Edit3 size={16} /> 编辑详情
-                            </button>
-                        </div>
-                    </div>
-                )}
-            </div>
-        )}
-      </Modal>
-
-      {/* SafeDeleteModal moved OUTSIDE of Summary Modal to prevent auto-closing issue */}
-      <SafeDeleteModal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} onConfirm={handleConfirmDelete} message="确认要删除这一整天的记录吗？"/>
-
-      {/* Masturbation Action Modal */}
-      <Modal isOpen={isMbActionModalOpen} onClose={() => setIsMbActionModalOpen(false)} title="施法结束">
-          <div className="space-y-3 pb-2">
-              <p className="text-sm text-center text-slate-500 mb-4">辛苦了！请选择如何记录本次施法。</p>
-              
-              <button onClick={handleQuickFinishMb} className="w-full bg-pastel-blue dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 p-4 rounded-2xl flex items-center justify-between group hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors">
-                  <div className="flex items-center gap-3">
-                      <div className="p-2 bg-blue-100 dark:bg-blue-800 rounded-full text-blue-600 dark:text-blue-300">
-                          <FastForward size={20} />
+      {/* Ongoing Activity Card (The "Status Card") */}
+      {(ongoingMb || ongoingExercise) && (
+          <div className="animate-in slide-in-from-top-2 fade-in">
+              {ongoingMb && (
+                  <div className="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl p-4 text-white shadow-lg shadow-blue-500/30 flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center animate-pulse">
+                              <Hand size={20} fill="currentColor"/>
+                          </div>
+                          <div>
+                              <div className="text-xs font-bold opacity-80 uppercase tracking-wider">正在进行</div>
+                              <div className="text-lg font-black flex items-center">
+                                  自慰中... <span className="ml-2 font-mono text-sm opacity-80">{ongoingMb.startTime} 开始</span>
+                              </div>
+                          </div>
                       </div>
-                      <div className="text-left">
-                          <h4 className="font-bold text-brand-text dark:text-slate-200">快速结案</h4>
-                          <p className="text-xs text-slate-500">仅记录时间，跳过详情</p>
+                      <div className="flex items-center gap-2">
+                          <button 
+                            onClick={() => handleCancelActivity('mb')}
+                            className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors text-white/80"
+                            title="取消"
+                          >
+                              <X size={16} strokeWidth={3}/>
+                          </button>
+                          <button 
+                            onClick={() => onFinishMasturbation && onFinishMasturbation(ongoingMb)}
+                            className="bg-white text-blue-600 px-4 py-2 rounded-xl font-bold text-sm hover:bg-blue-50 transition-colors shadow-sm flex items-center"
+                          >
+                              <StopCircle size={16} className="mr-1.5"/>
+                              完成
+                          </button>
                       </div>
                   </div>
-                  <ArrowRight size={18} className="text-slate-400 group-hover:text-blue-500"/>
-              </button>
-
-              <button 
-                onClick={() => { 
-                    if (ongoingMb && onFinishMasturbation) onFinishMasturbation(ongoingMb); 
-                    setIsMbActionModalOpen(false); 
-                }} 
-                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-4 rounded-2xl flex items-center justify-between group hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-              >
-                  <div className="flex items-center gap-3">
-                      <div className="p-2 bg-slate-200 dark:bg-slate-700 rounded-full text-slate-600 dark:text-slate-300">
-                          <Edit3 size={20} />
+              )}
+              {ongoingExercise && (
+                  <div className="bg-gradient-to-r from-orange-500 to-amber-500 rounded-2xl p-4 text-white shadow-lg shadow-orange-500/30 flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center animate-pulse">
+                              <Dumbbell size={20} />
+                          </div>
+                          <div>
+                              <div className="text-xs font-bold opacity-80 uppercase tracking-wider">正在进行</div>
+                              <div className="text-lg font-black flex items-center">
+                                  {ongoingExercise.type} <span className="ml-2 font-mono text-sm opacity-80">{ongoingExercise.startTime} 开始</span>
+                              </div>
+                          </div>
                       </div>
-                      <div className="text-left">
-                          <h4 className="font-bold text-brand-text dark:text-slate-200">补全详情</h4>
-                          <p className="text-xs text-slate-500">记录素材、感受与评价</p>
+                      <div className="flex items-center gap-2">
+                          <button 
+                            onClick={() => handleCancelActivity('exercise')}
+                            className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors text-white/80"
+                            title="取消"
+                          >
+                              <X size={16} strokeWidth={3}/>
+                          </button>
+                          <button 
+                            onClick={() => onFinishExercise && onFinishExercise(ongoingExercise)}
+                            className="bg-white text-orange-600 px-4 py-2 rounded-xl font-bold text-sm hover:bg-orange-50 transition-colors shadow-sm flex items-center"
+                          >
+                              <StopCircle size={16} className="mr-1.5"/>
+                              完成
+                          </button>
                       </div>
                   </div>
-                  <ArrowRight size={18} className="text-slate-400 group-hover:text-brand-accent"/>
-              </button>
-
-              <button onClick={handleCancelMb} className="w-full mt-4 py-3 text-red-500 dark:text-red-400 text-sm font-bold flex items-center justify-center gap-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors">
-                  <Trash2 size={16} /> 放弃 / 删除记录
-              </button>
+              )}
           </div>
+      )}
+
+      {/* Main Calendar Card */}
+      <div className="bg-brand-card dark:bg-slate-900 rounded-3xl p-4 shadow-soft border border-slate-100 dark:border-slate-800">
+        <CalendarHeatmap logs={completedLogs} onDateClick={handleDateClickForSummary} />
+      </div>
+
+      {/* Quick Status / Sleep / Activity Cards */}
+      <div className="grid grid-cols-2 gap-4">
+          <div 
+            onClick={handleToggleNap}
+            className={`p-4 rounded-3xl border transition-all cursor-pointer relative overflow-hidden ${ongoingNap ? 'bg-orange-500 text-white border-orange-600 shadow-lg shadow-orange-500/20' : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 shadow-sm'}`}
+          >
+              <div className="relative z-10">
+                  <div className="flex justify-between items-start mb-2">
+                      <div className={`p-2 rounded-xl ${ongoingNap ? 'bg-white/20' : 'bg-slate-100 dark:bg-slate-800'}`}>
+                          <CloudSun size={20} className={ongoingNap ? 'text-white' : 'text-slate-500'} />
+                      </div>
+                      {ongoingNap && <span className="text-[10px] font-bold bg-white/20 px-2 py-0.5 rounded-full animate-pulse">进行中</span>}
+                  </div>
+                  <h3 className={`font-bold ${ongoingNap ? 'text-white' : 'text-slate-700 dark:text-slate-200'}`}>午休小憩</h3>
+                  <p className={`text-xs mt-1 font-medium ${ongoingNap ? 'text-orange-100' : 'text-slate-400'}`}>
+                      {ongoingNap ? `${ongoingNap.startTime} 开始` : '点击开始/结束'}
+                  </p>
+              </div>
+          </div>
+
+          {/* Pending Sleep Card */}
+          {pendingLog ? (
+              <div onClick={() => onEdit(pendingLog.date)} className="bg-purple-600 p-4 rounded-3xl shadow-lg shadow-purple-500/30 text-white cursor-pointer relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 w-16 h-16 bg-white/10 rounded-full blur-xl -translate-y-1/2 translate-x-1/2"></div>
+                  <div className="flex justify-between items-start mb-2 relative z-10">
+                      <div className="p-2 bg-white/20 rounded-xl"><Moon size={20} fill="currentColor"/></div>
+                      <span className="text-[10px] font-bold bg-white/20 px-2 py-0.5 rounded-full">记录中</span>
+                  </div>
+                  <div className="relative z-10">
+                      <h3 className="font-bold">睡眠记录</h3>
+                      <p className="text-xs text-purple-200 mt-1 font-mono">
+                          入睡: {formatTime(pendingLog.sleep?.startTime)}
+                      </p>
+                  </div>
+              </div>
+          ) : (
+              <div className="bg-white dark:bg-slate-900 p-4 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col justify-center items-center text-slate-400">
+                  <Moon size={24} className="mb-2 opacity-50"/>
+                  <span className="text-xs font-bold">暂无睡眠</span>
+              </div>
+          )}
+      </div>
+
+      {/* Summary Modal */}
+      <Modal isOpen={isSummaryModalOpen} onClose={() => { setIsSummaryModalOpen(false); setSummaryLog(null); }} title="" footer={null}>
+          {summaryLog && (
+              <div className="pb-6">
+                  {/* Header Date */}
+                  <div className="flex justify-between items-end mb-6 px-1">
+                      <div>
+                          <h2 className="text-3xl font-black text-brand-text dark:text-slate-100 tracking-tighter">
+                              {new Date(summaryLog.date).getMonth() + 1}月{new Date(summaryLog.date).getDate()}日
+                          </h2>
+                          <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mt-1">
+                              {new Date(summaryLog.date).toLocaleDateString('zh-CN', { weekday: 'long' })}
+                          </p>
+                      </div>
+                      <div className="flex gap-2">
+                          <button onClick={() => setIsHistoryView(!isHistoryView)} className={`p-2 rounded-full transition-colors ${isHistoryView ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30' : 'bg-slate-100 text-slate-500 dark:bg-slate-800'}`}>
+                              <Clock size={20} />
+                          </button>
+                          <button onClick={() => handleDeleteRequest(summaryLog.date)} className="p-2 rounded-full bg-red-50 text-red-500 hover:bg-red-100 transition-colors">
+                              <Trash2 size={20} />
+                          </button>
+                      </div>
+                  </div>
+
+                  {/* Tabs */}
+                  <div className="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-xl mb-6">
+                      <button 
+                        onClick={() => setActiveSummaryTab('overview')}
+                        className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${activeSummaryTab === 'overview' ? 'bg-white dark:bg-slate-700 shadow-sm text-brand-accent' : 'text-slate-400'}`}
+                      >
+                          <List size={14} className="inline mr-1"/> 概览
+                      </button>
+                      <button 
+                        onClick={() => setActiveSummaryTab('timeline')}
+                        className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${activeSummaryTab === 'timeline' ? 'bg-white dark:bg-slate-700 shadow-sm text-brand-accent' : 'text-slate-400'}`}
+                      >
+                          <Route size={14} className="inline mr-1"/> 时间轴
+                      </button>
+                  </div>
+
+                  {isHistoryView ? (
+                      <div className="animate-in fade-in slide-in-from-right-4">
+                          <h3 className="text-sm font-bold text-slate-400 mb-4 flex items-center"><Clock size={16} className="mr-2"/> 修改历史</h3>
+                          <LogHistory log={summaryLog} />
+                      </div>
+                  ) : activeSummaryTab === 'timeline' ? (
+                      <div className="animate-in fade-in slide-in-from-right-4">
+                          <GlobalTimeline log={summaryLog} />
+                          <div className="mt-8 text-center">
+                              <button onClick={() => { onEdit(summaryLog.date); setIsSummaryModalOpen(false); }} className="w-full py-3 bg-slate-800 dark:bg-white text-white dark:text-slate-900 font-bold rounded-xl flex items-center justify-center">
+                                  <Edit3 size={16} className="mr-2"/> 编辑时间线
+                              </button>
+                          </div>
+                      </div>
+                  ) : (
+                      <div className="space-y-6 animate-in fade-in slide-in-from-left-4">
+                          <DailyReportCard log={summaryLog} />
+                          
+                          <button onClick={() => { onEdit(summaryLog.date); setIsSummaryModalOpen(false); }} className="w-full py-4 bg-slate-800 dark:bg-white text-white dark:text-slate-900 font-bold rounded-2xl flex items-center justify-center shadow-lg shadow-slate-200 dark:shadow-none hover:scale-[1.02] transition-transform">
+                              <Edit3 size={18} className="mr-2"/> 编辑详情
+                          </button>
+                      </div>
+                  )}
+              </div>
+          )}
       </Modal>
-    </>
+
+      <SafeDeleteModal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} onConfirm={handleConfirmDelete} />
+      
+      <CancelReasonModal 
+          isOpen={isCancelModalOpen} 
+          onClose={() => setIsCancelModalOpen(false)} 
+          onConfirm={confirmCancelActivity}
+          title={cancelTarget === 'mb' ? "取消自慰记录" : "取消运动记录"}
+      />
+    </div>
   );
 };
 
