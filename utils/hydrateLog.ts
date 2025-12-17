@@ -85,7 +85,9 @@ export const hydrateLog = (raw: any): LogEntry => {
         hasDream: n.hasDream ?? false,
         dreamTypes: n.dreamTypes ?? [],
         wokeWithErection: n.wokeWithErection ?? false,
-        hardness: n.hardness ?? null
+        hardness: n.hardness ?? null,
+        quality: n.quality || 3,
+        environment: n.environment || { location: 'home', temperature: 'comfortable' }
     }));
 
     const defaultSleep: SleepRecord = {

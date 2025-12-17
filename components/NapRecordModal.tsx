@@ -1,9 +1,10 @@
 
 import React, { useState, useEffect } from 'react';
-import { CloudSun, Clock, Play, Sparkles, SunMedium } from 'lucide-react';
+import { CloudSun, Clock, Play, Sparkles, SunMedium, Thermometer, MapPin } from 'lucide-react';
 import Modal from './Modal';
-import { NapRecord, HardnessLevel } from '../types';
+import { NapRecord, HardnessLevel, SleepLocation, SleepTemperature } from '../types';
 import HardnessSelector from './HardnessSelector';
+import { RangeSlider } from './FormControls';
 
 interface NapRecordModalProps {
     isOpen: boolean;
@@ -13,6 +14,20 @@ interface NapRecordModalProps {
 }
 
 const DREAM_TYPES = ['情色', '噩梦', '普通梦', '模糊梦'];
+
+const LOCATIONS: { value: SleepLocation, label: string }[] = [
+    { value: 'home', label: '自家' },
+    { value: 'hotel', label: '酒店' },
+    { value: 'others_home', label: '别人家' },
+    { value: 'dorm', label: '宿舍' },
+    { value: 'other', label: '其他' },
+];
+
+const TEMPS: { value: SleepTemperature, label: string }[] = [
+    { value: 'cold', label: '冷' },
+    { value: 'comfortable', label: '舒适' },
+    { value: 'hot', label: '热' },
+];
 
 const NapRecordModal: React.FC<NapRecordModalProps> = ({ isOpen, onClose, onSave, initialData }) => {
     const [startTime, setStartTime] = useState('');
@@ -25,6 +40,11 @@ const NapRecordModal: React.FC<NapRecordModalProps> = ({ isOpen, onClose, onSave
     // v0.0.7 Nap Wood Support
     const [wokeWithErection, setWokeWithErection] = useState(false);
     const [hardness, setHardness] = useState<HardnessLevel | null>(null);
+    
+    // v0.0.8 Nap Quality & Environment
+    const [quality, setQuality] = useState(3);
+    const [location, setLocation] = useState<SleepLocation>('home');
+    const [temperature, setTemperature] = useState<SleepTemperature>('comfortable');
     
     // Calculate duration for display and saving
     const duration = React.useMemo(() => {
@@ -45,6 +65,9 @@ const NapRecordModal: React.FC<NapRecordModalProps> = ({ isOpen, onClose, onSave
                 setDreamTypes(initialData.dreamTypes || []);
                 setWokeWithErection(initialData.wokeWithErection || false);
                 setHardness(initialData.hardness || null);
+                setQuality(initialData.quality || 3);
+                setLocation(initialData.environment?.location || 'home');
+                setTemperature(initialData.environment?.temperature || 'comfortable');
                 
                 // If existing record has duration but no endTime, calculate it
                 if (initialData.duration && !initialData.endTime && initialData.startTime) {
@@ -63,6 +86,9 @@ const NapRecordModal: React.FC<NapRecordModalProps> = ({ isOpen, onClose, onSave
                 setDreamTypes([]);
                 setWokeWithErection(false);
                 setHardness(null);
+                setQuality(3);
+                setLocation('home');
+                setTemperature('comfortable');
             }
         }
     }, [isOpen, initialData]);
@@ -77,7 +103,9 @@ const NapRecordModal: React.FC<NapRecordModalProps> = ({ isOpen, onClose, onSave
             hasDream,
             dreamTypes: hasDream ? dreamTypes : [],
             wokeWithErection,
-            hardness: wokeWithErection ? (hardness || 3) : null
+            hardness: wokeWithErection ? (hardness || 3) : null,
+            quality,
+            environment: { location, temperature }
         });
         onClose();
     };
@@ -140,6 +168,39 @@ const NapRecordModal: React.FC<NapRecordModalProps> = ({ isOpen, onClose, onSave
                     </div>
                     <div className="text-3xl font-black text-orange-600 dark:text-orange-400">
                         {duration} <span className="text-sm font-bold text-slate-400">分钟</span>
+                    </div>
+                </div>
+                
+                {/* Quality & Environment (v0.0.8) */}
+                <div className="space-y-4">
+                    <RangeSlider 
+                        leftLabel="睡得很差 (1)" rightLabel="神清气爽 (5)" 
+                        min={1} max={5} colorClass="accent-orange-500"
+                        value={quality} 
+                        onChange={setQuality} 
+                    />
+                    
+                    <div className="flex gap-2">
+                        <div className="flex-1 bg-slate-50 dark:bg-slate-800 p-2 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center gap-2">
+                            <MapPin size={14} className="text-slate-400"/>
+                            <select 
+                                value={location} 
+                                onChange={e => setLocation(e.target.value as SleepLocation)}
+                                className="bg-transparent text-xs w-full outline-none text-brand-text dark:text-slate-300 appearance-none font-medium cursor-pointer"
+                            >
+                                {LOCATIONS.map(l => <option key={l.value} value={l.value} className="dark:bg-slate-800">{l.label}</option>)}
+                            </select>
+                        </div>
+                        <div className="flex-1 bg-slate-50 dark:bg-slate-800 p-2 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center gap-2">
+                            <Thermometer size={14} className="text-slate-400"/>
+                            <select 
+                                value={temperature} 
+                                onChange={e => setTemperature(e.target.value as SleepTemperature)}
+                                className="bg-transparent text-xs w-full outline-none text-brand-text dark:text-slate-300 appearance-none font-medium cursor-pointer"
+                            >
+                                {TEMPS.map(t => <option key={t.value} value={t.value} className="dark:bg-slate-800">{t.label}</option>)}
+                            </select>
+                        </div>
                     </div>
                 </div>
                 

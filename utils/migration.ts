@@ -2,7 +2,7 @@
 import { StoredData, LogEntry, SexRecordDetails, MasturbationRecordDetails, SexInteraction, SexAction, ExerciseRecord, MorningRecord, SleepRecord, ContentItem } from '../types';
 
 // The latest version of our data structure.
-export const LATEST_VERSION = 38;
+export const LATEST_VERSION = 39;
 
 /**
  * MIGRATION UTILITIES
@@ -286,6 +286,20 @@ function migrateV37toV38(logs: any[]): LogEntry[] {
     });
 }
 
+// V39: Add Nap Quality & Env fields
+function migrateV38toV39(logs: any[]): LogEntry[] {
+    return logs.map(log => {
+        if (log.sleep && Array.isArray(log.sleep.naps)) {
+            log.sleep.naps = log.sleep.naps.map((n: any) => ({
+                ...n,
+                quality: n.quality || 3, // Default mid quality
+                environment: n.environment || { location: 'home', temperature: 'comfortable' }
+            }));
+        }
+        return log;
+    });
+}
+
 /**
  * REPAIR UTILS
  */
@@ -326,7 +340,8 @@ const MIGRATION_REGISTRY: Record<number, (logs: any[]) => any[]> = {
     35: migrateV34toV35,
     36: migrateV35toV36,
     37: migrateV36toV37,
-    38: migrateV37toV38
+    38: migrateV37toV38,
+    39: migrateV38toV39
 };
 
 export function runMigrations(data: any): StoredData {

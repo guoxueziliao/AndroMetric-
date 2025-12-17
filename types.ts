@@ -204,6 +204,12 @@ export interface NapRecord {
     // v0.0.7 Nap Wood
     wokeWithErection?: boolean;
     hardness?: HardnessLevel | null;
+    // v0.0.8 Nap Quality & Env
+    quality?: number; // 1-5
+    environment?: {
+        location: SleepLocation;
+        temperature: SleepTemperature;
+    };
 }
 
 export interface AlcoholItem {

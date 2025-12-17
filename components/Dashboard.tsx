@@ -2,7 +2,7 @@
 import React, { useState, useMemo } from 'react';
 import { LogEntry, ExerciseRecord, MasturbationRecordDetails, ChangeRecord } from '../types';
 import CalendarHeatmap from './CalendarHeatmap';
-import { Moon, Hand, CloudSun, Heart, StopCircle, X, Dumbbell, User, Clock, List, Route, Edit3, Trash2, Activity, Zap, SunMedium, ArrowRight, BedDouble, History } from 'lucide-react';
+import { Moon, Hand, CloudSun, Heart, StopCircle, X, Dumbbell, User, Clock, List, Route, Edit3, Trash2, Activity, Zap, SunMedium, ArrowRight, BedDouble, History, FileText, Fingerprint } from 'lucide-react';
 import Modal from './Modal';
 import SafeDeleteModal from './SafeDeleteModal';
 import CancelReasonModal from './CancelReasonModal';
@@ -76,6 +76,35 @@ const DailyReportCard: React.FC<{ log: LogEntry }> = ({ log }) => {
                 ) : (
                     <span className="text-slate-400 italic">未记录</span>
                 )}
+
+                {/* Naps Display */}
+                {log.sleep?.naps && log.sleep.naps.length > 0 && (
+                    <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+                        <div className="text-[10px] font-bold text-slate-400 uppercase mb-2 flex items-center">
+                            <CloudSun size={10} className="mr-1"/> 午休 / 小憩
+                        </div>
+                        <div className="space-y-2">
+                            {log.sleep.naps.map((nap, i) => (
+                                <div key={i} className="bg-slate-50 dark:bg-slate-800 rounded-lg p-2 text-xs">
+                                    <div className="flex justify-between items-center mb-1">
+                                        <span className="font-mono font-bold text-brand-text dark:text-slate-200">
+                                            {nap.startTime} <span className="text-slate-300 px-1">-</span> {nap.endTime || '进行中'}
+                                        </span>
+                                        <span className="font-bold text-amber-600 dark:text-amber-400">{nap.duration}m</span>
+                                    </div>
+                                    <div className="flex flex-wrap gap-2 text-[10px] text-slate-500">
+                                        {nap.quality && <span className="bg-white dark:bg-slate-700 px-1.5 rounded border border-slate-100 dark:border-slate-600">评分: {nap.quality}</span>}
+                                        {nap.environment?.location && nap.environment.location !== 'home' && (
+                                            <span className="bg-white dark:bg-slate-700 px-1.5 rounded border border-slate-100 dark:border-slate-600">📍 {LABELS.location[nap.environment.location] || nap.environment.location}</span>
+                                        )}
+                                        {nap.wokeWithErection && <span className="text-blue-500 font-bold bg-blue-50 dark:bg-blue-900/20 px-1.5 rounded">🍆 Lv{nap.hardness}</span>}
+                                        {nap.hasDream && <span className="text-purple-500 bg-purple-50 dark:bg-purple-900/20 px-1.5 rounded">💭 {nap.dreamTypes?.join(',')}</span>}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
             </Row>
 
             <Row label="身心环境">
@@ -119,7 +148,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
   // Summary Modal State - Unified Tab System
   const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
   const [summaryLog, setSummaryLog] = useState<LogEntry | null>(null);
-  const [activeSummaryTab, setActiveSummaryTab] = useState<'overview' | 'timeline' | 'history'>('overview');
+  const [activeSummaryTab, setActiveSummaryTab] = useState<'diary' | 'track' | 'trace'>('diary');
   
   // Activity Cancel State
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
@@ -256,7 +285,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
             onEdit(log.date);
         } else { 
             setSummaryLog(log); 
-            setActiveSummaryTab('overview'); 
+            setActiveSummaryTab('diary'); 
             setIsSummaryModalOpen(true); 
         }
     } else {
@@ -575,30 +604,30 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                       </div>
                   </div>
 
-                  {/* Unified Tabs (3-Way) */}
+                  {/* Unified Tabs (3-Way) - Renamed for v0.0.7 */}
                   <div className="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-xl mb-6">
                       <button 
-                        onClick={() => setActiveSummaryTab('overview')}
-                        className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center ${activeSummaryTab === 'overview' ? 'bg-white dark:bg-slate-700 shadow-sm text-brand-accent' : 'text-slate-400'}`}
+                        onClick={() => setActiveSummaryTab('diary')}
+                        className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center ${activeSummaryTab === 'diary' ? 'bg-white dark:bg-slate-700 shadow-sm text-brand-accent' : 'text-slate-400'}`}
                       >
-                          <List size={14} className="mr-1"/> 概览
+                          <FileText size={14} className="mr-1"/> 日记
                       </button>
                       <button 
-                        onClick={() => setActiveSummaryTab('timeline')}
-                        className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center ${activeSummaryTab === 'timeline' ? 'bg-white dark:bg-slate-700 shadow-sm text-brand-accent' : 'text-slate-400'}`}
+                        onClick={() => setActiveSummaryTab('track')}
+                        className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center ${activeSummaryTab === 'track' ? 'bg-white dark:bg-slate-700 shadow-sm text-brand-accent' : 'text-slate-400'}`}
                       >
-                          <Route size={14} className="mr-1"/> 时间轴
+                          <Route size={14} className="mr-1"/> 轨迹
                       </button>
                       <button 
-                        onClick={() => setActiveSummaryTab('history')}
-                        className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center ${activeSummaryTab === 'history' ? 'bg-white dark:bg-slate-700 shadow-sm text-brand-accent' : 'text-slate-400'}`}
+                        onClick={() => setActiveSummaryTab('trace')}
+                        className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center ${activeSummaryTab === 'trace' ? 'bg-white dark:bg-slate-700 shadow-sm text-brand-accent' : 'text-slate-400'}`}
                       >
-                          <History size={14} className="mr-1"/> 变动
+                          <Fingerprint size={14} className="mr-1"/> 溯源
                       </button>
                   </div>
 
                   {/* Content based on Tab */}
-                  {activeSummaryTab === 'overview' && (
+                  {activeSummaryTab === 'diary' && (
                       <div className="space-y-6 animate-in fade-in slide-in-from-left-4">
                           <DailyReportCard log={summaryLog} />
                           <button onClick={() => { onEdit(summaryLog.date); setIsSummaryModalOpen(false); }} className="w-full py-4 bg-slate-800 dark:bg-white text-white dark:text-slate-900 font-bold rounded-2xl flex items-center justify-center shadow-lg shadow-slate-200 dark:shadow-none hover:scale-[1.02] transition-transform">
@@ -607,7 +636,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                       </div>
                   )}
 
-                  {activeSummaryTab === 'timeline' && (
+                  {activeSummaryTab === 'track' && (
                       <div className="animate-in fade-in slide-in-from-right-4">
                           <GlobalTimeline log={summaryLog} />
                           <div className="mt-8 text-center">
@@ -618,7 +647,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                       </div>
                   )}
 
-                  {activeSummaryTab === 'history' && (
+                  {activeSummaryTab === 'trace' && (
                       <div className="animate-in fade-in slide-in-from-right-4">
                           <LogHistory log={summaryLog} />
                       </div>
