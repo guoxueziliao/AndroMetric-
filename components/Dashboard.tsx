@@ -17,7 +17,9 @@ interface DashboardProps {
   onDateClick: (date: string) => void;
   onNavigateToBackup: () => void;
   onFinishExercise?: (record: ExerciseRecord) => void;
+  onCancelExercise?: () => void;
   onFinishMasturbation?: (record: MasturbationRecordDetails) => void;
+  onCancelMasturbation?: () => void;
   onEditAlcohol?: () => void;
   onCancelAlcohol?: () => void;
 }
@@ -50,7 +52,7 @@ const DailyReportCard: React.FC<{ log: LogEntry }> = ({ log }) => {
     );
 };
 
-const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateToBackup, onFinishExercise, onFinishMasturbation, onEditAlcohol, onCancelAlcohol }) => {
+const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateToBackup, onFinishExercise, onCancelExercise, onFinishMasturbation, onCancelMasturbation, onEditAlcohol, onCancelAlcohol }) => {
   const { logs, deleteLog } = useData();
   const { showToast } = useToast();
 
@@ -62,10 +64,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
   const [summaryLog, setSummaryLog] = useState<LogEntry | null>(null);
   const [activeSummaryTab, setActiveSummaryTab] = useState<'diary' | 'track' | 'trace'>('diary');
   
-  // Activity Cancel State
-  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
-  const [cancelTarget, setCancelTarget] = useState<'mb' | 'exercise' | null>(null);
-
   const completedLogs = useMemo(() => logs.filter(log => log.status !== 'pending'), [logs]);
   const ongoingExercise = useMemo(() => logs.flatMap(l => l.exercise || []).find(e => e.ongoing), [logs]);
   const ongoingMb = useMemo(() => logs.flatMap(l => l.masturbation || []).find(m => m.status === 'inProgress'), [logs]);
@@ -103,9 +101,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
   const handleDeleteRequest = (date: string) => { setLogToDelete(date); setIsDeleteModalOpen(true); };
   const handleConfirmDelete = async () => { if (logToDelete) { try { await deleteLog(logToDelete); showToast('记录已删除', 'success'); } catch (e: any) { showToast(e.message, 'error'); } } setIsDeleteModalOpen(false); setLogToDelete(null); };
   const handleDateClickForSummary = (date: string) => { const log = logs.find(l => l.date === date); if (log) { if (log.status === 'pending') { onEdit(log.date); } else { setSummaryLog(log); setActiveSummaryTab('diary'); setIsSummaryModalOpen(true); } } else { onDateClick(date); } };
-
-  const handleCancelActivity = (type: 'mb' | 'exercise') => { setCancelTarget(type); setIsCancelModalOpen(true); };
-  const confirmCancelActivity = async (reason: string) => { /* Confirm cancel implementation here if needed */ };
 
   return (
     <div className="space-y-6">
@@ -170,8 +165,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                       </div>
                   </div>
                   <div className="flex items-center gap-2">
-                      <button onClick={() => handleCancelActivity('mb')} className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors text-white/80" title="取消"><X size={16} strokeWidth={3}/></button>
-                      <button onClick={() => onFinishMasturbation && onFinishMasturbation(ongoingMb)} className="bg-white text-blue-600 px-4 py-2 rounded-xl font-bold text-sm hover:bg-blue-50 transition-colors shadow-sm flex items-center"><StopCircle size={16} className="mr-1.5"/>完成</button>
+                      <button onClick={(e) => { e.stopPropagation(); onCancelMasturbation && onCancelMasturbation(); }} className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors text-white/80" title="取消"><X size={16} strokeWidth={3}/></button>
+                      <button onClick={(e) => { e.stopPropagation(); onFinishMasturbation && onFinishMasturbation(ongoingMb); }} className="bg-white text-blue-600 px-4 py-2 rounded-xl font-bold text-sm hover:bg-blue-50 transition-colors shadow-sm flex items-center"><StopCircle size={16} className="mr-1.5"/>完成</button>
                   </div>
               </div>
           )}
@@ -190,8 +185,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                       </div>
                   </div>
                   <div className="flex items-center gap-2">
-                      <button onClick={() => handleCancelActivity('exercise')} className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors text-white/80" title="取消"><X size={16} strokeWidth={3}/></button>
-                      <button onClick={() => onFinishExercise && onFinishExercise(ongoingExercise)} className="bg-white text-orange-600 px-4 py-2 rounded-xl font-bold text-sm hover:bg-orange-50 transition-colors shadow-sm flex items-center"><StopCircle size={16} className="mr-1.5"/>完成</button>
+                      <button onClick={(e) => { e.stopPropagation(); onCancelExercise && onCancelExercise(); }} className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors text-white/80" title="取消"><X size={16} strokeWidth={3}/></button>
+                      <button onClick={(e) => { e.stopPropagation(); onFinishExercise && onFinishExercise(ongoingExercise); }} className="bg-white text-orange-600 px-4 py-2 rounded-xl font-bold text-sm hover:bg-orange-50 transition-colors shadow-sm flex items-center"><StopCircle size={16} className="mr-1.5"/>完成</button>
                   </div>
               </div>
           )}
@@ -246,7 +241,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
       </Modal>
 
       <SafeDeleteModal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} onConfirm={handleConfirmDelete} />
-      <CancelReasonModal isOpen={isCancelModalOpen} onClose={() => setIsCancelModalOpen(false)} onConfirm={confirmCancelActivity} title={cancelTarget === 'mb' ? "取消自慰记录" : "取消运动记录"} />
     </div>
   );
 };
