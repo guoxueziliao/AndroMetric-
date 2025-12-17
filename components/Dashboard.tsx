@@ -64,7 +64,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
   const [summaryLog, setSummaryLog] = useState<LogEntry | null>(null);
   const [activeSummaryTab, setActiveSummaryTab] = useState<'diary' | 'track' | 'trace'>('diary');
   
-  // 6路并发横幅状态
+  // 6路并发横幅状态监测 (核心修复点)
   const ongoingAlcohol = useMemo(() => logs.find(l => l.alcoholRecord?.ongoing), [logs]);
   const ongoingMb = useMemo(() => logs.flatMap(l => l.masturbation || []).find(m => m.status === 'inProgress'), [logs]);
   const ongoingExercise = useMemo(() => logs.flatMap(l => l.exercise || []).find(e => e.ongoing), [logs]);
@@ -75,7 +75,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
   const todayStr = getTodayDateString();
   const greeting = useMemo(() => { const hour = new Date().getHours(); if (hour < 5) return '夜深了'; if (hour < 12) return '早上好'; if (hour < 18) return '下午好'; return '晚上好'; }, []);
 
-  // 统计修正：包含“进行中”的数据
+  // 统计逻辑修正：确保包含进行中的项，不让显示为 0
   const activityStats = useMemo(() => {
       const totalMb = logs.reduce((acc, l) => acc + (l.masturbation?.length || 0), 0);
       const totalSex = logs.reduce((acc, l) => acc + (l.sex?.length || 0), 0);
@@ -85,7 +85,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
   const handleDateClickForSummary = (date: string) => { const log = logs.find(l => l.date === date); if (log) { if (log.status === 'pending' && date !== todayStr) { onEdit(log.date); } else { setSummaryLog(log); setActiveSummaryTab('diary'); setIsSummaryModalOpen(true); } } else { onDateClick(date); } };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-10">
       <div className="flex justify-between items-center pt-2">
         <div>
           <h1 className="text-3xl font-black tracking-tight text-brand-text dark:text-slate-100 flex items-center">{greeting} <span className="text-2xl ml-2">👋</span></h1>
@@ -94,20 +94,20 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
         <button onClick={onNavigateToBackup} className="p-3 bg-white dark:bg-slate-800 rounded-full shadow-sm border border-slate-100 dark:border-slate-800 hover:scale-105 transition-transform"><User size={24} className="text-brand-accent"/></button>
       </div>
 
-      {/* 进行中横幅堆栈 */}
+      {/* --- 全能横幅系统 (6路) --- */}
       <div className="flex flex-col gap-3">
           {ongoingSleep && (
               <div className="bg-indigo-600 rounded-2xl p-4 text-white shadow-lg shadow-indigo-500/30 flex items-center justify-between animate-in slide-in-from-top-2 fade-in">
                   <div className="flex items-center gap-3 cursor-pointer flex-1" onClick={onWakeUp}>
                       <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center animate-pulse"><BedDouble size={20}/></div>
-                      <div>
-                          <div className="text-xs font-bold opacity-80 uppercase tracking-wider">正在睡觉</div>
-                          <div className="text-lg font-black">记录中... <span className="ml-1 font-mono text-sm opacity-60">{formatTime(ongoingSleep.sleep?.startTime || '')} 睡下</span></div>
+                      <div className="min-w-0 flex-1">
+                          <div className="text-[10px] font-bold opacity-80 uppercase tracking-wider">正在睡觉</div>
+                          <div className="text-lg font-black truncate">记录中... <span className="ml-1 font-mono text-sm opacity-60">{formatTime(ongoingSleep.sleep?.startTime || '')} 睡下</span></div>
                       </div>
                   </div>
                   <div className="flex items-center gap-2">
                       <button onClick={(e) => { e.stopPropagation(); onCancelSleep?.(); }} className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"><X size={16}/></button>
-                      <button onClick={(e) => { e.stopPropagation(); onWakeUp?.(); }} className="bg-white text-indigo-600 px-4 py-2 rounded-xl font-bold text-sm shadow-sm flex items-center"><SunMedium size={16} className="mr-1.5"/>我醒了</button>
+                      <button onClick={(e) => { e.stopPropagation(); onWakeUp?.(); }} className="bg-white text-indigo-600 px-4 py-2 rounded-xl font-bold text-sm shadow-sm flex items-center shrink-0"><SunMedium size={16} className="mr-1.5"/>醒了</button>
                   </div>
               </div>
           )}
@@ -116,14 +116,14 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
               <div className="bg-gradient-to-r from-pink-500 to-rose-600 rounded-2xl p-4 text-white shadow-lg shadow-pink-500/30 flex items-center justify-between animate-in slide-in-from-top-2 fade-in">
                   <div className="flex items-center gap-3 cursor-pointer flex-1" onClick={() => onFinishSex?.(ongoingSex)}>
                       <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center animate-pulse"><Heart size={20} fill="currentColor"/></div>
-                      <div>
-                          <div className="text-xs font-bold opacity-80 uppercase tracking-wider">正在进行</div>
-                          <div className="text-lg font-black">性爱中... <span className="ml-2 font-mono text-sm opacity-80">{ongoingSex.startTime} 开始</span></div>
+                      <div className="min-w-0 flex-1">
+                          <div className="text-[10px] font-bold opacity-80 uppercase tracking-wider">正在进行</div>
+                          <div className="text-lg font-black truncate">性爱中... <span className="ml-2 font-mono text-sm opacity-80">{ongoingSex.startTime} 开始</span></div>
                       </div>
                   </div>
                   <div className="flex items-center gap-2">
                       <button onClick={(e) => { e.stopPropagation(); onCancelSex?.(); }} className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors text-white/80"><X size={16}/></button>
-                      <button onClick={(e) => { e.stopPropagation(); onFinishSex?.(ongoingSex); }} className="bg-white text-pink-600 px-4 py-2 rounded-xl font-bold text-sm shadow-sm flex items-center"><StopCircle size={16} className="mr-1.5"/>完成</button>
+                      <button onClick={(e) => { e.stopPropagation(); onFinishSex?.(ongoingSex); }} className="bg-white text-pink-600 px-4 py-2 rounded-xl font-bold text-sm shadow-sm flex items-center shrink-0"><StopCircle size={16} className="mr-1.5"/>完成</button>
                   </div>
               </div>
           )}
@@ -132,14 +132,14 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
               <div className="bg-amber-600 rounded-2xl p-4 text-white shadow-lg shadow-amber-500/30 flex items-center justify-between animate-in slide-in-from-top-2 fade-in">
                   <div className="flex items-center gap-3 cursor-pointer flex-1" onClick={() => onFinishNap?.(ongoingNap)}>
                       <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center animate-pulse"><CloudSun size={20}/></div>
-                      <div>
-                          <div className="text-xs font-bold opacity-80 uppercase tracking-wider">正在午休</div>
-                          <div className="text-lg font-black">午间小憩中... <span className="ml-1 font-mono text-sm opacity-60">{ongoingNap.startTime} 开始</span></div>
+                      <div className="min-w-0 flex-1">
+                          <div className="text-[10px] font-bold opacity-80 uppercase tracking-wider">正在午休</div>
+                          <div className="text-lg font-black truncate">计时中... <span className="ml-1 font-mono text-sm opacity-60">{ongoingNap.startTime} 开始</span></div>
                       </div>
                   </div>
                   <div className="flex items-center gap-2">
                       <button onClick={(e) => { e.stopPropagation(); onCancelNap?.(ongoingNap.id); }} className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"><X size={16}/></button>
-                      <button onClick={(e) => { e.stopPropagation(); onFinishNap?.(ongoingNap); }} className="bg-white text-amber-600 px-4 py-2 rounded-xl font-bold text-sm shadow-sm flex items-center"><StopCircle size={16} className="mr-1.5"/>结束</button>
+                      <button onClick={(e) => { e.stopPropagation(); onFinishNap?.(ongoingNap); }} className="bg-white text-amber-600 px-4 py-2 rounded-xl font-bold text-sm shadow-sm flex items-center shrink-0"><StopCircle size={16} className="mr-1.5"/>结束</button>
                   </div>
               </div>
           )}
@@ -148,14 +148,14 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
               <div className="bg-amber-500 rounded-2xl p-4 text-white shadow-lg shadow-amber-500/30 flex items-center justify-between animate-in slide-in-from-top-2 fade-in">
                   <div className="flex items-center gap-3 cursor-pointer flex-1" onClick={onEditAlcohol}>
                       <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center animate-pulse"><Beer size={20} fill="currentColor"/></div>
-                      <div>
-                          <div className="text-xs font-bold opacity-80 uppercase tracking-wider">正在进行</div>
-                          <div className="text-lg font-black">饮酒中... <span className="ml-2 font-mono text-sm opacity-80">{ongoingAlcohol.alcoholRecord?.startTime} 开始</span></div>
+                      <div className="min-w-0 flex-1">
+                          <div className="text-[10px] font-bold opacity-80 uppercase tracking-wider">正在进行</div>
+                          <div className="text-lg font-black truncate">饮酒中... <span className="ml-2 font-mono text-sm opacity-80">{ongoingAlcohol.alcoholRecord?.startTime} 开始</span></div>
                       </div>
                   </div>
                   <div className="flex items-center gap-2">
                       <button onClick={(e) => { e.stopPropagation(); onCancelAlcohol?.(); }} className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors text-white/80"><X size={16}/></button>
-                      <button onClick={(e) => { e.stopPropagation(); onEditAlcohol?.(); }} className="bg-white text-amber-600 px-4 py-2 rounded-xl font-bold text-sm shadow-sm flex items-center"><StopCircle size={16} className="mr-1.5"/>完成</button>
+                      <button onClick={(e) => { e.stopPropagation(); onEditAlcohol?.(); }} className="bg-white text-amber-600 px-4 py-2 rounded-xl font-bold text-sm shadow-sm flex items-center shrink-0"><StopCircle size={16} className="mr-1.5"/>完成</button>
                   </div>
               </div>
           )}
@@ -164,14 +164,14 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
               <div className="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl p-4 text-white shadow-lg shadow-blue-500/30 flex items-center justify-between animate-in slide-in-from-top-2 fade-in">
                   <div className="flex items-center gap-3 cursor-pointer flex-1" onClick={() => onFinishMasturbation?.(ongoingMb)}>
                       <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center animate-pulse"><Hand size={20} fill="currentColor"/></div>
-                      <div>
-                          <div className="text-xs font-bold opacity-80 uppercase tracking-wider">正在进行</div>
-                          <div className="text-lg font-black">自慰中... <span className="ml-2 font-mono text-sm opacity-80">{ongoingMb.startTime} 开始</span></div>
+                      <div className="min-w-0 flex-1">
+                          <div className="text-[10px] font-bold opacity-80 uppercase tracking-wider">正在进行</div>
+                          <div className="text-lg font-black truncate">自慰中... <span className="ml-2 font-mono text-sm opacity-80">{ongoingMb.startTime} 开始</span></div>
                       </div>
                   </div>
                   <div className="flex items-center gap-2">
                       <button onClick={(e) => { e.stopPropagation(); onCancelMasturbation?.(); }} className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors text-white/80"><X size={16}/></button>
-                      <button onClick={(e) => { e.stopPropagation(); onFinishMasturbation?.(ongoingMb); }} className="bg-white text-blue-600 px-4 py-2 rounded-xl font-bold text-sm shadow-sm flex items-center"><StopCircle size={16} className="mr-1.5"/>详情</button>
+                      <button onClick={(e) => { e.stopPropagation(); onFinishMasturbation?.(ongoingMb); }} className="bg-white text-blue-600 px-4 py-2 rounded-xl font-bold text-sm shadow-sm flex items-center shrink-0"><StopCircle size={16} className="mr-1.5"/>详情</button>
                   </div>
               </div>
           )}
@@ -180,39 +180,39 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
               <div className="bg-gradient-to-r from-orange-500 to-amber-500 rounded-2xl p-4 text-white shadow-lg shadow-orange-500/30 flex items-center justify-between animate-in slide-in-from-top-2 fade-in">
                   <div className="flex items-center gap-3 cursor-pointer flex-1" onClick={() => onFinishExercise?.(ongoingExercise)}>
                       <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center animate-pulse"><Dumbbell size={20}/></div>
-                      <div>
-                          <div className="text-xs font-bold opacity-80 uppercase tracking-wider">正在进行</div>
-                          <div className="text-lg font-black">{ongoingExercise.type} <span className="ml-2 font-mono text-sm opacity-80">{ongoingExercise.startTime} 开始</span></div>
+                      <div className="min-w-0 flex-1">
+                          <div className="text-[10px] font-bold opacity-80 uppercase tracking-wider">正在进行</div>
+                          <div className="text-lg font-black truncate">{ongoingExercise.type} <span className="ml-2 font-mono text-sm opacity-80">{ongoingExercise.startTime} 开始</span></div>
                       </div>
                   </div>
                   <div className="flex items-center gap-2">
                       <button onClick={(e) => { e.stopPropagation(); onCancelExercise?.(); }} className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors text-white/80"><X size={16}/></button>
-                      <button onClick={(e) => { e.stopPropagation(); onFinishExercise?.(ongoingExercise); }} className="bg-white text-orange-600 px-4 py-2 rounded-xl font-bold text-sm shadow-sm flex items-center"><StopCircle size={16} className="mr-1.5"/>完成</button>
+                      <button onClick={(e) => { e.stopPropagation(); onFinishExercise?.(ongoingExercise); }} className="bg-white text-orange-600 px-4 py-2 rounded-xl font-bold text-sm shadow-sm flex items-center shrink-0"><StopCircle size={16} className="mr-1.5"/>完成</button>
                   </div>
               </div>
           )}
       </div>
 
-      {/* 主日历卡片 */}
+      {/* 主日历卡片 - 确保包含今日正在计时的记录 */}
       <div className="bg-brand-card dark:bg-slate-900 rounded-3xl p-4 shadow-soft border border-slate-100 dark:border-slate-800 mb-6">
         <CalendarHeatmap logs={logs.filter(l => l.status === 'completed' || l.date === todayStr)} onDateClick={handleDateClickForSummary} />
       </div>
 
-      {/* 统计网格 */}
+      {/* 核心统计卡片 - 实时更新数字 */}
       <div className="grid grid-cols-2 gap-3">
           <div className="bg-white dark:bg-slate-900 p-4 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 h-28 flex flex-col justify-between">
               <div className="flex justify-between items-start">
                   <div><span className="text-xs font-bold text-slate-500 block mb-1">自慰次数</span><div className="text-2xl font-black text-purple-400">{activityStats.totalMb}<span className="text-sm font-bold text-slate-600 dark:text-slate-400 ml-0.5">次</span></div></div>
                   <Hand size={16} className="text-purple-500 opacity-50"/>
               </div>
-              <div className="text-[10px] text-slate-400 font-medium">累计活跃</div>
+              <div className="text-[10px] text-slate-400 font-medium italic opacity-70">累计包含计时项</div>
           </div>
           <div className="bg-white dark:bg-slate-900 p-4 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 h-28 flex flex-col justify-between">
               <div className="flex justify-between items-start">
                   <div><span className="text-xs font-bold text-slate-500 block mb-1">性爱次数</span><div className="text-2xl font-black text-pink-400">{activityStats.totalSex}<span className="text-sm font-bold text-slate-600 dark:text-slate-400 ml-0.5">次</span></div></div>
                   <Heart size={16} className="text-pink-500 opacity-50"/>
               </div>
-              <div className="text-[10px] text-slate-400 font-medium">累计活跃</div>
+              <div className="text-[10px] text-slate-400 font-medium italic opacity-70">累计包含计时项</div>
           </div>
       </div>
 

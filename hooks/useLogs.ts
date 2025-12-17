@@ -21,6 +21,7 @@ export function useLogs() {
 
     const addOrUpdateLog = useCallback(async (log: LogEntry) => {
         try {
+            // 关键：在保存前进行深度检查，不要让 status 或其他元数据覆盖掉业务数组
             const logToSave = hydrateLog(log);
             await StorageService.logs.save(logToSave);
         } catch (error: any) {
@@ -30,7 +31,6 @@ export function useLogs() {
 
     const getActivityTargetDate = useCallback(() => {
         const now = new Date();
-        // 凌晨 3 点前属于生理上的“昨天”
         if (now.getHours() < 3) now.setDate(now.getDate() - 1);
         return now.toISOString().split('T')[0];
     }, []);
@@ -38,7 +38,6 @@ export function useLogs() {
     const getSleepTargetDate = useCallback(() => {
         const now = new Date();
         const targetDate = new Date();
-        // 中午 12 点后属于“明天”的记录（醒来的那份日记）
         if (now.getHours() >= 12) targetDate.setDate(now.getDate() + 1);
         return targetDate.toISOString().split('T')[0];
     }, []);
@@ -55,6 +54,8 @@ export function useLogs() {
             changeHistory: [...(log.changeHistory || []), historyEntry]
         };
     };
+
+    // --- Unified Logic for 6 Actions ---
 
     // 1. Alcohol
     const saveAlcoholRecord = useCallback(async (record: AlcoholRecord) => {
@@ -87,14 +88,14 @@ export function useLogs() {
         
         if (cancelled) {
             log.masturbation = (log.masturbation || []).filter(m => m.id !== record.id);
-            log = logChange(log, `取消自慰: ${reason || '无理由'}`);
+            log = logChange(log, `取消自慰: ${reason || '无'}`);
         } else {
             const newList = [...(log.masturbation || [])];
             const idx = newList.findIndex(m => m.id === record.id);
             if (idx >= 0) newList[idx] = record;
             else newList.push(record);
             log.masturbation = newList;
-            log.status = 'completed';
+            log.status = 'completed'; // 标记活跃
             log = logChange(log, record.status === 'inProgress' ? '开始自慰计时' : '完成自慰详情');
         }
         await addOrUpdateLog(log);
@@ -116,7 +117,7 @@ export function useLogs() {
             else newList.push(record);
             log.sex = newList;
             log.status = 'completed';
-            log = logChange(log, record.ongoing ? '开始性爱计时' : `记录性爱: ${record.partner || '伴侣'}`);
+            log = logChange(log, record.ongoing ? '开始性爱计时' : `性爱记录: ${record.partner || '伴侣'}`);
         }
         await addOrUpdateLog(log);
     }, [addOrUpdateLog, getActivityTargetDate]);
@@ -136,7 +137,7 @@ export function useLogs() {
         await addOrUpdateLog(log);
     }, [addOrUpdateLog, getActivityTargetDate]);
 
-    // 5. Sleep
+    // 5. Sleep (FIXED)
     const toggleSleepLog = useCallback(async () => {
         const targetDateStr = getSleepTargetDate();
         const existing = await StorageService.logs.get(targetDateStr);
@@ -146,11 +147,11 @@ export function useLogs() {
         if (log.sleep?.startTime && !log.sleep?.endTime) {
             log.sleep = { ...log.sleep!, endTime: isoNow };
             log.status = 'completed';
-            log = logChange(log, '起床 (一键完成睡眠)', [], 'quick');
+            log = logChange(log, '起床 (记录完成)', [], 'quick');
         } else {
             log.sleep = { ...log.sleep!, startTime: isoNow, endTime: null };
-            log.status = 'pending';
-            log = logChange(log, '入睡 (开始标记睡眠)', [], 'quick');
+            log.status = 'pending'; 
+            log = logChange(log, '入睡 (开始计时)', [], 'quick');
         }
         await addOrUpdateLog(log);
         return targetDateStr;
@@ -165,7 +166,7 @@ export function useLogs() {
         const idx = currentNaps.findIndex(n => n.id === record.id);
         const nextNaps = idx >= 0 ? currentNaps.map(n => n.id === record.id ? record : n) : [...currentNaps, record];
         log.sleep = { ...(log.sleep || hydrateLog({date: dateStr}).sleep!), naps: nextNaps };
-        log = logChange(log, record.ongoing ? '开始午休计时' : '完成午休记录');
+        log = logChange(log, record.ongoing ? '开始午休' : '结束午休');
         await addOrUpdateLog(log);
     }, [addOrUpdateLog, getActivityTargetDate]);
 
@@ -187,9 +188,7 @@ export function useLogs() {
             await saveNap({
                 id: Date.now().toString(),
                 startTime: new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
-                ongoing: true,
-                quality: 3,
-                environment: { location: 'home', temperature: 'comfortable' }
+                ongoing: true, quality: 3, environment: { location: 'home', temperature: 'comfortable' }
             });
         }
     }, [getActivityTargetDate, saveNap]);
@@ -198,10 +197,7 @@ export function useLogs() {
         logs, partners, isInitializing,
         addOrUpdateLog, deleteLog: StorageService.logs.delete,
         addOrUpdatePartner: StorageService.partners.save, deletePartner: StorageService.partners.delete,
-        quickAddSex, quickAddMasturbation,
-        saveExercise, saveAlcoholRecord,
-        saveNap, toggleAlcohol, toggleNap, toggleSleepLog, 
-        importLogs: StorageService.logs.bulkImport,
-        getSleepTargetDate, getActivityTargetDate
+        quickAddSex, quickAddMasturbation, saveExercise, saveAlcoholRecord, saveNap, toggleAlcohol, toggleNap, toggleSleepLog, 
+        importLogs: StorageService.logs.bulkImport, getSleepTargetDate, getActivityTargetDate
     };
 }
