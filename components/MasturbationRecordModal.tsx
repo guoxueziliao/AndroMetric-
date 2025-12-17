@@ -298,15 +298,23 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                                         onClick={() => handleEditContent(item)} 
                                         className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 flex flex-col gap-2 cursor-pointer hover:border-brand-accent transition-all group relative active:scale-[0.98]"
                                     >
-                                        {/* Header Row: Type & Platform + Badge */}
+                                        {/* Header Row: Type & Platform + Actions */}
                                         <div className="flex justify-between items-start">
                                             <div className="flex items-center gap-2">
                                                 <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold uppercase ${!item.type ? 'bg-slate-200 text-slate-500' : (item.type === '幻想' || item.type === '回忆' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700')}`}>{item.type || '未选择'}</span>
                                                 <span className={`text-[10px] px-1.5 py-0.5 rounded ${!item.platform ? 'text-slate-400 bg-slate-100' : 'text-slate-500 bg-slate-100 dark:bg-slate-800'}`}>{item.platform || '无来源'}</span>
                                             </div>
                                             
-                                            {/* Badge or Arrow */}
-                                            <div className="flex items-center gap-2">
+                                            {/* Action Group: Delete + Badge/Arrow */}
+                                            <div className="flex items-center gap-3 shrink-0">
+                                                <button 
+                                                    onClick={(e) => handleDeleteContent(item.id, e)}
+                                                    className="p-1.5 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                                                    title="删除素材"
+                                                >
+                                                    <Trash2 size={12}/>
+                                                </button>
+
                                                 {hasIssues ? (
                                                     <NoticeBadge 
                                                         level={maxSeverity} 
@@ -321,7 +329,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                                         </div>
                                         
                                         {/* Body: Title */}
-                                        <div className="font-bold text-sm text-brand-text dark:text-slate-200 truncate pr-6">
+                                        <div className="font-bold text-sm text-brand-text dark:text-slate-200 truncate pr-2">
                                             {item.title || <span className="text-slate-400 italic">未填写标题</span>}
                                         </div>
                                         
@@ -338,13 +346,6 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                                                 <NoticeStack items={notices} />
                                             </div>
                                         )}
-
-                                        <button 
-                                            onClick={(e) => handleDeleteContent(item.id, e)}
-                                            className="absolute top-2 right-8 p-1.5 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                                        >
-                                            <Trash2 size={12}/>
-                                        </button>
                                     </div>
                                 );
                             })}

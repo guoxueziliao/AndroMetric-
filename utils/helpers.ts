@@ -1,5 +1,5 @@
 
-import { LogEntry, AlcoholConsumption, PornConsumption, PreSleepState, ExerciseIntensity, SexQuality, IllnessType, StressLevel, HardnessLevel, MorningWoodRetention, Weather, Location, Mood, SleepAttire, ChangeDetail, ExerciseRecord, SexRecordDetails, MasturbationRecordDetails, AlcoholRecord, NapRecord, HistoryCategory, HistoryEventType } from '../types';
+import { LogEntry, AlcoholConsumption, PornConsumption, PreSleepState, ExerciseIntensity, SexQuality, IllnessType, StressLevel, HardnessLevel, MorningWoodRetention, Weather, Location, Mood, SleepAttire, ChangeDetail, ExerciseRecord, SexRecordDetails, MasturbationRecordDetails, AlcoholRecord, NapRecord, HistoryCategory, HistoryEventType, ChangeType } from '../types';
 
 export const getTodayDateString = (): string => {
     const todayDate = new Date();
@@ -26,23 +26,37 @@ export const formatDateFriendly = (dateStr: string): string => {
     return new Date(dateStr + 'T00:00:00').toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' });
 };
 
-export const formatHistoryValue = (field: string, val: string | null | undefined): string => {
+export const formatHistoryValue = (field: string, val: any): string => {
     if (!field) return val ? String(val) : '—';
-    const f = String(field);
     if (val === null || val === undefined || val === 'null' || val === 'undefined' || val === '空' || val === '') return '—';
-    if (val === 'true') return '是';
-    if (val === 'false') return '否';
-    if (val === '是' || val === '否') return val;
-    if (['时间', '开始', '结束'].some(k => f.includes(k))) return formatTime(val);
+    
+    // Handle booleans
+    if (val === true || val === 'true') return '是';
+    if (val === false || val === 'false') return '否';
+    
+    const f = String(field);
+    const sVal = String(val);
+
+    if (['时间', '开始', '结束'].some(k => f.includes(k))) return formatTime(sVal);
+    
     if (['质量', '评分', '爽度'].some(k => f.includes(k))) {
-        const num = parseInt(val.replace(/[^\d]/g, '')); 
+        const num = parseInt(sVal.replace(/[^\d]/g, '')); 
         if (!isNaN(num)) return '★'.repeat(num) + '☆'.repeat(5 - num);
     }
+    
     if (f.includes('硬度')) {
-        const num = parseInt(val.replace(/[^\d]/g, ''));
+        const num = parseInt(sVal.replace(/[^\d]/g, ''));
         if (!isNaN(num) && num >= 1 && num <= 5) return `${num}级`;
     }
-    return String(val);
+    
+    // Translate labels if possible
+    for (const group of Object.values(LABELS)) {
+        if (group[val as keyof typeof group]) {
+            return group[val as keyof typeof group];
+        }
+    }
+
+    return sVal;
 };
 
 export const calculateSleepDuration = (sleepTime?: string, wakeTime?: string): string | null => {
@@ -98,6 +112,145 @@ export const inferHistoryEventType = (summary: string): HistoryEventType => {
     if (s.includes('自动') || s.includes('修复')) return 'auto';
     if (s.includes('快速') || s.includes('开始') || s.includes('完成午休') || s.includes('记录')) return 'quick';
     return 'manual';
+};
+
+/**
+ * Calculates the difference between two log entries.
+ */
+export const calculateLogDiff = (oldLog: LogEntry, newLog: LogEntry): ChangeDetail[] => {
+    const diffs: ChangeDetail[] = [];
+
+    const check = (
+        field: string, 
+        oldVal: any, 
+        newVal: any, 
+        label: string, 
+        category: HistoryCategory
+    ) => {
+        // Normalize values for comparison
+        const v1 = (oldVal === null || oldVal === undefined) ? '' : String(oldVal);
+        const v2 = (newVal === null || newVal === undefined) ? '' : String(newVal);
+
+        if (v1 !== v2) {
+            let changeType: ChangeType = 'mod';
+            const isEmpty1 = !v1 || v1 === 'false' || v1 === '0';
+            const isEmpty2 = !v2 || v2 === 'false' || v2 === '0';
+
+            if (isEmpty1 && !isEmpty2) changeType = 'add';
+            else if (!isEmpty1 && isEmpty2) changeType = 'del';
+
+            diffs.push({
+                field: label,
+                oldValue: v1,
+                newValue: v2,
+                category,
+                changeType
+            });
+        }
+    };
+
+    // 1. Morning
+    check('morning.wokeWithErection', oldLog.morning?.wokeWithErection, newLog.morning?.wokeWithErection, '有无晨勃', 'morning');
+    if (newLog.morning?.wokeWithErection) {
+        check('morning.hardness', oldLog.morning?.hardness, newLog.morning?.hardness, '晨勃硬度', 'morning');
+        check('morning.retention', oldLog.morning?.retention, newLog.morning?.retention, '维持时间', 'morning');
+    }
+
+    // 2. Sleep
+    check('sleep.startTime', oldLog.sleep?.startTime, newLog.sleep?.startTime, '入睡时间', 'sleep');
+    check('sleep.endTime', oldLog.sleep?.endTime, newLog.sleep?.endTime, '起床时间', 'sleep');
+    check('sleep.quality', oldLog.sleep?.quality, newLog.sleep?.quality, '睡眠质量', 'sleep');
+    
+    // Naps count
+    const naps1 = oldLog.sleep?.naps?.length || 0;
+    const naps2 = newLog.sleep?.naps?.length || 0;
+    if (naps1 !== naps2) {
+        diffs.push({
+            field: '午休次数',
+            oldValue: String(naps1),
+            newValue: String(naps2),
+            category: 'nap',
+            changeType: naps2 > naps1 ? 'add' : 'del'
+        });
+    }
+
+    // 3. Environment & State
+    check('location', oldLog.location, newLog.location, '地点', 'lifestyle');
+    check('weather', oldLog.weather, newLog.weather, '天气', 'lifestyle');
+    check('mood', oldLog.mood, newLog.mood, '心情', 'lifestyle');
+    check('stressLevel', oldLog.stressLevel, newLog.stressLevel, '压力', 'lifestyle');
+
+    // 4. Activities
+    // Sex
+    const sex1 = oldLog.sex?.length || 0;
+    const sex2 = newLog.sex?.length || 0;
+    if (sex1 !== sex2) {
+        diffs.push({
+            field: '性生活',
+            oldValue: `${sex1}次`,
+            newValue: `${sex2}次`,
+            category: 'sex',
+            changeType: sex2 > sex1 ? 'add' : 'del'
+        });
+    }
+
+    // Masturbation
+    const mb1 = oldLog.masturbation?.length || 0;
+    const mb2 = newLog.masturbation?.length || 0;
+    if (mb1 !== mb2) {
+        diffs.push({
+            field: '自慰',
+            oldValue: `${mb1}次`,
+            newValue: `${mb2}次`,
+            category: 'masturbation',
+            changeType: mb2 > mb1 ? 'add' : 'del'
+        });
+    }
+
+    // Exercise
+    const ex1 = oldLog.exercise?.length || 0;
+    const ex2 = newLog.exercise?.length || 0;
+    if (ex1 !== ex2) {
+        diffs.push({
+            field: '运动',
+            oldValue: `${ex1}组`,
+            newValue: `${ex2}组`,
+            category: 'exercise',
+            changeType: ex2 > ex1 ? 'add' : 'del'
+        });
+    }
+
+    // 5. Health
+    check('health.isSick', oldLog.health?.isSick, newLog.health?.isSick, '身体不适', 'health');
+    if (newLog.health?.isSick) {
+        check('health.discomfortLevel', oldLog.health?.discomfortLevel, newLog.health?.discomfortLevel, '不适程度', 'health');
+    }
+
+    // 6. Lifestyle
+    const alc1 = oldLog.alcoholRecord?.totalGrams || 0;
+    const alc2 = newLog.alcoholRecord?.totalGrams || 0;
+    if (alc1 !== alc2) {
+        check('alcoholRecord.totalGrams', `${alc1}g`, `${alc2}g`, '酒精摄入', 'lifestyle');
+    }
+    
+    check('pornConsumption', oldLog.pornConsumption, newLog.pornConsumption, '看片', 'lifestyle');
+    
+    const caf1 = oldLog.caffeineRecord?.totalCount || 0;
+    const caf2 = newLog.caffeineRecord?.totalCount || 0;
+    if (caf1 !== caf2) {
+        diffs.push({
+            field: '咖啡因',
+            oldValue: `${caf1}杯`,
+            newValue: `${caf2}杯`,
+            category: 'lifestyle',
+            changeType: caf2 > caf1 ? 'add' : 'del'
+        });
+    }
+
+    // 7. Notes
+    check('notes', oldLog.notes, newLog.notes, '备注', 'meta');
+
+    return diffs;
 };
 
 export const generateLogSummary = (log: Partial<LogEntry>): Array<{ label: string, value: string }> => {
@@ -306,101 +459,27 @@ export const calculateInventory = (logs: LogEntry[]): string => {
 // Calculate Data Quality Score (0-100) based on current log completeness
 export const calculateDataQuality = (log: Partial<LogEntry>): number => {
     let score = 0;
-    const maxScore = 100;
     
     // Morning: 20pts
     if (log.morning?.wokeWithErection !== undefined) score += 10;
     if (log.morning?.wokeWithErection && log.morning.hardness) score += 10;
-    else if (log.morning?.wokeWithErection === false) score += 10;
-
+    
     // Sleep: 30pts
-    if (log.sleep?.startTime && log.sleep?.endTime) score += 15;
-    if (log.sleep?.quality) score += 5;
-    if (log.sleep?.hasDream !== undefined) score += 5;
-    if (log.sleep?.environment?.temperature) score += 5;
-
-    // Lifestyle: 20pts
+    if (log.sleep?.startTime && log.sleep?.endTime) score += 20;
+    if (log.sleep?.quality) score += 10;
+    
+    // Env & State: 20pts
     if (log.weather) score += 5;
-    if (log.stressLevel) score += 5;
+    if (log.location) score += 5;
     if (log.mood) score += 5;
-    if (log.caffeineIntake || (log.caffeineRecord?.totalCount || 0) > 0) score += 5;
-
-    // Activities (Bonus up to 30)
-    if (log.sex && log.sex.length > 0) score += 10;
-    if (log.masturbation && log.masturbation.length > 0) score += 10;
-    if (log.exercise && log.exercise.length > 0) score += 10;
-    if (log.alcoholRecord && log.alcoholRecord.totalGrams > 0) score += 5;
+    if (log.stressLevel) score += 5;
     
-    // Health Check Penalty (New in v0.0.6)
-    // If Sick is TRUE but Level is Missing -> Penalty
-    if (log.health?.isSick) {
-        if (log.health.discomfortLevel) score += 5;
-        else score -= 5;
-    } else {
-        score += 5; // Healthy bonus
-    }
-
-    return Math.min(maxScore, Math.max(0, score));
-};
-
-export const calculateLogDiff = (oldLog: LogEntry, newLog: LogEntry): ChangeDetail[] => {
-    const diffs: ChangeDetail[] = [];
-
-    // Morning
-    if (oldLog.morning?.hardness !== newLog.morning?.hardness) {
-        diffs.push({ 
-            field: '晨勃硬度', 
-            oldValue: String(oldLog.morning?.hardness || '无'), 
-            newValue: String(newLog.morning?.hardness || '无'), 
-            category: 'morning' 
-        });
-    }
-
-    // Sleep
-    if (oldLog.sleep?.startTime !== newLog.sleep?.startTime) {
-        diffs.push({ 
-            field: '入睡时间', 
-            oldValue: formatTime(oldLog.sleep?.startTime) || '无', 
-            newValue: formatTime(newLog.sleep?.startTime) || '无', 
-            category: 'sleep' 
-        });
-    }
-    if (oldLog.sleep?.endTime !== newLog.sleep?.endTime) {
-        diffs.push({ 
-            field: '起床时间', 
-            oldValue: formatTime(oldLog.sleep?.endTime) || '无', 
-            newValue: formatTime(newLog.sleep?.endTime) || '无', 
-            category: 'sleep' 
-        });
-    }
+    // Activities: Bonus points
+    if (log.exercise && log.exercise.length > 0) score += 15;
+    if ((log.sex && log.sex.length > 0) || (log.masturbation && log.masturbation.length > 0)) score += 15;
     
-    // Lifestyle
-    const oldAlc = oldLog.alcoholRecord?.totalGrams || 0;
-    const newAlc = newLog.alcoholRecord?.totalGrams || 0;
-    if (oldAlc !== newAlc) {
-        diffs.push({ 
-            field: '酒精摄入', 
-            oldValue: `${oldAlc}g`, 
-            newValue: `${newAlc}g`, 
-            category: 'lifestyle' 
-        });
-    }
+    // Health / Lifestyle Check: 15pts
+    if (log.alcohol || log.pornConsumption || log.health) score += 15;
 
-    // Counts
-    const sexDiff = (newLog.sex?.length || 0) - (oldLog.sex?.length || 0);
-    if (sexDiff !== 0) {
-        diffs.push({ 
-            field: '性生活', 
-            oldValue: `${oldLog.sex?.length || 0}次`, 
-            newValue: `${newLog.sex?.length || 0}次`, 
-            category: 'sex' 
-        });
-    }
-    
-    // Fallback if no specific diffs but updated
-    if (diffs.length === 0 && JSON.stringify(oldLog) !== JSON.stringify(newLog)) {
-         diffs.push({ field: '记录详情', oldValue: '...', newValue: '已更新', category: 'meta' });
-    }
-
-    return diffs;
+    return Math.min(100, score);
 };

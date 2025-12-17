@@ -27,6 +27,7 @@ export type CaffeineIntake = 'none' | 'low' | 'medium' | 'high';
 // --- History Categories ---
 export type HistoryCategory = 'sleep' | 'morning' | 'nap' | 'exercise' | 'masturbation' | 'sex' | 'health' | 'lifestyle' | 'meta' | 'system';
 export type HistoryEventType = 'manual' | 'quick' | 'auto';
+export type ChangeType = 'add' | 'mod' | 'del';
 
 // --- Unified Event Model (Analytics Layer) ---
 export type EventType = 'morning_wood' | 'sleep' | 'sex' | 'masturbation' | 'exercise' | 'alcohol' | 'stress' | 'emotion' | 'health';
@@ -273,13 +274,16 @@ export interface ChangeDetail {
     oldValue: string;
     newValue: string;
     category?: HistoryCategory;
+    changeType?: ChangeType; // New in v0.0.6+: 'add' | 'mod' | 'del'
 }
 
 export interface ChangeRecord {
+    id?: string; // New: Version ID (short hash)
     timestamp: number;
     summary: string;
     details: ChangeDetail[];
     type?: HistoryEventType;
+    relatedDate?: string; // New: For cross-day links (e.g., Previous Day for Sleep)
 }
 
 // --- Standardized Domain Models (Schema v1.0) ---
