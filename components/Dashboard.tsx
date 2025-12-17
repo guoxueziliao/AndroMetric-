@@ -1,13 +1,12 @@
 
-import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { LogEntry, ExerciseRecord, SexRecordDetails, MasturbationRecordDetails, ChangeRecord } from '../types';
+import React, { useState, useMemo } from 'react';
+import { LogEntry, ExerciseRecord, MasturbationRecordDetails, ChangeRecord } from '../types';
 import CalendarHeatmap from './CalendarHeatmap';
-import { Moon, Zap, Activity, Hand, HeartPulse, Clock, Dumbbell, Footprints, Timer, CloudSun, Swords, TrendingUp, TrendingDown, Beer, Film, ChevronLeft, ChevronRight, MapPin, Target, Play, ShieldAlert, Edit3, Trash2, FastForward, Coffee, Bed, ArrowRight, User, List, Route, Thermometer, Smile, AlertTriangle, Wind, StopCircle, X, Heart } from 'lucide-react';
+import { Moon, Hand, CloudSun, Heart, StopCircle, X, Dumbbell, User, Clock, List, Route, Edit3, Trash2 } from 'lucide-react';
 import Modal from './Modal';
 import SafeDeleteModal from './SafeDeleteModal';
 import CancelReasonModal from './CancelReasonModal';
-import { formatTime, calculateSleepDuration, analyzeSleep, generateLogSummary, LABELS } from '../utils/helpers';
-import { getPrediction } from '../utils/alcoholHelpers';
+import { formatTime, calculateSleepDuration, analyzeSleep, LABELS } from '../utils/helpers';
 import { useData } from '../contexts/DataContext';
 import { useToast } from '../contexts/ToastContext';
 import { LogHistory } from './LogHistory';
@@ -21,9 +20,8 @@ interface DashboardProps {
   onFinishMasturbation?: (record: MasturbationRecordDetails) => void;
 }
 
-// --- Rich Daily Report Card Component (Inspired by User Screenshot) ---
+// --- Daily Report Card (Detailed View for Modal) ---
 const DailyReportCard: React.FC<{ log: LogEntry }> = ({ log }) => {
-    
     const Row = ({ label, children, isLast = false }: { label: string, children: React.ReactNode, isLast?: boolean }) => (
         <div className={`flex items-start py-3 ${!isLast ? 'border-b border-slate-100 dark:border-slate-800' : ''}`}>
             <span className="w-20 shrink-0 text-xs font-bold text-slate-400 pt-0.5">{label}</span>
@@ -47,7 +45,6 @@ const DailyReportCard: React.FC<{ log: LogEntry }> = ({ log }) => {
 
     return (
         <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 shadow-sm border border-slate-100 dark:border-slate-800">
-            {/* 1. Morning Wood */}
             <Row label="晨勃情况">
                 {log.morning?.wokeWithErection ? (
                     <div>
@@ -63,7 +60,6 @@ const DailyReportCard: React.FC<{ log: LogEntry }> = ({ log }) => {
                 )}
             </Row>
 
-            {/* 2. Sleep */}
             <Row label="睡眠周期">
                 {log.sleep?.startTime ? (
                     <div>
@@ -76,35 +72,25 @@ const DailyReportCard: React.FC<{ log: LogEntry }> = ({ log }) => {
                             {analyzeSleep(log.sleep.startTime, log.sleep.endTime)?.isInsufficient && <Tag text="睡眠不足" type="red"/>}
                             {log.sleep.hasDream && <Tag text={`梦: ${log.sleep.dreamTypes?.join(',') || '有'}`} type="purple"/>}
                         </div>
-                        <div className="text-xs text-slate-500 mt-1">
-                            评分: {log.sleep.quality}星 | 睡衣: {LABELS.attire[log.sleep.attire || 'light']}
-                            {log.sleep.environment && ` | ${log.sleep.environment.temperature === 'comfortable' ? '适温' : log.sleep.environment.temperature === 'hot' ? '偏热' : '偏冷'}`}
-                        </div>
                     </div>
                 ) : (
-                    <span className="text-slate-400 italic">未记录睡眠</span>
+                    <span className="text-slate-400 italic">未记录</span>
                 )}
             </Row>
 
-            {/* 3. Environment */}
             <Row label="身心环境">
                 <div className="space-y-1">
-                    <div>
-                        天气: {LABELS.weather[log.weather || 'sunny']} | 地点: {LABELS.location[log.location || 'home']}
-                    </div>
-                    <div>
-                        心情: {LABELS.mood[log.mood || 'neutral']} | 压力: {LABELS.stress[log.stressLevel || 2]}
-                    </div>
+                    <div>天气: {LABELS.weather[log.weather || 'sunny']} | 地点: {LABELS.location[log.location || 'home']}</div>
+                    <div>心情: {LABELS.mood[log.mood || 'neutral']} | 压力: {LABELS.stress[log.stressLevel || 2]}</div>
                 </div>
             </Row>
 
-            {/* 4. Lifestyle */}
-            <Row label="生活习惯">
+            <Row label="生活习惯" isLast>
                 <div className="space-y-1">
                     <div className="flex items-center">
                         <span className="w-12 text-slate-400 text-xs">饮酒:</span>
                         {log.alcoholRecord && log.alcoholRecord.totalGrams > 0 ? (
-                            <span>{log.alcoholRecord.totalGrams}g <span className="text-xs text-slate-400">({LABELS.drunkLevel[log.alcoholRecord.drunkLevel || 'none']})</span></span>
+                            <span>{log.alcoholRecord.totalGrams}g</span>
                         ) : <span>无</span>}
                     </div>
                     <div className="flex items-center">
@@ -114,85 +100,10 @@ const DailyReportCard: React.FC<{ log: LogEntry }> = ({ log }) => {
                     <div className="flex items-center">
                         <span className="w-12 text-slate-400 text-xs">咖啡因:</span>
                         {log.caffeineRecord && log.caffeineRecord.totalCount > 0 ? (
-                            <span className="flex items-center"><Tag text="有摄入" type="purple"/> {log.caffeineRecord.totalCount}杯</span>
-                        ) : <span>无</span>}
-                    </div>
-                    <div className="flex items-center">
-                        <span className="w-12 text-slate-400 text-xs">运动:</span>
-                        {log.exercise && log.exercise.length > 0 ? (
-                            <span>{log.exercise.map(e => e.type).join(', ')}</span>
+                            <span className="flex items-center">{log.caffeineRecord.totalCount}杯</span>
                         ) : <span>无</span>}
                     </div>
                 </div>
-            </Row>
-
-            {/* 5. Sex Life */}
-            <Row label="性生活">
-                {log.sex && log.sex.length > 0 ? (
-                    <div className="space-y-2">
-                        {log.sex.map((s, i) => (
-                            <div key={i} className="text-xs bg-pink-50 dark:bg-pink-900/10 p-2 rounded-lg border border-pink-100 dark:border-pink-900/30">
-                                <div className="font-bold text-pink-700 dark:text-pink-300 mb-1 flex justify-between">
-                                    <span>{formatTime(s.startTime)} 与 {s.interactions?.[0]?.partner || s.partner || '伴侣'}</span>
-                                    <span>{s.duration}分</span>
-                                </div>
-                                <div className="text-pink-600/80 dark:text-pink-400/80 leading-tight">
-                                    {s.ejaculation ? `[射精: ${s.ejaculationLocation || '未知'}]` : '[未射精]'}
-                                    {s.interactions?.[0]?.chain?.length ? ` ${s.interactions[0].chain.map(a => a.name).join(' -> ')}` : ''}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                ) : <span className="text-slate-400">无</span>}
-            </Row>
-
-            {/* 6. Masturbation */}
-            <Row label={`自慰 (${log.masturbation?.length || 0})`}>
-                {log.masturbation && log.masturbation.length > 0 ? (
-                    <div className="space-y-2">
-                        {log.masturbation.map((m, i) => (
-                            <div key={i} className="text-xs bg-blue-50 dark:bg-blue-900/10 p-2 rounded-lg border border-blue-100 dark:border-blue-900/30">
-                                <div className="font-bold text-blue-700 dark:text-blue-300 mb-1 flex justify-between">
-                                    <span>{i + 1}. {formatTime(m.startTime)} {m.tools?.join(',') || '手'}</span>
-                                    <span>{m.duration}分</span>
-                                </div>
-                                <div className="flex flex-wrap gap-1 mt-1">
-                                    {m.volumeForceLevel && <span className="px-1 bg-blue-200 dark:bg-blue-800 text-blue-800 dark:text-blue-200 rounded-[2px]">[射精Lv.{m.volumeForceLevel}]</span>}
-                                    {m.contentItems?.map((c, ci) => (
-                                        <span key={ci} className="px-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-[2px] text-slate-500">
-                                            {c.xpTags.length > 0 ? `[${c.xpTags[0]}]` : '[素材]'}
-                                        </span>
-                                    ))}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                ) : <span className="text-slate-400">无</span>}
-            </Row>
-
-            {/* 7. Health */}
-            <Row label="健康状况">
-                {log.health?.isSick ? (
-                    <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-red-500"></div>
-                        <span className="font-bold text-red-600 dark:text-red-400">身体不适</span>
-                        <span className="text-xs text-slate-500">({LABELS.discomfortLevel[log.health.discomfortLevel || 'mild']})</span>
-                        {log.health.symptoms?.length > 0 && <Tag text={log.health.symptoms.join(',')} type="red"/>}
-                    </div>
-                ) : (
-                    <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
-                        <span className="text-emerald-600 dark:text-emerald-400 font-bold">身体健康</span>
-                    </div>
-                )}
-            </Row>
-
-            {/* 8. Notes */}
-            <Row label="备注信息" isLast>
-                {log.dailyEvents && log.dailyEvents.length > 0 && (
-                    <div className="mb-1"><span className="font-bold text-slate-500">事件:</span> {log.dailyEvents.join(' + ')}</div>
-                )}
-                {log.notes ? <span>{log.notes}</span> : <span className="text-slate-300 italic">无额外备注</span>}
             </Row>
         </div>
     );
@@ -209,8 +120,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
   const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
   const [summaryLog, setSummaryLog] = useState<LogEntry | null>(null);
   const [isHistoryView, setIsHistoryView] = useState(false);
-  
-  // Tabbed View State inside Summary
   const [activeSummaryTab, setActiveSummaryTab] = useState<'overview' | 'timeline'>('overview');
   
   // Activity Cancel State
@@ -218,7 +127,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
   const [cancelTarget, setCancelTarget] = useState<'mb' | 'exercise' | null>(null);
 
   const completedLogs = useMemo(() => logs.filter(log => log.status !== 'pending'), [logs]);
-  const latestLog = useMemo(() => logs.length > 0 ? logs[0] : null, [logs]);
   const pendingLog = useMemo(() => logs.find(log => log.status === 'pending'), [logs]);
   const ongoingExercise = useMemo(() => logs.flatMap(l => l.exercise || []).find(e => e.ongoing), [logs]);
   const ongoingNap = useMemo(() => logs.flatMap(l => l.sleep?.naps || []).find(n => n.ongoing), [logs]);
@@ -353,7 +261,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
         </button>
       </div>
 
-      {/* Ongoing Activity Card (The "Status Card") */}
+      {/* Ongoing Activity Card */}
       {(ongoingMb || ongoingExercise) && (
           <div className="animate-in slide-in-from-top-2 fade-in">
               {ongoingMb && (
@@ -370,20 +278,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                           </div>
                       </div>
                       <div className="flex items-center gap-2">
-                          <button 
-                            onClick={() => handleCancelActivity('mb')}
-                            className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors text-white/80"
-                            title="取消"
-                          >
-                              <X size={16} strokeWidth={3}/>
-                          </button>
-                          <button 
-                            onClick={() => onFinishMasturbation && onFinishMasturbation(ongoingMb)}
-                            className="bg-white text-blue-600 px-4 py-2 rounded-xl font-bold text-sm hover:bg-blue-50 transition-colors shadow-sm flex items-center"
-                          >
-                              <StopCircle size={16} className="mr-1.5"/>
-                              完成
-                          </button>
+                          <button onClick={() => handleCancelActivity('mb')} className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors text-white/80" title="取消"><X size={16} strokeWidth={3}/></button>
+                          <button onClick={() => onFinishMasturbation && onFinishMasturbation(ongoingMb)} className="bg-white text-blue-600 px-4 py-2 rounded-xl font-bold text-sm hover:bg-blue-50 transition-colors shadow-sm flex items-center"><StopCircle size={16} className="mr-1.5"/>完成</button>
                       </div>
                   </div>
               )}
@@ -401,20 +297,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                           </div>
                       </div>
                       <div className="flex items-center gap-2">
-                          <button 
-                            onClick={() => handleCancelActivity('exercise')}
-                            className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors text-white/80"
-                            title="取消"
-                          >
-                              <X size={16} strokeWidth={3}/>
-                          </button>
-                          <button 
-                            onClick={() => onFinishExercise && onFinishExercise(ongoingExercise)}
-                            className="bg-white text-orange-600 px-4 py-2 rounded-xl font-bold text-sm hover:bg-orange-50 transition-colors shadow-sm flex items-center"
-                          >
-                              <StopCircle size={16} className="mr-1.5"/>
-                              完成
-                          </button>
+                          <button onClick={() => handleCancelActivity('exercise')} className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors text-white/80" title="取消"><X size={16} strokeWidth={3}/></button>
+                          <button onClick={() => onFinishExercise && onFinishExercise(ongoingExercise)} className="bg-white text-orange-600 px-4 py-2 rounded-xl font-bold text-sm hover:bg-orange-50 transition-colors shadow-sm flex items-center"><StopCircle size={16} className="mr-1.5"/>完成</button>
                       </div>
                   </div>
               )}
@@ -426,7 +310,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
         <CalendarHeatmap logs={completedLogs} onDateClick={handleDateClickForSummary} />
       </div>
 
-      {/* Stats & Quick Actions Grid (Restored) */}
+      {/* Stats & Quick Actions Grid (Restored based on screenshot) */}
       <div className="grid grid-cols-2 gap-4">
           
           {/* Masturbation Stats Card */}
@@ -480,7 +364,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
               </div>
           </div>
 
-          {/* Pending Sleep Card */}
+          {/* Night Sleep Card (Strict adherence to docs: "未记录" instead of "无") */}
           {pendingLog ? (
               <div onClick={() => onEdit(pendingLog.date)} className="bg-purple-600 p-4 rounded-3xl shadow-lg shadow-purple-500/30 text-white cursor-pointer relative overflow-hidden group h-32 flex flex-col justify-between">
                   <div className="absolute top-0 right-0 w-16 h-16 bg-white/10 rounded-full blur-xl -translate-y-1/2 translate-x-1/2"></div>
@@ -498,7 +382,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
           ) : (
               <div className="bg-white dark:bg-slate-900 p-4 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col justify-center items-center text-slate-400 h-32">
                   <Moon size={24} className="mb-2 opacity-50"/>
-                  <span className="text-xs font-bold">暂无睡眠</span>
+                  {/* Per docs/ui-state-semantics.md: Night sleep should show "未记录" if missing */}
+                  <span className="text-xs font-bold">未记录</span>
               </div>
           )}
       </div>
