@@ -1,75 +1,46 @@
 
-
 import { LogEntry, Health, MorningRecord, SleepRecord, AlcoholRecord } from '../types';
 
-/**
- * HYDRATE LOG (Schema v1.0 Enforcer)
- */
 export const hydrateLog = (raw: any): LogEntry => {
     if (!raw) raw = {};
+    const date = raw.date || new Date().toISOString().split('T')[0];
 
-    // 1. Basic Metadata
+    // 1. Basic Structure
     const log: LogEntry = {
-        date: raw.date || new Date().toISOString().split('T')[0],
+        date,
         status: raw.status || 'completed',
         updatedAt: raw.updatedAt || Date.now(),
-        
-        // Environment & State
         location: raw.location ?? null,
         weather: raw.weather ?? null,
         mood: raw.mood ?? null,
         stressLevel: raw.stressLevel ?? null,
-        
-        // Lifestyle
         alcohol: raw.alcohol ?? null,
         pornConsumption: raw.pornConsumption ?? null,
-        
-        // v0.0.5 New Fields
-        /**
-         * Fixed caffeineIntake assignment.
-         */
         caffeineIntake: raw.caffeineIntake ?? null,
         dailyEvents: Array.isArray(raw.dailyEvents) ? raw.dailyEvents : [],
-        
-        // Arrays (Ensure Array)
         tags: Array.isArray(raw.tags) ? raw.tags : [],
         notes: raw.notes ?? null,
-        
-        // Activity Arrays
-        exercise: Array.isArray(raw.exercise) ? raw.exercise.map((e: any) => ({...e, feeling: e.feeling || 'ok'})) : [],
+        exercise: Array.isArray(raw.exercise) ? raw.exercise : [],
         sex: Array.isArray(raw.sex) ? raw.sex : [],
-        masturbation: Array.isArray(raw.masturbation) ? raw.masturbation.map((m: any) => ({
-            ...m, 
-            status: m.status || 'completed',
-            // v0.0.6 ContentItems
-            contentItems: Array.isArray(m.contentItems) ? m.contentItems : [] 
-        })) : [],
-        
+        masturbation: Array.isArray(raw.masturbation) ? raw.masturbation : [],
         changeHistory: Array.isArray(raw.changeHistory) ? raw.changeHistory : [],
     };
 
-    // v0.0.6 Caffeine Record (Cups)
+    // 2. Caffeine
     if (!raw.caffeineRecord) {
         log.caffeineRecord = { totalCount: 0, items: [] };
     } else {
-        // Migration from mg (old) to count (new) if needed, otherwise default
         const items = Array.isArray(raw.caffeineRecord.items) ? raw.caffeineRecord.items.map((i: any) => ({
             ...i,
-            // If old 'mg' exists but no 'count', convert (assume 1 cup if undefined)
-            count: i.count ?? (i.mg ? (i.mg > 10 ? 1 : i.mg) : 1),
-            // Default volume if missing (standard cup 350ml)
+            count: i.count ?? 1,
             volume: i.volume ?? 350 
         })) : [];
-        
-        log.caffeineRecord = {
-            totalCount: raw.caffeineRecord.totalCount ?? raw.caffeineRecord.totalMg ?? 0,
-            items
-        };
+        log.caffeineRecord = { totalCount: raw.caffeineRecord.totalCount ?? items.length, items };
     }
 
-    // 2. Domain Object: MorningRecord
+    // 3. Morning Wood
     const defaultMorning: MorningRecord = {
-        id: raw.morning?.id || `mr_${log.date}_${Date.now()}`,
+        id: raw.morning?.id || `mr_${date}_${Date.now()}`,
         timestamp: raw.morning?.timestamp || Date.now(),
         wokeWithErection: raw.morning?.wokeWithErection ?? raw.wokeWithErection ?? true,
         hardness: raw.morning?.hardness ?? raw.hardness ?? null,
@@ -79,12 +50,12 @@ export const hydrateLog = (raw: any): LogEntry => {
     };
     log.morning = { ...defaultMorning, ...(raw.morning || {}) };
 
-    // 3. Domain Object: SleepRecord
-    let naps = [];
-    if (raw.sleep && Array.isArray(raw.sleep.naps)) naps = raw.sleep.naps;
-    else if (Array.isArray(raw.naps)) naps = raw.naps;
+    // 4. Sleep & Naps
+    let rawNaps = [];
+    if (raw.sleep && Array.isArray(raw.sleep.naps)) rawNaps = raw.sleep.naps;
+    else if (Array.isArray(raw.naps)) rawNaps = raw.naps;
     
-    naps = naps.map((n: any) => ({
+    const naps = rawNaps.map((n: any) => ({
         ...n,
         hasDream: n.hasDream ?? false,
         dreamTypes: n.dreamTypes ?? [],
@@ -95,7 +66,7 @@ export const hydrateLog = (raw: any): LogEntry => {
     }));
 
     const defaultSleep: SleepRecord = {
-        id: raw.sleep?.id || `sr_${log.date}_${Date.now()}`,
+        id: raw.sleep?.id || `sr_${date}_${Date.now()}`,
         startTime: raw.sleep?.startTime ?? raw.sleepDateTime ?? null,
         endTime: raw.sleep?.endTime ?? raw.wakeUpDateTime ?? null,
         quality: raw.sleep?.quality ?? raw.sleepQuality ?? 3,
@@ -111,15 +82,9 @@ export const hydrateLog = (raw: any): LogEntry => {
     };
     log.sleep = { ...defaultSleep, ...(raw.sleep || {}) };
 
-    // 4. Domain Object: Health
-    /**
-     * Updated properties for Health object initialization.
-     */
+    // 5. Health
     const defaultHealth: Health = {
         isSick: false,
-        illnessType: null,
-        medicationTaken: null,
-        medicationName: null,
         feeling: raw.health?.isSick ? 'bad' : 'normal',
         discomfortLevel: null,
         symptoms: [],
@@ -127,17 +92,14 @@ export const hydrateLog = (raw: any): LogEntry => {
     };
     log.health = { ...defaultHealth, ...(raw.health || {}) };
 
-    // 5. Alcohol Record (Updated v0.0.9)
+    // 6. Alcohol
     if (raw.alcoholRecord) {
         log.alcoholRecord = {
             ...raw.alcoholRecord,
-            id: raw.alcoholRecord.id || `alc_${log.date}_${Date.now()}`,
+            id: raw.alcoholRecord.id || `alc_${date}_${Date.now()}`,
             drunkLevel: raw.alcoholRecord.drunkLevel || 'none',
-            alcoholScene: raw.alcoholRecord.alcoholScene || '', // Legacy
-            time: raw.alcoholRecord.time || '20:00', // Legacy fallback
             ongoing: raw.alcoholRecord.ongoing ?? false,
-            // New v0.0.9 fields default
-            location: raw.alcoholRecord.location || (raw.alcoholRecord.alcoholScene === '独自' ? '家' : raw.alcoholRecord.alcoholScene) || '家',
+            location: raw.alcoholRecord.location || '家',
             people: raw.alcoholRecord.people || '独自',
             reason: raw.alcoholRecord.reason || '放松'
         };

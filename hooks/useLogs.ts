@@ -21,8 +21,8 @@ export function useLogs() {
 
     const addOrUpdateLog = useCallback(async (log: LogEntry) => {
         try {
-            const cleanLog = hydrateLog(log);
-            await StorageService.logs.save(cleanLog);
+            const logToSave = hydrateLog(log);
+            await StorageService.logs.save(logToSave);
         } catch (error: any) {
             throw new Error(error.message || '保存失败');
         }
@@ -30,7 +30,6 @@ export function useLogs() {
 
     const getActivityTargetDate = useCallback(() => {
         const now = new Date();
-        // 凌晨 3 点前属于生理上的“昨天”
         if (now.getHours() < 3) now.setDate(now.getDate() - 1);
         return now.toISOString().split('T')[0];
     }, []);
@@ -38,7 +37,6 @@ export function useLogs() {
     const getSleepTargetDate = useCallback(() => {
         const now = new Date();
         const targetDate = new Date();
-        // 中午 12 点后属于“明天”的记录（醒来的那份日记）
         if (now.getHours() >= 12) targetDate.setDate(now.getDate() + 1);
         return targetDate.toISOString().split('T')[0];
     }, []);
@@ -56,18 +54,15 @@ export function useLogs() {
         };
     };
 
+    // 1. Alcohol
     const saveAlcoholRecord = useCallback(async (record: AlcoholRecord) => {
         const dateStr = getActivityTargetDate();
         const existing = await StorageService.logs.get(dateStr);
         let log = existing || hydrateLog({ date: dateStr });
-        
         log.alcoholRecord = record;
         log.alcohol = record.totalGrams > 50 ? 'high' : record.totalGrams > 20 ? 'medium' : record.totalGrams > 0 ? 'low' : 'none';
         log.status = 'completed';
-        log = logChange(log, record.ongoing ? '开始饮酒计时' : `完成饮酒记录 (${record.totalGrams}g)`, [
-            { field: '酒精摄入', oldValue: '0g', newValue: `${record.totalGrams}g`, category: 'lifestyle' }
-        ]);
-        
+        log = logChange(log, record.ongoing ? '开始饮酒计时' : `完成饮酒记录 (${record.totalGrams}g)`);
         await addOrUpdateLog(log);
     }, [addOrUpdateLog, getActivityTargetDate]);
 
@@ -75,78 +70,71 @@ export function useLogs() {
         const all = await StorageService.logs.getAll();
         const ongoing = all.find(l => l.alcoholRecord?.ongoing);
         if (ongoing) return false;
-
         const nowStr = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
         await saveAlcoholRecord({
-            id: Date.now().toString(),
-            startTime: nowStr,
-            ongoing: true,
-            totalGrams: 0,
-            durationMinutes: 0,
-            items: [],
-            isLate: false,
-            drunkLevel: 'none',
-            location: '家',
-            people: '独自',
-            reason: '放松',
-            time: nowStr
+            id: Date.now().toString(), startTime: nowStr, ongoing: true, totalGrams: 0, durationMinutes: 0, items: [], isLate: false, drunkLevel: 'none', location: '家', people: '独自', reason: '放松', time: nowStr
         });
         return true;
     }, [saveAlcoholRecord]);
 
-    const quickAddSex = useCallback(async (record: SexRecordDetails) => {
-        const dateStr = getActivityTargetDate();
-        const existing = await StorageService.logs.get(dateStr);
-        let log = existing || hydrateLog({ date: dateStr });
-        
-        const newSex = [...(log.sex || [])];
-        const idx = newSex.findIndex(s => s.id === record.id);
-        if (idx >= 0) newSex[idx] = record;
-        else newSex.push(record);
-        
-        log.sex = newSex;
-        log.status = 'completed';
-        log = logChange(log, `记录性爱: ${record.partner || '伴侣'}`, [], 'quick');
-        await addOrUpdateLog(log);
-    }, [addOrUpdateLog, getActivityTargetDate]);
-
+    // 2. Masturbation
     const quickAddMasturbation = useCallback(async (record: MasturbationRecordDetails, cancelled?: boolean, reason?: string) => {
         const dateStr = getActivityTargetDate();
         const existing = await StorageService.logs.get(dateStr);
         let log = existing || hydrateLog({ date: dateStr });
         
         if (cancelled) {
-            // 如果是取消，从数组中移除并记录原因
             log.masturbation = (log.masturbation || []).filter(m => m.id !== record.id);
-            log = logChange(log, `取消自慰记录: ${reason || '无原因'}`, [], 'quick');
+            log = logChange(log, `取消自慰: ${reason}`);
         } else {
-            const newMb = [...(log.masturbation || [])];
-            const idx = newMb.findIndex(m => m.id === record.id);
-            if (idx >= 0) newMb[idx] = record;
-            else newMb.push(record);
-            log.masturbation = newMb;
+            const newList = [...(log.masturbation || [])];
+            const idx = newList.findIndex(m => m.id === record.id);
+            if (idx >= 0) newList[idx] = record;
+            else newList.push(record);
+            log.masturbation = newList;
             log.status = 'completed';
-            log = logChange(log, record.status === 'inProgress' ? '开始自慰计时' : '完成自慰记录', [], 'quick');
+            log = logChange(log, record.status === 'inProgress' ? '开始自慰计时' : '完成自慰详情');
         }
         await addOrUpdateLog(log);
     }, [addOrUpdateLog, getActivityTargetDate]);
 
-    const saveExercise = useCallback(async (record: ExerciseRecord) => {
+    // 3. Sex (FIXED: Supports ongoing state for banners)
+    const quickAddSex = useCallback(async (record: SexRecordDetails, cancelled?: boolean) => {
         const dateStr = getActivityTargetDate();
         const existing = await StorageService.logs.get(dateStr);
         let log = existing || hydrateLog({ date: dateStr });
         
-        const newEx = [...(log.exercise || [])];
-        const idx = newEx.findIndex(e => e.id === record.id);
-        if (idx >= 0) newEx[idx] = record;
-        else newEx.push(record);
-        
-        log.exercise = newEx;
-        log.status = 'completed';
-        log = logChange(log, record.ongoing ? `开始${record.type}` : `完成${record.type}运动`, [], 'quick');
+        if (cancelled) {
+            log.sex = (log.sex || []).filter(s => s.id !== record.id);
+            log = logChange(log, '取消性爱计时');
+        } else {
+            const newList = [...(log.sex || [])];
+            const idx = newList.findIndex(s => s.id === record.id);
+            if (idx >= 0) newList[idx] = record;
+            else newList.push(record);
+            log.sex = newList;
+            log.status = 'completed';
+            log = logChange(log, record.ongoing ? '开始性爱计时' : `性爱记录: ${record.partner || '伴侣'}`);
+        }
         await addOrUpdateLog(log);
     }, [addOrUpdateLog, getActivityTargetDate]);
 
+    // 4. Exercise
+    const saveExercise = useCallback(async (record: ExerciseRecord) => {
+        const dateStr = getActivityTargetDate();
+        const existing = await StorageService.logs.get(dateStr);
+        let log = existing || hydrateLog({ date: dateStr });
+        const newList = [...(log.exercise || [])];
+        const idx = newList.findIndex(e => e.id === record.id);
+        if (idx >= 0) newList[idx] = record;
+        else newList.push(record);
+        log.exercise = newList;
+        log.status = 'completed';
+        log = logChange(log, record.ongoing ? `开始${record.type}` : `完成${record.type}`);
+        await addOrUpdateLog(log);
+    }, [addOrUpdateLog, getActivityTargetDate]);
+
+    // 5. Sleep (FIXED: PERSISTENCE & BANNER SUPPORT)
     const toggleSleepLog = useCallback(async () => {
         const targetDateStr = getSleepTargetDate();
         const existing = await StorageService.logs.get(targetDateStr);
@@ -156,16 +144,17 @@ export function useLogs() {
         if (log.sleep?.startTime && !log.sleep?.endTime) {
             log.sleep = { ...log.sleep!, endTime: isoNow };
             log.status = 'completed';
-            log = logChange(log, '起床 (一键完成睡眠)', [], 'quick');
+            log = logChange(log, '起床 (记录完成)', [], 'quick');
         } else {
             log.sleep = { ...log.sleep!, startTime: isoNow, endTime: null };
             log.status = 'pending';
-            log = logChange(log, '入睡 (开始记录今日睡眠)', [], 'quick');
+            log = logChange(log, '入睡 (开始计时)', [], 'quick');
         }
         await addOrUpdateLog(log);
         return targetDateStr;
     }, [addOrUpdateLog, getSleepTargetDate]);
 
+    // 6. Nap
     const saveNap = useCallback(async (record: NapRecord) => {
         const dateStr = getActivityTargetDate();
         const existing = await StorageService.logs.get(dateStr);
@@ -174,7 +163,7 @@ export function useLogs() {
         const idx = currentNaps.findIndex(n => n.id === record.id);
         const nextNaps = idx >= 0 ? currentNaps.map(n => n.id === record.id ? record : n) : [...currentNaps, record];
         log.sleep = { ...(log.sleep || hydrateLog({date: dateStr}).sleep!), naps: nextNaps };
-        log = logChange(log, record.ongoing ? '开始午休计时' : '完成午休记录', [], 'quick');
+        log = logChange(log, record.ongoing ? '开始午休' : '结束午休');
         await addOrUpdateLog(log);
     }, [addOrUpdateLog, getActivityTargetDate]);
 
@@ -196,9 +185,7 @@ export function useLogs() {
             await saveNap({
                 id: Date.now().toString(),
                 startTime: new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
-                ongoing: true,
-                quality: 3,
-                environment: { location: 'home', temperature: 'comfortable' }
+                ongoing: true, quality: 3, environment: { location: 'home', temperature: 'comfortable' }
             });
         }
     }, [getActivityTargetDate, saveNap]);
@@ -207,10 +194,7 @@ export function useLogs() {
         logs, partners, isInitializing,
         addOrUpdateLog, deleteLog: StorageService.logs.delete,
         addOrUpdatePartner: StorageService.partners.save, deletePartner: StorageService.partners.delete,
-        quickAddSex, quickAddMasturbation,
-        saveExercise, saveAlcoholRecord,
-        saveNap, toggleAlcohol, toggleNap, toggleSleepLog, 
-        importLogs: StorageService.logs.bulkImport,
-        getSleepTargetDate, getActivityTargetDate
+        quickAddSex, quickAddMasturbation, saveExercise, saveAlcoholRecord, saveNap, toggleAlcohol, toggleNap, toggleSleepLog, 
+        importLogs: StorageService.logs.bulkImport, getSleepTargetDate, getActivityTargetDate
     };
 }

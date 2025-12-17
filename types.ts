@@ -1,5 +1,4 @@
 
-
 export type HardnessLevel = 1 | 2 | 3 | 4 | 5;
 export type StressLevel = 1 | 2 | 3 | 4 | 5;
 export type ErectionDurationImpression = 'brief' | 'long' | 'unsure';
@@ -16,23 +15,18 @@ export type PornConsumption = 'none' | 'low' | 'medium' | 'high';
 export type IllnessType = 'cold' | 'fever' | 'headache' | 'other';
 export type PartnerType = 'stable' | 'dating' | 'casual' | 'service';
 
-// v0.0.5 New Enums
 export type SleepLocation = 'home' | 'hotel' | 'others_home' | 'dorm' | 'other';
 export type SleepTemperature = 'cold' | 'comfortable' | 'hot';
 export type DrunkLevel = 'none' | 'tipsy' | 'drunk' | 'wasted';
-export type HealthFeeling = 'normal' | 'minor_discomfort' | 'bad'; // Deprecated in v0.0.6
+export type HealthFeeling = 'normal' | 'minor_discomfort' | 'bad'; 
 export type DiscomfortLevel = 'mild' | 'moderate' | 'severe';
 export type ExerciseFeeling = 'great' | 'ok' | 'tired' | 'bad';
 export type CaffeineIntake = 'none' | 'low' | 'medium' | 'high';
 
-// --- History Categories ---
 export type HistoryCategory = 'sleep' | 'morning' | 'nap' | 'exercise' | 'masturbation' | 'sex' | 'health' | 'lifestyle' | 'meta' | 'system';
 export type HistoryEventType = 'manual' | 'quick' | 'auto';
 export type ChangeType = 'add' | 'mod' | 'del';
 
-/**
- * Added missing ChangeDetail type used in helper functions and history repair.
- */
 export interface ChangeDetail {
     field: string;
     oldValue: string;
@@ -41,7 +35,6 @@ export interface ChangeDetail {
     changeType?: ChangeType;
 }
 
-// --- Unified Event Model (Analytics Layer) ---
 export type EventType = 'morning_wood' | 'sleep' | 'sex' | 'masturbation' | 'exercise' | 'alcohol' | 'stress' | 'emotion' | 'health';
 
 export interface UnifiedEvent {
@@ -83,9 +76,6 @@ export interface AppSettings {
   lastExportAt?: number;
 }
 
-/**
- * Added missing BackupState type used in MyView.
- */
 export interface BackupState {
     lastBackupAt?: number;
     isCloudSynced?: boolean;
@@ -105,19 +95,15 @@ export interface AlcoholRecord {
     startTime?: string;
     endTime?: string;
     ongoing?: boolean;
-    isInstant?: boolean; // v0.0.9 新增：是否为一口/一杯式饮酒
+    isInstant?: boolean;
     totalGrams: number;
     durationMinutes: number;
     isLate: boolean;
     items: AlcoholItem[];
     drunkLevel?: DrunkLevel;
-    
-    // v0.0.9 Context Fields
-    location?: string; // Where
-    people?: string;   // Who
-    reason?: string;   // Why
-    
-    // Legacy
+    location?: string;
+    people?: string;
+    reason?: string;
     time?: string;
     alcoholScene?: string;
 }
@@ -185,6 +171,7 @@ export interface SexRecordDetails {
   id: string; 
   startTime?: string | null; 
   duration?: number; 
+  ongoing?: boolean; // 新增：支持进行中状态
   protection?: string | null;
   state?: string | null;
   interactions: SexInteraction[];
@@ -226,9 +213,6 @@ export interface SexAction {
   name: string;
 }
 
-/**
- * Added missing SexActionType.
- */
 export type SexActionType = 'act' | 'position';
 
 export interface MasturbationRecordDetails {
@@ -254,9 +238,6 @@ export interface MasturbationRecordDetails {
   volumeForceLevel?: 1 | 2 | 3 | 4 | 5;
   postMood?: string;
   fatigue?: string;
-  /**
-   * Added missing legacy/internal properties used in UI and migrations.
-   */
   materialsList?: any[];
   assets?: {
       sources?: string[];
@@ -339,9 +320,6 @@ export interface LogEntry {
     alcoholRecord?: AlcoholRecord | null;
     pornConsumption?: PornConsumption | null;
     caffeineRecord?: CaffeineRecord | null;
-    /**
-     * Added missing caffeineIntake used in hydrateLog.
-     */
     caffeineIntake?: CaffeineIntake | null;
     dailyEvents?: string[];
     exercise?: ExerciseRecord[];
@@ -357,9 +335,6 @@ export interface Health {
     discomfortLevel?: DiscomfortLevel | null;
     symptoms?: string[];
     medications?: string[];
-    /**
-     * Added missing properties used in hydrateLog and eventAdapter.
-     */
     illnessType?: string | null;
     medicationTaken?: boolean | null;
     medicationName?: string | null;
