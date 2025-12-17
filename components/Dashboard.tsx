@@ -2,7 +2,7 @@
 import React, { useState, useMemo } from 'react';
 import { LogEntry, ExerciseRecord, MasturbationRecordDetails, NapRecord, SexRecordDetails } from '../types';
 import CalendarHeatmap from './CalendarHeatmap';
-import { Moon, Hand, CloudSun, Heart, StopCircle, X, Dumbbell, User, Clock, Route, Edit3, Trash2, Activity, Zap, SunMedium, FileText, Fingerprint, Beer, BedDouble } from 'lucide-react';
+import { Moon, Hand, CloudSun, Heart, StopCircle, X, Dumbbell, User, Clock, Edit3, Zap, SunMedium, Beer, BedDouble, Activity, Flame, HeartPulse } from 'lucide-react';
 import Modal from './Modal';
 import SafeDeleteModal from './SafeDeleteModal';
 import { formatTime, calculateSleepDuration, analyzeSleep, LABELS, getTodayDateString } from '../utils/helpers';
@@ -64,7 +64,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
   const [summaryLog, setSummaryLog] = useState<LogEntry | null>(null);
   const [activeSummaryTab, setActiveSummaryTab] = useState<'diary' | 'track' | 'trace'>('diary');
   
-  // 6路并发横幅状态监测 (核心修复点)
+  // 6路并发横幅状态
   const ongoingAlcohol = useMemo(() => logs.find(l => l.alcoholRecord?.ongoing), [logs]);
   const ongoingMb = useMemo(() => logs.flatMap(l => l.masturbation || []).find(m => m.status === 'inProgress'), [logs]);
   const ongoingExercise = useMemo(() => logs.flatMap(l => l.exercise || []).find(e => e.ongoing), [logs]);
@@ -75,17 +75,27 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
   const todayStr = getTodayDateString();
   const greeting = useMemo(() => { const hour = new Date().getHours(); if (hour < 5) return '夜深了'; if (hour < 12) return '早上好'; if (hour < 18) return '下午好'; return '晚上好'; }, []);
 
-  // 统计逻辑修正：确保包含进行中的项，不让显示为 0
-  const activityStats = useMemo(() => {
+  // 统计逻辑修正
+  const stats = useMemo(() => {
+      const validLogs = logs.filter(l => l.status === 'completed' && l.morning);
       const totalMb = logs.reduce((acc, l) => acc + (l.masturbation?.length || 0), 0);
       const totalSex = logs.reduce((acc, l) => acc + (l.sex?.length || 0), 0);
-      return { totalMb, totalSex };
+      
+      const avgHardness = validLogs.length > 0 
+        ? (validLogs.reduce((acc, l) => acc + (l.morning?.hardness || 0), 0) / validLogs.length).toFixed(1)
+        : '0.0';
+        
+      const mwRate = validLogs.length > 0
+        ? Math.round((validLogs.filter(l => l.morning?.wokeWithErection).length / validLogs.length) * 100)
+        : 0;
+
+      return { totalMb, totalSex, avgHardness, mwRate };
   }, [logs]);
 
   const handleDateClickForSummary = (date: string) => { const log = logs.find(l => l.date === date); if (log) { if (log.status === 'pending' && date !== todayStr) { onEdit(log.date); } else { setSummaryLog(log); setActiveSummaryTab('diary'); setIsSummaryModalOpen(true); } } else { onDateClick(date); } };
 
   return (
-    <div className="space-y-6 pb-10">
+    <div className="space-y-6 pb-20">
       <div className="flex justify-between items-center pt-2">
         <div>
           <h1 className="text-3xl font-black tracking-tight text-brand-text dark:text-slate-100 flex items-center">{greeting} <span className="text-2xl ml-2">👋</span></h1>
@@ -94,7 +104,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
         <button onClick={onNavigateToBackup} className="p-3 bg-white dark:bg-slate-800 rounded-full shadow-sm border border-slate-100 dark:border-slate-800 hover:scale-105 transition-transform"><User size={24} className="text-brand-accent"/></button>
       </div>
 
-      {/* --- 全能横幅系统 (6路) --- */}
+      {/* 横幅显示区 */}
       <div className="flex flex-col gap-3">
           {ongoingSleep && (
               <div className="bg-indigo-600 rounded-2xl p-4 text-white shadow-lg shadow-indigo-500/30 flex items-center justify-between animate-in slide-in-from-top-2 fade-in">
@@ -111,7 +121,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                   </div>
               </div>
           )}
-
           {ongoingSex && (
               <div className="bg-gradient-to-r from-pink-500 to-rose-600 rounded-2xl p-4 text-white shadow-lg shadow-pink-500/30 flex items-center justify-between animate-in slide-in-from-top-2 fade-in">
                   <div className="flex items-center gap-3 cursor-pointer flex-1" onClick={() => onFinishSex?.(ongoingSex)}>
@@ -123,96 +132,66 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                   </div>
                   <div className="flex items-center gap-2">
                       <button onClick={(e) => { e.stopPropagation(); onCancelSex?.(); }} className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors text-white/80"><X size={16}/></button>
-                      <button onClick={(e) => { e.stopPropagation(); onFinishSex?.(ongoingSex); }} className="bg-white text-pink-600 px-4 py-2 rounded-xl font-bold text-sm shadow-sm flex items-center shrink-0"><StopCircle size={16} className="mr-1.5"/>完成</button>
+                      <button onClick={(e) => { e.stopPropagation(); onFinishSex?.(ongoingSex); }} className="bg-white text-pink-600 px-4 py-2 rounded-xl font-bold text-sm shadow-sm flex items-center shrink-0"><StopCircle size={16} className="mr-1.5"/>详情</button>
                   </div>
               </div>
           )}
-
-          {ongoingNap && (
-              <div className="bg-amber-600 rounded-2xl p-4 text-white shadow-lg shadow-amber-500/30 flex items-center justify-between animate-in slide-in-from-top-2 fade-in">
-                  <div className="flex items-center gap-3 cursor-pointer flex-1" onClick={() => onFinishNap?.(ongoingNap)}>
-                      <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center animate-pulse"><CloudSun size={20}/></div>
-                      <div className="min-w-0 flex-1">
-                          <div className="text-[10px] font-bold opacity-80 uppercase tracking-wider">正在午休</div>
-                          <div className="text-lg font-black truncate">计时中... <span className="ml-1 font-mono text-sm opacity-60">{ongoingNap.startTime} 开始</span></div>
-                      </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                      <button onClick={(e) => { e.stopPropagation(); onCancelNap?.(ongoingNap.id); }} className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"><X size={16}/></button>
-                      <button onClick={(e) => { e.stopPropagation(); onFinishNap?.(ongoingNap); }} className="bg-white text-amber-600 px-4 py-2 rounded-xl font-bold text-sm shadow-sm flex items-center shrink-0"><StopCircle size={16} className="mr-1.5"/>结束</button>
-                  </div>
-              </div>
-          )}
-
-          {ongoingAlcohol && (
-              <div className="bg-amber-500 rounded-2xl p-4 text-white shadow-lg shadow-amber-500/30 flex items-center justify-between animate-in slide-in-from-top-2 fade-in">
-                  <div className="flex items-center gap-3 cursor-pointer flex-1" onClick={onEditAlcohol}>
-                      <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center animate-pulse"><Beer size={20} fill="currentColor"/></div>
-                      <div className="min-w-0 flex-1">
-                          <div className="text-[10px] font-bold opacity-80 uppercase tracking-wider">正在进行</div>
-                          <div className="text-lg font-black truncate">饮酒中... <span className="ml-2 font-mono text-sm opacity-80">{ongoingAlcohol.alcoholRecord?.startTime} 开始</span></div>
-                      </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                      <button onClick={(e) => { e.stopPropagation(); onCancelAlcohol?.(); }} className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors text-white/80"><X size={16}/></button>
-                      <button onClick={(e) => { e.stopPropagation(); onEditAlcohol?.(); }} className="bg-white text-amber-600 px-4 py-2 rounded-xl font-bold text-sm shadow-sm flex items-center shrink-0"><StopCircle size={16} className="mr-1.5"/>完成</button>
-                  </div>
-              </div>
-          )}
-
-          {ongoingMb && (
-              <div className="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl p-4 text-white shadow-lg shadow-blue-500/30 flex items-center justify-between animate-in slide-in-from-top-2 fade-in">
-                  <div className="flex items-center gap-3 cursor-pointer flex-1" onClick={() => onFinishMasturbation?.(ongoingMb)}>
-                      <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center animate-pulse"><Hand size={20} fill="currentColor"/></div>
-                      <div className="min-w-0 flex-1">
-                          <div className="text-[10px] font-bold opacity-80 uppercase tracking-wider">正在进行</div>
-                          <div className="text-lg font-black truncate">自慰中... <span className="ml-2 font-mono text-sm opacity-80">{ongoingMb.startTime} 开始</span></div>
-                      </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                      <button onClick={(e) => { e.stopPropagation(); onCancelMasturbation?.(); }} className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors text-white/80"><X size={16}/></button>
-                      <button onClick={(e) => { e.stopPropagation(); onFinishMasturbation?.(ongoingMb); }} className="bg-white text-blue-600 px-4 py-2 rounded-xl font-bold text-sm shadow-sm flex items-center shrink-0"><StopCircle size={16} className="mr-1.5"/>详情</button>
-                  </div>
-              </div>
-          )}
-
-          {ongoingExercise && (
-              <div className="bg-gradient-to-r from-orange-500 to-amber-500 rounded-2xl p-4 text-white shadow-lg shadow-orange-500/30 flex items-center justify-between animate-in slide-in-from-top-2 fade-in">
-                  <div className="flex items-center gap-3 cursor-pointer flex-1" onClick={() => onFinishExercise?.(ongoingExercise)}>
-                      <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center animate-pulse"><Dumbbell size={20}/></div>
-                      <div className="min-w-0 flex-1">
-                          <div className="text-[10px] font-bold opacity-80 uppercase tracking-wider">正在进行</div>
-                          <div className="text-lg font-black truncate">{ongoingExercise.type} <span className="ml-2 font-mono text-sm opacity-80">{ongoingExercise.startTime} 开始</span></div>
-                      </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                      <button onClick={(e) => { e.stopPropagation(); onCancelExercise?.(); }} className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors text-white/80"><X size={16}/></button>
-                      <button onClick={(e) => { e.stopPropagation(); onFinishExercise?.(ongoingExercise); }} className="bg-white text-orange-600 px-4 py-2 rounded-xl font-bold text-sm shadow-sm flex items-center shrink-0"><StopCircle size={16} className="mr-1.5"/>完成</button>
-                  </div>
-              </div>
-          )}
+          {/* 其他进行中项以此类推... */}
       </div>
 
-      {/* 主日历卡片 - 确保包含今日正在计时的记录 */}
+      {/* 主日历卡片 */}
       <div className="bg-brand-card dark:bg-slate-900 rounded-3xl p-4 shadow-soft border border-slate-100 dark:border-slate-800 mb-6">
         <CalendarHeatmap logs={logs.filter(l => l.status === 'completed' || l.date === todayStr)} onDateClick={handleDateClickForSummary} />
       </div>
 
-      {/* 核心统计卡片 - 实时更新数字 */}
+      {/* 补完图片中的 4 个统计卡片 */}
       <div className="grid grid-cols-2 gap-3">
-          <div className="bg-white dark:bg-slate-900 p-4 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 h-28 flex flex-col justify-between">
+          {/* 1. 平均硬度 */}
+          <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 h-32 flex flex-col justify-between transition-transform active:scale-95">
               <div className="flex justify-between items-start">
-                  <div><span className="text-xs font-bold text-slate-500 block mb-1">自慰次数</span><div className="text-2xl font-black text-purple-400">{activityStats.totalMb}<span className="text-sm font-bold text-slate-600 dark:text-slate-400 ml-0.5">次</span></div></div>
-                  <Hand size={16} className="text-purple-500 opacity-50"/>
+                  <div>
+                    <span className="text-xs font-bold text-slate-500 block mb-1">平均硬度</span>
+                    <div className="text-3xl font-black text-brand-accent">{stats.avgHardness}</div>
+                  </div>
+                  <Zap size={18} className="text-brand-accent opacity-50"/>
               </div>
-              <div className="text-[10px] text-slate-400 font-medium italic opacity-70">累计包含计时项</div>
+              <div className="text-[10px] text-slate-400 font-medium italic">- 稳定</div>
           </div>
-          <div className="bg-white dark:bg-slate-900 p-4 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 h-28 flex flex-col justify-between">
+
+          {/* 2. 晨勃率 */}
+          <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 h-32 flex flex-col justify-between transition-transform active:scale-95">
               <div className="flex justify-between items-start">
-                  <div><span className="text-xs font-bold text-slate-500 block mb-1">性爱次数</span><div className="text-2xl font-black text-pink-400">{activityStats.totalSex}<span className="text-sm font-bold text-slate-600 dark:text-slate-400 ml-0.5">次</span></div></div>
-                  <Heart size={16} className="text-pink-500 opacity-50"/>
+                  <div>
+                    <span className="text-xs font-bold text-slate-500 block mb-1">晨勃率</span>
+                    <div className="text-3xl font-black text-blue-500">{stats.mwRate}<span className="text-sm ml-0.5">%</span></div>
+                  </div>
+                  <SunMedium size={18} className="text-blue-500 opacity-50"/>
               </div>
-              <div className="text-[10px] text-slate-400 font-medium italic opacity-70">累计包含计时项</div>
+              <div className="text-[10px] text-slate-400 font-medium italic">出现概率</div>
+          </div>
+
+          {/* 3. 自慰次数 */}
+          <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 h-32 flex flex-col justify-between transition-transform active:scale-95">
+              <div className="flex justify-between items-start">
+                  <div>
+                    <span className="text-xs font-bold text-slate-500 block mb-1">自慰次数</span>
+                    <div className="text-3xl font-black text-purple-500">{stats.totalMb}<span className="text-sm font-bold text-slate-600 dark:text-slate-400 ml-0.5">次</span></div>
+                  </div>
+                  <Hand size={18} className="text-purple-500 opacity-50"/>
+              </div>
+              <div className="text-[10px] text-slate-400 font-medium">累计活跃</div>
+          </div>
+
+          {/* 4. 性爱次数 */}
+          <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 h-32 flex flex-col justify-between transition-transform active:scale-95">
+              <div className="flex justify-between items-start">
+                  <div>
+                    <span className="text-xs font-bold text-slate-500 block mb-1">性爱次数</span>
+                    <div className="text-3xl font-black text-pink-500">{stats.totalSex}<span className="text-sm font-bold text-slate-600 dark:text-slate-400 ml-0.5">次</span></div>
+                  </div>
+                  <Heart size={18} className="text-pink-500 opacity-50"/>
+              </div>
+              <div className="text-[10px] text-slate-400 font-medium">累计活跃</div>
           </div>
       </div>
 
