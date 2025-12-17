@@ -61,7 +61,10 @@ export function useLogs() {
         let log = existing || hydrateLog({ date: dateStr });
         log.alcoholRecord = record;
         log.alcohol = record.totalGrams > 50 ? 'high' : record.totalGrams > 20 ? 'medium' : record.totalGrams > 0 ? 'low' : 'none';
-        log.status = 'completed';
+        
+        // 关键修复：结束计时即视为完成
+        if (!record.ongoing) log.status = 'completed';
+        
         log = logChange(log, record.ongoing ? '开始饮酒计时' : `完成饮酒记录 (${record.totalGrams}g)`);
         await addOrUpdateLog(log);
     }, [addOrUpdateLog, getActivityTargetDate]);
@@ -92,7 +95,10 @@ export function useLogs() {
             if (idx >= 0) newList[idx] = record;
             else newList.push(record);
             log.masturbation = newList;
-            log.status = 'completed';
+            
+            // 关键修复：只要不是进行中，就标记为已完成
+            if (record.status !== 'inProgress') log.status = 'completed';
+            
             log = logChange(log, record.status === 'inProgress' ? '开始自慰计时' : '完成自慰详情');
         }
         await addOrUpdateLog(log);
@@ -113,7 +119,10 @@ export function useLogs() {
             if (idx >= 0) newList[idx] = record;
             else newList.push(record);
             log.sex = newList;
-            log.status = 'completed';
+            
+            // 关键修复
+            if (!record.ongoing) log.status = 'completed';
+            
             log = logChange(log, record.ongoing ? '开始性爱计时' : `性爱记录: ${record.partner || '伴侣'}`);
         }
         await addOrUpdateLog(log);
@@ -129,7 +138,10 @@ export function useLogs() {
         if (idx >= 0) newList[idx] = record;
         else newList.push(record);
         log.exercise = newList;
-        log.status = 'completed';
+        
+        // 关键修复
+        if (!record.ongoing) log.status = 'completed';
+        
         log = logChange(log, record.ongoing ? `开始${record.type}` : `完成${record.type}`);
         await addOrUpdateLog(log);
     }, [addOrUpdateLog, getActivityTargetDate]);
@@ -143,11 +155,11 @@ export function useLogs() {
 
         if (log.sleep?.startTime && !log.sleep?.endTime) {
             log.sleep = { ...log.sleep!, endTime: isoNow };
-            log.status = 'completed';
+            log.status = 'completed'; // 醒来视为日记可以闭环
             log = logChange(log, '起床 (记录完成)', [], 'quick');
         } else {
             log.sleep = { ...log.sleep!, startTime: isoNow, endTime: null };
-            log.status = 'pending'; 
+            log.status = 'pending'; // 睡觉中，状态为待补全
             log = logChange(log, '入睡 (开始计时)', [], 'quick');
         }
         await addOrUpdateLog(log);
@@ -162,7 +174,12 @@ export function useLogs() {
         const currentNaps = log.sleep?.naps || [];
         const idx = currentNaps.findIndex(n => n.id === record.id);
         const nextNaps = idx >= 0 ? currentNaps.map(n => n.id === record.id ? record : n) : [...currentNaps, record];
+        
         log.sleep = { ...(log.sleep || hydrateLog({date: dateStr}).sleep!), naps: nextNaps };
+        
+        // 关键修复：结束午休计时，标记日志为完成
+        if (!record.ongoing) log.status = 'completed';
+        
         log = logChange(log, record.ongoing ? '开始午休' : '结束午休');
         await addOrUpdateLog(log);
     }, [addOrUpdateLog, getActivityTargetDate]);

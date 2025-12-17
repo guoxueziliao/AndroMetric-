@@ -48,6 +48,7 @@ export const hydrateLog = (raw: any): LogEntry => {
         wokenByErection: raw.morning?.wokenByErection ?? raw.wokenByErection ?? false,
         durationImpression: raw.morning?.durationImpression ?? raw.durationImpression ?? null
     };
+    // 确保 spreading 时，由 hydration 生成的完整对象优于原始可能缺失的对象
     log.morning = { ...defaultMorning, ...(raw.morning || {}) };
 
     // 4. Sleep & Naps
@@ -55,8 +56,9 @@ export const hydrateLog = (raw: any): LogEntry => {
     if (raw.sleep && Array.isArray(raw.sleep.naps)) rawNaps = raw.sleep.naps;
     else if (Array.isArray(raw.naps)) rawNaps = raw.naps;
     
-    const naps = rawNaps.map((n: any) => ({
+    const processedNaps = rawNaps.map((n: any) => ({
         ...n,
+        id: n.id || `nap_${Date.now()}_${Math.random()}`,
         hasDream: n.hasDream ?? false,
         dreamTypes: n.dreamTypes ?? [],
         wokeWithErection: n.wokeWithErection ?? false,
@@ -75,20 +77,21 @@ export const hydrateLog = (raw: any): LogEntry => {
         nocturnalEmission: raw.sleep?.nocturnalEmission ?? raw.nocturnalEmission ?? false,
         withPartner: raw.sleep?.withPartner ?? raw.sleepWithPartner ?? false,
         preSleepState: raw.sleep?.preSleepState ?? raw.preSleepState ?? null,
-        naps: naps,
+        naps: processedNaps,
         hasDream: raw.sleep?.hasDream ?? false,
         dreamTypes: Array.isArray(raw.sleep?.dreamTypes) ? raw.sleep.dreamTypes : [],
         environment: raw.sleep?.environment || { location: 'home', temperature: 'comfortable' }
     };
-    log.sleep = { ...defaultSleep, ...(raw.sleep || {}) };
+    // 关键修复：显式传递 processedNaps，防止被 raw.sleep 中的空值覆盖
+    log.sleep = { ...defaultSleep, ...(raw.sleep || {}), naps: processedNaps };
 
     // 5. Health
     const defaultHealth: Health = {
-        isSick: false,
+        isSick: raw.health?.isSick ?? false,
         feeling: raw.health?.isSick ? 'bad' : 'normal',
-        discomfortLevel: null,
-        symptoms: [],
-        medications: []
+        discomfortLevel: raw.health?.discomfortLevel || null,
+        symptoms: Array.isArray(raw.health?.symptoms) ? raw.health.symptoms : [],
+        medications: Array.isArray(raw.health?.medications) ? raw.health.medications : []
     };
     log.health = { ...defaultHealth, ...(raw.health || {}) };
 
