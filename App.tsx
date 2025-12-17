@@ -12,6 +12,7 @@ import SexRecordModal from './components/SexRecordModal';
 import MasturbationRecordModal from './components/MasturbationRecordModal';
 import ExerciseRecordModal from './components/ExerciseSelectorModal'; 
 import AlcoholRecordModal from './components/AlcoholRecordModal'; 
+import CancelReasonModal from './components/CancelReasonModal';
 import VersionHistoryModal from './components/VersionHistoryModal';
 import Welcome from './components/Welcome';
 import { useLogs } from './hooks/useLogs';
@@ -40,7 +41,7 @@ const defaultSettings: AppSettings = {
 };
 
 const AppContent: React.FC<{ data: any }> = ({ data }) => {
-  const { logs, partners, quickAddSex, quickAddMasturbation, saveExercise, saveAlcoholRecord, saveNap, toggleAlcohol, toggleNap, toggleSleepLog, isInitializing, addOrUpdateLog, deleteLog } = data;
+  const { logs, partners, quickAddSex, quickAddMasturbation, saveExercise, saveAlcoholRecord, saveNap, toggleAlcohol, toggleNap, toggleSleepLog, isInitializing, addOrUpdateLog } = data;
   const { showToast } = useToast();
   
   const [settings, setSettings] = useLocalStorage<AppSettings>('appSettings', defaultSettings);
@@ -48,21 +49,25 @@ const AppContent: React.FC<{ data: any }> = ({ data }) => {
   const [view, setView] = useState<View>('dashboard');
   const [editingLogDate, setEditingLogDate] = useState<string | null>(null);
   
-  // Modals Visibility
+  // Modals Visibility States
   const [isSexModalOpen, setIsSexModalOpen] = useState(false);
   const [isMbModalOpen, setIsMbModalOpen] = useState(false);
   const [isExerciseModalOpen, setIsExerciseModalOpen] = useState(false);
   const [isAlcoholModalOpen, setIsAlcoholModalOpen] = useState(false);
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [isVersionHistoryOpen, setIsVersionHistoryOpen] = useState(false);
 
-  // Derive ongoing activities for FAB and Banners
+  // Cancellation State
+  const [cancelTarget, setCancelTarget] = useState<{ type: 'alcohol' | 'mb' | 'exercise', id?: string } | null>(null);
+
+  // Ongoing Data References
   const ongoingAlcohol = useMemo(() => logs.find((l: LogEntry) => l.alcoholRecord?.ongoing), [logs]);
   const ongoingMb = useMemo(() => logs.flatMap((l: LogEntry) => l.masturbation || []).find((m: MasturbationRecordDetails) => m.status === 'inProgress'), [logs]);
   const ongoingExercise = useMemo(() => logs.flatMap((l: LogEntry) => l.exercise || []).find((e: ExerciseRecord) => e.ongoing), [logs]);
   const ongoingSleep = useMemo(() => logs.find((l: LogEntry) => l.sleep?.startTime && !l.sleep?.endTime), [logs]);
   const ongoingNap = useMemo(() => logs.flatMap((l: LogEntry) => l.sleep?.naps || []).find((n: NapRecord) => n.ongoing), [logs]);
 
-  // FAB Handlers
+  // --- Handlers for FAB & Dashboard ---
   const handleStartAlcohol = async () => {
       if (ongoingAlcohol) setIsAlcoholModalOpen(true);
       else {
@@ -89,10 +94,16 @@ const AppContent: React.FC<{ data: any }> = ({ data }) => {
       showToast(ongoingNap ? '午休已结束' : '休息一下，已标记午休开始', 'info');
   };
 
-  // Activity Cancel Logic (Unified for Dashboard Banners)
-  const handleCancelActivity = async (type: 'alcohol' | 'mb' | 'exercise') => {
-      if (!confirm(`确定取消并删除本次${type === 'alcohol' ? '饮酒' : type === 'mb' ? '自慰' : '运动'}记录吗？`)) return;
+  // --- Activity Cancellation (Detailed Reason Modal) ---
+  const triggerCancelActivity = (type: 'alcohol' | 'mb' | 'exercise', id?: string) => {
+      setCancelTarget({ type, id });
+      setIsCancelModalOpen(true);
+  };
 
+  const confirmCancelActivity = async (reason: string) => {
+      if (!cancelTarget) return;
+      const { type } = cancelTarget;
+      
       try {
           if (type === 'alcohol' && ongoingAlcohol) {
               await addOrUpdateLog({ ...ongoingAlcohol, alcoholRecord: null, alcohol: 'none' });
@@ -103,9 +114,12 @@ const AppContent: React.FC<{ data: any }> = ({ data }) => {
               const log = logs.find((l: LogEntry) => l.exercise?.some(e => e.id === ongoingExercise.id));
               if (log) await addOrUpdateLog({ ...log, exercise: log.exercise!.filter(e => e.id !== ongoingExercise.id) });
           }
-          showToast('记录已移除', 'info');
+          showToast(`已取消记录 (${reason})`, 'info');
       } catch (e: any) {
           showToast(e.message, 'error');
+      } finally {
+          setIsCancelModalOpen(false);
+          setCancelTarget(null);
       }
   };
 
@@ -122,11 +136,11 @@ const AppContent: React.FC<{ data: any }> = ({ data }) => {
                 onDateClick={d => { setEditingLogDate(d); setView('form'); }} 
                 onNavigateToBackup={() => setActiveMainView('my')}
                 onEditAlcohol={() => setIsAlcoholModalOpen(true)}
-                onCancelAlcohol={() => handleCancelActivity('alcohol')}
+                onCancelAlcohol={() => triggerCancelActivity('alcohol')}
                 onFinishMasturbation={() => setIsMbModalOpen(true)}
-                onCancelMasturbation={() => handleCancelActivity('mb')}
+                onCancelMasturbation={() => triggerCancelActivity('mb')}
                 onFinishExercise={() => setIsExerciseModalOpen(true)}
-                onCancelExercise={() => handleCancelActivity('exercise')}
+                onCancelExercise={() => triggerCancelActivity('exercise')}
               />
             )}
             <Suspense fallback={<div className="p-10 text-center opacity-50"><Loader2 className="animate-spin mx-auto mb-2"/>加载视图...</div>}>
@@ -163,7 +177,7 @@ const AppContent: React.FC<{ data: any }> = ({ data }) => {
           </>
         )}
 
-        {/* --- Unified Modals --- */}
+        {/* --- Activity Detail Modals --- */}
         <SexRecordModal
             isOpen={isSexModalOpen}
             onClose={() => setIsSexModalOpen(false)}
@@ -191,6 +205,14 @@ const AppContent: React.FC<{ data: any }> = ({ data }) => {
             onClose={() => setIsAlcoholModalOpen(false)}
             onSave={async r => { await saveAlcoholRecord(r); setIsAlcoholModalOpen(false); showToast('饮酒详情已更新', 'success'); }}
             initialData={ongoingAlcohol?.alcoholRecord || undefined}
+        />
+
+        {/* --- Global Utility Modals --- */}
+        <CancelReasonModal
+            isOpen={isCancelModalOpen}
+            onClose={() => setIsCancelModalOpen(false)}
+            onConfirm={confirmCancelActivity}
+            title={`取消${cancelTarget?.type === 'alcohol' ? '饮酒' : cancelTarget?.type === 'mb' ? '自慰' : '运动'}记录`}
         />
         <VersionHistoryModal isOpen={isVersionHistoryOpen} onClose={() => setIsVersionHistoryOpen(false)} />
       </div>
