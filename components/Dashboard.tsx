@@ -386,7 +386,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
       <div className="grid grid-cols-2 gap-3 mb-6">
           {/* Sleep Card - Refactored for Total Sleep + Naps, No Click Action */}
           <div 
-            className="bg-[#0f172a] dark:bg-slate-900 p-4 rounded-3xl shadow-sm border border-slate-800 flex flex-col h-40 relative overflow-hidden"
+            className="bg-white dark:bg-slate-900 p-4 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col h-40 relative overflow-hidden"
           >
               {/* Header: Label + Total Time */}
               <div className="flex justify-between items-start z-10 mb-2">
@@ -395,7 +395,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                           <div className="w-7 h-7 rounded-lg bg-indigo-500/20 flex items-center justify-center text-indigo-400">
                               <Moon size={14} />
                           </div>
-                          <span className="text-sm font-bold text-slate-300">睡眠</span>
+                          <span className="text-sm font-bold text-slate-700 dark:text-slate-300">睡眠</span>
                       </div>
                       <div className="text-[10px] text-slate-500 font-mono font-medium pl-1">
                           {todayLog?.sleep?.startTime && todayLog?.sleep?.endTime 
@@ -406,12 +406,12 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                   </div>
                   <div>
                       {todayTotalSleep > 0 ? (
-                          <div className="text-3xl font-black text-white tracking-tight">
+                          <div className="text-3xl font-black text-brand-text dark:text-white tracking-tight">
                               {todayTotalSleep.toFixed(1)}
                               <span className="text-sm font-bold text-slate-500 ml-1">h</span>
                           </div>
                       ) : (
-                          <div className="text-2xl font-black text-slate-700">--</div>
+                          <div className="text-2xl font-black text-slate-300 dark:text-slate-700">--</div>
                       )}
                   </div>
               </div>
@@ -457,7 +457,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                                   </div>
                               ) : (
                                   /* Empty Placeholder */
-                                  <div className="w-full h-1 bg-slate-800/50 rounded-full"></div>
+                                  <div className="w-full h-1 bg-slate-100 dark:bg-slate-800/50 rounded-full"></div>
                               )}
                           </div>
                       );
@@ -466,7 +466,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
           </div>
 
           {/* Vitality Card */}
-          <div className="bg-[#0f172a] dark:bg-slate-900 p-4 rounded-3xl shadow-sm border border-slate-800 flex flex-col justify-between h-40 relative overflow-hidden">
+          <div className="bg-white dark:bg-slate-900 p-4 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col justify-between h-40 relative overflow-hidden">
               <div className="flex justify-between items-start z-10">
                   <div className="p-2 bg-rose-500/20 rounded-xl text-rose-500">
                       <Activity size={20} />
@@ -474,20 +474,20 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
               </div>
               <div className="z-10 w-full">
                   <div className="flex justify-between items-end mb-2">
-                      <h3 className="text-sm font-bold text-slate-400">活力</h3>
-                      <span className="text-[10px] text-slate-600">今日释放</span>
+                      <h3 className="text-sm font-bold text-slate-700 dark:text-slate-400">活力</h3>
+                      <span className="text-[10px] text-slate-400 dark:text-slate-600">今日释放</span>
                   </div>
                   
                   <div className="space-y-3">
                       <div className="flex items-center justify-between text-xs">
                           <span className="flex items-center text-orange-400 font-bold"><Dumbbell size={12} className="mr-1.5"/> 运动</span>
-                          <span className="text-slate-300 font-medium">
+                          <span className="text-brand-text dark:text-slate-300 font-medium">
                               {todayLog?.exercise && todayLog.exercise.length > 0 ? '已完成' : '未完成'}
                           </span>
                       </div>
                       <div className="flex items-center justify-between text-xs">
                           <span className="flex items-center text-pink-400 font-bold"><Heart size={12} className="mr-1.5"/> 性/手</span>
-                          <span className="text-slate-300 font-medium">
+                          <span className="text-brand-text dark:text-slate-300 font-medium">
                               {(todayLog?.sex?.length || 0) + (todayLog?.masturbation?.length || 0) > 0 ? `${(todayLog?.sex?.length || 0) + (todayLog?.masturbation?.length || 0)}次` : '无'}
                           </span>
                       </div>
@@ -500,7 +500,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
       <div className="grid grid-cols-2 gap-3">
           
           {/* Avg Hardness */}
-          <div className="bg-[#0f172a] dark:bg-slate-900 p-4 rounded-3xl shadow-sm border border-slate-800 h-28 flex flex-col justify-between">
+          <div className="bg-white dark:bg-slate-900 p-4 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 h-28 flex flex-col justify-between">
               <div className="flex justify-between items-start">
                   <div>
                       <span className="text-xs font-bold text-slate-500 block mb-1">平均硬度</span>
@@ -510,49 +510,49 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                   </div>
                   <Zap size={16} className="text-brand-accent opacity-50"/>
               </div>
-              <div className="text-[10px] text-slate-600 font-medium">- 稳定</div>
+              <div className="text-[10px] text-slate-400 font-medium">- 稳定</div>
           </div>
 
           {/* Morning Rate */}
-          <div className="bg-[#0f172a] dark:bg-slate-900 p-4 rounded-3xl shadow-sm border border-slate-800 h-28 flex flex-col justify-between">
+          <div className="bg-white dark:bg-slate-900 p-4 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 h-28 flex flex-col justify-between">
               <div className="flex justify-between items-start">
                   <div>
                       <span className="text-xs font-bold text-slate-500 block mb-1">晨勃率</span>
                       <div className="text-2xl font-black text-brand-accent">
-                          {currentMonthStats.rate}<span className="text-sm font-bold text-slate-600 ml-0.5">%</span>
+                          {currentMonthStats.rate}<span className="text-sm font-bold text-slate-600 dark:text-slate-400 ml-0.5">%</span>
                       </div>
                   </div>
                   <SunMedium size={16} className="text-brand-accent opacity-50"/>
               </div>
-              <div className="text-[10px] text-slate-600 font-medium">出现概率</div>
+              <div className="text-[10px] text-slate-400 font-medium">出现概率</div>
           </div>
 
           {/* Masturbation Count */}
-          <div className="bg-[#0f172a] dark:bg-slate-900 p-4 rounded-3xl shadow-sm border border-slate-800 h-28 flex flex-col justify-between">
+          <div className="bg-white dark:bg-slate-900 p-4 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 h-28 flex flex-col justify-between">
               <div className="flex justify-between items-start">
                   <div>
                       <span className="text-xs font-bold text-slate-500 block mb-1">自慰次数</span>
                       <div className="text-2xl font-black text-purple-400">
-                          {currentMonthStats.mbCount}<span className="text-sm font-bold text-slate-600 ml-0.5">次</span>
+                          {currentMonthStats.mbCount}<span className="text-sm font-bold text-slate-600 dark:text-slate-400 ml-0.5">次</span>
                       </div>
                   </div>
                   <Hand size={16} className="text-purple-500 opacity-50"/>
               </div>
-              <div className="text-[10px] text-slate-600 font-medium">本月释放</div>
+              <div className="text-[10px] text-slate-400 font-medium">本月释放</div>
           </div>
 
           {/* Sex Count */}
-          <div className="bg-[#0f172a] dark:bg-slate-900 p-4 rounded-3xl shadow-sm border border-slate-800 h-28 flex flex-col justify-between">
+          <div className="bg-white dark:bg-slate-900 p-4 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 h-28 flex flex-col justify-between">
               <div className="flex justify-between items-start">
                   <div>
                       <span className="text-xs font-bold text-slate-500 block mb-1">性爱次数</span>
                       <div className="text-2xl font-black text-pink-400">
-                          {currentMonthStats.sexCount}<span className="text-sm font-bold text-slate-600 ml-0.5">次</span>
+                          {currentMonthStats.sexCount}<span className="text-sm font-bold text-slate-600 dark:text-slate-400 ml-0.5">次</span>
                       </div>
                   </div>
                   <Heart size={16} className="text-pink-500 opacity-50"/>
               </div>
-              <div className="text-[10px] text-slate-600 font-medium">High Quality</div>
+              <div className="text-[10px] text-slate-400 font-medium">High Quality</div>
           </div>
       </div>
 
