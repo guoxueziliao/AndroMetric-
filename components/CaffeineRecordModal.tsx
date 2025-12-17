@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Coffee, Clock, Check, Plus, CupSoda } from 'lucide-react';
+import { Clock, Check, CupSoda, PenLine } from 'lucide-react';
 import Modal from './Modal';
 import { CaffeineItem } from '../types';
 
@@ -11,38 +11,41 @@ interface CaffeineRecordModalProps {
 }
 
 const PRESETS = [
-    { name: '美式咖啡', volume: 350, icon: '☕', mg: 150 },
-    { name: '拿铁/卡布', volume: 350, icon: '🥛', mg: 100 },
-    { name: '浓缩 (Espresso)', volume: 30, icon: '🤏', mg: 60 },
-    { name: '茶', volume: 250, icon: '🍵', mg: 40 },
-    { name: '功能饮料', volume: 250, icon: '⚡', mg: 80 },
-    { name: '冷萃', volume: 300, icon: '🧊', mg: 180 },
+    { name: '美式咖啡', volume: 350, icon: '☕' },
+    { name: '拿铁/奶咖', volume: 350, icon: '🥛' },
+    { name: '浓缩/Espresso', volume: 40, icon: '🤏' },
+    { name: '原叶茶', volume: 300, icon: '🍵' },
+    { name: '奶茶/果茶', volume: 500, icon: '🧋' },
+    { name: '功能饮料', volume: 250, icon: '⚡' },
+    { name: '可乐/苏打', volume: 330, icon: '🥤' },
+    { name: '冷萃咖啡', volume: 300, icon: '🧊' },
+    { name: '抹茶', volume: 250, icon: '🍵' },
 ];
 
 const CaffeineRecordModal: React.FC<CaffeineRecordModalProps> = ({ isOpen, onClose, onSave }) => {
     const [time, setTime] = useState('');
-    const [selectedName, setSelectedName] = useState('美式咖啡');
+    const [name, setName] = useState('美式咖啡');
     const [volume, setVolume] = useState(350);
 
     useEffect(() => {
         if (isOpen) {
             const now = new Date();
             setTime(now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }));
-            setSelectedName('美式咖啡');
+            setName('美式咖啡');
             setVolume(350);
         }
     }, [isOpen]);
 
     const handleSelectPreset = (p: typeof PRESETS[0]) => {
-        setSelectedName(p.name);
+        setName(p.name);
         setVolume(p.volume);
     };
 
     const handleSave = () => {
-        if (!time) return;
+        if (!time || !name) return;
         const newItem: CaffeineItem = {
             id: Date.now().toString(),
-            name: selectedName,
+            name: name,
             time: time,
             count: 1,
             volume: volume
@@ -57,7 +60,7 @@ const CaffeineRecordModal: React.FC<CaffeineRecordModalProps> = ({ isOpen, onClo
         <Modal
             isOpen={isOpen}
             onClose={onClose}
-            title="添加咖啡因"
+            title="记录提神饮品"
             footer={
                 <button 
                     onClick={handleSave} 
@@ -81,22 +84,39 @@ const CaffeineRecordModal: React.FC<CaffeineRecordModalProps> = ({ isOpen, onClo
                     />
                 </div>
 
+                {/* Name Input */}
+                <div>
+                    <label className="text-xs font-bold text-slate-400 uppercase mb-2 block">饮品名称</label>
+                    <div className="relative">
+                        <input 
+                            type="text" 
+                            value={name}
+                            onChange={e => setName(e.target.value)}
+                            placeholder="例如：龙井、红牛..."
+                            className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 pl-10 text-sm font-bold text-brand-text dark:text-slate-200 outline-none focus:border-amber-500 transition-colors"
+                        />
+                        <div className="absolute left-3 top-3 text-slate-400 pointer-events-none">
+                            <PenLine size={16}/>
+                        </div>
+                    </div>
+                </div>
+
                 {/* Presets Grid */}
                 <div>
-                    <label className="text-xs font-bold text-slate-400 uppercase mb-3 block">常见饮品</label>
+                    <label className="text-xs font-bold text-slate-400 uppercase mb-3 block">快速选择</label>
                     <div className="grid grid-cols-3 gap-3">
                         {PRESETS.map(p => (
                             <button
                                 key={p.name}
                                 onClick={() => handleSelectPreset(p)}
-                                className={`p-3 rounded-xl border flex flex-col items-center justify-center gap-2 transition-all ${
-                                    selectedName === p.name 
-                                    ? 'bg-amber-50 dark:bg-amber-900/30 border-amber-500 text-amber-800 dark:text-amber-400 ring-1 ring-amber-500' 
+                                className={`p-2 rounded-xl border flex flex-col items-center justify-center gap-1 transition-all ${
+                                    name === p.name 
+                                    ? 'bg-amber-50 dark:bg-amber-900/30 border-amber-500 text-amber-800 dark:text-amber-400 ring-1 ring-amber-500 shadow-sm' 
                                     : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800'
                                 }`}
                             >
-                                <span className="text-2xl">{p.icon}</span>
-                                <span className="text-xs font-bold">{p.name}</span>
+                                <span className="text-xl">{p.icon}</span>
+                                <span className="text-[10px] font-bold truncate w-full text-center">{p.name}</span>
                             </button>
                         ))}
                     </div>
@@ -114,15 +134,14 @@ const CaffeineRecordModal: React.FC<CaffeineRecordModalProps> = ({ isOpen, onClo
                         type="range" 
                         min="50" 
                         max="1000" 
-                        step="50" 
+                        step="10" 
                         value={volume}
                         onChange={(e) => setVolume(Number(e.target.value))}
                         className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-amber-600"
                     />
                     <div className="flex justify-between text-[10px] text-slate-400 mt-2 font-mono">
-                        <span>50ml</span>
-                        <span>500ml</span>
-                        <span>1000ml</span>
+                        <span>50ml (一口)</span>
+                        <span>500ml (一瓶)</span>
                     </div>
                 </div>
             </div>

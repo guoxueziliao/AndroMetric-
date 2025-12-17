@@ -301,7 +301,7 @@ const LogForm: React.FC<{
                             {/* Caffeine */}
                             <div className="space-y-2">
                                 <div className="flex justify-between items-center mb-1">
-                                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">咖啡因 (Caffeine)</label>
+                                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">提神饮品 (Refreshments)</label>
                                     <span className="text-[10px] text-brand-muted bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded-full font-bold">Total: {log.caffeineRecord?.totalCount || 0}</span>
                                 </div>
                                 
@@ -322,7 +322,7 @@ const LogForm: React.FC<{
                                             ))}
                                         </div>
                                     ) : (
-                                        <div className="text-center py-3 text-xs text-slate-400">暂无咖啡因记录</div>
+                                        <div className="text-center py-3 text-xs text-slate-400">暂无饮品记录</div>
                                     )}
                                     
                                     <button 
@@ -330,7 +330,7 @@ const LogForm: React.FC<{
                                         onClick={() => setIsCaffeineModalOpen(true)}
                                         className="w-full py-2.5 bg-white dark:bg-slate-700 rounded-lg border border-dashed border-slate-300 dark:border-slate-600 text-brand-accent hover:bg-blue-50 dark:hover:bg-slate-600 transition-colors flex items-center justify-center text-xs font-bold"
                                     >
-                                        <Plus size={14} className="mr-1"/> 添加咖啡/茶
+                                        <Plus size={14} className="mr-1"/> 添加饮品
                                     </button>
                                 </div>
                             </div>
