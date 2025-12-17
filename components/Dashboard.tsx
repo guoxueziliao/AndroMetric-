@@ -150,6 +150,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
           let nightDuration = 0;
           let napDuration = 0;
           let isLate = false;
+          let isInsufficient = false;
           
           // Night Sleep
           if (log?.sleep?.startTime && log?.sleep?.endTime) {
@@ -157,6 +158,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
               if (analysis) {
                   nightDuration = analysis.durationHours;
                   isLate = analysis.isLate;
+                  isInsufficient = analysis.isInsufficient;
               }
           }
 
@@ -171,6 +173,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
               napDuration,
               totalDuration: nightDuration + napDuration,
               isLate, 
+              isInsufficient,
               isToday: i === 0 
           });
       }
@@ -375,10 +378,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
 
       {/* Today's Status Cards (2-Col Layout) */}
       <div className="grid grid-cols-2 gap-3 mb-6">
-          {/* Sleep Card - Refactored for Total Sleep + Naps */}
+          {/* Sleep Card - Refactored for Total Sleep + Naps, No Click Action */}
           <div 
-            onClick={() => onEdit(todayStr)}
-            className="bg-[#0f172a] dark:bg-slate-900 p-4 rounded-3xl shadow-sm border border-slate-800 flex flex-col h-40 relative overflow-hidden group cursor-pointer"
+            className="bg-[#0f172a] dark:bg-slate-900 p-4 rounded-3xl shadow-sm border border-slate-800 flex flex-col h-40 relative overflow-hidden"
           >
               {/* Header: Label + Total Time */}
               <div className="flex justify-between items-start z-10 mb-2">
@@ -417,24 +419,30 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                       const nightPercent = stat.totalDuration > 0 ? (stat.nightDuration / stat.totalDuration) * 100 : 0;
                       const napPercent = stat.totalDuration > 0 ? (stat.napDuration / stat.totalDuration) * 100 : 0;
 
+                      // Color Logic for Night Bar
+                      let nightColor = 'bg-indigo-500'; // Default: Healthy
+                      if (stat.isLate && stat.isInsufficient) {
+                          nightColor = 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.4)]'; // Late & Short (Worst)
+                      } else if (stat.isLate) {
+                          nightColor = 'bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.4)]'; // Late (Behavioral issue)
+                      } else if (stat.isInsufficient) {
+                          nightColor = 'bg-orange-500'; // Short (Outcome issue)
+                      }
+
                       return (
                           <div key={i} className="flex-1 flex flex-col justify-end h-full relative group/bar">
                               {stat.totalDuration > 0 ? (
                                   <div className="w-full flex flex-col justify-end gap-[1px]" style={{ height: `${Math.max(10, totalHeightPercent)}%` }}>
-                                      {/* Nap Segment (Top) */}
+                                      {/* Nap Segment (Top) - Amber/Yellow for Day */}
                                       {stat.napDuration > 0 && (
                                           <div 
                                               className="w-full bg-amber-400 rounded-t-sm rounded-b-[1px] opacity-90"
                                               style={{ height: `${napPercent}%` }} 
                                           />
                                       )}
-                                      {/* Night Segment (Bottom) */}
+                                      {/* Night Segment (Bottom) - Dynamic Color */}
                                       <div 
-                                          className={`w-full rounded-b-sm ${stat.napDuration > 0 ? 'rounded-t-[1px]' : 'rounded-t-sm'} transition-colors duration-300 ${
-                                              stat.isLate 
-                                              ? 'bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.4)]' // Late: Purple glow
-                                              : 'bg-indigo-500' // Normal: Indigo
-                                          }`}
+                                          className={`w-full rounded-b-sm ${stat.napDuration > 0 ? 'rounded-t-[1px]' : 'rounded-t-sm'} transition-colors duration-300 ${nightColor}`}
                                           style={{ height: `${nightPercent}%` }}
                                       />
                                   </div>
@@ -446,13 +454,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                       );
                   })}
               </div>
-              
-              {/* Late Tag Overlay */}
-              {todayLog?.sleep && analyzeSleep(todayLog.sleep.startTime, todayLog.sleep.endTime)?.isLate && (
-                   <div className="absolute top-12 right-0 bg-purple-500/20 text-purple-400 text-[9px] font-bold px-1.5 py-0.5 rounded-l border-l border-purple-500/30">
-                       熬夜
-                   </div>
-              )}
           </div>
 
           {/* Vitality Card */}
