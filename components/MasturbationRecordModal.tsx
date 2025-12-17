@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo, Suspense, lazy } from 'react';
 import { X, Check, Clock, Film, PenLine, Plus, Minus, BatteryCharging, Wind, Sparkles, Hash, Settings, Users, ChevronRight, ArrowLeft, Trash2, Tag, MonitorPlay, Search, AlertTriangle } from 'lucide-react';
 import { MasturbationRecordDetails, LogEntry, PartnerProfile, ContentItem } from '../types';
@@ -78,8 +79,30 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
     useEffect(() => {
         if (isOpen) {
             if (initialData) {
+                let initialDuration = initialData.duration || 0;
+                
+                // Auto-calculate duration if we are finishing an in-progress record
+                if (initialData.status === 'inProgress' && initialData.startTime) {
+                    try {
+                        const [h, m] = initialData.startTime.split(':').map(Number);
+                        const now = new Date();
+                        const start = new Date();
+                        start.setHours(h, m, 0, 0);
+                        
+                        let diff = Math.round((now.getTime() - start.getTime()) / 60000);
+                        // Handle crossing midnight (e.g. started 23:50, now 00:10)
+                        if (diff < 0) diff += 1440; 
+                        
+                        // Ensure at least 1 min
+                        initialDuration = diff > 0 ? diff : 1;
+                    } catch (e) {
+                        console.error('Error calculating duration', e);
+                    }
+                }
+
                 setData({
                     ...initialData,
+                    duration: initialDuration,
                     contentItems: initialData.contentItems || [],
                     volumeForceLevel: initialData.volumeForceLevel || (initialData.ejaculation ? 3 : undefined),
                     postMood: initialData.postMood || '平静/贤者',
@@ -112,6 +135,11 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
 
     const handleSave = () => {
         const finalData = { ...data };
+        
+        // Always mark as completed when saving via this modal
+        // This fixes the bug where "inProgress" status persisted after editing details
+        finalData.status = 'completed';
+
         if (finalData.edgingCount && finalData.edgingCount > 0) finalData.edging = finalData.edgingCount === 1 ? 'once' : 'multiple';
         else finalData.edging = 'none';
         
