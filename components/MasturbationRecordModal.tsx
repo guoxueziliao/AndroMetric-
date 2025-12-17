@@ -81,7 +81,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
             if (initialData) {
                 let initialDuration = initialData.duration || 0;
                 
-                // Auto-calculate duration if we are finishing an in-progress record
+                // 自动计算时长：如果是“进行中”的状态，计算从开始到现在的时间
                 if (initialData.status === 'inProgress' && initialData.startTime) {
                     try {
                         const [h, m] = initialData.startTime.split(':').map(Number);
@@ -90,10 +90,10 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                         start.setHours(h, m, 0, 0);
                         
                         let diff = Math.round((now.getTime() - start.getTime()) / 60000);
-                        // Handle crossing midnight (e.g. started 23:50, now 00:10)
+                        // 处理跨天情况 (例如 23:50 开始，现在 00:10)
                         if (diff < 0) diff += 1440; 
                         
-                        // Ensure at least 1 min
+                        // 确保至少显示1分钟
                         initialDuration = diff > 0 ? diff : 1;
                     } catch (e) {
                         console.error('Error calculating duration', e);
@@ -136,8 +136,8 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
     const handleSave = () => {
         const finalData = { ...data };
         
-        // Always mark as completed when saving via this modal
-        // This fixes the bug where "inProgress" status persisted after editing details
+        // 关键修复：只要通过此弹窗保存，强制标记为已完成
+        // 这解决了“点击补充素材后保存，状态仍为施法中”的Bug
         finalData.status = 'completed';
 
         if (finalData.edgingCount && finalData.edgingCount > 0) finalData.edging = finalData.edgingCount === 1 ? 'once' : 'multiple';
