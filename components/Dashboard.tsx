@@ -2,7 +2,7 @@
 import React, { useState, useMemo } from 'react';
 import { LogEntry, ExerciseRecord, MasturbationRecordDetails, NapRecord, SexRecordDetails } from '../types';
 import CalendarHeatmap from './CalendarHeatmap';
-import { Moon, Hand, CloudSun, Heart, StopCircle, X, Dumbbell, User, Clock, Edit3, Trash2, Activity, Zap, SunMedium, Beer, BedDouble, History as HistoryIcon, ChevronRight } from 'lucide-react';
+import { Moon, Hand, CloudSun, Heart, StopCircle, X, Dumbbell, User, Clock, Edit3, Trash2, Activity, Zap, SunMedium, Beer, BedDouble, History as HistoryIcon, ChevronRight, HeartPulse, Flame } from 'lucide-react';
 import Modal from './Modal';
 import SafeDeleteModal from './SafeDeleteModal';
 import { formatTime, calculateSleepDuration, analyzeSleep, LABELS, getTodayDateString } from '../utils/helpers';
@@ -28,6 +28,39 @@ interface DashboardProps {
   onFinishSex?: (record: SexRecordDetails) => void;
   onCancelSex?: () => void;
 }
+
+// 辅助组件：睡眠小柱状图
+const SleepBarChart = ({ logs }: { logs: LogEntry[] }) => {
+    const last7Days = useMemo(() => {
+        const result = [];
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date();
+            d.setDate(d.getDate() - i);
+            const dateStr = d.toISOString().split('T')[0];
+            const log = logs.find(l => l.date === dateStr);
+            let hours = 0;
+            if (log?.sleep?.startTime && log?.sleep?.endTime) {
+                const s = new Date(log.sleep.startTime).getTime();
+                const e = new Date(log.sleep.endTime).getTime();
+                hours = Math.max(0, (e - s) / (1000 * 60 * 60));
+            }
+            result.push({ hours, isToday: i === 0 });
+        }
+        return result;
+    }, [logs]);
+
+    return (
+        <div className="flex items-end gap-1.5 h-12 mt-2 px-1">
+            {last7Days.map((d, i) => (
+                <div 
+                    key={i} 
+                    className={`flex-1 rounded-t-sm transition-all duration-500 ${d.isToday ? 'bg-amber-400' : 'bg-indigo-500/60'}`}
+                    style={{ height: `${Math.min(100, (d.hours / 10) * 100)}%` }}
+                />
+            ))}
+        </div>
+    );
+};
 
 const DailyReportCard: React.FC<{ log: LogEntry }> = ({ log }) => {
     const Row = ({ label, children, isLast = false }: { label: string, children: React.ReactNode, isLast?: boolean }) => (
@@ -64,6 +97,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
   const [summaryLog, setSummaryLog] = useState<LogEntry | null>(null);
   const [activeSummaryTab, setActiveSummaryTab] = useState<'diary' | 'track' | 'trace'>('diary');
   
+  const todayStr = getTodayDateString();
+  const todayLog = useMemo(() => logs.find(l => l.date === todayStr), [logs, todayStr]);
+
   // 6路并发横幅状态
   const ongoingAlcohol = useMemo(() => logs.find(l => l.alcoholRecord?.ongoing), [logs]);
   const ongoingMb = useMemo(() => logs.flatMap(l => l.masturbation || []).find(m => m.status === 'inProgress'), [logs]);
@@ -72,7 +108,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
   const ongoingNap = useMemo(() => logs.flatMap(l => l.sleep?.naps || []).find(n => n.ongoing), [logs]);
   const ongoingSex = useMemo(() => logs.flatMap(l => l.sex || []).find(s => s.ongoing), [logs]);
 
-  const todayStr = getTodayDateString();
   const greeting = useMemo(() => { const hour = new Date().getHours(); if (hour < 5) return '夜深了'; if (hour < 12) return '早上好'; if (hour < 18) return '下午好'; return '晚上好'; }, []);
 
   // 统计逻辑修正
@@ -89,8 +124,20 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
         ? Math.round((validLogs.filter(l => l.morning?.wokeWithErection).length / validLogs.length) * 100)
         : 0;
 
-      return { totalMb, totalSex, avgHardness, mwRate };
-  }, [logs]);
+      // 活力逻辑：今日运动和性行为状态
+      const todayExercise = todayLog?.exercise?.length || 0;
+      const todaySexual = (todayLog?.sex?.length || 0) + (todayLog?.masturbation?.length || 0);
+      
+      // 睡眠逻辑：今日睡眠时长显示
+      let sleepDisplay = '--';
+      if (todayLog?.sleep?.startTime && todayLog?.sleep?.endTime) {
+          const s = new Date(todayLog.sleep.startTime).getTime();
+          const e = new Date(todayLog.sleep.endTime).getTime();
+          sleepDisplay = ((e - s) / (1000 * 60 * 60)).toFixed(1);
+      }
+
+      return { totalMb, totalSex, avgHardness, mwRate, todayExercise, todaySexual, sleepDisplay };
+  }, [logs, todayLog]);
 
   const handleDateClickForSummary = (date: string) => { const log = logs.find(l => l.date === date); if (log) { if (log.status === 'pending' && date !== todayStr) { onEdit(log.date); } else { setSummaryLog(log); setActiveSummaryTab('diary'); setIsSummaryModalOpen(true); } } else { onDateClick(date); } };
 
@@ -104,7 +151,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
         <button onClick={onNavigateToBackup} className="p-3 bg-white dark:bg-slate-800 rounded-full shadow-sm border border-slate-100 dark:border-slate-800 hover:scale-105 transition-transform"><User size={24} className="text-brand-accent"/></button>
       </div>
 
-      {/* 横幅区 */}
+      {/* 横幅区 (保持不变) */}
       <div className="flex flex-col gap-3">
           {ongoingSleep && (
               <div className="bg-indigo-600 rounded-2xl p-4 text-white shadow-lg shadow-indigo-500/30 flex items-center justify-between animate-in slide-in-from-top-2 fade-in">
@@ -138,47 +185,110 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
           )}
       </div>
 
-      {/* 主日历 */}
+      {/* 主日历卡片 */}
       <div className="bg-brand-card dark:bg-slate-900 rounded-3xl p-4 shadow-soft border border-slate-100 dark:border-slate-800 mb-6">
         <CalendarHeatmap logs={logs.filter(l => l.status === 'completed' || l.date === todayStr)} onDateClick={handleDateClickForSummary} />
       </div>
 
-      {/* 统计卡片 */}
-      <div className="grid grid-cols-2 gap-3">
-          <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 h-32 flex flex-col justify-between transition-transform active:scale-95">
-              <div className="flex justify-between items-start">
-                  <div><span className="text-xs font-bold text-slate-500 block mb-1">平均硬度</span><div className="text-3xl font-black text-brand-accent">{stats.avgHardness}</div></div>
-                  <Zap size={18} className="text-brand-accent opacity-50"/>
+      {/* 图片同款 6 卡片网格布局 */}
+      <div className="grid grid-cols-2 gap-4">
+          
+          {/* 1. 睡眠卡片 (深色) */}
+          <div className="bg-slate-900 dark:bg-slate-900/80 p-5 rounded-[2.5rem] shadow-lg h-44 flex flex-col justify-between overflow-hidden relative group">
+              <div className="flex justify-between items-start relative z-10">
+                  <div className="flex items-center gap-2">
+                      <div className="w-9 h-9 rounded-2xl bg-indigo-500/20 flex items-center justify-center text-indigo-400">
+                          <Moon size={18} fill="currentColor" />
+                      </div>
+                      <span className="text-sm font-bold text-white">睡眠</span>
+                  </div>
+                  <div className="text-xl font-black text-white/40 font-mono tracking-tighter">
+                      {stats.sleepDisplay !== '--' ? stats.sleepDisplay : '--'}
+                  </div>
               </div>
-              <div className="text-[10px] text-slate-400 font-medium italic">- 稳定</div>
+              <div className="relative z-10">
+                  <span className="text-[10px] font-bold text-white/30 block mb-1">
+                      {stats.sleepDisplay !== '--' ? '今日睡眠时长' : '未记录时间'}
+                  </span>
+                  <SleepBarChart logs={logs} />
+              </div>
           </div>
-          <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 h-32 flex flex-col justify-between transition-transform active:scale-95">
+
+          {/* 2. 活力卡片 (深色) */}
+          <div className="bg-slate-900 dark:bg-slate-900/80 p-5 rounded-[2.5rem] shadow-lg h-44 flex flex-col justify-between group">
               <div className="flex justify-between items-start">
-                  <div><span className="text-xs font-bold text-slate-500 block mb-1">晨勃率</span><div className="text-3xl font-black text-blue-500">{stats.mwRate}<span className="text-sm ml-0.5">%</span></div></div>
-                  <SunMedium size={18} className="text-blue-500 opacity-50"/>
+                  <div className="w-9 h-9 rounded-2xl bg-rose-500/20 flex items-center justify-center text-rose-400">
+                      <HeartPulse size={18} />
+                  </div>
               </div>
-              <div className="text-[10px] text-slate-400 font-medium italic">出现概率</div>
+              <div>
+                  <h4 className="text-lg font-black text-white mb-2">活力</h4>
+                  <div className="space-y-1.5">
+                      <div className="flex justify-between items-center">
+                          <span className="text-[10px] font-bold text-orange-400 flex items-center gap-1"><Dumbbell size={10}/> 运动</span>
+                          <span className="text-[10px] font-black text-white/60">{stats.todayExercise > 0 ? '已完成' : '未完成'}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                          <span className="text-[10px] font-bold text-pink-400 flex items-center gap-1"><Heart size={10} fill="currentColor"/> 性/手</span>
+                          <span className="text-[10px] font-black text-white/60">{stats.todaySexual > 0 ? `${stats.todaySexual}次` : '无'}</span>
+                      </div>
+                  </div>
+              </div>
+              <div className="text-[10px] font-bold text-white/20 text-right">今日释放</div>
           </div>
-          <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 h-32 flex flex-col justify-between transition-transform active:scale-95">
+
+          {/* 3. 平均硬度 (图片样式) */}
+          <div className="bg-white dark:bg-slate-900 p-5 rounded-[2.5rem] shadow-sm border border-slate-100 dark:border-slate-800 h-44 flex flex-col justify-between transition-all hover:shadow-md">
               <div className="flex justify-between items-start">
-                  <div><span className="text-xs font-bold text-slate-500 block mb-1">自慰次数</span><div className="text-3xl font-black text-purple-500">{stats.totalMb}<span className="text-sm font-bold text-slate-600 dark:text-slate-400 ml-0.5">次</span></div></div>
-                  <Hand size={18} className="text-purple-500 opacity-50"/>
+                  <div className="text-xs font-bold text-slate-400">平均硬度</div>
+                  <Zap size={18} className="text-brand-accent opacity-30"/>
               </div>
-              <div className="text-[10px] text-slate-400 font-medium">累计活跃</div>
+              <div>
+                  <div className="text-4xl font-black text-brand-text dark:text-white tracking-tighter">{stats.avgHardness}</div>
+                  <div className="text-[10px] text-slate-400 font-bold mt-1">- 稳定</div>
+              </div>
           </div>
-          <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 h-32 flex flex-col justify-between transition-transform active:scale-95">
+
+          {/* 4. 晨勃率 (图片样式) */}
+          <div className="bg-white dark:bg-slate-900 p-5 rounded-[2.5rem] shadow-sm border border-slate-100 dark:border-slate-800 h-44 flex flex-col justify-between transition-all hover:shadow-md">
               <div className="flex justify-between items-start">
-                  <div><span className="text-xs font-bold text-slate-500 block mb-1">性爱次数</span><div className="text-3xl font-black text-pink-500">{stats.totalSex}<span className="text-sm font-bold text-slate-600 dark:text-slate-400 ml-0.5">次</span></div></div>
-                  <Heart size={18} className="text-pink-500 opacity-50"/>
+                  <div className="text-xs font-bold text-slate-400">晨勃率</div>
+                  <SunMedium size={18} className="text-amber-500 opacity-30"/>
               </div>
-              <div className="text-[10px] text-slate-400 font-medium">累计活跃</div>
+              <div>
+                  <div className="text-4xl font-black text-blue-500 tracking-tighter">{stats.mwRate}<span className="text-sm ml-0.5">%</span></div>
+                  <div className="text-[10px] text-slate-400 font-bold mt-1">出现概率</div>
+              </div>
+          </div>
+
+          {/* 5. 自慰次数 (图片样式) */}
+          <div className="bg-white dark:bg-slate-900 p-5 rounded-[2.5rem] shadow-sm border border-slate-100 dark:border-slate-800 h-44 flex flex-col justify-between transition-all hover:shadow-md">
+              <div className="flex justify-between items-start">
+                  <div className="text-xs font-bold text-slate-400">自慰次数</div>
+                  <Hand size={18} className="text-purple-500 opacity-30"/>
+              </div>
+              <div>
+                  <div className="text-4xl font-black text-purple-500 tracking-tighter">{stats.totalMb}<span className="text-sm font-bold ml-1 opacity-50">次</span></div>
+                  <div className="text-[10px] text-slate-400 font-bold mt-1">本月释放</div>
+              </div>
+          </div>
+
+          {/* 6. 性爱次数 (图片样式) */}
+          <div className="bg-white dark:bg-slate-900 p-5 rounded-[2.5rem] shadow-sm border border-slate-100 dark:border-slate-800 h-44 flex flex-col justify-between transition-all hover:shadow-md">
+              <div className="flex justify-between items-start">
+                  <div className="text-xs font-bold text-slate-400">性爱次数</div>
+                  <Heart size={18} className="text-pink-500 opacity-30"/>
+              </div>
+              <div>
+                  <div className="text-4xl font-black text-pink-500 tracking-tighter">{stats.totalSex}<span className="text-sm font-bold ml-1 opacity-50">次</span></div>
+                  <div className="text-[10px] text-slate-400 font-bold mt-1">High Quality</div>
+              </div>
           </div>
       </div>
 
       <Modal isOpen={isSummaryModalOpen} onClose={() => { setIsSummaryModalOpen(false); setSummaryLog(null); }} title="" footer={null}>
           {summaryLog && (
               <div className="pb-6">
-                  {/* 弹窗头部：增加删除与历史按钮 */}
                   <div className="flex justify-between items-start mb-6 px-1">
                       <div>
                           <h2 className="text-3xl font-black text-brand-text dark:text-slate-100 tracking-tighter">{new Date(summaryLog.date).getMonth() + 1}月{new Date(summaryLog.date).getDate()}日</h2>
@@ -187,45 +297,31 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                       <div className="flex gap-2">
                           <button 
                             onClick={() => setActiveSummaryTab('trace')}
-                            className={`p-2.5 rounded-xl border transition-all ${activeSummaryTab === 'trace' ? 'bg-brand-accent text-white border-brand-accent shadow-md' : 'bg-slate-50 dark:bg-slate-800 text-slate-400 border-slate-100 dark:border-slate-700 hover:text-brand-accent'}`}
-                            title="查看修改历史"
+                            className={`p-2.5 rounded-2xl border transition-all ${activeSummaryTab === 'trace' ? 'bg-brand-accent text-white border-brand-accent shadow-md' : 'bg-slate-50 dark:bg-slate-800 text-slate-400 border-slate-100 dark:border-slate-700 hover:text-brand-accent'}`}
                           >
                             <HistoryIcon size={18}/>
                           </button>
                           <button 
                             onClick={() => { setLogToDelete(summaryLog.date); setIsDeleteModalOpen(true); }}
-                            className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-400 border border-slate-100 dark:border-slate-700 hover:text-red-500 transition-all"
-                            title="删除此记录"
+                            className="p-2.5 rounded-2xl bg-slate-50 dark:bg-slate-800 text-slate-400 border border-slate-100 dark:border-slate-700 hover:text-red-500 transition-all"
                           >
                             <Trash2 size={18}/>
                           </button>
                       </div>
                   </div>
-
-                  <div className="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-xl mb-6">
-                      <button onClick={() => setActiveSummaryTab('diary')} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center ${activeSummaryTab === 'diary' ? 'bg-white dark:bg-slate-700 shadow-sm text-brand-accent' : 'text-slate-400'}`}>日记</button>
-                      <button onClick={() => setActiveSummaryTab('track')} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center ${activeSummaryTab === 'track' ? 'bg-white dark:bg-slate-700 shadow-sm text-brand-accent' : 'text-slate-400'}`}>轨迹</button>
-                      <button onClick={() => setActiveSummaryTab('trace')} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center ${activeSummaryTab === 'trace' ? 'bg-white dark:bg-slate-700 shadow-sm text-brand-accent' : 'text-slate-400'}`}>溯源</button>
+                  <div className="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl mb-6">
+                      <button onClick={() => setActiveSummaryTab('diary')} className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center ${activeSummaryTab === 'diary' ? 'bg-white dark:bg-slate-700 shadow-sm text-brand-accent' : 'text-slate-400'}`}>日记</button>
+                      <button onClick={() => setActiveSummaryTab('track')} className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center ${activeSummaryTab === 'track' ? 'bg-white dark:bg-slate-700 shadow-sm text-brand-accent' : 'text-slate-400'}`}>轨迹</button>
+                      <button onClick={() => setActiveSummaryTab('trace')} className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center ${activeSummaryTab === 'trace' ? 'bg-white dark:bg-slate-700 shadow-sm text-brand-accent' : 'text-slate-400'}`}>溯源</button>
                   </div>
-                  {activeSummaryTab === 'diary' && (<div className="space-y-6 animate-in fade-in slide-in-from-left-4"><DailyReportCard log={summaryLog} /><button onClick={() => { onEdit(summaryLog.date); setIsSummaryModalOpen(false); }} className="w-full py-4 bg-slate-800 dark:bg-white text-white dark:text-slate-900 font-bold rounded-2xl flex items-center justify-center shadow-lg"><Edit3 size={18} className="mr-2"/> 编辑详情</button></div>)}
+                  {activeSummaryTab === 'diary' && (<div className="space-y-6 animate-in fade-in slide-in-from-left-4"><DailyReportCard log={summaryLog} /><button onClick={() => { onEdit(summaryLog.date); setIsSummaryModalOpen(false); }} className="w-full py-4 bg-slate-800 dark:bg-white text-white dark:text-slate-900 font-bold rounded-3xl flex items-center justify-center shadow-lg"><Edit3 size={18} className="mr-2"/> 编辑详情</button></div>)}
                   {activeSummaryTab === 'track' && (<div className="animate-in fade-in slide-in-from-right-4"><GlobalTimeline log={summaryLog} /></div>)}
                   {activeSummaryTab === 'trace' && (<div className="animate-in fade-in slide-in-from-right-4"><LogHistory log={summaryLog} /></div>)}
               </div>
           )}
       </Modal>
 
-      <SafeDeleteModal 
-        isOpen={isDeleteModalOpen} 
-        onClose={() => setIsDeleteModalOpen(false)} 
-        onConfirm={async () => { 
-            if (logToDelete) { 
-                await deleteLog(logToDelete); 
-                showToast('记录已删除', 'success'); 
-                setIsDeleteModalOpen(false); 
-                setIsSummaryModalOpen(false); 
-            } 
-        }} 
-      />
+      <SafeDeleteModal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} onConfirm={async () => { if (logToDelete) { await deleteLog(logToDelete); showToast('记录已删除', 'success'); setIsDeleteModalOpen(false); setIsSummaryModalOpen(false); } }} />
     </div>
   );
 };
