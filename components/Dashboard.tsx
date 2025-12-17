@@ -2,7 +2,7 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { LogEntry, ExerciseRecord, SexRecordDetails, MasturbationRecordDetails, ChangeRecord } from '../types';
 import CalendarHeatmap from './CalendarHeatmap';
-import { Moon, Zap, Activity, Hand, HeartPulse, Clock, Dumbbell, Footprints, Timer, CloudSun, Swords, TrendingUp, Beer, Film, ChevronLeft, ChevronRight, MapPin, Target, Play, ShieldAlert, Edit3, Trash2, FastForward, Coffee, Bed, ArrowRight, User, List, Route, Thermometer, Smile, AlertTriangle, Wind, StopCircle, X } from 'lucide-react';
+import { Moon, Zap, Activity, Hand, HeartPulse, Clock, Dumbbell, Footprints, Timer, CloudSun, Swords, TrendingUp, TrendingDown, Beer, Film, ChevronLeft, ChevronRight, MapPin, Target, Play, ShieldAlert, Edit3, Trash2, FastForward, Coffee, Bed, ArrowRight, User, List, Route, Thermometer, Smile, AlertTriangle, Wind, StopCircle, X, Heart } from 'lucide-react';
 import Modal from './Modal';
 import SafeDeleteModal from './SafeDeleteModal';
 import CancelReasonModal from './CancelReasonModal';
@@ -224,6 +224,23 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
   const ongoingNap = useMemo(() => logs.flatMap(l => l.sleep?.naps || []).find(n => n.ongoing), [logs]);
   const ongoingMb = useMemo(() => logs.flatMap(l => l.masturbation || []).find(m => m.status === 'inProgress'), [logs]);
 
+  // Stats for the monthly dashboard cards
+  const currentMonthStats = useMemo(() => {
+      const now = new Date();
+      const currentYear = now.getFullYear();
+      const currentMonth = now.getMonth();
+      
+      const monthLogs = logs.filter(l => {
+          const d = new Date(l.date);
+          return d.getFullYear() === currentYear && d.getMonth() === currentMonth;
+      });
+
+      return {
+          mbCount: monthLogs.reduce((acc, l) => acc + (l.masturbation?.length || 0), 0),
+          sexCount: monthLogs.reduce((acc, l) => acc + (l.sex?.length || 0), 0)
+      };
+  }, [logs]);
+
   const greeting = useMemo(() => {
       const hour = new Date().getHours();
       if (hour < 5) return '夜深了';
@@ -409,13 +426,47 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
         <CalendarHeatmap logs={completedLogs} onDateClick={handleDateClickForSummary} />
       </div>
 
-      {/* Quick Status / Sleep / Activity Cards */}
+      {/* Stats & Quick Actions Grid (Restored) */}
       <div className="grid grid-cols-2 gap-4">
+          
+          {/* Masturbation Stats Card */}
+          <div className="bg-brand-card dark:bg-slate-900 p-4 rounded-3xl shadow-soft border border-slate-100 dark:border-slate-800 relative overflow-hidden flex flex-col justify-between h-32">
+              <div className="flex justify-between items-start">
+                  <div>
+                      <span className="text-xs font-bold text-slate-400 block mb-1">自慰次数</span>
+                      <div className="text-2xl font-black text-brand-text dark:text-slate-100">
+                          {currentMonthStats.mbCount}<span className="text-sm font-bold text-slate-400 ml-1">次</span>
+                      </div>
+                  </div>
+                  <div className="p-2 bg-purple-50 dark:bg-purple-900/20 rounded-full">
+                      <Hand size={18} className="text-purple-500" />
+                  </div>
+              </div>
+              <div className="text-[10px] text-slate-400 font-medium">本月释放</div>
+          </div>
+
+          {/* Sex Stats Card */}
+          <div className="bg-brand-card dark:bg-slate-900 p-4 rounded-3xl shadow-soft border border-slate-100 dark:border-slate-800 relative overflow-hidden flex flex-col justify-between h-32">
+              <div className="flex justify-between items-start">
+                  <div>
+                      <span className="text-xs font-bold text-slate-400 block mb-1">性爱次数</span>
+                      <div className="text-2xl font-black text-brand-text dark:text-slate-100">
+                          {currentMonthStats.sexCount}<span className="text-sm font-bold text-slate-400 ml-1">次</span>
+                      </div>
+                  </div>
+                  <div className="p-2 bg-pink-50 dark:bg-pink-900/20 rounded-full">
+                      <Heart size={18} className="text-pink-500" />
+                  </div>
+              </div>
+              <div className="text-[10px] text-slate-400 font-medium">High Quality</div>
+          </div>
+
+          {/* Nap Card */}
           <div 
             onClick={handleToggleNap}
-            className={`p-4 rounded-3xl border transition-all cursor-pointer relative overflow-hidden ${ongoingNap ? 'bg-orange-500 text-white border-orange-600 shadow-lg shadow-orange-500/20' : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 shadow-sm'}`}
+            className={`p-4 rounded-3xl border transition-all cursor-pointer relative overflow-hidden h-32 flex flex-col justify-between ${ongoingNap ? 'bg-orange-500 text-white border-orange-600 shadow-lg shadow-orange-500/20' : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 shadow-sm'}`}
           >
-              <div className="relative z-10">
+              <div className="relative z-10 w-full">
                   <div className="flex justify-between items-start mb-2">
                       <div className={`p-2 rounded-xl ${ongoingNap ? 'bg-white/20' : 'bg-slate-100 dark:bg-slate-800'}`}>
                           <CloudSun size={20} className={ongoingNap ? 'text-white' : 'text-slate-500'} />
@@ -431,9 +482,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
 
           {/* Pending Sleep Card */}
           {pendingLog ? (
-              <div onClick={() => onEdit(pendingLog.date)} className="bg-purple-600 p-4 rounded-3xl shadow-lg shadow-purple-500/30 text-white cursor-pointer relative overflow-hidden group">
+              <div onClick={() => onEdit(pendingLog.date)} className="bg-purple-600 p-4 rounded-3xl shadow-lg shadow-purple-500/30 text-white cursor-pointer relative overflow-hidden group h-32 flex flex-col justify-between">
                   <div className="absolute top-0 right-0 w-16 h-16 bg-white/10 rounded-full blur-xl -translate-y-1/2 translate-x-1/2"></div>
-                  <div className="flex justify-between items-start mb-2 relative z-10">
+                  <div className="flex justify-between items-start mb-2 relative z-10 w-full">
                       <div className="p-2 bg-white/20 rounded-xl"><Moon size={20} fill="currentColor"/></div>
                       <span className="text-[10px] font-bold bg-white/20 px-2 py-0.5 rounded-full">记录中</span>
                   </div>
@@ -445,7 +496,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                   </div>
               </div>
           ) : (
-              <div className="bg-white dark:bg-slate-900 p-4 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col justify-center items-center text-slate-400">
+              <div className="bg-white dark:bg-slate-900 p-4 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col justify-center items-center text-slate-400 h-32">
                   <Moon size={24} className="mb-2 opacity-50"/>
                   <span className="text-xs font-bold">暂无睡眠</span>
               </div>
