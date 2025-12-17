@@ -149,11 +149,15 @@ export const GlobalTimeline: React.FC<GlobalTimelineProps> = ({ log }) => {
 
         // 8. Naps
         log.sleep?.naps?.forEach(nap => {
+            let desc = nap.ongoing ? '进行中...' : `时长 ${nap.duration}m`;
+            if (nap.hasDream) desc += ` (有梦)`;
+            if (nap.wokeWithErection) desc += ` 🍆 Lv${nap.hardness}`;
+            
             list.push({
                 time: nap.startTime,
                 type: 'nap',
                 title: '午休',
-                desc: nap.ongoing ? '进行中...' : `时长 ${nap.duration}m ${nap.hasDream ? '(有梦)' : ''}`,
+                desc,
                 icon: CloudSun,
                 color: 'text-amber-500 bg-amber-50 dark:bg-amber-900/20',
                 timestamp: getTimestamp(nap.startTime)

@@ -83,7 +83,9 @@ export const hydrateLog = (raw: any): LogEntry => {
     naps = naps.map((n: any) => ({
         ...n,
         hasDream: n.hasDream ?? false,
-        dreamTypes: n.dreamTypes ?? []
+        dreamTypes: n.dreamTypes ?? [],
+        wokeWithErection: n.wokeWithErection ?? false,
+        hardness: n.hardness ?? null
     }));
 
     const defaultSleep: SleepRecord = {

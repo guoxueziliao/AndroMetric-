@@ -201,6 +201,9 @@ export interface NapRecord {
     ongoing?: boolean;
     hasDream?: boolean;
     dreamTypes?: string[];
+    // v0.0.7 Nap Wood
+    wokeWithErection?: boolean;
+    hardness?: HardnessLevel | null;
 }
 
 export interface AlcoholItem {

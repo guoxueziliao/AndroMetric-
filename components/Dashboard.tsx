@@ -2,7 +2,7 @@
 import React, { useState, useMemo } from 'react';
 import { LogEntry, ExerciseRecord, MasturbationRecordDetails, ChangeRecord } from '../types';
 import CalendarHeatmap from './CalendarHeatmap';
-import { Moon, Hand, CloudSun, Heart, StopCircle, X, Dumbbell, User, Clock, List, Route, Edit3, Trash2, Activity, Zap, SunMedium, ArrowRight, BedDouble } from 'lucide-react';
+import { Moon, Hand, CloudSun, Heart, StopCircle, X, Dumbbell, User, Clock, List, Route, Edit3, Trash2, Activity, Zap, SunMedium, ArrowRight, BedDouble, History } from 'lucide-react';
 import Modal from './Modal';
 import SafeDeleteModal from './SafeDeleteModal';
 import CancelReasonModal from './CancelReasonModal';
@@ -116,11 +116,10 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [logToDelete, setLogToDelete] = useState<string | null>(null);
   
-  // Summary Modal State
+  // Summary Modal State - Unified Tab System
   const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
   const [summaryLog, setSummaryLog] = useState<LogEntry | null>(null);
-  const [isHistoryView, setIsHistoryView] = useState(false);
-  const [activeSummaryTab, setActiveSummaryTab] = useState<'overview' | 'timeline'>('overview');
+  const [activeSummaryTab, setActiveSummaryTab] = useState<'overview' | 'timeline' | 'history'>('overview');
   
   // Activity Cancel State
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
@@ -259,7 +258,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
             setSummaryLog(log); 
             setActiveSummaryTab('overview'); 
             setIsSummaryModalOpen(true); 
-            setIsHistoryView(false); 
         }
     } else {
         onDateClick(date);
@@ -560,7 +558,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
       <Modal isOpen={isSummaryModalOpen} onClose={() => { setIsSummaryModalOpen(false); setSummaryLog(null); }} title="" footer={null}>
           {summaryLog && (
               <div className="pb-6">
-                  {/* Header Date */}
+                  {/* Header Date & Actions */}
                   <div className="flex justify-between items-end mb-6 px-1">
                       <div>
                           <h2 className="text-3xl font-black text-brand-text dark:text-slate-100 tracking-tighter">
@@ -571,37 +569,45 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                           </p>
                       </div>
                       <div className="flex gap-2">
-                          <button onClick={() => setIsHistoryView(!isHistoryView)} className={`p-2 rounded-full transition-colors ${isHistoryView ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30' : 'bg-slate-100 text-slate-500 dark:bg-slate-800'}`}>
-                              <Clock size={20} />
-                          </button>
                           <button onClick={() => handleDeleteRequest(summaryLog.date)} className="p-2 rounded-full bg-red-50 text-red-500 hover:bg-red-100 transition-colors">
                               <Trash2 size={20} />
                           </button>
                       </div>
                   </div>
 
-                  {/* Tabs */}
+                  {/* Unified Tabs (3-Way) */}
                   <div className="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-xl mb-6">
                       <button 
                         onClick={() => setActiveSummaryTab('overview')}
-                        className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${activeSummaryTab === 'overview' ? 'bg-white dark:bg-slate-700 shadow-sm text-brand-accent' : 'text-slate-400'}`}
+                        className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center ${activeSummaryTab === 'overview' ? 'bg-white dark:bg-slate-700 shadow-sm text-brand-accent' : 'text-slate-400'}`}
                       >
-                          <List size={14} className="inline mr-1"/> 概览
+                          <List size={14} className="mr-1"/> 概览
                       </button>
                       <button 
                         onClick={() => setActiveSummaryTab('timeline')}
-                        className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${activeSummaryTab === 'timeline' ? 'bg-white dark:bg-slate-700 shadow-sm text-brand-accent' : 'text-slate-400'}`}
+                        className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center ${activeSummaryTab === 'timeline' ? 'bg-white dark:bg-slate-700 shadow-sm text-brand-accent' : 'text-slate-400'}`}
                       >
-                          <Route size={14} className="inline mr-1"/> 时间轴
+                          <Route size={14} className="mr-1"/> 时间轴
+                      </button>
+                      <button 
+                        onClick={() => setActiveSummaryTab('history')}
+                        className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center ${activeSummaryTab === 'history' ? 'bg-white dark:bg-slate-700 shadow-sm text-brand-accent' : 'text-slate-400'}`}
+                      >
+                          <History size={14} className="mr-1"/> 变动
                       </button>
                   </div>
 
-                  {isHistoryView ? (
-                      <div className="animate-in fade-in slide-in-from-right-4">
-                          <h3 className="text-sm font-bold text-slate-400 mb-4 flex items-center"><Clock size={16} className="mr-2"/> 修改历史</h3>
-                          <LogHistory log={summaryLog} />
+                  {/* Content based on Tab */}
+                  {activeSummaryTab === 'overview' && (
+                      <div className="space-y-6 animate-in fade-in slide-in-from-left-4">
+                          <DailyReportCard log={summaryLog} />
+                          <button onClick={() => { onEdit(summaryLog.date); setIsSummaryModalOpen(false); }} className="w-full py-4 bg-slate-800 dark:bg-white text-white dark:text-slate-900 font-bold rounded-2xl flex items-center justify-center shadow-lg shadow-slate-200 dark:shadow-none hover:scale-[1.02] transition-transform">
+                              <Edit3 size={18} className="mr-2"/> 编辑详情
+                          </button>
                       </div>
-                  ) : activeSummaryTab === 'timeline' ? (
+                  )}
+
+                  {activeSummaryTab === 'timeline' && (
                       <div className="animate-in fade-in slide-in-from-right-4">
                           <GlobalTimeline log={summaryLog} />
                           <div className="mt-8 text-center">
@@ -610,13 +616,11 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                               </button>
                           </div>
                       </div>
-                  ) : (
-                      <div className="space-y-6 animate-in fade-in slide-in-from-left-4">
-                          <DailyReportCard log={summaryLog} />
-                          
-                          <button onClick={() => { onEdit(summaryLog.date); setIsSummaryModalOpen(false); }} className="w-full py-4 bg-slate-800 dark:bg-white text-white dark:text-slate-900 font-bold rounded-2xl flex items-center justify-center shadow-lg shadow-slate-200 dark:shadow-none hover:scale-[1.02] transition-transform">
-                              <Edit3 size={18} className="mr-2"/> 编辑详情
-                          </button>
+                  )}
+
+                  {activeSummaryTab === 'history' && (
+                      <div className="animate-in fade-in slide-in-from-right-4">
+                          <LogHistory log={summaryLog} />
                       </div>
                   )}
               </div>

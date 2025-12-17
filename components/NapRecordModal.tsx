@@ -1,8 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
-import { CloudSun, Clock, Play, Sparkles } from 'lucide-react';
+import { CloudSun, Clock, Play, Sparkles, SunMedium } from 'lucide-react';
 import Modal from './Modal';
-import { NapRecord } from '../types';
+import { NapRecord, HardnessLevel } from '../types';
+import HardnessSelector from './HardnessSelector';
 
 interface NapRecordModalProps {
     isOpen: boolean;
@@ -21,6 +22,10 @@ const NapRecordModal: React.FC<NapRecordModalProps> = ({ isOpen, onClose, onSave
     const [hasDream, setHasDream] = useState(false);
     const [dreamTypes, setDreamTypes] = useState<string[]>([]);
     
+    // v0.0.7 Nap Wood Support
+    const [wokeWithErection, setWokeWithErection] = useState(false);
+    const [hardness, setHardness] = useState<HardnessLevel | null>(null);
+    
     // Calculate duration for display and saving
     const duration = React.useMemo(() => {
         if (!startTime || !endTime) return 0;
@@ -38,6 +43,8 @@ const NapRecordModal: React.FC<NapRecordModalProps> = ({ isOpen, onClose, onSave
                 setEndTime(initialData.endTime || '');
                 setHasDream(initialData.hasDream || false);
                 setDreamTypes(initialData.dreamTypes || []);
+                setWokeWithErection(initialData.wokeWithErection || false);
+                setHardness(initialData.hardness || null);
                 
                 // If existing record has duration but no endTime, calculate it
                 if (initialData.duration && !initialData.endTime && initialData.startTime) {
@@ -54,6 +61,8 @@ const NapRecordModal: React.FC<NapRecordModalProps> = ({ isOpen, onClose, onSave
                 
                 setHasDream(false);
                 setDreamTypes([]);
+                setWokeWithErection(false);
+                setHardness(null);
             }
         }
     }, [isOpen, initialData]);
@@ -66,13 +75,20 @@ const NapRecordModal: React.FC<NapRecordModalProps> = ({ isOpen, onClose, onSave
             duration,
             ongoing: false, // Manual entry implies completed
             hasDream,
-            dreamTypes: hasDream ? dreamTypes : []
+            dreamTypes: hasDream ? dreamTypes : [],
+            wokeWithErection,
+            hardness: wokeWithErection ? (hardness || 3) : null
         });
         onClose();
     };
     
     const toggleDreamType = (t: string) => {
         setDreamTypes(prev => prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t]);
+    };
+    
+    const handleWokeWoodToggle = (checked: boolean) => {
+        setWokeWithErection(checked);
+        if (checked && !hardness) setHardness(3); // Default to standard
     };
 
     if (!isOpen) return null;
@@ -125,6 +141,26 @@ const NapRecordModal: React.FC<NapRecordModalProps> = ({ isOpen, onClose, onSave
                     <div className="text-3xl font-black text-orange-600 dark:text-orange-400">
                         {duration} <span className="text-sm font-bold text-slate-400">分钟</span>
                     </div>
+                </div>
+                
+                {/* Nap Wood Section (v0.0.7) */}
+                <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-3 border border-slate-100 dark:border-slate-800">
+                    <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center text-blue-600 dark:text-blue-400 font-bold text-xs uppercase tracking-wider">
+                            <SunMedium size={14} className="mr-1.5"/> 午休勃起 (Nap Wood)
+                        </div>
+                        <div className="flex items-center">
+                            <input type="checkbox" className="toggle-checkbox h-4 w-8" checked={wokeWithErection} onChange={e => handleWokeWoodToggle(e.target.checked)} />
+                        </div>
+                    </div>
+                    {wokeWithErection && (
+                        <div className="animate-in fade-in pt-2">
+                            <HardnessSelector 
+                                value={hardness || 3} 
+                                onChange={(v) => setHardness(v as HardnessLevel)} 
+                            />
+                        </div>
+                    )}
                 </div>
                 
                 {/* Dream Section (v0.0.5) */}
