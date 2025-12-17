@@ -1,5 +1,4 @@
 
-
 import { LogEntry } from '../types';
 import { XP_GROUPS } from './constants';
 import { validateTag } from './tagValidators';
@@ -65,9 +64,6 @@ export const calculateXpStats = (logs: LogEntry[]): XpAnalysisResult => {
         if (!log.masturbation || log.masturbation.length === 0) return;
 
         log.masturbation.forEach(record => {
-            /**
-             * Fixed Property access: record.assets?.categories is now defined in types.
-             */
             const rawTags = record.assets?.categories || [];
             if (rawTags.length === 0) return;
 
@@ -101,9 +97,6 @@ export const calculateXpStats = (logs: LogEntry[]): XpAnalysisResult => {
                 // 5. Update Dimension Stats (Only if NOT noise)
                 if (!isNoise) {
                     const dim = statsMap[tag].dimension;
-                    /**
-                     * Fixed index access with explicit key check.
-                     */
                     if (dimensionRecordSets[dim]) {
                         dimensionRecordSets[dim].add(record.id);
                         dimensionUniqueTags[dim].add(tag);
@@ -120,10 +113,8 @@ export const calculateXpStats = (logs: LogEntry[]): XpAnalysisResult => {
     // 6. Aggregate Results
     const allTags = Object.values(statsMap);
     
-    // Sort Top Tags (Include noise in the raw list, but UI might hide them)
-    // The requirement says: "Allow in raw frequency list, but exclude from dimension stats"
     const topTags = allTags
-        .filter(t => !t.isNoise) // Let's filter noise from Top List for cleaner UI by default
+        .filter(t => !t.isNoise) 
         .sort((a, b) => b.count - a.count);
 
     const noiseTags = allTags
@@ -135,14 +126,11 @@ export const calculateXpStats = (logs: LogEntry[]): XpAnalysisResult => {
         dimensionStats[dim] = {
             name: dim,
             recordCount: dimensionRecordSets[dim].size,
-            tagCount: 0, // This would require summing counts of tags in this dim
+            tagCount: 0, 
             uniqueTags: dimensionUniqueTags[dim].size
         };
     });
 
-    /**
-     * Recalculate total tag count per dimension properly.
-     */
     topTags.forEach(t => {
         if (dimensionStats[t.dimension]) {
             dimensionStats[t.dimension].tagCount += t.count;

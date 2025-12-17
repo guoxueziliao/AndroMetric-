@@ -1,5 +1,4 @@
 
-
 import { LogEntry, UnifiedEvent, EventType } from '../types';
 import { analyzeSleep } from './helpers';
 
@@ -119,9 +118,9 @@ export const flattenLogsToEvents = (logs: LogEntry[]): UnifiedEvent[] => {
                         ts = d.getTime(); 
                     }
                 }
-                const partners = new Set<string>();
-                if(s.interactions) s.interactions.forEach(i => { if(i.partner) partners.add(i.partner); });
-                else if(s.partner) partners.add(s.partner);
+                const partnersSet = new Set<string>();
+                if(s.interactions) s.interactions.forEach(i => { if(i.partner) partnersSet.add(i.partner); });
+                else if(s.partner) partnersSet.add(s.partner);
 
                 events.push(createEvent(
                     'sex',
@@ -134,7 +133,7 @@ export const flattenLogsToEvents = (logs: LogEntry[]): UnifiedEvent[] => {
                         withPartner: true,
                         isGood: s.indicators.partnerOrgasm 
                     },
-                    [...Array.from(partners), ...(s.positions || []), s.protection || ''],
+                    [...Array.from(partnersSet), ...(s.positions || []), s.protection || ''],
                     s.id
                 ));
             });
@@ -152,9 +151,6 @@ export const flattenLogsToEvents = (logs: LogEntry[]): UnifiedEvent[] => {
                         ts = d.getTime();
                     }
                 }
-                /**
-                 * Fixed Property access: m.assets?.categories is now defined.
-                 */
                 events.push(createEvent(
                     'masturbation',
                     log.date,
@@ -181,9 +177,6 @@ export const flattenLogsToEvents = (logs: LogEntry[]): UnifiedEvent[] => {
         
         // 8. Health/Sickness
         if (log.health?.isSick) {
-             /**
-              * Fixed Property access: log.health.illnessType is now defined.
-              */
              events.push(createEvent(
                 'health',
                 log.date,
