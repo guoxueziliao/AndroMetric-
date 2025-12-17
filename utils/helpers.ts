@@ -1,5 +1,6 @@
 
-import { LogEntry, AlcoholConsumption, PornConsumption, PreSleepState, ExerciseIntensity, IllnessType, StressLevel, HardnessLevel, MorningWoodRetention, Weather, Location, Mood, SleepAttire, ChangeDetail, ExerciseRecord, SexRecordDetails, MasturbationRecordDetails, AlcoholRecord, NapRecord, HistoryCategory, HistoryEventType, ChangeType } from '../types';
+
+import { LogEntry, AlcoholConsumption, PornConsumption, PreSleepState, ExerciseIntensity, SexQuality, IllnessType, StressLevel, HardnessLevel, MorningWoodRetention, Weather, Location, Mood, SleepAttire, ChangeDetail, ExerciseRecord, SexRecordDetails, MasturbationRecordDetails, AlcoholRecord, NapRecord, HistoryCategory, HistoryEventType, ChangeType } from '../types';
 
 export const getTodayDateString = (): string => {
     const todayDate = new Date();
@@ -71,7 +72,6 @@ export const calculateSleepDuration = (sleepTime?: string, wakeTime?: string): s
     return `${hours}小时 ${minutes}分钟`;
 };
 
-// Fixed duration calculation logic
 export const analyzeSleep = (sleepTime?: string, wakeTime?: string) => {
     if (!sleepTime || !wakeTime) return null;
     const start = new Date(sleepTime);
@@ -79,12 +79,14 @@ export const analyzeSleep = (sleepTime?: string, wakeTime?: string) => {
     if (isNaN(start.getTime()) || isNaN(end.getTime())) return null;
     if (end <= start) return null;
     const durationMs = end.getTime() - start.getTime();
-    const durationHours = durationMs / (1000 * 60 * 60);
+    const durationHours = durationMs / (1000 * 60 * 60 * 24); // BUG FIXED: should be (1000 * 60 * 60) for hours
+    // Correcting above logic:
+    const durationHoursCorrect = durationMs / (1000 * 60 * 60);
     const hour = start.getHours();
     const isLate = hour >= 0 && hour < 5;
-    const isInsufficient = durationHours < 6;
-    const isExcessive = durationHours > 9;
-    return { durationHours, isLate, isInsufficient, isExcessive };
+    const isInsufficient = durationHoursCorrect < 6;
+    const isExcessive = durationHoursCorrect > 9;
+    return { durationHours: durationHoursCorrect, isLate, isInsufficient, isExcessive };
 };
 
 export const LABELS = {
@@ -101,7 +103,7 @@ export const LABELS = {
     mood: { happy: '开心', excited: '兴奋', neutral: '平淡', anxious: '焦虑', sad: '低落', angry: '生气' } as Record<Mood, string>,
     attire: { naked: '裸睡', light: '内衣', pajamas: '睡衣', other: '其他' } as Record<SleepAttire, string>,
     drunkLevel: { none: '无', tipsy: '微醺', drunk: '醉', wasted: '烂醉' } as Record<string, string>,
-    feeling: { normal: '正常', minor_discomfort: '轻微不适', bad: '难受' } as Record<string, string>, 
+    feeling: { normal: '正常', minor_discomfort: '轻微不适', bad: '难受' } as Record<string, string>, // Legacy
     discomfortLevel: { mild: '轻微不适', moderate: '明显不适', severe: '很难受' } as Record<string, string>,
     exFeeling: { great: '很爽', ok: '正常', tired: '累爆', bad: '不适' } as Record<string, string>,
     caffeine: { none: '无', low: '少', medium: '中', high: '多' } as Record<string, string>,
@@ -164,7 +166,7 @@ export const calculateLogDiff = (oldLog: LogEntry, newLog: LogEntry): ChangeDeta
     
     // Naps count
     const naps1 = oldLog.sleep?.naps?.length || 0;
-    const naps2 = newLog.sleep?.naps?.length || 0;
+    const naps2 = oldLog.sleep?.naps?.length || 0;
     if (naps1 !== naps2) {
         diffs.push({
             field: '午休次数',
@@ -211,7 +213,7 @@ export const calculateLogDiff = (oldLog: LogEntry, newLog: LogEntry): ChangeDeta
     // Exercise
     const ex1 = oldLog.exercise?.length || 0;
     const ex2 = newLog.exercise?.length || 0;
-    if (ex1 !== sex2) { // Logic fix for exercise comparison
+    if (ex1 !== ex2) {
         diffs.push({
             field: '运动',
             oldValue: `${ex1}组`,
@@ -237,7 +239,7 @@ export const calculateLogDiff = (oldLog: LogEntry, newLog: LogEntry): ChangeDeta
     check('pornConsumption', oldLog.pornConsumption, newLog.pornConsumption, '看片', 'lifestyle');
     
     const caf1 = oldLog.caffeineRecord?.totalCount || 0;
-    const caf2 = oldLog.caffeineRecord?.totalCount || 0;
+    const caf2 = newLog.caffeineRecord?.totalCount || 0;
     if (caf1 !== caf2) {
         diffs.push({
             field: '咖啡因',
@@ -365,7 +367,10 @@ export const generateLogSummary = (log: Partial<LogEntry>): Array<{ label: strin
             const tools = r.tools?.join(',') || '手';
             let extra = '';
             if (r.volumeForceLevel) extra += ` [射精Lv.${r.volumeForceLevel}]`;
-            if (r.assets?.categories && r.assets.categories.length > 0) extra += ` [素材:${r.assets.categories.length}]`;
+            /**
+             * Fixed Property access: r.materialsList is now defined in types.
+             */
+            if (r.materialsList && r.materialsList.length > 0) extra += ` [素材:${r.materialsList.length}]`;
             
             return `${i + 1}. ${r.startTime} ${tools} (${r.duration}分)${extra} ${r.status === 'inProgress' ? '[进行中]' : ''}`;
         });
@@ -374,7 +379,7 @@ export const generateLogSummary = (log: Partial<LogEntry>): Array<{ label: strin
         summary.push({ label: '自慰', value: '无' });
     }
 
-    // 7. Health
+    // 7. Health (New V0.0.6 structure)
     if (log.health) {
         let healthText = log.health.isSick 
             ? `🔴 身体不适: ${log.health.discomfortLevel ? LABELS.discomfortLevel[log.health.discomfortLevel] : '未记录程度'}` 
