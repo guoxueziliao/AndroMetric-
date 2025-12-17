@@ -192,6 +192,12 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
       }
       return total;
   }, [todayLog]);
+  
+  // Naps info
+  const todayNapsDuration = useMemo(() => {
+      if (!todayLog || !todayLog.sleep?.naps) return 0;
+      return todayLog.sleep.naps.reduce((acc, n) => acc + (n.duration || 0), 0);
+  }, [todayLog]);
 
   // Stats for the monthly dashboard cards
   const currentMonthStats = useMemo(() => {
@@ -395,6 +401,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                           {todayLog?.sleep?.startTime && todayLog?.sleep?.endTime 
                               ? `${formatTime(todayLog.sleep.startTime)} - ${formatTime(todayLog.sleep.endTime)}` 
                               : '未记录时间'}
+                          {todayNapsDuration > 0 && <span className="text-amber-500 block">+ 午休 {todayNapsDuration}m</span>}
                       </div>
                   </div>
                   <div>
@@ -441,10 +448,12 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                                           />
                                       )}
                                       {/* Night Segment (Bottom) - Dynamic Color */}
-                                      <div 
-                                          className={`w-full rounded-b-sm ${stat.napDuration > 0 ? 'rounded-t-[1px]' : 'rounded-t-sm'} transition-colors duration-300 ${nightColor}`}
-                                          style={{ height: `${nightPercent}%` }}
-                                      />
+                                      {stat.nightDuration > 0 && (
+                                          <div 
+                                              className={`w-full rounded-b-sm ${stat.napDuration > 0 ? 'rounded-t-[1px]' : 'rounded-t-sm'} transition-colors duration-300 ${nightColor}`}
+                                              style={{ height: `${nightPercent}%` }}
+                                          />
+                                      )}
                                   </div>
                               ) : (
                                   /* Empty Placeholder */

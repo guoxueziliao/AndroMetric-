@@ -211,6 +211,13 @@ export function useLogs() {
         const targetDateStr = getActivityTargetDate();
         const existingLog = await StorageService.logs.get(targetDateStr);
         
+        // Detailed History
+        const details = [
+            { field: '开始时间', oldValue: '', newValue: record.startTime },
+            { field: '结束时间', oldValue: '', newValue: record.endTime || '进行中' },
+            { field: '午休时长', oldValue: '0', newValue: `${record.duration}分` }
+        ];
+
         try {
             if (existingLog) {
                 let newNaps = existingLog.sleep?.naps ? [...existingLog.sleep.naps] : [];
@@ -218,14 +225,14 @@ export function useLogs() {
                 if (napIdx > -1) newNaps[napIdx] = record;
                 else newNaps.push(record);
                 
-                const historyEntry: ChangeRecord = { timestamp: Date.now(), summary: '记录午休', details: [], type: 'quick' };
+                const historyEntry: ChangeRecord = { timestamp: Date.now(), summary: '记录午休', details, type: 'quick' };
                 await addOrUpdateLog({
                     ...existingLog,
                     sleep: { ...existingLog.sleep!, naps: newNaps },
                     changeHistory: [...(existingLog.changeHistory || []), historyEntry]
                 });
             } else {
-                const historyEntry: ChangeRecord = { timestamp: Date.now(), summary: '记录午休', details: [], type: 'quick' };
+                const historyEntry: ChangeRecord = { timestamp: Date.now(), summary: '记录午休', details, type: 'quick' };
                 const skeleton = hydrateLog({ date: targetDateStr });
                 const newLog: LogEntry = {
                     ...skeleton,
@@ -294,7 +301,16 @@ export function useLogs() {
                 if (duration === 0) duration = 1;
 
                 const updatedNaps = hydratedOngoingLog.sleep!.naps.map(n => n.id === ongoingNap.id ? { ...n, ongoing: false, duration, endTime: nowStr } : n);
-                const historyEntry: ChangeRecord = { timestamp: Date.now(), summary: `完成午休 (${duration}m)`, details: [], type: 'quick' };
+                
+                const historyEntry: ChangeRecord = { 
+                    timestamp: Date.now(), 
+                    summary: `完成午休 (${duration}m)`, 
+                    details: [
+                        { field: '午休结束', oldValue: '进行中', newValue: nowStr },
+                        { field: '时长', oldValue: '0', newValue: `${duration}m` }
+                    ], 
+                    type: 'quick' 
+                };
 
                 await addOrUpdateLog({
                     ...hydratedOngoingLog,
@@ -306,16 +322,21 @@ export function useLogs() {
                 const nowStr = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
                 const newNap: NapRecord = { id: Date.now().toString(), startTime: nowStr, ongoing: true, duration: 0, hasDream: false, dreamTypes: [] };
                 const existingLog = await StorageService.logs.get(targetDateStr);
+                
+                const historyEntry: ChangeRecord = { 
+                    timestamp: Date.now(), 
+                    summary: '开始午休', 
+                    details: [{ field: '午休开始', oldValue: '', newValue: nowStr }], 
+                    type: 'quick' 
+                };
 
                 if (existingLog) {
-                    const historyEntry: ChangeRecord = { timestamp: Date.now(), summary: '开始午休', details: [], type: 'quick' };
                     await addOrUpdateLog({
                         ...existingLog,
                         sleep: { ...existingLog.sleep!, naps: [...(existingLog.sleep?.naps || []), newNap] },
                         changeHistory: [...(existingLog.changeHistory || []), historyEntry]
                     });
                 } else {
-                    const historyEntry: ChangeRecord = { timestamp: Date.now(), summary: '开始午休', details: [], type: 'quick' };
                     const skeleton = hydrateLog({ date: targetDateStr });
                     const newLog: LogEntry = {
                         ...skeleton,
@@ -338,7 +359,14 @@ export function useLogs() {
             } else {
                 const targetDateString = getSleepTargetDate();
                 const existingLog = await StorageService.logs.get(targetDateString);
-                const historyEntry: ChangeRecord = { timestamp: Date.now(), summary: '记录睡眠时间 (入睡)', details: [], type: 'quick' };
+                const nowStr = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+                
+                const historyEntry: ChangeRecord = { 
+                    timestamp: Date.now(), 
+                    summary: '记录睡眠时间 (入睡)', 
+                    details: [{ field: '入睡时间', oldValue: '未记录', newValue: nowStr }], 
+                    type: 'quick' 
+                };
 
                 if (existingLog) {
                     if (confirm(`检测到 ${targetDateString} 已有活动记录。要将睡眠状态合并到该记录中吗？`)) {

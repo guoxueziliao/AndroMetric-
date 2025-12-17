@@ -1,7 +1,7 @@
 
 import React, { useMemo } from 'react';
 import { LogEntry } from '../types';
-import { SunMedium, Moon, Coffee, Beer, Hand, HeartPulse, Dumbbell, Circle, Clock } from 'lucide-react';
+import { SunMedium, Moon, Coffee, Beer, Hand, HeartPulse, Dumbbell, Circle, Clock, CloudSun } from 'lucide-react';
 
 interface GlobalTimelineProps {
     log: LogEntry;
@@ -9,7 +9,7 @@ interface GlobalTimelineProps {
 
 interface TimelineEvent {
     time: string; // HH:mm
-    type: 'wakeup' | 'sleep' | 'caffeine' | 'alcohol' | 'masturbation' | 'sex' | 'exercise';
+    type: 'wakeup' | 'sleep' | 'caffeine' | 'alcohol' | 'masturbation' | 'sex' | 'exercise' | 'nap';
     title: string;
     desc?: string;
     icon: React.ElementType;
@@ -146,6 +146,19 @@ export const GlobalTimeline: React.FC<GlobalTimelineProps> = ({ log }) => {
                 timestamp: getTimestamp(sleepTime)
             });
         }
+
+        // 8. Naps
+        log.sleep?.naps?.forEach(nap => {
+            list.push({
+                time: nap.startTime,
+                type: 'nap',
+                title: '午休',
+                desc: nap.ongoing ? '进行中...' : `时长 ${nap.duration}m ${nap.hasDream ? '(有梦)' : ''}`,
+                icon: CloudSun,
+                color: 'text-amber-500 bg-amber-50 dark:bg-amber-900/20',
+                timestamp: getTimestamp(nap.startTime)
+            });
+        });
 
         return list.sort((a, b) => a.timestamp - b.timestamp);
     }, [log]);
