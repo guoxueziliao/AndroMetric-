@@ -126,10 +126,16 @@ const DailyReportCard: React.FC<{ log: LogEntry }> = ({ log }) => {
                         <span className="w-12 text-slate-400 text-xs">看片:</span>
                         <span>{LABELS.porn[log.pornConsumption || 'none']}</span>
                     </div>
-                    <div className="flex items-center">
-                        <span className="w-12 text-slate-400 text-xs">咖啡因:</span>
-                        {log.caffeineRecord && log.caffeineRecord.totalCount > 0 ? (
-                            <span className="flex items-center">{log.caffeineRecord.totalCount}杯</span>
+                    <div className="flex items-start">
+                        <span className="w-12 text-slate-400 text-xs mt-0.5">咖啡因:</span>
+                        {log.caffeineRecord && log.caffeineRecord.items.length > 0 ? (
+                            <div className="flex-1 flex flex-col gap-1">
+                                {log.caffeineRecord.items.map((item, idx) => (
+                                    <span key={idx} className="text-xs bg-amber-50 dark:bg-amber-900/20 px-1.5 py-0.5 rounded text-amber-800 dark:text-amber-400 border border-amber-100 dark:border-amber-900/30">
+                                        {item.time} {item.name} <span className="opacity-60 text-[10px]">({item.volume}ml)</span>
+                                    </span>
+                                ))}
+                            </div>
                         ) : <span>无</span>}
                     </div>
                 </div>

@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef, lazy, Suspense } from 'react';
-import { LogEntry, SexRecordDetails, MasturbationRecordDetails, ExerciseRecord, NapRecord, ChangeDetail, ChangeRecord, AlcoholRecord, PartnerProfile, MorningRecord, SleepRecord, CaffeineRecord } from '../types';
+import { LogEntry, SexRecordDetails, MasturbationRecordDetails, ExerciseRecord, NapRecord, ChangeDetail, ChangeRecord, AlcoholRecord, PartnerProfile, MorningRecord, SleepRecord, CaffeineRecord, CaffeineItem } from '../types';
 import { CheckSquare, Tag, Beer, Film, Dumbbell, Sun, Cloud, CloudRain, Snowflake, Wind, CloudFog, Home, Users, Hotel, Plane, MapPin, Shirt, HeartPulse, Hand, Plus, Edit2, Trash2, Footprints, Save, Coffee, Calendar, X, Zap, Check, Sparkles, Settings, ArrowLeft } from 'lucide-react';
 import Modal from './Modal';
 import SexRecordModal from './SexRecordModal';
@@ -8,6 +8,7 @@ import MasturbationRecordModal from './MasturbationRecordModal';
 import ExerciseRecordModal from './ExerciseSelectorModal'; 
 import NapRecordModal from './NapRecordModal';
 import AlcoholRecordModal from './AlcoholRecordModal';
+import CaffeineRecordModal from './CaffeineRecordModal';
 import { generateLogSummary, getTodayDateString, calculateLogDiff, calculateDataQuality } from '../utils/helpers';
 import { validateLogEntry } from '../utils/validators';
 import { useToast } from '../contexts/ToastContext';
@@ -90,6 +91,7 @@ const LogForm: React.FC<{
     const [isExerciseModalOpen, setIsExerciseModalOpen] = useState(false);
     const [isNapModalOpen, setIsNapModalOpen] = useState(false);
     const [isAlcoholModalOpen, setIsAlcoholModalOpen] = useState(false);
+    const [isCaffeineModalOpen, setIsCaffeineModalOpen] = useState(false); // New
     const [isTagManagerOpen, setIsTagManagerOpen] = useState(false);
     
     // Edit targets
@@ -138,15 +140,11 @@ const LogForm: React.FC<{
             diffs = calculateLogDiff(existingLog, log);
             summary = '编辑记录';
         } else {
-             // New Log: Compare against a clean empty log template (hydrated defaults) to identify user inputs
-             // This ensures that values like "Hardness: 3" are captured as "Additions" relative to the default null/empty state
              const baseline = hydrateLog({ date: log.date });
              diffs = calculateLogDiff(baseline, log);
              summary = '创建新记录';
         }
 
-        // Add history entry if there are changes or it's a new record
-        // Note: For new records, we now include `diffs` so the history shows what was initially populated
         if (diffs.length > 0 || !existingLog) {
             const historyEntry: ChangeRecord = {
                 timestamp: Date.now(),
@@ -194,15 +192,32 @@ const LogForm: React.FC<{
             onDirtyStateChange(true);
         }
     };
+    
+    // Caffeine Handlers
+    const handleSaveCaffeine = (item: CaffeineItem) => {
+        const currentItems = log.caffeineRecord?.items || [];
+        const newItems = [...currentItems, item];
+        const newTotal = newItems.length; // Simply count cups for now, or sum by item.count if needed
+        
+        updateDeepLog('caffeineRecord', 'items', newItems);
+        updateDeepLog('caffeineRecord', 'totalCount', newTotal);
+        
+        isDirtyRef.current = true;
+        onDirtyStateChange(true);
+    };
+
+    const handleDeleteCaffeine = (id: string) => {
+        const currentItems = log.caffeineRecord?.items || [];
+        const newItems = currentItems.filter(i => i.id !== id);
+        
+        updateDeepLog('caffeineRecord', 'items', newItems);
+        updateDeepLog('caffeineRecord', 'totalCount', newItems.length);
+        
+        isDirtyRef.current = true;
+        onDirtyStateChange(true);
+    };
 
     // --- Render Helpers ---
-    const renderTag = (tag: string) => (
-        <span key={tag} className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 mr-2 mb-2">
-            {tag}
-            <button onClick={() => updateLog('tags', (log.tags || []).filter(t => t !== tag))} className="ml-1.5 text-slate-400 hover:text-red-500"><X size={12}/></button>
-        </span>
-    );
-
     const toggleDailyEvent = (evt: string) => {
         const current = log.dailyEvents || [];
         const next = current.includes(evt) ? current.filter(e => e !== evt) : [...current, evt];
@@ -285,30 +300,37 @@ const LogForm: React.FC<{
 
                             {/* Caffeine */}
                             <div className="space-y-2">
-                                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block">咖啡因 (Caffeine)</label>
-                                <div className="bg-slate-50 dark:bg-slate-800 p-1 rounded-xl flex items-center">
+                                <div className="flex justify-between items-center mb-1">
+                                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">咖啡因 (Caffeine)</label>
+                                    <span className="text-[10px] text-brand-muted bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded-full font-bold">Total: {log.caffeineRecord?.totalCount || 0}</span>
+                                </div>
+                                
+                                <div className="bg-slate-50 dark:bg-slate-800 p-2 rounded-xl flex flex-col gap-2">
+                                    {log.caffeineRecord?.items && log.caffeineRecord.items.length > 0 ? (
+                                        <div className="space-y-2">
+                                            {log.caffeineRecord.items.map((item) => (
+                                                <div key={item.id} className="flex justify-between items-center bg-white dark:bg-slate-900 p-2 rounded-lg shadow-sm border border-slate-100 dark:border-slate-700">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-xs font-mono text-slate-400 bg-slate-100 dark:bg-slate-800 px-1 rounded">{item.time}</span>
+                                                        <span className="text-sm font-bold text-slate-700 dark:text-slate-300">{item.name}</span>
+                                                        {item.volume && <span className="text-[10px] text-slate-400">{item.volume}ml</span>}
+                                                    </div>
+                                                    <button onClick={() => handleDeleteCaffeine(item.id)} className="text-slate-400 hover:text-red-500 p-1">
+                                                        <Trash2 size={12}/>
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="text-center py-3 text-xs text-slate-400">暂无咖啡因记录</div>
+                                    )}
+                                    
                                     <button 
                                         type="button"
-                                        onClick={() => {
-                                            const current = log.caffeineRecord?.totalCount || 0;
-                                            updateDeepLog('caffeineRecord', 'totalCount', Math.max(0, current - 1));
-                                        }}
-                                        className="p-3 hover:bg-white dark:hover:bg-slate-700 rounded-lg shadow-sm text-slate-500 transition-all"
+                                        onClick={() => setIsCaffeineModalOpen(true)}
+                                        className="w-full py-2.5 bg-white dark:bg-slate-700 rounded-lg border border-dashed border-slate-300 dark:border-slate-600 text-brand-accent hover:bg-blue-50 dark:hover:bg-slate-600 transition-colors flex items-center justify-center text-xs font-bold"
                                     >
-                                        <Trash2 size={16}/>
-                                    </button>
-                                    <div className="flex-1 text-center font-black text-xl text-slate-700 dark:text-slate-200">
-                                        {log.caffeineRecord?.totalCount || 0} <span className="text-xs font-bold text-slate-400">杯</span>
-                                    </div>
-                                    <button 
-                                        type="button"
-                                        onClick={() => {
-                                            const current = log.caffeineRecord?.totalCount || 0;
-                                            updateDeepLog('caffeineRecord', 'totalCount', current + 1);
-                                        }}
-                                        className="p-3 bg-white dark:bg-slate-700 rounded-lg shadow-sm text-brand-accent transition-all hover:scale-105"
-                                    >
-                                        <Plus size={16} strokeWidth={3}/>
+                                        <Plus size={14} className="mr-1"/> 添加咖啡/茶
                                     </button>
                                 </div>
                             </div>
@@ -451,7 +473,7 @@ const LogForm: React.FC<{
                     {log.dailyEvents && log.dailyEvents.filter(e => !EVENT_PRESETS.includes(e)).length > 0 && (
                         <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
                             {log.dailyEvents.filter(e => !EVENT_PRESETS.includes(e)).map(tag => (
-                                <span key={tag} onClick={() => toggleDailyEvent(tag)} className="px-2.5 py-1 rounded-lg text-xs font-medium bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-300 border border-purple-100 dark:border-purple-900 cursor-pointer flex items-center hover:bg-red-50 hover:text-red-500 hover:border-red-100 transition-colors group">
+                                <span key={tag} onClick={() => toggleDailyEvent(tag)} className="px-2.5 py-1.5 rounded-lg text-xs font-medium bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-300 border border-purple-100 dark:border-purple-900 cursor-pointer flex items-center hover:bg-red-50 hover:text-red-500 hover:border-red-100 transition-colors group">
                                     {tag}
                                     <X size={10} className="ml-1 opacity-0 group-hover:opacity-100"/>
                                 </span>
@@ -520,6 +542,11 @@ const LogForm: React.FC<{
                 onClose={() => setIsAlcoholModalOpen(false)}
                 onSave={(record) => { updateLog('alcoholRecord', record); updateLog('alcohol', record.totalGrams > 50 ? 'high' : record.totalGrams > 20 ? 'medium' : record.totalGrams > 0 ? 'low' : 'none'); }}
                 initialData={log.alcoholRecord || undefined}
+            />
+            <CaffeineRecordModal
+                isOpen={isCaffeineModalOpen}
+                onClose={() => setIsCaffeineModalOpen(false)}
+                onSave={handleSaveCaffeine}
             />
             <Suspense fallback={null}>
                 <TagManager 
