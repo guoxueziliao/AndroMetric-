@@ -53,8 +53,8 @@ const SleepBarChart = ({ logs }: { logs: LogEntry[] }) => {
             {last7Days.map((d, i) => (
                 <div 
                     key={i} 
-                    className={`flex-1 rounded-t-sm transition-all duration-500 ${d.isToday ? 'bg-amber-400' : 'bg-brand-accent/40'}`}
-                    style={{ height: `${Math.min(100, (d.hours / 10) * 100)}%` }}
+                    className={`flex-1 rounded-t-sm transition-all duration-500 ${d.isToday ? 'bg-amber-400' : 'bg-brand-accent/30 dark:bg-brand-accent/50'}`}
+                    style={{ height: `${Math.max(10, Math.min(100, (d.hours / 10) * 100))}%` }}
                 />
             ))}
         </div>
@@ -97,7 +97,7 @@ const Banner = ({ type, title, subtitle, color, icon: Icon, onMain, onCancel }: 
         </div>
         <div className="flex items-center gap-2">
             <button onClick={(e) => { e.stopPropagation(); onCancel?.(); }} className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"><X size={16}/></button>
-            <button onClick={(e) => { e.stopPropagation(); onMain?.(); }} className="bg-white px-4 py-2 rounded-xl font-bold text-sm shadow-sm flex items-center shrink-0" style={{ color: 'inherit' }}>详情</button>
+            <button onClick={(e) => { e.stopPropagation(); onMain?.(); }} className="bg-white/90 px-4 py-2 rounded-xl font-bold text-sm shadow-sm flex items-center shrink-0 text-slate-800 hover:bg-white transition-colors">详情</button>
         </div>
     </div>
 );
@@ -179,7 +179,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
 
       {/* 卡片配色适配 */}
       <div className="grid grid-cols-2 gap-4">
-          <div className="bg-slate-900 dark:bg-slate-800 p-5 rounded-[2.5rem] shadow-lg h-44 flex flex-col justify-between overflow-hidden relative text-white">
+          <div className="bg-slate-900 dark:bg-slate-900/50 p-5 rounded-[2.5rem] shadow-lg h-44 flex flex-col justify-between overflow-hidden relative text-white transition-colors">
               <div className="flex justify-between items-start z-10">
                   <div className="flex items-center gap-2">
                       <div className="w-9 h-9 rounded-2xl bg-indigo-500/20 flex items-center justify-center text-indigo-400"><Moon size={18} fill="currentColor" /></div>
@@ -190,7 +190,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
               <div className="z-10"><span className="text-[10px] font-bold text-white/30 block mb-1">{stats.sleepDisplay !== '--' ? '今日睡眠时长' : '未记录时间'}</span><SleepBarChart logs={logs} /></div>
           </div>
 
-          <div className="bg-slate-900 dark:bg-slate-800 p-5 rounded-[2.5rem] shadow-lg h-44 flex flex-col justify-between text-white">
+          <div className="bg-slate-900 dark:bg-slate-900/50 p-5 rounded-[2.5rem] shadow-lg h-44 flex flex-col justify-between text-white transition-colors">
               <div className="w-9 h-9 rounded-2xl bg-rose-500/20 flex items-center justify-center text-rose-400"><HeartPulse size={18} /></div>
               <div><h4 className="text-lg font-black mb-2">活力</h4>
                   <div className="space-y-1.5">
