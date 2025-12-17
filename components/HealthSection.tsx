@@ -34,23 +34,19 @@ const ChipSelect = ({
                     key={opt}
                     onClick={() => onToggle(opt)}
                     type="button"
-                    className={`px-2 py-1 rounded text-xs font-bold border transition-all ${
-                        selected.includes(opt) 
-                        ? `bg-${color}-100 dark:bg-${color}-900/30 text-${color}-700 dark:text-${color}-300 border-${color}-300 dark:border-${color}-800` 
-                        : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700'
-                    }`}
+                    className={`px-2 py-1 rounded text-xs font-bold border transition-all ${selected.includes(opt) ? `bg-${color}-100 dark:bg-${color}-900/30 text-${color}-700 dark:text-${color}-300 border-${color}-300` : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500'}`}
                 >
                     {opt}
                 </button>
             ))}
             {selected.filter(s => !options.includes(s)).map(s => (
-                <button key={s} onClick={() => onToggle(s)} type="button" className={`px-2 py-1 rounded text-xs font-bold border bg-${color}-100 dark:bg-${color}-900/30 text-${color}-700 dark:text-${color}-300 border-${color}-300 dark:border-${color}-800`}>
+                <button key={s} onClick={() => onToggle(s)} type="button" className={`px-2 py-1 rounded text-xs font-bold border bg-${color}-100 dark:bg-${color}-900/30 text-${color}-700 dark:text-${color}-300 border-${color}-300`}>
                     {s}
                 </button>
             ))}
             
             {onAdd && (
-                <button onClick={onAdd} type="button" className="px-2 py-1 rounded text-xs font-bold border border-dashed border-slate-300 dark:border-slate-600 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 flex items-center">
+                <button onClick={onAdd} type="button" className="px-2 py-1 rounded text-xs font-bold border border-dashed border-slate-300 text-slate-400 hover:text-slate-600 flex items-center">
                     <Plus size={12}/>
                 </button>
             )}
@@ -134,7 +130,7 @@ const HealthSection: React.FC<HealthSectionProps> = ({ log, onChange, onDeepChan
                         
                         {/* Discomfort Level */}
                         <div>
-                            <label className="text-xs font-bold text-red-600/70 dark:text-red-400/70 mb-2 block uppercase">不适程度</label>
+                            <label className="text-xs font-bold text-red-600/70 mb-2 block uppercase">不适程度</label>
                             <div className="flex bg-white dark:bg-slate-800 rounded-lg p-1 border border-red-100 dark:border-red-900/30 shadow-sm">
                                 {[{v: 'mild', l: '轻微不适'}, {v: 'moderate', l: '明显不适'}, {v: 'severe', l: '很难受'}].map(opt => (
                                     <button
@@ -161,8 +157,8 @@ const HealthSection: React.FC<HealthSectionProps> = ({ log, onChange, onDeepChan
                         {/* Symptoms */}
                         <div>
                             <div className="flex justify-between items-center mb-2">
-                                <label className="text-xs font-bold text-red-600/70 dark:text-red-400/70 block uppercase">症状 (多选)</label>
-                                <button type="button" onClick={() => onManageTags('symptom')} className="text-[10px] text-slate-400 flex items-center hover:text-slate-600 dark:hover:text-slate-300"><Settings size={10} className="mr-1"/> 管理标签</button>
+                                <label className="text-xs font-bold text-red-600/70 block uppercase">症状 (多选)</label>
+                                <button type="button" onClick={() => onManageTags('symptom')} className="text-[10px] text-slate-400 flex items-center"><Settings size={10} className="mr-1"/> 管理标签</button>
                             </div>
                             <ChipSelect 
                                 options={SYMPTOMS} 
@@ -175,7 +171,7 @@ const HealthSection: React.FC<HealthSectionProps> = ({ log, onChange, onDeepChan
 
                         {/* Medications */}
                         <div>
-                            <label className="text-xs font-bold text-red-600/70 dark:text-red-400/70 mb-2 block uppercase">用药情况</label>
+                            <label className="text-xs font-bold text-red-600/70 mb-2 block uppercase">用药情况</label>
                             <ChipSelect options={MEDICATIONS} selected={log.health?.medications || []} onToggle={toggleMed} color="blue" />
                             {(!log.health?.symptoms?.length && !log.health?.medications?.length) && (
                                 <p className="text-[10px] text-blue-400 mt-2 flex items-center">

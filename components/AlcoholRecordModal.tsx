@@ -136,13 +136,13 @@ const AlcoholRecordModal: React.FC<AlcoholRecordModalProps> = ({ isOpen, onClose
 
                 <div className="mx-2 mb-4 space-y-3 shrink-0 bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
                     <div className="flex gap-2 items-center">
-                        <input type="time" value={time} onChange={e => setTime(e.target.value)} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1 text-xs font-mono font-bold outline-none text-brand-text dark:text-slate-200" />
+                        <input type="time" value={time} onChange={e => setTime(e.target.value)} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1 text-xs font-mono font-bold outline-none" />
                         <div className="flex-1 flex gap-1 overflow-x-auto scrollbar-hide">
                             {SCENES.map(s => (
-                                <button key={s} onClick={() => setScene(s)} className={`px-2 py-1 text-xs rounded border whitespace-nowrap ${scene === s ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-400 border-amber-300 dark:border-amber-800' : 'bg-white dark:bg-slate-900 text-slate-500 border-slate-200 dark:border-slate-700'}`}>{s}</button>
+                                <button key={s} onClick={() => setScene(s)} className={`px-2 py-1 text-xs rounded border whitespace-nowrap ${scene === s ? 'bg-amber-100 text-amber-800 border-amber-300' : 'bg-white dark:bg-slate-900 text-slate-500'}`}>{s}</button>
                             ))}
                         </div>
-                        <button onClick={() => setIsLate(!isLate)} className={`px-2 py-1 rounded text-xs border flex items-center whitespace-nowrap ${isLate ? 'bg-purple-600 text-white border-purple-600' : 'bg-white dark:bg-slate-900 text-slate-500 border-slate-200 dark:border-slate-700'}`}><Moon size={12} className="mr-1"/> 熬夜</button>
+                        <button onClick={() => setIsLate(!isLate)} className={`px-2 py-1 rounded text-xs border flex items-center whitespace-nowrap ${isLate ? 'bg-purple-600 text-white' : 'bg-white dark:bg-slate-900 text-slate-500'}`}><Moon size={12} className="mr-1"/> 熬夜</button>
                     </div>
                     <div className="flex justify-between gap-1">
                         {DRUNK_LEVELS.map(lvl => (
@@ -159,7 +159,7 @@ const AlcoholRecordModal: React.FC<AlcoholRecordModalProps> = ({ isOpen, onClose
                         {DRINK_TYPES.map(drink => {
                             const count = selectedItems[drink.key] || 0;
                             return (
-                                <div key={drink.key} onClick={() => handleItemChange(drink.key, 1)} className={`relative flex flex-col items-center justify-center p-3 rounded-2xl border-2 transition-all cursor-pointer aspect-square ${count > 0 ? 'bg-amber-50 dark:bg-amber-900/10 border-amber-400' : 'bg-white dark:bg-slate-800 border-transparent hover:bg-slate-50 dark:hover:bg-slate-700'}`}>
+                                <div key={drink.key} onClick={() => handleItemChange(drink.key, 1)} className={`relative flex flex-col items-center justify-center p-3 rounded-2xl border-2 transition-all cursor-pointer aspect-square ${count > 0 ? 'bg-amber-50 dark:bg-amber-900/10 border-amber-400' : 'bg-white dark:bg-slate-800 border-transparent hover:bg-slate-50'}`}>
                                     <div className="text-3xl mb-1">{drink.icon}</div>
                                     <div className="text-xs font-bold text-slate-700 dark:text-slate-300 text-center leading-tight">{drink.name}</div>
                                     <div className="text-[10px] text-slate-400 scale-90">{drink.volume}ml</div>

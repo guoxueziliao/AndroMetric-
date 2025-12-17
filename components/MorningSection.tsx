@@ -26,15 +26,15 @@ const MorningSection: React.FC<MorningSectionProps> = ({ morning, onChange }) =>
     };
 
     return (
-        <div className="bg-brand-card dark:bg-slate-900 rounded-card p-5 shadow-soft border border-slate-100 dark:border-slate-800 transition-colors">
+        <div className="bg-brand-card dark:bg-slate-900 rounded-card p-5 shadow-soft border border-slate-100 dark:border-slate-800">
             <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center mb-4">
-                <div className="p-1.5 bg-amber-100 dark:bg-amber-900/30 rounded-lg mr-2 text-amber-600 dark:text-amber-500">
+                <div className="p-1.5 bg-amber-100 dark:bg-amber-900/30 rounded-lg mr-2 text-amber-600">
                     <SunMedium size={16} />
                 </div>
                 晨间状态
             </h3>
             
-            <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 p-4 rounded-2xl mb-4 transition-colors">
+            <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-800 p-4 rounded-2xl mb-4">
                 <label className="font-bold text-sm text-brand-text dark:text-slate-200">有晨勃吗？</label>
                 <input 
                     type="checkbox" 
@@ -61,13 +61,13 @@ const MorningSection: React.FC<MorningSectionProps> = ({ morning, onChange }) =>
                         />
                     </div>
                     
-                    <label className="flex items-center space-x-3 p-3 rounded-xl border border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer">
+                    <label className="flex items-center space-x-3 p-3 rounded-xl border border-slate-100 hover:bg-slate-50 transition-colors cursor-pointer">
                         <input 
                             type="checkbox" 
                             id="woken" 
                             checked={morning.wokenByErection} 
                             onChange={e => onChange('wokenByErection', e.target.checked)} 
-                            className="w-5 h-5 rounded text-brand-accent focus:ring-brand-accent border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900"
+                            className="w-5 h-5 rounded text-brand-accent focus:ring-brand-accent border-gray-300"
                         />
                         <span className="text-sm font-medium text-slate-700 dark:text-slate-300">被勃起弄醒 (雄激素旺盛)</span>
                     </label>
