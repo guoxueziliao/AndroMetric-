@@ -4,23 +4,18 @@ import { LogEntry, AppSettings, ExerciseRecord, MasturbationRecordDetails, Alcoh
 import Dashboard from './components/Dashboard';
 import LogForm from './components/LogForm';
 import BottomNav from './components/BottomNav';
-import { ArrowLeft, Loader2, Database } from 'lucide-react';
+import { ArrowLeft, Loader2 } from 'lucide-react';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import FAB from './components/FAB';
-import Modal from './components/Modal';
 import SexRecordModal from './components/SexRecordModal';
 import MasturbationRecordModal from './components/MasturbationRecordModal';
 import ExerciseRecordModal from './components/ExerciseSelectorModal'; 
 import AlcoholRecordModal from './components/AlcoholRecordModal'; 
 import CancelReasonModal from './components/CancelReasonModal';
 import VersionHistoryModal from './components/VersionHistoryModal';
-import Welcome from './components/Welcome';
 import { useLogs } from './hooks/useLogs';
 import { ToastProvider, useToast } from './contexts/ToastContext';
 import { DataContext } from './contexts/DataContext';
-import { pluginManager } from './services/PluginManager';
-import { AlcoholAnalysisPlugin } from './plugins/CoreAnalysis';
-import { StorageService } from './services/StorageService';
 
 const MyView = lazy(() => import('./components/MyView'));
 const StatsView = lazy(() => import('./components/StatsView'));
@@ -49,30 +44,25 @@ const AppContent: React.FC<{ data: any }> = ({ data }) => {
   const [view, setView] = useState<View>('dashboard');
   const [editingLogDate, setEditingLogDate] = useState<string | null>(null);
   
-  // Modals Visibility States
   const [isSexModalOpen, setIsSexModalOpen] = useState(false);
   const [isMbModalOpen, setIsMbModalOpen] = useState(false);
   const [isExerciseModalOpen, setIsExerciseModalOpen] = useState(false);
   const [isAlcoholModalOpen, setIsAlcoholModalOpen] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [isVersionHistoryOpen, setIsVersionHistoryOpen] = useState(false);
-
-  // Cancellation State
   const [cancelTarget, setCancelTarget] = useState<{ type: 'alcohol' | 'mb' | 'exercise', id?: string } | null>(null);
 
-  // Ongoing Data References
   const ongoingAlcohol = useMemo(() => logs.find((l: LogEntry) => l.alcoholRecord?.ongoing), [logs]);
   const ongoingMb = useMemo(() => logs.flatMap((l: LogEntry) => l.masturbation || []).find((m: MasturbationRecordDetails) => m.status === 'inProgress'), [logs]);
   const ongoingExercise = useMemo(() => logs.flatMap((l: LogEntry) => l.exercise || []).find((e: ExerciseRecord) => e.ongoing), [logs]);
   const ongoingSleep = useMemo(() => logs.find((l: LogEntry) => l.sleep?.startTime && !l.sleep?.endTime), [logs]);
   const ongoingNap = useMemo(() => logs.flatMap((l: LogEntry) => l.sleep?.naps || []).find((n: NapRecord) => n.ongoing), [logs]);
 
-  // --- Handlers for FAB & Dashboard ---
   const handleStartAlcohol = async () => {
       if (ongoingAlcohol) setIsAlcoholModalOpen(true);
       else {
-          const started = await toggleAlcohol();
-          if (started) showToast('已开始饮酒计时...', 'info');
+          const success = await toggleAlcohol();
+          if (success) showToast('已开始饮酒计时...', 'info');
       }
   };
 
@@ -86,7 +76,7 @@ const AppContent: React.FC<{ data: any }> = ({ data }) => {
 
   const handleToggleSleep = async () => {
       await toggleSleepLog();
-      showToast(ongoingSleep ? '早安，祝你今天精力充沛' : '晚安，已标记入睡时间', 'info');
+      showToast(ongoingSleep ? '早安，记录已归档' : '晚安，已标记入睡时间', 'info');
   };
 
   const handleToggleNap = async () => {
@@ -94,7 +84,6 @@ const AppContent: React.FC<{ data: any }> = ({ data }) => {
       showToast(ongoingNap ? '午休已结束' : '休息一下，已标记午休开始', 'info');
   };
 
-  // --- Activity Cancellation (Detailed Reason Modal) ---
   const triggerCancelActivity = (type: 'alcohol' | 'mb' | 'exercise', id?: string) => {
       setCancelTarget({ type, id });
       setIsCancelModalOpen(true);
@@ -102,19 +91,17 @@ const AppContent: React.FC<{ data: any }> = ({ data }) => {
 
   const confirmCancelActivity = async (reason: string) => {
       if (!cancelTarget) return;
-      const { type } = cancelTarget;
-      
       try {
-          if (type === 'alcohol' && ongoingAlcohol) {
+          if (cancelTarget.type === 'alcohol' && ongoingAlcohol) {
               await addOrUpdateLog({ ...ongoingAlcohol, alcoholRecord: null, alcohol: 'none' });
-          } else if (type === 'mb' && ongoingMb) {
+          } else if (cancelTarget.type === 'mb' && ongoingMb) {
               const log = logs.find((l: LogEntry) => l.masturbation?.some(m => m.id === ongoingMb.id));
               if (log) await addOrUpdateLog({ ...log, masturbation: log.masturbation!.filter(m => m.id !== ongoingMb.id) });
-          } else if (type === 'exercise' && ongoingExercise) {
+          } else if (cancelTarget.type === 'exercise' && ongoingExercise) {
               const log = logs.find((l: LogEntry) => l.exercise?.some(e => e.id === ongoingExercise.id));
               if (log) await addOrUpdateLog({ ...log, exercise: log.exercise!.filter(e => e.id !== ongoingExercise.id) });
           }
-          showToast(`已取消记录 (${reason})`, 'info');
+          showToast(`记录已移除 (${reason})`, 'info');
       } catch (e: any) {
           showToast(e.message, 'error');
       } finally {
@@ -143,7 +130,7 @@ const AppContent: React.FC<{ data: any }> = ({ data }) => {
                 onCancelExercise={() => triggerCancelActivity('exercise')}
               />
             )}
-            <Suspense fallback={<div className="p-10 text-center opacity-50"><Loader2 className="animate-spin mx-auto mb-2"/>加载视图...</div>}>
+            <Suspense fallback={<div className="p-10 text-center opacity-50"><Loader2 className="animate-spin mx-auto mb-2"/>加载中...</div>}>
                 {activeMainView === 'stats' && <StatsView isDarkMode={false} />}
                 {activeMainView === 'sexlife' && <SexLifeView />}
                 {activeMainView === 'my' && <MyView settings={settings} onUpdateSettings={setSettings} installPrompt={null} onShowVersionHistory={() => setIsVersionHistoryOpen(true)} onNavigateToLog={d => { setEditingLogDate(d); setView('form'); }} />}
@@ -159,61 +146,18 @@ const AppContent: React.FC<{ data: any }> = ({ data }) => {
         )}
 
         {view === 'dashboard' && (
-          <>
-            <FAB 
-                onSleep={handleToggleSleep} 
-                onSex={() => setIsSexModalOpen(true)} 
-                onMasturbation={handleStartMasturbation} 
-                onExercise={() => setIsExerciseModalOpen(true)} 
-                onNap={handleToggleNap} 
-                onAlcohol={handleStartAlcohol}
-                isSleepPending={!!ongoingSleep} 
-                isAlcoholOngoing={!!ongoingAlcohol}
-                isMbOngoing={!!ongoingMb}
-                isExerciseOngoing={!!ongoingExercise}
-                isNapOngoing={!!ongoingNap}
-            />
-            <BottomNav activeView={activeMainView} onViewChange={setActiveMainView} />
-          </>
+          <FAB 
+                onSleep={handleToggleSleep} onSex={() => setIsSexModalOpen(true)} onMasturbation={handleStartMasturbation} onExercise={() => setIsExerciseModalOpen(true)} onNap={handleToggleNap} onAlcohol={handleStartAlcohol}
+                isSleepPending={!!ongoingSleep} isAlcoholOngoing={!!ongoingAlcohol} isMbOngoing={!!ongoingMb} isExerciseOngoing={!!ongoingExercise} isNapOngoing={!!ongoingNap}
+          />
         )}
+        {view === 'dashboard' && <BottomNav activeView={activeMainView} onViewChange={setActiveMainView} />}
 
-        {/* --- Activity Detail Modals --- */}
-        <SexRecordModal
-            isOpen={isSexModalOpen}
-            onClose={() => setIsSexModalOpen(false)}
-            onSave={async r => { await quickAddSex(r); setIsSexModalOpen(false); showToast('性爱记录已添加', 'success'); }}
-            dateStr={new Date().toISOString()}
-            partners={partners}
-        />
-        <MasturbationRecordModal
-            isOpen={isMbModalOpen}
-            onClose={() => setIsMbModalOpen(false)}
-            onSave={async r => { await quickAddMasturbation(r); setIsMbModalOpen(false); showToast('自慰记录已更新', 'success'); }}
-            initialData={ongoingMb}
-            dateStr={new Date().toISOString()}
-            logs={logs}
-        />
-        <ExerciseRecordModal
-            isOpen={isExerciseModalOpen}
-            onClose={() => setIsExerciseModalOpen(false)}
-            onSave={async r => { await saveExercise(r); setIsExerciseModalOpen(false); showToast('运动已记录', 'success'); }}
-            initialData={ongoingExercise}
-            mode={ongoingExercise ? 'finish' : 'start'}
-        />
-        <AlcoholRecordModal
-            isOpen={isAlcoholModalOpen}
-            onClose={() => setIsAlcoholModalOpen(false)}
-            onSave={async r => { await saveAlcoholRecord(r); setIsAlcoholModalOpen(false); showToast('饮酒详情已更新', 'success'); }}
-            initialData={ongoingAlcohol?.alcoholRecord || undefined}
-        />
-
-        {/* --- Global Utility Modals --- */}
-        <CancelReasonModal
-            isOpen={isCancelModalOpen}
-            onClose={() => setIsCancelModalOpen(false)}
-            onConfirm={confirmCancelActivity}
-            title={`取消${cancelTarget?.type === 'alcohol' ? '饮酒' : cancelTarget?.type === 'mb' ? '自慰' : '运动'}记录`}
-        />
+        <SexRecordModal isOpen={isSexModalOpen} onClose={() => setIsSexModalOpen(false)} onSave={async r => { await quickAddSex(r); setIsSexModalOpen(false); showToast('已添加', 'success'); }} dateStr={new Date().toISOString()} partners={partners} />
+        <MasturbationRecordModal isOpen={isMbModalOpen} onClose={() => setIsMbModalOpen(false)} onSave={async r => { await quickAddMasturbation(r); setIsMbModalOpen(false); showToast('已更新', 'success'); }} initialData={ongoingMb} dateStr={new Date().toISOString()} logs={logs} />
+        <ExerciseRecordModal isOpen={isExerciseModalOpen} onClose={() => setIsExerciseModalOpen(false)} onSave={async r => { await saveExercise(r); setIsExerciseModalOpen(false); showToast('已保存', 'success'); }} initialData={ongoingExercise} mode={ongoingExercise ? 'finish' : 'start'} />
+        <AlcoholRecordModal isOpen={isAlcoholModalOpen} onClose={() => setIsAlcoholModalOpen(false)} onSave={async r => { await saveAlcoholRecord(r); setIsAlcoholModalOpen(false); showToast('已更新', 'success'); }} initialData={ongoingAlcohol?.alcoholRecord || undefined} />
+        <CancelReasonModal isOpen={isCancelModalOpen} onClose={() => setIsCancelModalOpen(false)} onConfirm={confirmCancelActivity} title="取消当前记录" />
         <VersionHistoryModal isOpen={isVersionHistoryOpen} onClose={() => setIsVersionHistoryOpen(false)} />
       </div>
     </div>
