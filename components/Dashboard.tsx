@@ -539,7 +539,10 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                         </div>
 
                         <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 text-center shrink-0">
-                            <button onClick={() => { setIsSummaryModalOpen(false); onEdit(summaryLog.date); }} className="w-full py-3 bg-brand-accent text-white rounded-xl font-bold shadow-lg shadow-blue-500/30 hover:bg-blue-600 transition-colors flex items-center justify-center gap-2">
+                            <button 
+                                onClick={() => { setIsSummaryModalOpen(false); onEdit(summaryLog.date); }} 
+                                className="w-full py-3 bg-brand-primary dark:bg-slate-800 text-brand-text dark:text-slate-200 rounded-xl font-bold hover:bg-brand-accent hover:text-white dark:hover:bg-slate-700 transition-all flex items-center justify-center gap-2 border border-slate-200 dark:border-slate-700"
+                            >
                                 <Edit3 size={16} /> 编辑详情
                             </button>
                         </div>

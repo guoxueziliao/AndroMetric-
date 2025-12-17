@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import { LogEntry, SexRecordDetails, MasturbationRecordDetails, ExerciseRecord, NapRecord, ChangeDetail, ChangeRecord, AlcoholRecord, PartnerProfile, MorningRecord, SleepRecord, CaffeineRecord } from '../types';
-import { CheckSquare, Tag, Beer, Film, Dumbbell, Sun, Cloud, CloudRain, Snowflake, Wind, CloudFog, Home, Users, Hotel, Plane, MapPin, Shirt, HeartPulse, Hand, Plus, Edit2, Trash2, Footprints, Save, Coffee, Calendar, X, Zap, Check, Sparkles, Settings } from 'lucide-react';
+import { CheckSquare, Tag, Beer, Film, Dumbbell, Sun, Cloud, CloudRain, Snowflake, Wind, CloudFog, Home, Users, Hotel, Plane, MapPin, Shirt, HeartPulse, Hand, Plus, Edit2, Trash2, Footprints, Save, Coffee, Calendar, X, Zap, Check, Sparkles, Settings, ArrowLeft } from 'lucide-react';
 import Modal from './Modal';
 import SexRecordModal from './SexRecordModal';
 import MasturbationRecordModal from './MasturbationRecordModal';
@@ -467,16 +467,18 @@ const LogForm: React.FC<{
             </CardSection>
 
             {/* Sticky Bottom Actions */}
-            <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 flex justify-between items-center z-40 transition-colors">
-                <button onClick={handleSaveDraft} className="px-6 py-3 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold text-sm hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+            <div className="fixed bottom-0 left-0 right-0 p-4 pb-6 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-t border-slate-100 dark:border-slate-800/50 flex justify-between items-center z-40 transition-all">
+                <button onClick={handleSaveDraft} className="px-6 py-3.5 rounded-2xl text-slate-500 dark:text-slate-400 font-bold text-xs hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors flex flex-col items-center justify-center gap-1 active:scale-95">
+                    <Save size={20} className="mb-0.5"/>
                     保存草稿
                 </button>
                 <button 
                     onClick={handlePreSave}
-                    className="flex-1 ml-4 py-3 rounded-2xl bg-brand-accent hover:bg-brand-accent-hover text-white font-bold shadow-lg shadow-blue-500/30 flex items-center justify-center transition-all active:scale-[0.98]"
+                    className="flex-1 ml-3 py-3.5 rounded-2xl bg-brand-accent hover:bg-blue-500 text-white font-bold shadow-lg shadow-blue-500/20 dark:shadow-blue-900/30 flex items-center justify-center transition-all active:scale-[0.98] group relative overflow-hidden"
                 >
-                    <CheckSquare size={18} className="mr-2" />
-                    完成记录
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
+                    <CheckSquare size={18} className="mr-2" strokeWidth={2.5} />
+                    <span className="text-base tracking-wide">完成记录</span>
                 </button>
             </div>
 
