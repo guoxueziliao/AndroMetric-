@@ -313,12 +313,12 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
       )}
 
       {/* Main Calendar Card */}
-      <div className="bg-brand-card dark:bg-slate-900 rounded-3xl p-4 shadow-soft border border-slate-100 dark:border-slate-800">
+      <div className="bg-brand-card dark:bg-slate-900 rounded-3xl p-4 shadow-soft border border-slate-100 dark:border-slate-800 mb-6">
         <CalendarHeatmap logs={completedLogs} onDateClick={handleDateClickForSummary} />
       </div>
 
       {/* Today's Status Cards (2-Col Layout) */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-3 mb-6">
           {/* Sleep Card */}
           <div 
             onClick={() => onEdit(todayStr)}
