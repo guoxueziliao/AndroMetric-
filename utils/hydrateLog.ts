@@ -120,15 +120,19 @@ export const hydrateLog = (raw: any): LogEntry => {
     };
     log.health = { ...defaultHealth, ...(raw.health || {}) };
 
-    // 5. Alcohol Record (Updated v0.0.8)
+    // 5. Alcohol Record (Updated v0.0.9)
     if (raw.alcoholRecord) {
         log.alcoholRecord = {
             ...raw.alcoholRecord,
             id: raw.alcoholRecord.id || `alc_${log.date}_${Date.now()}`,
             drunkLevel: raw.alcoholRecord.drunkLevel || 'none',
-            alcoholScene: raw.alcoholRecord.alcoholScene || '',
+            alcoholScene: raw.alcoholRecord.alcoholScene || '', // Legacy
             time: raw.alcoholRecord.time || '20:00', // Legacy fallback
-            ongoing: raw.alcoholRecord.ongoing ?? false
+            ongoing: raw.alcoholRecord.ongoing ?? false,
+            // New v0.0.9 fields default
+            location: raw.alcoholRecord.location || (raw.alcoholRecord.alcoholScene === '独自' ? '家' : raw.alcoholRecord.alcoholScene) || '家',
+            people: raw.alcoholRecord.people || '独自',
+            reason: raw.alcoholRecord.reason || '放松'
         };
     } else {
         log.alcoholRecord = null;

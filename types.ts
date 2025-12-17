@@ -231,9 +231,15 @@ export interface AlcoholRecord {
     isLate: boolean; // Auto-calculated now
     items: AlcoholItem[];
     drunkLevel?: DrunkLevel;
-    alcoholScene?: string;
+    
+    // v0.0.9 Context Fields
+    location?: string; // Place (e.g. Home, BBQ)
+    people?: string;   // Who (e.g. Friends, Alone)
+    reason?: string;   // Why (e.g. Social, Relax)
+    
     // v0.0.6 Legacy
     time?: string; // HH:mm
+    alcoholScene?: string; // Deprecated
 }
 
 // v0.0.6 Caffeine (Updated to use Cups)
