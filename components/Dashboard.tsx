@@ -29,7 +29,6 @@ interface DashboardProps {
   onCancelSex?: () => void;
 }
 
-// 辅助组件：睡眠小柱状图
 const SleepBarChart = ({ logs }: { logs: LogEntry[] }) => {
     const last7Days = useMemo(() => {
         const result = [];
@@ -54,7 +53,7 @@ const SleepBarChart = ({ logs }: { logs: LogEntry[] }) => {
             {last7Days.map((d, i) => (
                 <div 
                     key={i} 
-                    className={`flex-1 rounded-t-sm transition-all duration-500 ${d.isToday ? 'bg-amber-400' : 'bg-indigo-500/60'}`}
+                    className={`flex-1 rounded-t-sm transition-all duration-500 ${d.isToday ? 'bg-amber-400' : 'bg-brand-accent/40'}`}
                     style={{ height: `${Math.min(100, (d.hours / 10) * 100)}%` }}
                 />
             ))}
@@ -87,6 +86,22 @@ const DailyReportCard: React.FC<{ log: LogEntry }> = ({ log }) => {
     );
 };
 
+const Banner = ({ type, title, subtitle, color, icon: Icon, onMain, onCancel }: any) => (
+    <div className={`rounded-2xl p-4 text-white shadow-lg flex items-center justify-between animate-in slide-in-from-top-2 fade-in ${color}`}>
+        <div className="flex items-center gap-3 cursor-pointer flex-1" onClick={onMain}>
+            <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center animate-pulse"><Icon size={20}/></div>
+            <div className="min-w-0 flex-1">
+                <div className="text-[10px] font-bold opacity-80 uppercase tracking-wider">{type}</div>
+                <div className="text-lg font-black truncate">{title} <span className="ml-1 font-mono text-sm opacity-70">{subtitle}</span></div>
+            </div>
+        </div>
+        <div className="flex items-center gap-2">
+            <button onClick={(e) => { e.stopPropagation(); onCancel?.(); }} className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"><X size={16}/></button>
+            <button onClick={(e) => { e.stopPropagation(); onMain?.(); }} className="bg-white px-4 py-2 rounded-xl font-bold text-sm shadow-sm flex items-center shrink-0" style={{ color: 'inherit' }}>详情</button>
+        </div>
+    </div>
+);
+
 const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateToBackup, onFinishExercise, onCancelExercise, onFinishMasturbation, onCancelMasturbation, onEditAlcohol, onCancelAlcohol, onWakeUp, onCancelSleep, onFinishNap, onCancelNap, onFinishSex, onCancelSex }) => {
   const { logs, deleteLog } = useData();
   const { showToast } = useToast();
@@ -110,7 +125,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
 
   const greeting = useMemo(() => { const hour = new Date().getHours(); if (hour < 5) return '夜深了'; if (hour < 12) return '早上好'; if (hour < 18) return '下午好'; return '晚上好'; }, []);
 
-  // 统计逻辑修正
   const stats = useMemo(() => {
       const validLogs = logs.filter(l => l.status === 'completed' && l.morning);
       const totalMb = logs.reduce((acc, l) => acc + (l.masturbation?.length || 0), 0);
@@ -124,11 +138,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
         ? Math.round((validLogs.filter(l => l.morning?.wokeWithErection).length / validLogs.length) * 100)
         : 0;
 
-      // 活力逻辑：今日运动和性行为状态
       const todayExercise = todayLog?.exercise?.length || 0;
       const todaySexual = (todayLog?.sex?.length || 0) + (todayLog?.masturbation?.length || 0);
       
-      // 睡眠逻辑：今日睡眠时长显示
       let sleepDisplay = '--';
       if (todayLog?.sleep?.startTime && todayLog?.sleep?.endTime) {
           const s = new Date(todayLog.sleep.startTime).getTime();
@@ -151,162 +163,65 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
         <button onClick={onNavigateToBackup} className="p-3 bg-white dark:bg-slate-800 rounded-full shadow-sm border border-slate-100 dark:border-slate-800 hover:scale-105 transition-transform"><User size={24} className="text-brand-accent"/></button>
       </div>
 
-      {/* 横幅区 (保持不变) */}
+      {/* 6路横幅恢复 */}
       <div className="flex flex-col gap-3">
-          {ongoingSleep && (
-              <div className="bg-indigo-600 rounded-2xl p-4 text-white shadow-lg shadow-indigo-500/30 flex items-center justify-between animate-in slide-in-from-top-2 fade-in">
-                  <div className="flex items-center gap-3 cursor-pointer flex-1" onClick={onWakeUp}>
-                      <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center animate-pulse"><BedDouble size={20}/></div>
-                      <div className="min-w-0 flex-1">
-                          <div className="text-[10px] font-bold opacity-80 uppercase tracking-wider">正在睡觉</div>
-                          <div className="text-lg font-black truncate">记录中... <span className="ml-1 font-mono text-sm opacity-60">{formatTime(ongoingSleep.sleep?.startTime || '')} 睡下</span></div>
-                      </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                      <button onClick={(e) => { e.stopPropagation(); onCancelSleep?.(); }} className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"><X size={16}/></button>
-                      <button onClick={(e) => { e.stopPropagation(); onWakeUp?.(); }} className="bg-white text-indigo-600 px-4 py-2 rounded-xl font-bold text-sm shadow-sm flex items-center shrink-0"><SunMedium size={16} className="mr-1.5"/>醒了</button>
-                  </div>
-              </div>
-          )}
-          {ongoingSex && (
-              <div className="bg-gradient-to-r from-pink-500 to-rose-600 rounded-2xl p-4 text-white shadow-lg shadow-pink-500/30 flex items-center justify-between animate-in slide-in-from-top-2 fade-in">
-                  <div className="flex items-center gap-3 cursor-pointer flex-1" onClick={() => onFinishSex?.(ongoingSex)}>
-                      <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center animate-pulse"><Heart size={20} fill="currentColor"/></div>
-                      <div className="min-w-0 flex-1">
-                          <div className="text-[10px] font-bold opacity-80 uppercase tracking-wider">正在进行</div>
-                          <div className="text-lg font-black truncate">性爱中... <span className="ml-2 font-mono text-sm opacity-80">{ongoingSex.startTime} 开始</span></div>
-                      </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                      <button onClick={(e) => { e.stopPropagation(); onCancelSex?.(); }} className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors text-white/80"><X size={16}/></button>
-                      <button onClick={(e) => { e.stopPropagation(); onFinishSex?.(ongoingSex); }} className="bg-white text-pink-600 px-4 py-2 rounded-xl font-bold text-sm shadow-sm flex items-center shrink-0"><StopCircle size={16} className="mr-1.5"/>详情</button>
-                  </div>
-              </div>
-          )}
+          {ongoingSleep && <Banner type="正在睡觉" title="记录中..." subtitle={`${formatTime(ongoingSleep.sleep?.startTime || '')} 睡下`} color="bg-indigo-600 shadow-indigo-500/30" icon={BedDouble} onMain={onWakeUp} onCancel={onCancelSleep}/>}
+          {ongoingNap && <Banner type="正在午休" title="梦境生长中..." subtitle={`${ongoingNap.startTime} 开始`} color="bg-orange-500 shadow-orange-500/30" icon={CloudSun} onMain={() => onFinishNap?.(ongoingNap)} onCancel={() => onCancelNap?.(ongoingNap.id)}/>}
+          {ongoingSex && <Banner type="性爱进行中" title="热汗淋漓..." subtitle={`${ongoingSex.startTime} 开始`} color="bg-pink-500 shadow-pink-500/30" icon={Heart} onMain={() => onFinishSex?.(ongoingSex)} onCancel={onCancelSex}/>}
+          {ongoingMb && <Banner type="正在施法" title="专注中..." subtitle={`${ongoingMb.startTime} 开始`} color="bg-blue-500 shadow-blue-500/30" icon={Hand} onMain={onFinishMasturbation} onCancel={onCancelMasturbation}/>}
+          {ongoingExercise && <Banner type="正在运动" title={ongoingExercise.type} subtitle={`${ongoingExercise.startTime} 开始`} color="bg-emerald-600 shadow-emerald-500/30" icon={Dumbbell} onMain={onFinishExercise} onCancel={onCancelExercise}/>}
+          {ongoingAlcohol && <Banner type="开怀畅饮" title="酒精摄入中..." subtitle={`${ongoingAlcohol.alcoholRecord?.startTime} 开始`} color="bg-amber-600 shadow-amber-500/30" icon={Beer} onMain={onEditAlcohol} onCancel={onCancelAlcohol}/>}
       </div>
 
-      {/* 主日历卡片 */}
       <div className="bg-brand-card dark:bg-slate-900 rounded-3xl p-4 shadow-soft border border-slate-100 dark:border-slate-800 mb-6">
         <CalendarHeatmap logs={logs.filter(l => l.status === 'completed' || l.date === todayStr)} onDateClick={handleDateClickForSummary} />
       </div>
 
-      {/* 图片同款 6 卡片网格布局 */}
+      {/* 卡片配色适配 */}
       <div className="grid grid-cols-2 gap-4">
-          
-          {/* 1. 睡眠卡片 (深色) */}
-          <div className="bg-slate-900 dark:bg-slate-900/80 p-5 rounded-[2.5rem] shadow-lg h-44 flex flex-col justify-between overflow-hidden relative group">
-              <div className="flex justify-between items-start relative z-10">
+          <div className="bg-slate-900 dark:bg-slate-800 p-5 rounded-[2.5rem] shadow-lg h-44 flex flex-col justify-between overflow-hidden relative text-white">
+              <div className="flex justify-between items-start z-10">
                   <div className="flex items-center gap-2">
-                      <div className="w-9 h-9 rounded-2xl bg-indigo-500/20 flex items-center justify-center text-indigo-400">
-                          <Moon size={18} fill="currentColor" />
-                      </div>
-                      <span className="text-sm font-bold text-white">睡眠</span>
+                      <div className="w-9 h-9 rounded-2xl bg-indigo-500/20 flex items-center justify-center text-indigo-400"><Moon size={18} fill="currentColor" /></div>
+                      <span className="text-sm font-bold">睡眠</span>
                   </div>
-                  <div className="text-xl font-black text-white/40 font-mono tracking-tighter">
-                      {stats.sleepDisplay !== '--' ? stats.sleepDisplay : '--'}
-                  </div>
+                  <div className="text-xl font-black text-white/40 font-mono">{stats.sleepDisplay}</div>
               </div>
-              <div className="relative z-10">
-                  <span className="text-[10px] font-bold text-white/30 block mb-1">
-                      {stats.sleepDisplay !== '--' ? '今日睡眠时长' : '未记录时间'}
-                  </span>
-                  <SleepBarChart logs={logs} />
-              </div>
+              <div className="z-10"><span className="text-[10px] font-bold text-white/30 block mb-1">{stats.sleepDisplay !== '--' ? '今日睡眠时长' : '未记录时间'}</span><SleepBarChart logs={logs} /></div>
           </div>
 
-          {/* 2. 活力卡片 (深色) */}
-          <div className="bg-slate-900 dark:bg-slate-900/80 p-5 rounded-[2.5rem] shadow-lg h-44 flex flex-col justify-between group">
-              <div className="flex justify-between items-start">
-                  <div className="w-9 h-9 rounded-2xl bg-rose-500/20 flex items-center justify-center text-rose-400">
-                      <HeartPulse size={18} />
-                  </div>
-              </div>
-              <div>
-                  <h4 className="text-lg font-black text-white mb-2">活力</h4>
+          <div className="bg-slate-900 dark:bg-slate-800 p-5 rounded-[2.5rem] shadow-lg h-44 flex flex-col justify-between text-white">
+              <div className="w-9 h-9 rounded-2xl bg-rose-500/20 flex items-center justify-center text-rose-400"><HeartPulse size={18} /></div>
+              <div><h4 className="text-lg font-black mb-2">活力</h4>
                   <div className="space-y-1.5">
-                      <div className="flex justify-between items-center">
-                          <span className="text-[10px] font-bold text-orange-400 flex items-center gap-1"><Dumbbell size={10}/> 运动</span>
-                          <span className="text-[10px] font-black text-white/60">{stats.todayExercise > 0 ? '已完成' : '未完成'}</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                          <span className="text-[10px] font-bold text-pink-400 flex items-center gap-1"><Heart size={10} fill="currentColor"/> 性/手</span>
-                          <span className="text-[10px] font-black text-white/60">{stats.todaySexual > 0 ? `${stats.todaySexual}次` : '无'}</span>
-                      </div>
+                      <div className="flex justify-between items-center"><span className="text-[10px] font-bold text-orange-400 flex items-center gap-1"><Dumbbell size={10}/> 运动</span><span className="text-[10px] font-black text-white/60">{stats.todayExercise > 0 ? '已完成' : '未完成'}</span></div>
+                      <div className="flex justify-between items-center"><span className="text-[10px] font-bold text-pink-400 flex items-center gap-1"><Heart size={10} fill="currentColor"/> 性/手</span><span className="text-[10px] font-black text-white/60">{stats.todaySexual > 0 ? `${stats.todaySexual}次` : '无'}</span></div>
                   </div>
               </div>
               <div className="text-[10px] font-bold text-white/20 text-right">今日释放</div>
           </div>
 
-          {/* 3. 平均硬度 (图片样式) */}
-          <div className="bg-white dark:bg-slate-900 p-5 rounded-[2.5rem] shadow-sm border border-slate-100 dark:border-slate-800 h-44 flex flex-col justify-between transition-all hover:shadow-md">
-              <div className="flex justify-between items-start">
-                  <div className="text-xs font-bold text-slate-400">平均硬度</div>
-                  <Zap size={18} className="text-brand-accent opacity-30"/>
+          {[
+              { label: '平均硬度', val: stats.avgHardness, icon: Zap, color: 'text-brand-accent', sub: '- 稳定' },
+              { label: '晨勃率', val: `${stats.mwRate}%`, icon: SunMedium, color: 'text-blue-500', sub: '出现概率' },
+              { label: '自慰次数', val: `${stats.totalMb}次`, icon: Hand, color: 'text-purple-500', sub: '本月释放' },
+              { label: '性爱次数', val: `${stats.totalSex}次`, icon: Heart, color: 'text-pink-500', sub: 'High Quality' }
+          ].map((c, i) => (
+              <div key={i} className="bg-white dark:bg-slate-900 p-5 rounded-[2.5rem] shadow-sm border border-slate-100 dark:border-slate-800 h-44 flex flex-col justify-between">
+                  <div className="flex justify-between items-start"><div className="text-xs font-bold text-slate-400">{c.label}</div><c.icon size={18} className={`${c.color} opacity-30`}/></div>
+                  <div><div className={`text-4xl font-black tracking-tighter ${c.color}`}>{c.val}</div><div className="text-[10px] text-slate-400 font-bold mt-1">{c.sub}</div></div>
               </div>
-              <div>
-                  <div className="text-4xl font-black text-brand-text dark:text-white tracking-tighter">{stats.avgHardness}</div>
-                  <div className="text-[10px] text-slate-400 font-bold mt-1">- 稳定</div>
-              </div>
-          </div>
-
-          {/* 4. 晨勃率 (图片样式) */}
-          <div className="bg-white dark:bg-slate-900 p-5 rounded-[2.5rem] shadow-sm border border-slate-100 dark:border-slate-800 h-44 flex flex-col justify-between transition-all hover:shadow-md">
-              <div className="flex justify-between items-start">
-                  <div className="text-xs font-bold text-slate-400">晨勃率</div>
-                  <SunMedium size={18} className="text-amber-500 opacity-30"/>
-              </div>
-              <div>
-                  <div className="text-4xl font-black text-blue-500 tracking-tighter">{stats.mwRate}<span className="text-sm ml-0.5">%</span></div>
-                  <div className="text-[10px] text-slate-400 font-bold mt-1">出现概率</div>
-              </div>
-          </div>
-
-          {/* 5. 自慰次数 (图片样式) */}
-          <div className="bg-white dark:bg-slate-900 p-5 rounded-[2.5rem] shadow-sm border border-slate-100 dark:border-slate-800 h-44 flex flex-col justify-between transition-all hover:shadow-md">
-              <div className="flex justify-between items-start">
-                  <div className="text-xs font-bold text-slate-400">自慰次数</div>
-                  <Hand size={18} className="text-purple-500 opacity-30"/>
-              </div>
-              <div>
-                  <div className="text-4xl font-black text-purple-500 tracking-tighter">{stats.totalMb}<span className="text-sm font-bold ml-1 opacity-50">次</span></div>
-                  <div className="text-[10px] text-slate-400 font-bold mt-1">本月释放</div>
-              </div>
-          </div>
-
-          {/* 6. 性爱次数 (图片样式) */}
-          <div className="bg-white dark:bg-slate-900 p-5 rounded-[2.5rem] shadow-sm border border-slate-100 dark:border-slate-800 h-44 flex flex-col justify-between transition-all hover:shadow-md">
-              <div className="flex justify-between items-start">
-                  <div className="text-xs font-bold text-slate-400">性爱次数</div>
-                  <Heart size={18} className="text-pink-500 opacity-30"/>
-              </div>
-              <div>
-                  <div className="text-4xl font-black text-pink-500 tracking-tighter">{stats.totalSex}<span className="text-sm font-bold ml-1 opacity-50">次</span></div>
-                  <div className="text-[10px] text-slate-400 font-bold mt-1">High Quality</div>
-              </div>
-          </div>
+          ))}
       </div>
 
       <Modal isOpen={isSummaryModalOpen} onClose={() => { setIsSummaryModalOpen(false); setSummaryLog(null); }} title="" footer={null}>
           {summaryLog && (
               <div className="pb-6">
                   <div className="flex justify-between items-start mb-6 px-1">
-                      <div>
-                          <h2 className="text-3xl font-black text-brand-text dark:text-slate-100 tracking-tighter">{new Date(summaryLog.date).getMonth() + 1}月{new Date(summaryLog.date).getDate()}日</h2>
-                          <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mt-1">{new Date(summaryLog.date).toLocaleDateString('zh-CN', { weekday: 'long' })}</p>
-                      </div>
+                      <div><h2 className="text-3xl font-black text-brand-text dark:text-slate-100 tracking-tighter">{new Date(summaryLog.date).getMonth() + 1}月{new Date(summaryLog.date).getDate()}日</h2><p className="text-sm font-bold text-slate-400 uppercase tracking-widest mt-1">{new Date(summaryLog.date).toLocaleDateString('zh-CN', { weekday: 'long' })}</p></div>
                       <div className="flex gap-2">
-                          <button 
-                            onClick={() => setActiveSummaryTab('trace')}
-                            className={`p-2.5 rounded-2xl border transition-all ${activeSummaryTab === 'trace' ? 'bg-brand-accent text-white border-brand-accent shadow-md' : 'bg-slate-50 dark:bg-slate-800 text-slate-400 border-slate-100 dark:border-slate-700 hover:text-brand-accent'}`}
-                          >
-                            <HistoryIcon size={18}/>
-                          </button>
-                          <button 
-                            onClick={() => { setLogToDelete(summaryLog.date); setIsDeleteModalOpen(true); }}
-                            className="p-2.5 rounded-2xl bg-slate-50 dark:bg-slate-800 text-slate-400 border border-slate-100 dark:border-slate-700 hover:text-red-500 transition-all"
-                          >
-                            <Trash2 size={18}/>
-                          </button>
+                          <button onClick={() => setActiveSummaryTab('trace')} className={`p-2.5 rounded-2xl border transition-all ${activeSummaryTab === 'trace' ? 'bg-brand-accent text-white border-brand-accent shadow-md' : 'bg-slate-50 dark:bg-slate-800 text-slate-400 border-slate-100 dark:border-slate-700 hover:text-brand-accent'}`}><HistoryIcon size={18}/></button>
+                          <button onClick={() => { setLogToDelete(summaryLog.date); setIsDeleteModalOpen(true); }} className="p-2.5 rounded-2xl bg-slate-50 dark:bg-slate-800 text-slate-400 border border-slate-100 dark:border-slate-700 hover:text-red-500 transition-all"><Trash2 size={18}/></button>
                       </div>
                   </div>
                   <div className="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl mb-6">

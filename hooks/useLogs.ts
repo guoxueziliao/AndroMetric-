@@ -21,7 +21,6 @@ export function useLogs() {
 
     const addOrUpdateLog = useCallback(async (log: LogEntry) => {
         try {
-            // 关键：在保存前进行深度检查，不要让 status 或其他元数据覆盖掉业务数组
             const logToSave = hydrateLog(log);
             await StorageService.logs.save(logToSave);
         } catch (error: any) {
@@ -54,8 +53,6 @@ export function useLogs() {
             changeHistory: [...(log.changeHistory || []), historyEntry]
         };
     };
-
-    // --- Unified Logic for 6 Actions ---
 
     // 1. Alcohol
     const saveAlcoholRecord = useCallback(async (record: AlcoholRecord) => {
@@ -95,7 +92,7 @@ export function useLogs() {
             if (idx >= 0) newList[idx] = record;
             else newList.push(record);
             log.masturbation = newList;
-            log.status = 'completed'; // 标记活跃
+            log.status = 'completed';
             log = logChange(log, record.status === 'inProgress' ? '开始自慰计时' : '完成自慰详情');
         }
         await addOrUpdateLog(log);
@@ -137,7 +134,7 @@ export function useLogs() {
         await addOrUpdateLog(log);
     }, [addOrUpdateLog, getActivityTargetDate]);
 
-    // 5. Sleep (FIXED)
+    // 5. Sleep
     const toggleSleepLog = useCallback(async () => {
         const targetDateStr = getSleepTargetDate();
         const existing = await StorageService.logs.get(targetDateStr);
