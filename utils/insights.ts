@@ -1,5 +1,4 @@
 
-
 import { LogEntry } from '../types';
 import { StatsEngine, METRICS, MetricId } from './StatsEngine';
 import { analyzeSleep } from './helpers';
@@ -176,15 +175,10 @@ const analyzeXPChange = (logs: LogEntry[]): Insight[] => {
     const countTags = (ls: LogEntry[]) => {
         const counts: Record<string, number> = {};
         let total = 0;
-        ls.forEach(l => l.masturbation?.forEach(m => {
-            /**
-             * Fixed Property access: m.assets?.categories is now defined.
-             */
-            m.assets?.categories?.forEach(c => {
-                counts[c] = (counts[c] || 0) + 1;
-                total++;
-            });
-        }));
+        ls.forEach(l => l.masturbation?.forEach(m => m.assets?.categories?.forEach(c => {
+            counts[c] = (counts[c] || 0) + 1;
+            total++;
+        })));
         return { counts, total };
     };
     

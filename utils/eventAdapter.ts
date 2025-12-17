@@ -1,5 +1,4 @@
 
-
 import { LogEntry, UnifiedEvent, EventType } from '../types';
 import { analyzeSleep } from './helpers';
 
@@ -152,9 +151,6 @@ export const flattenLogsToEvents = (logs: LogEntry[]): UnifiedEvent[] => {
                         ts = d.getTime();
                     }
                 }
-                /**
-                 * Fixed Property access: m.assets?.categories is now defined.
-                 */
                 events.push(createEvent(
                     'masturbation',
                     log.date,
@@ -181,9 +177,6 @@ export const flattenLogsToEvents = (logs: LogEntry[]): UnifiedEvent[] => {
         
         // 8. Health/Sickness
         if (log.health?.isSick) {
-             /**
-              * Fixed Property access: log.health.illnessType is now defined.
-              */
              events.push(createEvent(
                 'health',
                 log.date,

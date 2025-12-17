@@ -1,7 +1,7 @@
 
 import React, { useMemo } from 'react';
 import { LogEntry } from '../types';
-import { SunMedium, Moon, Coffee, Beer, Hand, HeartPulse, Dumbbell, Circle, Clock, CloudSun } from 'lucide-react';
+import { SunMedium, Moon, Coffee, Beer, Hand, HeartPulse, Dumbbell, Circle, Clock } from 'lucide-react';
 
 interface GlobalTimelineProps {
     log: LogEntry;
@@ -9,7 +9,7 @@ interface GlobalTimelineProps {
 
 interface TimelineEvent {
     time: string; // HH:mm
-    type: 'wakeup' | 'sleep' | 'caffeine' | 'alcohol' | 'masturbation' | 'sex' | 'exercise' | 'nap';
+    type: 'wakeup' | 'sleep' | 'caffeine' | 'alcohol' | 'masturbation' | 'sex' | 'exercise';
     title: string;
     desc?: string;
     icon: React.ElementType;
@@ -146,23 +146,6 @@ export const GlobalTimeline: React.FC<GlobalTimelineProps> = ({ log }) => {
                 timestamp: getTimestamp(sleepTime)
             });
         }
-
-        // 8. Naps
-        log.sleep?.naps?.forEach(nap => {
-            let desc = nap.ongoing ? '进行中...' : `时长 ${nap.duration}m`;
-            if (nap.hasDream) desc += ` (有梦)`;
-            if (nap.wokeWithErection) desc += ` 🍆 Lv${nap.hardness}`;
-            
-            list.push({
-                time: nap.startTime,
-                type: 'nap',
-                title: '午休',
-                desc,
-                icon: CloudSun,
-                color: 'text-amber-500 bg-amber-50 dark:bg-amber-900/20',
-                timestamp: getTimestamp(nap.startTime)
-            });
-        });
 
         return list.sort((a, b) => a.timestamp - b.timestamp);
     }, [log]);

@@ -1,5 +1,4 @@
 
-
 import React, { useState, useMemo, Suspense, useEffect } from 'react';
 import { LogEntry } from '../types';
 import { Tag, Edit2, Trash2, X, Check, Activity, ShieldAlert, Stethoscope, Plus, Search } from 'lucide-react';
@@ -75,13 +74,8 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
         logs.forEach(log => {
             // XP (Masturbation Categories)
             log.masturbation?.forEach(m => {
-                /**
-                 * Fixed Property access: m.assets?.categories is now defined.
-                 */
                 const uniqueCategories = new Set(m.assets?.categories || []);
-                uniqueCategories.forEach(c => {
-                    if (c) xp[c] = (xp[c] || 0) + 1;
-                });
+                uniqueCategories.forEach(c => xp[c] = (xp[c] || 0) + 1);
             });
             
             // Events (Daily Events)
@@ -98,12 +92,7 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
 
     const currentTags = useMemo(() => {
         if (activeTab === 'health_check') return [];
-        /**
-         * Safely handle activeTab indexing into tagsMap.
-         */
-        const map = tagsMap[activeTab as keyof typeof tagsMap];
-        if (!map) return [];
-        
+        const map = tagsMap[activeTab];
         return Object.entries(map)
             .filter(([name]) => name.toLowerCase().includes(searchTerm.toLowerCase()))
             // Sort: High frequency first, then unused (0)
@@ -114,11 +103,8 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
         const tag = createInput.trim();
         if (!tag) return;
 
-        /**
-         * Fixed indexing for exists check.
-         */
-        const currentMap = tagsMap[activeTab as keyof typeof tagsMap];
-        if (currentMap && currentMap[tag] !== undefined) {
+        // 1. Check if exists
+        if (tagsMap[activeTab][tag] !== undefined) {
             if (onSelectTag) {
                 onSelectTag(tag);
                 onClose();
@@ -189,11 +175,7 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
         }
         
         // Check merge
-        /**
-         * Safely handle indexing for merge check.
-         */
-        const currentMap = tagsMap[activeTab as keyof typeof tagsMap];
-        const existingTags = currentMap ? Object.keys(currentMap) : [];
+        const existingTags = Object.keys(tagsMap[activeTab]);
         const targetExists = existingTags.some(t => t.toLowerCase() === newName.toLowerCase());
         
         if (targetExists) {
@@ -220,9 +202,6 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
 
             if (targetType === 'xp' && newLog.masturbation) {
                 newLog.masturbation = newLog.masturbation.map(m => {
-                    /**
-                     * Fixed Property access for rename.
-                     */
                     if (m.assets?.categories?.includes(oldName)) {
                         const newCats = m.assets.categories.map(c => c === oldName ? newName : c);
                         const uniqueCats = Array.from(new Set(newCats));
@@ -253,11 +232,7 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
     };
 
     const handleDelete = async (tag: string) => {
-        /**
-         * Safely handle indexing for delete count.
-         */
-        const currentMap = tagsMap[activeTab as keyof typeof tagsMap];
-        const usageCount = currentMap ? (currentMap[tag] || 0) : 0;
+        const usageCount = tagsMap[activeTab][tag] || 0;
         const targetType = activeTab;
         
         if (usageCount > 0) {
@@ -283,9 +258,6 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
 
                 if (targetType === 'xp' && newLog.masturbation) {
                     newLog.masturbation = newLog.masturbation.map(m => {
-                        /**
-                         * Fixed Property access for delete.
-                         */
                         if (m.assets?.categories?.includes(tag)) {
                             modified = true;
                             return { ...m, assets: { ...m.assets, categories: m.assets.categories.filter(c => c !== tag) } };

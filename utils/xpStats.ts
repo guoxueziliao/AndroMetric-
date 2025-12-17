@@ -1,8 +1,7 @@
 
-
 import { LogEntry } from '../types';
 import { XP_GROUPS } from './constants';
-import { validateTag } from './tagValidators';
+import { validateTag, ValidationResult } from './tagValidators';
 
 // --- Types ---
 
@@ -31,9 +30,7 @@ export interface XpAnalysisResult {
 
 // --- Helpers ---
 
-/**
- * Build Reverse Lookup Map for Dimensions.
- */
+// Build Reverse Lookup Map for Dimensions
 const TAG_DIMENSION_MAP: Record<string, string> = {};
 Object.entries(XP_GROUPS).forEach(([dim, tags]) => {
     tags.forEach(t => TAG_DIMENSION_MAP[t] = dim);
@@ -65,9 +62,7 @@ export const calculateXpStats = (logs: LogEntry[]): XpAnalysisResult => {
         if (!log.masturbation || log.masturbation.length === 0) return;
 
         log.masturbation.forEach(record => {
-            /**
-             * Fixed Property access: record.assets?.categories is now defined in types.
-             */
+            // Get tags from assets.categories
             const rawTags = record.assets?.categories || [];
             if (rawTags.length === 0) return;
 
@@ -101,9 +96,6 @@ export const calculateXpStats = (logs: LogEntry[]): XpAnalysisResult => {
                 // 5. Update Dimension Stats (Only if NOT noise)
                 if (!isNoise) {
                     const dim = statsMap[tag].dimension;
-                    /**
-                     * Fixed index access with explicit key check.
-                     */
                     if (dimensionRecordSets[dim]) {
                         dimensionRecordSets[dim].add(record.id);
                         dimensionUniqueTags[dim].add(tag);
@@ -140,9 +132,7 @@ export const calculateXpStats = (logs: LogEntry[]): XpAnalysisResult => {
         };
     });
 
-    /**
-     * Recalculate total tag count per dimension properly.
-     */
+    // Recalculate total tag count per dimension properly
     topTags.forEach(t => {
         if (dimensionStats[t.dimension]) {
             dimensionStats[t.dimension].tagCount += t.count;

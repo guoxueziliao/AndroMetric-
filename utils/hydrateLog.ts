@@ -1,46 +1,71 @@
 
 import { LogEntry, Health, MorningRecord, SleepRecord, AlcoholRecord } from '../types';
 
+/**
+ * HYDRATE LOG (Schema v1.0 Enforcer)
+ */
 export const hydrateLog = (raw: any): LogEntry => {
     if (!raw) raw = {};
-    const date = raw.date || new Date().toISOString().split('T')[0];
 
-    // 1. Basic Structure
+    // 1. Basic Metadata
     const log: LogEntry = {
-        date,
+        date: raw.date || new Date().toISOString().split('T')[0],
         status: raw.status || 'completed',
         updatedAt: raw.updatedAt || Date.now(),
+        
+        // Environment & State
         location: raw.location ?? null,
         weather: raw.weather ?? null,
         mood: raw.mood ?? null,
         stressLevel: raw.stressLevel ?? null,
+        
+        // Lifestyle
         alcohol: raw.alcohol ?? null,
         pornConsumption: raw.pornConsumption ?? null,
+        
+        // v0.0.5 New Fields
         caffeineIntake: raw.caffeineIntake ?? null,
         dailyEvents: Array.isArray(raw.dailyEvents) ? raw.dailyEvents : [],
+        
+        // Arrays (Ensure Array)
         tags: Array.isArray(raw.tags) ? raw.tags : [],
         notes: raw.notes ?? null,
-        exercise: Array.isArray(raw.exercise) ? raw.exercise : [],
+        
+        // Activity Arrays
+        exercise: Array.isArray(raw.exercise) ? raw.exercise.map((e: any) => ({...e, feeling: e.feeling || 'ok'})) : [],
         sex: Array.isArray(raw.sex) ? raw.sex : [],
-        masturbation: Array.isArray(raw.masturbation) ? raw.masturbation : [],
+        masturbation: Array.isArray(raw.masturbation) ? raw.masturbation.map((m: any) => ({
+            ...m, 
+            status: m.status || 'completed',
+            // v0.0.6 ContentItems
+            contentItems: Array.isArray(m.contentItems) ? m.contentItems : [] 
+        })) : [],
+        
         changeHistory: Array.isArray(raw.changeHistory) ? raw.changeHistory : [],
     };
 
-    // 2. Caffeine
+    // v0.0.6 Caffeine Record (Cups)
     if (!raw.caffeineRecord) {
         log.caffeineRecord = { totalCount: 0, items: [] };
     } else {
+        // Migration from mg (old) to count (new) if needed, otherwise default
         const items = Array.isArray(raw.caffeineRecord.items) ? raw.caffeineRecord.items.map((i: any) => ({
             ...i,
-            count: i.count ?? 1,
+            // If old 'mg' exists but no 'count', convert (assume 1 cup if undefined)
+            count: i.count ?? (i.mg ? (i.mg > 10 ? 1 : i.mg) : 1),
+            // Default volume if missing (standard cup 350ml)
             volume: i.volume ?? 350 
         })) : [];
-        log.caffeineRecord = { totalCount: raw.caffeineRecord.totalCount ?? items.length, items };
+        
+        log.caffeineRecord = {
+            totalCount: raw.caffeineRecord.totalCount ?? raw.caffeineRecord.totalMg ?? 0,
+            items
+        };
     }
 
-    // 3. Morning Wood
+    // 2. Domain Object: MorningRecord
     const defaultMorning: MorningRecord = {
-        id: raw.morning?.id || `mr_${date}_${Date.now()}`,
+        id: raw.morning?.id || `mr_${log.date}_${Date.now()}`,
         timestamp: raw.morning?.timestamp || Date.now(),
         wokeWithErection: raw.morning?.wokeWithErection ?? raw.wokeWithErection ?? true,
         hardness: raw.morning?.hardness ?? raw.hardness ?? null,
@@ -48,27 +73,21 @@ export const hydrateLog = (raw: any): LogEntry => {
         wokenByErection: raw.morning?.wokenByErection ?? raw.wokenByErection ?? false,
         durationImpression: raw.morning?.durationImpression ?? raw.durationImpression ?? null
     };
-    // 确保 spreading 时，由 hydration 生成的完整对象优于原始可能缺失的对象
     log.morning = { ...defaultMorning, ...(raw.morning || {}) };
 
-    // 4. Sleep & Naps
-    let rawNaps = [];
-    if (raw.sleep && Array.isArray(raw.sleep.naps)) rawNaps = raw.sleep.naps;
-    else if (Array.isArray(raw.naps)) rawNaps = raw.naps;
+    // 3. Domain Object: SleepRecord
+    let naps = [];
+    if (raw.sleep && Array.isArray(raw.sleep.naps)) naps = raw.sleep.naps;
+    else if (Array.isArray(raw.naps)) naps = raw.naps;
     
-    const processedNaps = rawNaps.map((n: any) => ({
+    naps = naps.map((n: any) => ({
         ...n,
-        id: n.id || `nap_${Date.now()}_${Math.random()}`,
         hasDream: n.hasDream ?? false,
-        dreamTypes: n.dreamTypes ?? [],
-        wokeWithErection: n.wokeWithErection ?? false,
-        hardness: n.hardness ?? null,
-        quality: n.quality || 3,
-        environment: n.environment || { location: 'home', temperature: 'comfortable' }
+        dreamTypes: n.dreamTypes ?? []
     }));
 
     const defaultSleep: SleepRecord = {
-        id: raw.sleep?.id || `sr_${date}_${Date.now()}`,
+        id: raw.sleep?.id || `sr_${log.date}_${Date.now()}`,
         startTime: raw.sleep?.startTime ?? raw.sleepDateTime ?? null,
         endTime: raw.sleep?.endTime ?? raw.wakeUpDateTime ?? null,
         quality: raw.sleep?.quality ?? raw.sleepQuality ?? 3,
@@ -77,34 +96,33 @@ export const hydrateLog = (raw: any): LogEntry => {
         nocturnalEmission: raw.sleep?.nocturnalEmission ?? raw.nocturnalEmission ?? false,
         withPartner: raw.sleep?.withPartner ?? raw.sleepWithPartner ?? false,
         preSleepState: raw.sleep?.preSleepState ?? raw.preSleepState ?? null,
-        naps: processedNaps,
+        naps: naps,
         hasDream: raw.sleep?.hasDream ?? false,
         dreamTypes: Array.isArray(raw.sleep?.dreamTypes) ? raw.sleep.dreamTypes : [],
         environment: raw.sleep?.environment || { location: 'home', temperature: 'comfortable' }
     };
-    // 关键修复：显式传递 processedNaps，防止被 raw.sleep 中的空值覆盖
-    log.sleep = { ...defaultSleep, ...(raw.sleep || {}), naps: processedNaps };
+    log.sleep = { ...defaultSleep, ...(raw.sleep || {}) };
 
-    // 5. Health
+    // 4. Domain Object: Health
     const defaultHealth: Health = {
-        isSick: raw.health?.isSick ?? false,
+        isSick: false,
+        illnessType: null,
+        medicationTaken: null,
+        medicationName: null,
         feeling: raw.health?.isSick ? 'bad' : 'normal',
-        discomfortLevel: raw.health?.discomfortLevel || null,
-        symptoms: Array.isArray(raw.health?.symptoms) ? raw.health.symptoms : [],
-        medications: Array.isArray(raw.health?.medications) ? raw.health.medications : []
+        discomfortLevel: null,
+        symptoms: [],
+        medications: []
     };
     log.health = { ...defaultHealth, ...(raw.health || {}) };
 
-    // 6. Alcohol
+    // 5. Alcohol Record
     if (raw.alcoholRecord) {
         log.alcoholRecord = {
             ...raw.alcoholRecord,
-            id: raw.alcoholRecord.id || `alc_${date}_${Date.now()}`,
             drunkLevel: raw.alcoholRecord.drunkLevel || 'none',
-            ongoing: raw.alcoholRecord.ongoing ?? false,
-            location: raw.alcoholRecord.location || '家',
-            people: raw.alcoholRecord.people || '独自',
-            reason: raw.alcoholRecord.reason || '放松'
+            alcoholScene: raw.alcoholRecord.alcoholScene || '',
+            time: raw.alcoholRecord.time || '20:00' // v0.0.6 default
         };
     } else {
         log.alcoholRecord = null;

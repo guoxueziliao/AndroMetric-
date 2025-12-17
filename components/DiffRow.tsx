@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { ArrowUpRight, Plus, Trash2, Edit2 } from 'lucide-react';
+import { ArrowUpRight, Plus, Trash2, Hash } from 'lucide-react';
 import { ChangeDetail } from '../types';
 import { formatHistoryValue } from '../utils/helpers';
 
@@ -10,31 +10,24 @@ interface DiffRowProps {
 
 export const DiffRow: React.FC<DiffRowProps> = ({ diff }) => {
     if (!diff) return null;
-    const { field, oldValue, newValue, changeType } = diff;
+    const { field, oldValue, newValue } = diff;
     
     // Handle potentially undefined inputs for logic safely
     const sOld = oldValue === undefined || oldValue === null ? '' : String(oldValue);
     const sNew = newValue === undefined || newValue === null ? '' : String(newValue);
 
-    // Fallback detection if changeType is missing (for legacy records)
-    const isAdded = changeType === 'add' || (!changeType && (sOld === '无' || sOld === 'null' || sOld === '' || sOld === '0' || sOld === '0m' || sOld === 'false'));
-    const isDeleted = changeType === 'del' || (!changeType && (sNew === '删除' || sNew === '无' || sNew === '' || sNew === 'null'));
-    const isModified = changeType === 'mod' || (!isAdded && !isDeleted);
+    // Detect operation type
+    const isAdded = sOld === '无' || sOld === 'null' || sOld === '' || sOld === '0' || sOld === '0m' || sOld === 'false';
+    const isDeleted = sNew === '删除' || sNew === '无' || sNew === '' || sNew === 'null';
 
     const formattedOld = isAdded ? null : formatHistoryValue(field, oldValue);
     const formattedNew = isDeleted ? (newValue === '删除' ? '已删除' : '—') : formatHistoryValue(field, newValue);
 
     return (
-        <div className={`flex items-center justify-between py-2.5 border-b border-slate-50 dark:border-slate-800 last:border-0 px-4 transition-colors group ${
-            isAdded ? 'bg-green-50/30 dark:bg-green-900/10' : 
-            isDeleted ? 'bg-red-50/30 dark:bg-red-900/10' : 
-            'hover:bg-slate-50 dark:hover:bg-slate-800/20'
-        }`}>
+        <div className="flex items-center justify-between py-2.5 border-b border-slate-50 dark:border-slate-800 last:border-0 px-4 hover:bg-slate-50 dark:hover:bg-slate-800/20 transition-colors group">
             {/* Field Label */}
             <div className="flex items-center gap-1.5 shrink-0 mr-4">
-                <div className={`w-1.5 h-1.5 rounded-full ${
-                    isAdded ? 'bg-green-500' : isDeleted ? 'bg-red-500' : 'bg-blue-400'
-                }`}></div>
+                <div className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-600"></div>
                 <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider truncate max-w-[100px]" title={field}>
                     {field || '未知字段'}
                 </span>
@@ -42,7 +35,7 @@ export const DiffRow: React.FC<DiffRowProps> = ({ diff }) => {
 
             {/* Values Area */}
             <div className="flex flex-col items-end gap-0.5 text-right min-w-0 flex-1">
-                {/* Old Value (Top, Gray, Strikethrough) - Hide if Added */}
+                {/* Old Value (Top, Gray, Strikethrough) */}
                 {!isAdded && (
                     <span className="text-[10px] text-slate-400 line-through decoration-slate-300 dark:decoration-slate-600 truncate max-w-full opacity-80">
                         {formattedOld}
@@ -54,12 +47,12 @@ export const DiffRow: React.FC<DiffRowProps> = ({ diff }) => {
                     isDeleted 
                         ? 'text-red-500 dark:text-red-400' 
                         : isAdded 
-                            ? 'text-green-600 dark:text-green-400' 
-                            : 'text-blue-600 dark:text-blue-400'
+                            ? 'text-blue-600 dark:text-blue-400' 
+                            : 'text-emerald-600 dark:text-emerald-400'
                 }`}>
                     {/* Semantic Icons */}
                     {isAdded && <Plus size={10} className="mr-1 stroke-[3]" />}
-                    {isModified && <ArrowUpRight size={10} className="mr-1 stroke-[3]" />} 
+                    {!isAdded && !isDeleted && <ArrowUpRight size={10} className="mr-1 stroke-[3]" />} 
                     {isDeleted && <Trash2 size={10} className="mr-1 stroke-[3]" />}
                     
                     {formattedNew}
