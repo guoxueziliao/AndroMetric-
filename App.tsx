@@ -45,6 +45,32 @@ const AppContent: React.FC<{ data: any }> = ({ data }) => {
   const [view, setView] = useState<View>('dashboard');
   const [editingLogDate, setEditingLogDate] = useState<string | null>(null);
   
+  // --- Theme Logic ---
+  const isCurrentlyDark = useMemo(() => {
+    if (settings.theme === 'dark') return true;
+    if (settings.theme === 'light') return false;
+    // system
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  }, [settings.theme]);
+
+  useEffect(() => {
+    const root = window.document.documentElement;
+    const applyTheme = (isDark: boolean) => {
+      if (isDark) root.classList.add('dark');
+      else root.classList.remove('dark');
+    };
+
+    applyTheme(isCurrentlyDark);
+
+    // If set to system, listen for system preference changes
+    if (settings.theme === 'system') {
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      const handleChange = (e: MediaQueryListEvent) => applyTheme(e.matches);
+      mediaQuery.addEventListener('change', handleChange);
+      return () => mediaQuery.removeEventListener('change', handleChange);
+    }
+  }, [settings.theme, isCurrentlyDark]);
+  
   // Modals Visibility
   const [isSexModalOpen, setIsSexModalOpen] = useState(false);
   const [isMbModalOpen, setIsMbModalOpen] = useState(false);
@@ -118,7 +144,7 @@ const AppContent: React.FC<{ data: any }> = ({ data }) => {
                 />
               )}
               <Suspense fallback={<div className="p-10 text-center opacity-50"><Loader2 className="animate-spin mx-auto mb-2"/>加载中...</div>}>
-                  {activeMainView === 'stats' && <StatsView isDarkMode={false} />}
+                  {activeMainView === 'stats' && <StatsView isDarkMode={isCurrentlyDark} />}
                   {activeMainView === 'sexlife' && <SexLifeView />}
                   {activeMainView === 'my' && <MyView settings={settings} onUpdateSettings={setSettings} installPrompt={null} onShowVersionHistory={() => setIsVersionHistoryOpen(true)} onNavigateToLog={d => { setEditingLogDate(d); setView('form'); }} />}
               </Suspense>
@@ -147,6 +173,7 @@ const AppContent: React.FC<{ data: any }> = ({ data }) => {
       <SexRecordModal isOpen={isSexModalOpen} onClose={() => setIsSexModalOpen(false)} onSave={async r => { await quickAddSex({...r, ongoing: false}); setIsSexModalOpen(false); showToast('性爱记录已添加', 'success'); }} dateStr={new Date().toISOString()} partners={partners} logs={logs} initialData={ongoingSex} />
       <MasturbationRecordModal isOpen={isMbModalOpen} onClose={() => setIsMbModalOpen(false)} onSave={async r => { await quickAddMasturbation({...r, status: 'completed'}); setIsMbModalOpen(false); showToast('记录已更新', 'success'); }} initialData={ongoingMb} dateStr={new Date().toISOString()} logs={logs} partners={partners} />
       <ExerciseRecordModal isOpen={isExerciseModalOpen} onClose={() => setIsExerciseModalOpen(false)} onSave={async r => { await saveExercise({...r, ongoing: r.ongoing ?? false}); setIsExerciseModalOpen(false); showToast('运动记录已同步', 'success'); }} initialData={ongoingExercise} mode={ongoingExercise ? 'finish' : 'start'} />
+      <AlcoholRecordModal isOpen={isAlcoholModalOpen} onClose={() => setIsAlcoholModalOpen(false)} onSave={async r => { await saveAlcoholRecord({...r, ongoing: false}); setIsAlcoholModalOpen(false); showToast('饮酒详情已更新', 'success'); }} initialData={ongoingAlcohol?.alcoholRecord || undefined} />
       <AlcoholRecordModal isOpen={isAlcoholModalOpen} onClose={() => setIsAlcoholModalOpen(false)} onSave={async r => { await saveAlcoholRecord({...r, ongoing: false}); setIsAlcoholModalOpen(false); showToast('饮酒详情已更新', 'success'); }} initialData={ongoingAlcohol?.alcoholRecord || undefined} />
       <NapRecordModal isOpen={isNapModalOpen} onClose={() => setIsNapModalOpen(false)} onSave={async r => { await saveNap({...r, ongoing: false}); setIsNapModalOpen(false); showToast('午休已记录', 'success'); }} initialData={ongoingNap} />
       <CancelReasonModal isOpen={isCancelModalOpen} onClose={() => setIsCancelModalOpen(false)} onConfirm={confirmCancel} title="取消当前计时" />
