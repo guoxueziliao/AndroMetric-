@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useMemo } from 'react';
 import { 
     Plus, Heart, Hand, Dumbbell, 
@@ -11,8 +12,9 @@ import SexRecordModal from './SexRecordModal';
 import MasturbationRecordModal from './MasturbationRecordModal';
 import ExerciseRecordModal from './ExerciseSelectorModal';
 import AlcoholRecordModal from './AlcoholRecordModal';
+import NapRecordModal from './NapRecordModal';
 import { 
-    LogEntry, PartnerProfile, Weather, Location, SleepAttire, AlcoholRecord
+    LogEntry, PartnerProfile, Weather, Location, SleepAttire, AlcoholRecord, ExerciseRecord, SexRecordDetails, MasturbationRecordDetails, NapRecord
 } from '../types';
 import MorningSection from './MorningSection';
 import SleepSection from './SleepSection';
@@ -60,8 +62,11 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
     } as LogEntry);
 
     const [activeMidTab, setActiveMidTab] = useState<MidTabType>('life');
-    const [modalState, setModalState] = useState({ bev: false, sex: false, mb: false, ex: false, alc: false });
+    const [modalState, setModalState] = useState({ bev: false, sex: false, mb: false, ex: false, alc: false, nap: false });
     const [eventSearch, setEventSearch] = useState('');
+    
+    // 编辑中的单项数据
+    const [editTarget, setEditTarget] = useState<{ type: string, data: any } | null>(null);
 
     const markDirty = useCallback(() => onDirtyStateChange(true), [onDirtyStateChange]);
     const qualityScore = useMemo(() => calculateDataQuality(log), [log]);
@@ -81,10 +86,8 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
         markDirty();
     };
 
-    const removeItem = (field: 'sex' | 'masturbation' | 'exercise' | 'caffeine' | 'alcohol', id: string) => {
-        // 增加删除确认
-        const confirmMsg = field === 'alcohol' ? '确定要删除这条饮酒记录吗？' : '确定要删除这项记录吗？';
-        if (!window.confirm(confirmMsg)) return;
+    const removeItem = (field: 'sex' | 'masturbation' | 'exercise' | 'caffeine' | 'alcohol' | 'nap', id: string) => {
+        if (!window.confirm('确定要删除这条记录吗？')) return;
 
         if (field === 'caffeine') {
             const newItems = (log.caffeineRecord?.items || []).filter(i => i.id !== id);
@@ -92,6 +95,8 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
         } else if (field === 'alcohol') {
             setField('alcoholRecord', null);
             setField('alcohol', 'none');
+        } else if (field === 'nap') {
+            handleSleepChange('naps', (log.sleep?.naps || []).filter(n => n.id !== id));
         } else {
             setLog(prev => ({ ...prev, [field]: (log[field] as any[]).filter(i => i.id !== id) }));
         }
@@ -119,7 +124,6 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
 
     return (
         <div className="space-y-6">
-            {/* 0. 顶部日期卡片 */}
             <div className="bg-white dark:bg-slate-900 rounded-[2rem] p-6 shadow-soft border border-slate-100 dark:border-white/5 flex justify-between items-center">
                 <div className="flex-1 pr-4">
                     <h2 className="text-2xl font-black text-brand-text dark:text-slate-100 leading-tight">
@@ -129,19 +133,16 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
                 <QualityScoreRing score={qualityScore} />
             </div>
 
-            {/* 1. 晨间状态卡片 */}
             <MorningSection morning={log.morning!} onChange={handleMorningChange} />
             
-            {/* 2. 睡眠周期卡片 */}
             <SleepSection 
                 sleep={log.sleep!} 
                 onChange={handleSleepChange}
-                onAddNap={() => {/* 午休逻辑 */}}
-                onEditNap={() => {}}
-                onDeleteNap={(id) => handleSleepChange('naps', log.sleep?.naps.filter(n => n.id !== id))}
+                onAddNap={() => { setEditTarget(null); setModalState(s => ({ ...s, nap: true })); }}
+                onEditNap={(nap) => { setEditTarget({ type: 'nap', data: nap }); setModalState(s => ({ ...s, nap: true })); }}
+                onDeleteNap={(id) => removeItem('nap', id)}
             />
 
-            {/* 3. 中部 Tab 切换区 */}
             <div className="bg-white dark:bg-slate-900 rounded-[2rem] shadow-soft border border-slate-100 dark:border-white/5 overflow-hidden">
                 <div className="flex bg-slate-50/50 dark:bg-slate-900/50 border-b border-slate-100 dark:border-white/5">
                     {[
@@ -161,7 +162,6 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
                 </div>
 
                 <div className="p-6 min-h-[340px]">
-                    {/* 生活 Tab */}
                     {activeMidTab === 'life' && (
                         <div className="space-y-6 animate-in fade-in duration-300">
                             <div className="grid grid-cols-2 gap-4">
@@ -172,22 +172,20 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
                                             onClick={() => setModalState(s => ({ ...s, alc: true }))}
                                             className="relative aspect-square bg-amber-50 dark:bg-amber-900/20 border-2 border-amber-200 dark:border-amber-800 rounded-3xl flex flex-col items-center justify-center p-4 text-center cursor-pointer group hover:border-amber-400 transition-all shadow-sm"
                                         >
-                                            {/* 增加显眼的“编辑”引导 */}
-                                            <div className="absolute top-2 left-2 flex items-center gap-1 text-amber-500 opacity-60 group-hover:opacity-100 transition-opacity">
-                                                <Edit3 size={12}/>
-                                                <span className="text-[9px] font-black uppercase">修改</span>
+                                            <div className="absolute top-2 left-2 flex items-center gap-1 text-amber-500 opacity-60 group-hover:opacity-100">
+                                                <Edit3 size={12}/><span className="text-[9px] font-black">修改</span>
                                             </div>
-
                                             <div className="text-2xl mb-1">🍺</div>
                                             <div className="text-xl font-black text-amber-600 dark:text-amber-400 tabular-nums">
                                                 {log.alcoholRecord.totalGrams}<span className="text-[10px] ml-0.5">g</span>
                                             </div>
-                                            <div className="text-[9px] font-bold text-amber-500/70 mt-1 uppercase tracking-tighter line-clamp-1 px-1">
-                                                {log.alcoholRecord.items.length} 种饮品
+                                            {/* 显示具体饮品，修复“显示太少”问题 */}
+                                            <div className="text-[9px] font-bold text-amber-500/70 mt-1 line-clamp-2 px-1">
+                                                {log.alcoholRecord.items.map(i => i.name).join(', ')}
                                             </div>
                                             <button 
                                                 onClick={(e) => { e.stopPropagation(); removeItem('alcohol', ''); }}
-                                                className="absolute -top-1 -right-1 p-2 bg-white dark:bg-slate-800 rounded-full shadow-md text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all border border-slate-100 dark:border-slate-700 z-10"
+                                                className="absolute -top-1 -right-1 p-2 bg-white dark:bg-slate-800 rounded-full shadow-md text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all border border-slate-100 dark:border-slate-700"
                                             >
                                                 <Trash2 size={14}/>
                                             </button>
@@ -204,7 +202,7 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest block">看片</label>
-                                    <div className="grid grid-cols-2 gap-2">
+                                    <div className="grid grid-cols-2 gap-2 h-full content-start">
                                         {[
                                             { id: 'none', label: '无' },
                                             { id: 'low', label: '少量' },
@@ -214,7 +212,7 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
                                             <button 
                                                 key={opt.id}
                                                 onClick={() => setField('pornConsumption', opt.id)}
-                                                className={`py-3 rounded-2xl text-xs font-black border transition-all ${log.pornConsumption === opt.id ? 'bg-blue-50 dark:bg-blue-900/30 text-brand-accent border-brand-accent shadow-sm' : 'bg-slate-50 dark:bg-slate-800 border-transparent text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'}`}
+                                                className={`py-5 rounded-2xl text-xs font-black border transition-all ${log.pornConsumption === opt.id ? 'bg-blue-50 dark:bg-blue-900/30 text-brand-accent border-brand-accent shadow-sm' : 'bg-slate-50 dark:bg-slate-800 border-transparent text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'}`}
                                             >
                                                 {opt.label}
                                             </button>
@@ -226,42 +224,75 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
                             <div>
                                 <div className="flex justify-between items-center mb-2">
                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">咖啡因</label>
-                                    <button onClick={() => setModalState(s => ({ ...s, bev: true }))} className="text-[10px] text-brand-accent font-black">+ 添加</button>
+                                    <button onClick={() => { setEditTarget(null); setModalState(s => ({ ...s, bev: true })); }} className="text-[10px] text-brand-accent font-black">+ 添加</button>
                                 </div>
                                 <div className="space-y-2">
                                     {log.caffeineRecord?.items.map(item => (
-                                        <div key={item.id} className="flex justify-between items-center bg-slate-50 dark:bg-slate-800 p-3 rounded-2xl border border-slate-100 dark:border-white/5">
-                                            <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{item.name}</span>
-                                            <button onClick={() => removeItem('caffeine', item.id)} className="text-slate-300 hover:text-red-500"><Trash2 size={14}/></button>
+                                        <div key={item.id} className="group flex justify-between items-center bg-slate-50 dark:bg-slate-800 p-3 rounded-2xl border border-slate-100 dark:border-white/5">
+                                            <div className="flex items-center gap-3">
+                                                <Coffee size={14} className="text-orange-400"/>
+                                                <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{item.name} <span className="opacity-40 text-[10px] ml-1">{item.time}</span></span>
+                                            </div>
+                                            <button onClick={() => removeItem('caffeine', item.id)} className="p-1.5 bg-white dark:bg-slate-700 rounded-lg shadow-sm text-slate-300 opacity-0 group-hover:opacity-100 hover:text-red-500 transition-all"><Trash2 size={14}/></button>
                                         </div>
                                     ))}
-                                    {(!log.caffeineRecord || log.caffeineRecord.items.length === 0) && <p className="text-[11px] text-slate-300 italic pl-1">无记录</p>}
+                                    {(!log.caffeineRecord || log.caffeineRecord.items.length === 0) && <p className="text-[11px] text-slate-300 italic pl-1">无咖啡因记录</p>}
                                 </div>
                             </div>
 
                             <div>
                                 <div className="flex justify-between items-center mb-2">
                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">运动</label>
-                                    <button onClick={() => setModalState(s => ({ ...s, ex: true }))} className="text-[10px] text-emerald-500 font-black">+ 添加</button>
+                                    <button onClick={() => { setEditTarget(null); setModalState(s => ({ ...s, ex: true })); }} className="text-[10px] text-emerald-500 font-black">+ 添加</button>
                                 </div>
                                 <div className="space-y-2">
                                     {log.exercise?.map(item => (
-                                        <div key={item.id} className="flex justify-between items-center bg-slate-50 dark:bg-slate-800 p-3 rounded-2xl border border-slate-100 dark:border-white/5">
-                                            <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{item.type}</span>
-                                            <button onClick={() => removeItem('exercise', item.id)} className="text-slate-300 hover:text-red-500"><Trash2 size={14}/></button>
+                                        <div key={item.id} onClick={() => { setEditTarget({type:'ex', data: item}); setModalState(s => ({ ...s, ex: true })); }} className="group flex justify-between items-center bg-slate-50 dark:bg-slate-800 p-3 rounded-2xl border border-slate-100 dark:border-white/5 cursor-pointer hover:border-emerald-500/50">
+                                            <div className="flex items-center gap-3">
+                                                <Dumbbell size={14} className="text-emerald-500"/>
+                                                <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{item.type} <span className="opacity-40 text-[10px] ml-1">{item.duration}分</span></span>
+                                            </div>
+                                            <button onClick={(e) => { e.stopPropagation(); removeItem('exercise', item.id); }} className="p-1.5 bg-white dark:bg-slate-700 rounded-lg shadow-sm text-slate-300 opacity-0 group-hover:opacity-100 hover:text-red-500 transition-all"><Trash2 size={14}/></button>
                                         </div>
                                     ))}
-                                    {(!log.exercise || log.exercise.length === 0) && <p className="text-[11px] text-slate-300 italic pl-1">无记录</p>}
+                                    {(!log.exercise || log.exercise.length === 0) && <p className="text-[11px] text-slate-300 italic pl-1">无运动记录</p>}
                                 </div>
                             </div>
 
-                            <div>
+                            <div className="pt-4 border-t border-slate-100 dark:border-white/5">
                                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block">性活动</label>
+                                <div className="space-y-3 mb-4">
+                                    {/* 修复：自慰记录填写了却不显示的问题 */}
+                                    {log.masturbation?.map(m => (
+                                        <div key={m.id} onClick={() => { setEditTarget({type:'mb', data: m}); setModalState(s => ({ ...s, mb: true })); }} className="group flex justify-between items-center bg-blue-50/50 dark:bg-blue-900/10 p-3 rounded-2xl border border-blue-100 dark:border-blue-900/30 cursor-pointer hover:border-blue-400">
+                                            <div className="flex items-center gap-3">
+                                                <Hand size={14} className="text-blue-500"/>
+                                                <div>
+                                                    <span className="text-xs font-black text-blue-700 dark:text-blue-400">自慰记录 <span className="font-mono opacity-50 text-[10px] ml-1">{m.startTime} · {m.duration}分</span></span>
+                                                    <div className="text-[9px] text-blue-500/70 font-bold">{m.contentItems?.length ? m.contentItems.map(i => i.type).join(', ') : '无素材'}</div>
+                                                </div>
+                                            </div>
+                                            <button onClick={(e) => { e.stopPropagation(); removeItem('masturbation', m.id); }} className="p-1.5 bg-white dark:bg-slate-700 rounded-lg shadow-sm text-slate-300 opacity-0 group-hover:opacity-100 hover:text-red-500 transition-all"><Trash2 size={14}/></button>
+                                        </div>
+                                    ))}
+                                    {log.sex?.map(s => (
+                                        <div key={s.id} onClick={() => { setEditTarget({type:'sex', data: s}); setModalState(s => ({ ...s, sex: true })); }} className="group flex justify-between items-center bg-pink-50/50 dark:bg-pink-900/10 p-3 rounded-2xl border border-pink-100 dark:border-pink-900/30 cursor-pointer hover:border-pink-400">
+                                            <div className="flex items-center gap-3">
+                                                <Heart size={14} className="text-pink-500"/>
+                                                <div>
+                                                    <span className="text-xs font-black text-pink-700 dark:text-pink-400">{s.interactions?.[0]?.partner || '性爱记录'} <span className="font-mono opacity-50 text-[10px] ml-1">{s.startTime} · {s.duration}分</span></span>
+                                                    <div className="text-[9px] text-pink-500/70 font-bold">{s.interactions?.length || 1} 阶段</div>
+                                                </div>
+                                            </div>
+                                            <button onClick={(e) => { e.stopPropagation(); removeItem('sex', s.id); }} className="p-1.5 bg-white dark:bg-slate-700 rounded-lg shadow-sm text-slate-300 opacity-0 group-hover:opacity-100 hover:text-red-500 transition-all"><Trash2 size={14}/></button>
+                                        </div>
+                                    ))}
+                                </div>
                                 <div className="flex gap-3">
-                                    <button onClick={() => setModalState(s => ({ ...s, sex: true }))} className="flex-1 py-4 bg-pink-50 dark:bg-pink-900/20 text-pink-600 dark:text-pink-400 rounded-2xl font-black text-xs flex items-center justify-center gap-2 border border-pink-100 dark:border-pink-900/50 active:scale-95 transition-all">
+                                    <button onClick={() => { setEditTarget(null); setModalState(s => ({ ...s, sex: true })); }} className="flex-1 py-4 bg-pink-50 dark:bg-pink-900/20 text-pink-600 dark:text-pink-400 rounded-2xl font-black text-xs flex items-center justify-center gap-2 border border-pink-100 dark:border-pink-900/50 active:scale-95 transition-all">
                                         <Heart size={16} fill="currentColor" fillOpacity={0.2} /> 记录性爱
                                     </button>
-                                    <button onClick={() => setModalState(s => ({ ...s, mb: true }))} className="flex-1 py-4 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-2xl font-black text-xs flex items-center justify-center gap-2 border border-blue-100 dark:border-blue-900/50 active:scale-95 transition-all">
+                                    <button onClick={() => { setEditTarget(null); setModalState(s => ({ ...s, mb: true })); }} className="flex-1 py-4 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-2xl font-black text-xs flex items-center justify-center gap-2 border border-blue-100 dark:border-blue-900/50 active:scale-95 transition-all">
                                         <Hand size={16} /> 记录自慰
                                     </button>
                                 </div>
@@ -269,7 +300,6 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
                         </div>
                     )}
 
-                    {/* 环境 Tab */}
                     {activeMidTab === 'env' && (
                         <div className="space-y-8 animate-in fade-in duration-300">
                             {[
@@ -305,7 +335,6 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
                         </div>
                     )}
 
-                    {/* 健康 Tab */}
                     {activeMidTab === 'health' && (
                         <div className="space-y-10 animate-in fade-in duration-300">
                             <div className="space-y-4">
@@ -421,7 +450,6 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
                 </div>
             </div>
 
-            {/* 4. 底部备注卡片 */}
             <div className="bg-white dark:bg-slate-900 rounded-[2rem] p-6 shadow-soft border border-slate-100 dark:border-white/5">
                 <div className="flex items-center gap-3 mb-5">
                     <StickyNote size={18} className="text-brand-muted" />
@@ -473,7 +501,6 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
                 />
             </div>
 
-            {/* 5. 底部操作栏 */}
             <div className="flex gap-4 pt-4 pb-12">
                 <button 
                     onClick={() => { onSave({ ...log, status: 'pending' }); }}
@@ -490,12 +517,63 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
                 </button>
             </div>
 
-            {/* 弹窗 */}
-            <BeverageModal isOpen={modalState.bev} onClose={() => setModalState(s => ({ ...s, bev: false }))} onSave={(i) => { const current = log.caffeineRecord || { totalCount: 0, items: [] }; setLog(prev => ({ ...prev, caffeineRecord: { totalCount: current.items.length + 1, items: [...current.items, i] } })); }} />
-            <SexRecordModal isOpen={modalState.sex} onClose={() => setModalState(s => ({ ...s, sex: false }))} onSave={(r) => { setField('sex', [...(log.sex || []), r]); setModalState(s => ({ ...s, sex: false })); }} dateStr={log.date} partners={partners} logs={logs} />
-            <MasturbationRecordModal isOpen={modalState.mb} onClose={() => setModalState(s => ({ ...s, mb: false }))} onSave={(r) => { setField('masturbation', [...(log.masturbation || []), r]); setModalState(s => ({ ...s, mb: false })); }} dateStr={log.date} logs={logs} partners={partners} />
-            <ExerciseRecordModal isOpen={modalState.ex} onClose={() => setModalState(s => ({ ...s, ex: false }))} onSave={(r) => { setField('exercise', [...(log.exercise || []), r]); setModalState(s => ({ ...s, ex: false })); }} />
-            <AlcoholRecordModal isOpen={modalState.alc} onClose={() => setModalState(s => ({ ...s, alc: false }))} onSave={handleSaveAlcohol} initialData={log.alcoholRecord || undefined} />
+            {/* 弹窗集合 */}
+            <BeverageModal 
+                isOpen={modalState.bev} 
+                onClose={() => setModalState(s => ({ ...s, bev: false }))} 
+                onSave={(i) => { const current = log.caffeineRecord || { totalCount: 0, items: [] }; setLog(prev => ({ ...prev, caffeineRecord: { totalCount: current.items.length + 1, items: [...current.items, i] } })); }} 
+            />
+            <SexRecordModal 
+                isOpen={modalState.sex} 
+                onClose={() => { setModalState(s => ({ ...s, sex: false })); setEditTarget(null); }} 
+                initialData={editTarget?.type === 'sex' ? editTarget.data : undefined}
+                onSave={(r) => { 
+                    const current = log.sex || [];
+                    const exists = current.find(x => x.id === r.id);
+                    setField('sex', exists ? current.map(x => x.id === r.id ? r : x) : [...current, r]);
+                    setModalState(s => ({ ...s, sex: false })); 
+                }} 
+                dateStr={log.date} partners={partners} logs={logs} 
+            />
+            <MasturbationRecordModal 
+                isOpen={modalState.mb} 
+                onClose={() => { setModalState(s => ({ ...s, mb: false })); setEditTarget(null); }} 
+                initialData={editTarget?.type === 'mb' ? editTarget.data : undefined}
+                onSave={(r) => { 
+                    const current = log.masturbation || [];
+                    const exists = current.find(x => x.id === r.id);
+                    setField('masturbation', exists ? current.map(x => x.id === r.id ? r : x) : [...current, r]);
+                    setModalState(s => ({ ...s, mb: false })); 
+                }} 
+                dateStr={log.date} logs={logs} partners={partners} 
+            />
+            <ExerciseRecordModal 
+                isOpen={modalState.ex} 
+                onClose={() => { setModalState(s => ({ ...s, ex: false })); setEditTarget(null); }} 
+                initialData={editTarget?.type === 'ex' ? editTarget.data : undefined}
+                onSave={(r) => { 
+                    const current = log.exercise || [];
+                    const exists = current.find(x => x.id === r.id);
+                    setField('exercise', exists ? current.map(x => x.id === r.id ? r : x) : [...current, r]);
+                    setModalState(s => ({ ...s, ex: false })); 
+                }} 
+            />
+            <AlcoholRecordModal 
+                isOpen={modalState.alc} 
+                onClose={() => setModalState(s => ({ ...s, alc: false }))} 
+                onSave={handleSaveAlcohol} 
+                initialData={log.alcoholRecord || undefined} 
+            />
+            <NapRecordModal
+                isOpen={modalState.nap}
+                onClose={() => { setModalState(s => ({ ...s, nap: false })); setEditTarget(null); }}
+                initialData={editTarget?.type === 'nap' ? editTarget.data : undefined}
+                onSave={(r) => {
+                    const current = log.sleep?.naps || [];
+                    const exists = current.find(x => x.id === r.id);
+                    handleSleepChange('naps', exists ? current.map(x => x.id === r.id ? r : x) : [...current, r]);
+                }}
+            />
         </div>
     );
 };

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { CloudSun, Clock, Play, Sparkles, Star, Zap, Trash2, Check, Minus, Plus, MapPin, Leaf, RotateCcw, Heart, Shirt, Thermometer, BrainCircuit } from 'lucide-react';
 import Modal from './Modal';
@@ -122,11 +123,11 @@ const NapRecordModal: React.FC<NapRecordModalProps> = ({ isOpen, onClose, onSave
         >
             <div className="space-y-8 pb-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                 
-                {/* 1. Header Card - Time Tracking */}
-                <div className="bg-slate-900 rounded-[2.5rem] p-8 text-white relative overflow-hidden shadow-2xl">
-                    <div className="absolute top-0 right-0 w-48 h-48 bg-orange-500/20 rounded-full blur-[60px] -translate-y-1/2 translate-x-1/2"></div>
+                {/* 1. Header Card - 时间追踪 (视觉修正：不再使用纯黑 bg-slate-900) */}
+                <div className="bg-orange-50 dark:bg-slate-900 rounded-[2.5rem] p-8 text-orange-950 dark:text-white relative overflow-hidden shadow-inner border border-orange-100 dark:border-white/5">
+                    <div className="absolute top-0 right-0 w-48 h-48 bg-orange-500/10 rounded-full blur-[60px] -translate-y-1/2 translate-x-1/2"></div>
                     <div className="relative z-10 flex flex-col items-center">
-                        <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-orange-400 mb-2">
+                        <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-orange-600 dark:text-orange-400 mb-2">
                             <Clock size={14}/> Nap statistics
                         </div>
                         <div className="flex items-baseline gap-1">
@@ -134,19 +135,19 @@ const NapRecordModal: React.FC<NapRecordModalProps> = ({ isOpen, onClose, onSave
                             <span className="text-sm font-bold opacity-60">分钟</span>
                         </div>
                         <div className="mt-6 flex gap-3 w-full">
-                            <div className="flex-1 bg-white/10 backdrop-blur-md rounded-2xl p-3 flex flex-col items-center">
-                                <span className="text-[9px] font-bold opacity-50 uppercase">开始</span>
-                                <input type="time" value={record.startTime} onChange={e => setRecord({...record, startTime: e.target.value})} className="bg-transparent text-sm font-mono font-bold outline-none text-center w-full"/>
+                            <div className="flex-1 bg-white dark:bg-white/5 backdrop-blur-md rounded-2xl p-3 flex flex-col items-center border border-orange-200 dark:border-white/10">
+                                <span className="text-[9px] font-bold opacity-50 uppercase text-orange-900 dark:text-orange-200">开始</span>
+                                <input type="time" value={record.startTime} onChange={e => setRecord({...record, startTime: e.target.value})} className="bg-transparent text-sm font-mono font-bold outline-none text-center w-full text-orange-950 dark:text-white"/>
                             </div>
-                            <div className="flex-1 bg-white/10 backdrop-blur-md rounded-2xl p-3 flex flex-col items-center">
-                                <span className="text-[9px] font-bold opacity-50 uppercase">醒来</span>
-                                <input type="time" value={endTime} onChange={e => handleEndTimeChange(e.target.value)} className="bg-transparent text-sm font-mono font-bold outline-none text-center w-full"/>
+                            <div className="flex-1 bg-white dark:bg-white/5 backdrop-blur-md rounded-2xl p-3 flex flex-col items-center border border-orange-200 dark:border-white/10">
+                                <span className="text-[9px] font-bold opacity-50 uppercase text-orange-900 dark:text-orange-200">醒来</span>
+                                <input type="time" value={endTime} onChange={e => handleEndTimeChange(e.target.value)} className="bg-transparent text-sm font-mono font-bold outline-none text-center w-full text-orange-950 dark:text-white"/>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {/* 2. Quality Slider */}
+                {/* 2. 质量滑块 */}
                 <div className="space-y-4">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
                         <Star size={12}/> 午休质量反馈
@@ -159,7 +160,7 @@ const NapRecordModal: React.FC<NapRecordModalProps> = ({ isOpen, onClose, onSave
                     />
                 </div>
 
-                {/* 3. Event Toggles (Synced with Sleep) */}
+                {/* 3. 状态切换 */}
                 <div className="flex gap-2">
                     {[
                         { key: 'naturalAwakening', label: '自然醒', icon: Leaf, color: 'text-green-600' },
@@ -176,7 +177,7 @@ const NapRecordModal: React.FC<NapRecordModalProps> = ({ isOpen, onClose, onSave
                     ))}
                 </div>
 
-                {/* 4. Pre-sleep & Attire */}
+                {/* 4. 环境选项 */}
                 <div className="grid grid-cols-1 gap-6">
                     <div className="space-y-3">
                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><Shirt size={12}/> 穿着方式</label>
@@ -188,7 +189,7 @@ const NapRecordModal: React.FC<NapRecordModalProps> = ({ isOpen, onClose, onSave
                     </div>
                 </div>
 
-                {/* 5. Environment */}
+                {/* 5. 地点和温感 */}
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><MapPin size={12}/> 地点</label>
@@ -206,7 +207,7 @@ const NapRecordModal: React.FC<NapRecordModalProps> = ({ isOpen, onClose, onSave
                     </div>
                 </div>
 
-                {/* 6. Hardness Selector - Fixed UI Conflict to Match Morning Wood logic */}
+                {/* 6. 硬度选项 */}
                 <div className="space-y-4">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><Zap size={12}/> 午起生理反馈</label>
                     
@@ -230,7 +231,7 @@ const NapRecordModal: React.FC<NapRecordModalProps> = ({ isOpen, onClose, onSave
                     )}
                 </div>
 
-                {/* 7. Dreams */}
+                {/* 7. 梦境记录 */}
                 <div className="bg-purple-50 dark:bg-purple-900/10 rounded-2xl p-4 border border-purple-100 dark:border-purple-900/30">
                     <div className="flex items-center justify-between mb-4">
                         <label className="text-[10px] font-black text-purple-700 dark:text-purple-300 uppercase tracking-widest flex items-center gap-2"><Sparkles size={14}/> 梦境探测</label>
@@ -245,7 +246,6 @@ const NapRecordModal: React.FC<NapRecordModalProps> = ({ isOpen, onClose, onSave
                     )}
                 </div>
 
-                {/* Notes */}
                 <textarea 
                     value={record.notes} onChange={e => setRecord({...record, notes: e.target.value})}
                     placeholder="记录午休的心得，或者是周围环境对睡眠的影响..."
