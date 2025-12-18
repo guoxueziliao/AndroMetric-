@@ -54,6 +54,7 @@
             boxShadow: {
               'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
               'glow': '0 0 15px rgba(59, 130, 246, 0.3)',
+              'dark-glow': '0 0 25px rgba(0, 0, 0, 0.5)',
             }
           },
         },
@@ -75,6 +76,9 @@
         transition: background-color 0.3s ease-in-out;
         cursor: pointer;
         flex-shrink: 0;
+      }
+      .dark .toggle-checkbox {
+        background-color: #1E293B;
       }
       .toggle-checkbox:checked {
         background-color: #3B82F6;
@@ -104,7 +108,7 @@
       }
       
       .custom-scrollbar::-webkit-scrollbar {
-          width: 4px;
+          width: 5px;
       }
       .custom-scrollbar::-webkit-scrollbar-track {
           background: transparent;
@@ -113,6 +117,9 @@
           background-color: #CBD5E1;
           border-radius: 20px;
       }
+      .dark .custom-scrollbar::-webkit-scrollbar-thumb {
+          background-color: #334155;
+      }
       
       .glass-effect {
         background: rgba(255, 255, 255, 0.8);
@@ -120,7 +127,15 @@
         -webkit-backdrop-filter: blur(12px);
       }
       .dark .glass-effect {
-        background: rgba(15, 23, 42, 0.8);
+        background: rgba(15, 23, 42, 0.6);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+      }
+      
+      /* Dark mode card optimization */
+      .dark-card {
+        background: linear-gradient(145deg, rgba(30, 41, 59, 0.4), rgba(15, 23, 42, 0.4));
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(255, 255, 255, 0.05);
       }
     </style>
   <script type="importmap">
@@ -142,7 +157,7 @@
 }
 </script>
 </head>
-  <body class="bg-brand-bg text-brand-text dark:bg-slate-950 dark:text-slate-100 transition-colors duration-300 selection:bg-blue-100 selection:text-blue-900">
+  <body class="bg-brand-bg text-brand-text dark:bg-[#020617] dark:text-slate-100 transition-colors duration-500 selection:bg-blue-100 selection:text-blue-900">
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
   </body>
