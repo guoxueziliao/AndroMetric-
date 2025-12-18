@@ -92,7 +92,7 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
 
     return (
         <div className="space-y-6">
-            {/* 0. 顶部日期卡片 (完全还原截图 1) */}
+            {/* 0. 顶部日期卡片 */}
             <div className="bg-white dark:bg-slate-900 rounded-[2rem] p-6 shadow-soft border border-slate-100 dark:border-white/5 flex justify-between items-center">
                 <div className="flex-1 pr-4">
                     <h2 className="text-2xl font-black text-brand-text dark:text-slate-100 leading-tight">
@@ -114,7 +114,7 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
                 onDeleteNap={(id) => handleSleepChange('naps', log.sleep?.naps.filter(n => n.id !== id))}
             />
 
-            {/* 3. 中部 Tab 切换区 (完全还原截图 2-3 逻辑) */}
+            {/* 3. 中部 Tab 切换区 */}
             <div className="bg-white dark:bg-slate-900 rounded-[2rem] shadow-soft border border-slate-100 dark:border-white/5 overflow-hidden">
                 <div className="flex bg-slate-50/50 dark:bg-slate-900/50 border-b border-slate-100 dark:border-white/5">
                     {[
@@ -134,7 +134,7 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
                 </div>
 
                 <div className="p-6 min-h-[340px]">
-                    {/* 生活 Tab (截图 1) */}
+                    {/* 生活 Tab */}
                     {activeMidTab === 'life' && (
                         <div className="space-y-6 animate-in fade-in duration-300">
                             <div className="grid grid-cols-2 gap-4">
@@ -212,7 +212,7 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
                         </div>
                     )}
 
-                    {/* 环境 Tab (截图 2) */}
+                    {/* 环境 Tab */}
                     {activeMidTab === 'env' && (
                         <div className="space-y-8 animate-in fade-in duration-300">
                             {[
@@ -248,7 +248,7 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
                         </div>
                     )}
 
-                    {/* 健康 Tab (完全还原截图 3) */}
+                    {/* 健康 Tab (完全还原详细体感记录) */}
                     {activeMidTab === 'health' && (
                         <div className="space-y-10 animate-in fade-in duration-300">
                             <div className="space-y-4">
@@ -259,26 +259,116 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
                                 <label className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest block">压力等级 (STRESS)</label>
                                 <FaceSelector options={STRESS_FACES} value={log.stressLevel || null} onChange={v => setField('stressLevel', v)} />
                             </div>
-                            <div className="pt-6 border-t border-slate-100 dark:border-white/5">
-                                <div className="flex items-center justify-between p-5 bg-slate-50/50 dark:bg-slate-950/50 rounded-[1.5rem] border border-slate-100 dark:border-slate-800">
+                            
+                            {/* 身体不适详细卡片 */}
+                            <div className={`mt-6 rounded-[1.5rem] border transition-all duration-300 overflow-hidden ${log.health?.isSick ? 'bg-red-50/50 dark:bg-red-900/10 border-red-200 dark:border-red-900/30' : 'bg-slate-50/50 dark:bg-slate-950/50 border-slate-100 dark:border-slate-800'}`}>
+                                <div className="flex items-center justify-between p-5">
                                     <div className="flex items-center gap-4">
-                                        <ShieldAlert className="text-slate-400 dark:text-slate-600" size={20}/>
-                                        <span className="text-sm font-black text-slate-600 dark:text-slate-400">身体不适</span>
+                                        <ShieldAlert className={log.health?.isSick ? 'text-red-500 animate-pulse' : 'text-slate-400 dark:text-slate-600'} size={20}/>
+                                        <span className={`text-sm font-black ${log.health?.isSick ? 'text-red-700 dark:text-red-400' : 'text-slate-600 dark:text-slate-400'}`}>身体不适</span>
                                     </div>
                                     <input 
                                         type="checkbox" 
                                         className="toggle-checkbox" 
                                         checked={log.health?.isSick || false} 
-                                        onChange={e => setLog(prev => ({ ...prev, health: { ...prev.health!, isSick: e.target.checked } }))} 
+                                        onChange={e => {
+                                            const checked = e.target.checked;
+                                            setLog(prev => ({ 
+                                                ...prev, 
+                                                health: { 
+                                                    ...prev.health!, 
+                                                    isSick: checked,
+                                                    discomfortLevel: checked ? prev.health?.discomfortLevel : undefined,
+                                                    symptoms: checked ? prev.health?.symptoms || [] : [],
+                                                    medications: checked ? prev.health?.medications || [] : []
+                                                } 
+                                            }));
+                                            markDirty();
+                                        }} 
                                     />
                                 </div>
+
+                                {log.health?.isSick && (
+                                    <div className="px-5 pb-6 space-y-6 animate-in slide-in-from-top-2 duration-300">
+                                        {/* 不适程度选择 */}
+                                        <div className="space-y-3">
+                                            <label className="text-[10px] font-black text-red-600/70 dark:text-red-400/50 uppercase tracking-widest block">程度评价</label>
+                                            <div className="flex bg-white dark:bg-slate-900/50 rounded-xl p-1 border border-red-100 dark:border-red-900/30 shadow-sm">
+                                                {[
+                                                    { v: 'mild', l: '轻微' },
+                                                    { v: 'moderate', l: '明显' },
+                                                    { v: 'severe', l: '很难受' }
+                                                ].map(opt => (
+                                                    <button
+                                                        key={opt.v}
+                                                        onClick={() => {
+                                                            setLog(prev => ({ ...prev, health: { ...prev.health!, discomfortLevel: opt.v as any } }));
+                                                            markDirty();
+                                                        }}
+                                                        className={`flex-1 py-2 text-xs font-black rounded-lg transition-all ${log.health?.discomfortLevel === opt.v ? 'bg-red-500 text-white shadow-md' : 'text-slate-400 hover:bg-red-50 dark:hover:bg-red-900/20'}`}
+                                                    >
+                                                        {opt.l}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        {/* 症状标签 */}
+                                        <div className="space-y-3">
+                                            <label className="text-[10px] font-black text-red-600/70 dark:text-red-400/50 uppercase tracking-widest block">具体症状</label>
+                                            <div className="flex flex-wrap gap-2">
+                                                {['头痛', '喉咙痛', '胃不适', '肌肉酸痛', '发烧', '鼻塞', '乏力', '咳嗽'].map(s => {
+                                                    const isSelected = log.health?.symptoms?.includes(s);
+                                                    return (
+                                                        <button
+                                                            key={s}
+                                                            onClick={() => {
+                                                                const current = log.health?.symptoms || [];
+                                                                const next = current.includes(s) ? current.filter(x => x !== s) : [...current, s];
+                                                                setLog(prev => ({ ...prev, health: { ...prev.health!, symptoms: next } }));
+                                                                markDirty();
+                                                            }}
+                                                            className={`px-3 py-1.5 rounded-xl text-[10px] font-black border transition-all ${isSelected ? 'bg-red-500 text-white border-red-500 shadow-sm' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-500'}`}
+                                                        >
+                                                            {s}
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+
+                                        {/* 用药记录 */}
+                                        <div className="space-y-3 pt-2 border-t border-red-100 dark:border-red-900/30">
+                                            <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest block">用药情况</label>
+                                            <div className="flex flex-wrap gap-2">
+                                                {['感冒药', '止痛药', '助眠药', '消炎药', '维生素'].map(m => {
+                                                    const isSelected = log.health?.medications?.includes(m);
+                                                    return (
+                                                        <button
+                                                            key={m}
+                                                            onClick={() => {
+                                                                const current = log.health?.medications || [];
+                                                                const next = current.includes(m) ? current.filter(x => x !== m) : [...current, m];
+                                                                setLog(prev => ({ ...prev, health: { ...prev.health!, medications: next } }));
+                                                                markDirty();
+                                                            }}
+                                                            className={`px-3 py-1.5 rounded-xl text-[10px] font-black border transition-all ${isSelected ? 'bg-blue-600 text-white border-blue-600 shadow-sm' : 'bg-slate-100 dark:bg-slate-800 border-transparent text-slate-500'}`}
+                                                        >
+                                                            {m}
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     )}
                 </div>
             </div>
 
-            {/* 4. 底部备注卡片 (还原截图 1) */}
+            {/* 4. 底部备注卡片 */}
             <div className="bg-white dark:bg-slate-900 rounded-[2rem] p-6 shadow-soft border border-slate-100 dark:border-white/5">
                 <div className="flex items-center gap-3 mb-5">
                     <StickyNote size={18} className="text-brand-muted" />
@@ -317,7 +407,7 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
                 />
             </div>
 
-            {/* 5. 底部操作栏 (还原截图 1) */}
+            {/* 5. 底部操作栏 */}
             <div className="flex gap-4 pt-4 pb-12">
                 <button 
                     onClick={() => { log.status = 'pending'; onSave(log); }}
