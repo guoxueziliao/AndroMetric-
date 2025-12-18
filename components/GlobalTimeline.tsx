@@ -95,16 +95,17 @@ export const GlobalTimeline: React.FC<GlobalTimelineProps> = ({ log }) => {
         });
 
         // 4. Alcohol
-        if (log.alcoholRecord && log.alcoholRecord.totalGrams > 0) {
-            const time = log.alcoholRecord.time || '20:00';
-            list.push({
-                time,
-                type: 'alcohol',
-                title: '饮酒',
-                desc: `${log.alcoholRecord.totalGrams}g ${log.alcoholRecord.drunkLevel !== 'none' ? `(${log.alcoholRecord.drunkLevel})` : ''}`,
-                icon: Beer,
-                color: 'text-purple-600 bg-purple-100 dark:bg-purple-900/30',
-                timestamp: getTimestamp(time)
+        if (log.alcoholRecords && log.alcoholRecords.length > 0) {
+            log.alcoholRecords.forEach(r => {
+                list.push({
+                    time: r.time,
+                    type: 'alcohol',
+                    title: '饮酒',
+                    desc: `${r.totalGrams}g ${r.drunkLevel !== 'none' ? `(${r.drunkLevel})` : ''}`,
+                    icon: Beer,
+                    color: 'text-purple-600 bg-purple-100 dark:bg-purple-900/30',
+                    timestamp: getTimestamp(r.time)
+                });
             });
         }
 

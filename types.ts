@@ -1,5 +1,4 @@
 
-
 export type HardnessLevel = 1 | 2 | 3 | 4 | 5;
 export type MorningWoodRetention = 'instant' | 'brief' | 'normal' | 'extended';
 export type StressLevel = 1 | 2 | 3 | 4 | 5;
@@ -105,6 +104,7 @@ export interface AlcoholItem {
 }
 
 export interface AlcoholRecord {
+    id: string;
     totalGrams: number;
     durationMinutes: number;
     items: AlcoholItem[];
@@ -173,7 +173,6 @@ export interface MasturbationRecordDetails {
     postMood?: string;
     fatigue?: string;
     quickLog?: boolean;
-    // Fix: Added location to satisfy SexLifeView timeline logic
     location?: string;
 }
 
@@ -259,9 +258,10 @@ export interface LogEntry {
     sex: SexRecordDetails[];
     masturbation: MasturbationRecordDetails[];
     caffeineRecord?: CaffeineRecord;
-    alcoholRecord?: AlcoholRecord | null;
+    alcoholRecords: AlcoholRecord[];
     health?: Health;
     changeHistory: ChangeRecord[];
+    alcoholRecord?: AlcoholRecord | null; // Legacy field for migration
 }
 
 export interface PartnerProfile {
@@ -293,7 +293,6 @@ export interface PartnerProfile {
     primaryValues?: string;
     petPeeves?: string;
     notes?: string;
-    // Fix: Added occupation to satisfy PartnerManager form
     occupation?: string;
 }
 

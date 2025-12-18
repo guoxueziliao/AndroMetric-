@@ -1,5 +1,3 @@
-
-
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { StorageService } from '../services/StorageService';
@@ -272,7 +270,9 @@ export function useLogs() {
         } else {
             const targetDateStr = getActivityTargetDate();
             const nowStr = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+            // Fix: Added missing id property to AlcoholRecord creation.
             const newRecord: AlcoholRecord = {
+                id: Date.now().toString(),
                 totalGrams: 0,
                 durationMinutes: 0,
                 isLate: new Date().getHours() < 5,

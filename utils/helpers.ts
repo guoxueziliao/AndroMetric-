@@ -159,11 +159,12 @@ export const generateLogSummary = (log: Partial<LogEntry>): Array<{ label: strin
 
     // 4. Lifestyle
     const life = [];
-    if (log.alcoholRecord && log.alcoholRecord.totalGrams > 0) {
-        const itemStr = log.alcoholRecord.items.map(i => `${i.name}x${i.count}`).join(', ');
-        life.push(`🍺 饮酒: ${log.alcoholRecord.totalGrams}g纯酒精 [${LABELS.drunkLevel[log.alcoholRecord.drunkLevel || 'none']}] (${itemStr})`);
+    if (log.alcoholRecords && log.alcoholRecords.length > 0) {
+        const total = log.alcoholRecords.reduce((s, r) => s + r.totalGrams, 0);
+        const itemStr = log.alcoholRecords.map(r => `${r.items.map(i => i.name).join('+')} (${r.totalGrams}g)`).join(', ');
+        life.push(`🍺 饮酒: 总计 ${total}g纯酒精 [${itemStr}]`);
     } else {
-        life.push(`饮酒: ${LABELS.alcohol[log.alcohol || 'none']}`);
+        life.push(`饮酒: 无`);
     }
     life.push(`看片: ${LABELS.porn[log.pornConsumption || 'none']}`);
     
@@ -211,7 +212,7 @@ export const generateLogSummary = (log: Partial<LogEntry>): Array<{ label: strin
             const tools = r.tools?.join(',') || '手';
             let extra = '';
             if (r.volumeForceLevel) extra += ` [射精Lv.${r.volumeForceLevel}]`;
-            if (r.materialsList && r.materialsList.length > 0) extra += ` [素材:${r.materialsList.length}]`;
+            if (r.contentItems && r.contentItems.length > 0) extra += ` [素材:${r.contentItems.length}]`;
             
             return `${i + 1}. ${r.startTime} ${tools} (${r.duration}分)${extra} ${r.status === 'inProgress' ? '[进行中]' : ''}`;
         });
@@ -220,7 +221,6 @@ export const generateLogSummary = (log: Partial<LogEntry>): Array<{ label: strin
         summary.push({ label: `自慰`, value: '无' });
     }
 
-    // 7. Health (New V0.0.6 structure)
     if (log.health) {
         let healthText = log.health.isSick 
             ? `🔴 身体不适: ${log.health.discomfortLevel ? LABELS.discomfortLevel[log.health.discomfortLevel] : '未记录程度'}` 
@@ -233,7 +233,6 @@ export const generateLogSummary = (log: Partial<LogEntry>): Array<{ label: strin
         summary.push({ label: '健康状况', value: healthText });
     }
 
-    // 8. Notes
     if ((log.tags && log.tags.length > 0) || log.notes || (log.dailyEvents && log.dailyEvents.length > 0)) {
         const notes = [];
         if (log.dailyEvents && log.dailyEvents.length > 0) notes.push(`📅 事件: ${log.dailyEvents.join(' + ')}`);
@@ -329,7 +328,7 @@ export const calculateDataQuality = (log: Partial<LogEntry>): number => {
     if (log.sex && log.sex.length > 0) score += 10;
     if (log.masturbation && log.masturbation.length > 0) score += 10;
     if (log.exercise && log.exercise.length > 0) score += 10;
-    if (log.alcoholRecord && log.alcoholRecord.totalGrams > 0) score += 5;
+    if (log.alcoholRecords && log.alcoholRecords.length > 0) score += 5;
     
     // Health Check Penalty (New in v0.0.6)
     // If Sick is TRUE but Level is Missing -> Penalty
@@ -375,8 +374,8 @@ export const calculateLogDiff = (oldLog: LogEntry, newLog: LogEntry): ChangeDeta
     }
     
     // Lifestyle
-    const oldAlc = oldLog.alcoholRecord?.totalGrams || 0;
-    const newAlc = newLog.alcoholRecord?.totalGrams || 0;
+    const oldAlc = (oldLog.alcoholRecords || []).reduce((s, r) => s + r.totalGrams, 0);
+    const newAlc = (newLog.alcoholRecords || []).reduce((s, r) => s + r.totalGrams, 0);
     if (oldAlc !== newAlc) {
         diffs.push({ 
             field: '酒精摄入', 

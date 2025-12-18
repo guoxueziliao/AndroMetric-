@@ -58,7 +58,8 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
         sleep: { id: `s_${Date.now()}`, quality: 3, naturalAwakening: true, nocturnalEmission: false, withPartner: false, naps: [], hasDream: false, dreamTypes: [], environment: { location: 'home', temperature: 'comfortable' } },
         exercise: [], sex: [], masturbation: [], dailyEvents: [], tags: [],
         health: { isSick: false, symptoms: [], medications: [] },
-        changeHistory: []
+        changeHistory: [],
+        alcoholRecords: []
     } as LogEntry);
 
     const [activeMidTab, setActiveMidTab] = useState<MidTabType>('life');
@@ -107,8 +108,7 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
             const newItems = (log.caffeineRecord?.items || []).filter(i => i.id !== id);
             setLog(prev => ({ ...prev, caffeineRecord: { totalCount: newItems.length, items: newItems } }));
         } else if (field === 'alcohol') {
-            setField('alcoholRecord', null);
-            setField('alcohol', 'none');
+            setLog(prev => ({ ...prev, alcoholRecords: prev.alcoholRecords.filter(r => r.id !== id) }));
         } else if (field === 'nap') {
             handleSleepChange('naps', (log.sleep?.naps || []).filter(n => n.id !== id));
         } else {
@@ -128,10 +128,18 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
     };
 
     const handleSaveAlcohol = (r: AlcoholRecord) => {
+        const current = log.alcoholRecords || [];
+        const exists = current.find(x => x.id === r.id);
+        const next = exists ? current.map(x => x.id === r.id ? r : x) : [...current, r];
+        
+        // 计算总量以同步旧版 alcohol 枚举字段
+        const total = next.reduce((sum, item) => sum + item.totalGrams, 0);
+        const level = total > 50 ? 'high' : total > 20 ? 'medium' : total > 0 ? 'low' : 'none';
+
         setLog(prev => ({ 
             ...prev, 
-            alcoholRecord: r, 
-            alcohol: r.totalGrams > 50 ? 'high' : r.totalGrams > 20 ? 'medium' : r.totalGrams > 0 ? 'low' : 'none' 
+            alcoholRecords: next,
+            alcohol: level
         }));
         markDirty();
     };
@@ -178,36 +186,35 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
                 <div className="p-6 min-h-[340px]">
                     {activeMidTab === 'life' && (
                         <div className="space-y-8 animate-in fade-in duration-300">
-                            {/* 饮酒部分 - 扁平化列表布局 */}
+                            {/* 饮酒列表 */}
                             <div>
                                 <div className="flex justify-between items-center mb-3">
                                     <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">饮酒</label>
                                     <button onClick={() => { setEditTarget(null); setModalState(s => ({ ...s, alc: true })); }} className="text-[11px] text-amber-600 font-black">+ 添加</button>
                                 </div>
                                 <div className="space-y-2">
-                                    {log.alcoholRecord ? (
-                                        <div className="group flex justify-between items-center bg-white dark:bg-slate-800 p-3.5 rounded-2xl border border-slate-100 dark:border-white/5 shadow-sm">
+                                    {log.alcoholRecords?.map(record => (
+                                        <div key={record.id} className="group flex justify-between items-center bg-white dark:bg-slate-800 p-3.5 rounded-2xl border border-slate-100 dark:border-white/5 shadow-sm">
                                             <div className="flex items-center gap-3">
                                                 <div className="w-9 h-9 bg-amber-50 dark:bg-amber-900/30 rounded-xl flex items-center justify-center text-amber-500"><Beer size={18}/></div>
                                                 <div>
                                                     <div className="text-sm font-black text-slate-700 dark:text-slate-200">
-                                                        {log.alcoholRecord.totalGrams}g <span className="text-[10px] text-slate-400">纯酒精</span>
+                                                        {record.totalGrams}g <span className="text-[10px] text-slate-400">{record.time}</span>
                                                     </div>
-                                                    <div className="text-[10px] text-slate-400 font-bold mt-0.5 line-clamp-1">{log.alcoholRecord.items.map(i => i.name).join(', ')}</div>
+                                                    <div className="text-[10px] text-slate-400 font-bold mt-0.5 line-clamp-1">{record.items.map(i => i.name).join(', ')}</div>
                                                 </div>
                                             </div>
                                             <div className="flex gap-1.5">
-                                                <button onClick={() => handleEdit('alc', log.alcoholRecord)} className="p-2 bg-slate-50 dark:bg-slate-700 rounded-xl text-slate-400 hover:text-brand-accent transition-colors"><Edit3 size={15}/></button>
-                                                <button onClick={() => removeItem('alcohol', '')} className="p-2 bg-slate-50 dark:bg-slate-700 rounded-xl text-slate-400 hover:text-red-500 transition-colors"><Trash2 size={15}/></button>
+                                                <button onClick={() => handleEdit('alc', record)} className="p-2 bg-slate-50 dark:bg-slate-700 rounded-xl text-slate-400 hover:text-brand-accent transition-colors"><Edit3 size={15}/></button>
+                                                <button onClick={() => removeItem('alcohol', record.id)} className="p-2 bg-slate-50 dark:bg-slate-700 rounded-xl text-slate-400 hover:text-red-500 transition-colors"><Trash2 size={15}/></button>
                                             </div>
                                         </div>
-                                    ) : (
-                                        <p className="text-[11px] text-slate-300 italic pl-1">未记录饮酒</p>
-                                    )}
+                                    ))}
+                                    {(!log.alcoholRecords || log.alcoholRecords.length === 0) && <p className="text-[11px] text-slate-300 italic pl-1">未记录饮酒</p>}
                                 </div>
                             </div>
 
-                            {/* 提神饮品部分 */}
+                            {/* 提神饮品列表 */}
                             <div>
                                 <div className="flex justify-between items-center mb-3">
                                     <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">提神饮品</label>
@@ -233,7 +240,7 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
                                 </div>
                             </div>
 
-                            {/* 运动部分 */}
+                            {/* 运动列表 */}
                             <div>
                                 <div className="flex justify-between items-center mb-3">
                                     <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">运动</label>
@@ -259,7 +266,7 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
                                 </div>
                             </div>
 
-                            {/* 看片部分 - 扁平横向布局 */}
+                            {/* 看片 */}
                             <div>
                                 <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-3 block">看片</label>
                                 <div className="flex gap-2">
@@ -280,7 +287,7 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
                                 </div>
                             </div>
 
-                            {/* 性活动部分 */}
+                            {/* 性活动 */}
                             <div className="pt-4 border-t border-slate-100 dark:border-white/5">
                                 <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-4 block">性活动</label>
                                 <div className="space-y-3 mb-5">
@@ -595,7 +602,7 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
                 isOpen={modalState.alc} 
                 onClose={() => { setModalState(s => ({ ...s, alc: false })); setEditTarget(null); }} 
                 onSave={handleSaveAlcohol} 
-                initialData={log.alcoholRecord || undefined} 
+                initialData={editTarget?.type === 'alc' ? editTarget.data : undefined} 
             />
             <NapRecordModal
                 isOpen={modalState.nap}

@@ -37,9 +37,11 @@ export const hydrateLog = (raw: any): LogEntry => {
         masturbation: Array.isArray(raw.masturbation) ? raw.masturbation.map((m: any) => ({
             ...m, 
             status: m.status || 'completed',
-            // v0.0.6 ContentItems
             contentItems: Array.isArray(m.contentItems) ? m.contentItems : [] 
         })) : [],
+        
+        // New Alcohol Array Support
+        alcoholRecords: Array.isArray(raw.alcoholRecords) ? raw.alcoholRecords : [],
         
         changeHistory: Array.isArray(raw.changeHistory) ? raw.changeHistory : [],
     };
@@ -48,12 +50,9 @@ export const hydrateLog = (raw: any): LogEntry => {
     if (!raw.caffeineRecord) {
         log.caffeineRecord = { totalCount: 0, items: [] };
     } else {
-        // Migration from mg (old) to count (new) if needed, otherwise default
         const items = Array.isArray(raw.caffeineRecord.items) ? raw.caffeineRecord.items.map((i: any) => ({
             ...i,
-            // If old 'mg' exists but no 'count', convert (assume 1 cup if undefined)
             count: i.count ?? (i.mg ? (i.mg > 10 ? 1 : i.mg) : 1),
-            // Default volume if missing (standard cup 350ml)
             volume: i.volume ?? 350 
         })) : [];
         
@@ -116,16 +115,16 @@ export const hydrateLog = (raw: any): LogEntry => {
     };
     log.health = { ...defaultHealth, ...(raw.health || {}) };
 
-    // 5. Alcohol Record
-    if (raw.alcoholRecord) {
-        log.alcoholRecord = {
+    // 5. Alcohol Record Migration (Legacy -> Array)
+    if (raw.alcoholRecord && log.alcoholRecords.length === 0) {
+        log.alcoholRecords.push({
             ...raw.alcoholRecord,
+            id: raw.alcoholRecord.id || `alc_mig_${Date.now()}`,
             drunkLevel: raw.alcoholRecord.drunkLevel || 'none',
             alcoholScene: raw.alcoholRecord.alcoholScene || '',
-            time: raw.alcoholRecord.time || '20:00' // v0.0.6 default
-        };
-    } else {
-        log.alcoholRecord = null;
+            time: raw.alcoholRecord.time || '20:00',
+            ongoing: raw.alcoholRecord.ongoing || false
+        });
     }
 
     return log;
