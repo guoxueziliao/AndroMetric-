@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { LogEntry, ExerciseRecord, SexRecordDetails, MasturbationRecordDetails, NapRecord, AlcoholRecord } from '../types';
 import CalendarHeatmap from './CalendarHeatmap';
-import { Moon, Zap, Activity, Hand, HeartPulse, Clock, Dumbbell, Footprints, Timer, CloudSun, Beer, TrendingUp, ShieldAlert, Edit3, Trash2, FastForward, Coffee, Bed, ArrowRight, User, Heart, RotateCcw, MapPin, Sparkles, Shirt, Star, Thermometer, BrainCircuit, Tag, Film, Smile, AlertTriangle, ChevronRight, Calendar, Check, AlertCircle } from 'lucide-react';
+/* Added Check to lucide-react imports to fix line 270 error */
+import { Moon, Zap, Activity, Hand, HeartPulse, Clock, Dumbbell, Footprints, Timer, CloudSun, Beer, TrendingUp, ShieldAlert, Edit3, Trash2, FastForward, Coffee, Bed, ArrowRight, User, Heart, RotateCcw, MapPin, Sparkles, Shirt, Star, Thermometer, BrainCircuit, Tag, Film, Smile, AlertTriangle, ChevronRight, Calendar, Check } from 'lucide-react';
 import Modal from './Modal';
 import SafeDeleteModal from './SafeDeleteModal';
 import { formatTime, calculateSleepDuration, analyzeSleep, formatDateFriendly, LABELS } from '../utils/helpers';
@@ -41,28 +42,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
   const ongoingMb = useMemo(() => logs.flatMap(l => l.masturbation || []).find(m => m.status === 'inProgress'), [logs]);
   const ongoingAlcohol = useMemo(() => logs.find(l => l.alcoholRecord?.ongoing)?.alcoholRecord, [logs]);
 
-  // Fix: Added missing diaryDateInfo used in the summary modal
-  const diaryDateInfo = useMemo(() => {
-    if (!summaryLog) return { main: '', sub: '' };
-    const date = new Date(summaryLog.date + 'T00:00:00');
-    return {
-      main: date.toLocaleDateString('zh-CN', { month: 'long', day: 'numeric' }),
-      sub: date.toLocaleDateString('zh-CN', { weekday: 'long', year: 'numeric' })
-    };
-  }, [summaryLog]);
-
-  // 生成最近7天的日期列表（含今天）
-  const last7Days = useMemo(() => {
-      const dates = [];
-      const today = new Date();
-      for (let i = 0; i < 7; i++) {
-          const d = new Date(today);
-          d.setDate(today.getDate() - i);
-          dates.push(d.toISOString().split('T')[0]);
-      }
-      return dates;
-  }, []);
-
   const greeting = useMemo(() => {
       const hour = new Date().getHours();
       if (hour < 5) return '夜深了';
@@ -95,6 +74,29 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
           showToast('记录已成功删除', 'success');
       }
   };
+
+  const sleepStats = useMemo(() => {
+    if (!latestLog?.sleep?.startTime || !latestLog?.sleep?.endTime) return null;
+    const analysis = analyzeSleep(latestLog.sleep.startTime, latestLog.sleep.endTime);
+    const durationStr = calculateSleepDuration(latestLog.sleep.startTime, latestLog.sleep.endTime) || '';
+    const hours = durationStr.split('小时')[0].trim();
+    return {
+        hours,
+        start: formatTime(latestLog.sleep.startTime),
+        end: formatTime(latestLog.sleep.endTime),
+        isLate: analysis?.isLate,
+        isGood: (latestLog.sleep.quality || 0) >= 4
+    };
+  }, [latestLog]);
+
+  const diaryDateInfo = useMemo(() => {
+      if (!summaryLog) return { main: '', sub: '' };
+      const d = new Date(summaryLog.date + 'T00:00:00');
+      const month = d.getMonth() + 1;
+      const date = d.getDate();
+      const weekday = d.toLocaleDateString('zh-CN', { weekday: 'long' });
+      return { main: `${month}月${date}日`, sub: weekday };
+  }, [summaryLog]);
 
   const SummarySection = ({ title, icon: Icon, children, colorClass = "text-slate-400" }: any) => (
       <div className="space-y-3">
@@ -139,63 +141,22 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
 
         <CalendarHeatmap logs={logs} onDateClick={handleDateClickForSummary}>
             <div className="grid grid-cols-2 gap-4 mt-2">
-                {/* 睡眠卡片 (红框区域) */}
-                <div className="bg-white dark:bg-slate-900/40 rounded-3xl p-4 shadow-soft border border-slate-100 dark:border-white/5 flex flex-col h-52 transition-colors overflow-hidden">
-                    <div className="flex justify-between items-center mb-2 shrink-0">
+                <div className="bg-white dark:bg-slate-900/40 rounded-3xl p-5 shadow-soft border border-slate-100 dark:border-white/5 flex flex-col justify-between h-44 transition-colors">
+                    <div className="flex justify-between items-start">
                         <div className="flex items-center gap-2">
-                            <div className="p-1.5 bg-blue-50 dark:bg-blue-500/10 rounded-lg text-blue-500"><Moon size={16} fill="currentColor" fillOpacity={0.2}/></div>
-                            <span className="text-xs font-black text-slate-800 dark:text-slate-300">睡眠 (7日)</span>
+                            <div className="p-2 bg-blue-50 dark:bg-blue-500/10 rounded-full text-blue-500"><Moon size={18} fill="currentColor" fillOpacity={0.2}/></div>
+                            <span className="text-sm font-bold text-slate-800 dark:text-slate-300">睡眠</span>
                         </div>
-                        {pendingLog && <span className="text-[10px] font-bold text-emerald-500 animate-pulse">记录中</span>}
+                        <div className="flex items-baseline"><span className="text-3xl font-black text-slate-800 dark:text-slate-100">{sleepStats?.hours || (pendingLog ? '记' : '未')}</span><span className="text-xs font-bold text-slate-400 ml-0.5">{pendingLog ? '录中' : 'h'}</span></div>
                     </div>
-
-                    <div className="flex-1 overflow-y-auto custom-scrollbar pr-1 space-y-1.5">
-                        {last7Days.map(date => {
-                            // Fix: reference correct log for each day in the summary list
-                            const log = logs.find(l => l.date === date);
-                            const analysis = log?.sleep?.startTime && log?.sleep?.endTime ? analyzeSleep(log.sleep.startTime, log.sleep.endTime) : null;
-                            const totalNapMinutes = log?.sleep?.naps?.reduce((acc, n) => acc + (n.duration || 0), 0) || 0;
-                            const isToday = date === new Date().toISOString().split('T')[0];
-
-                            return (
-                                <div key={date} className={`flex flex-col p-2 rounded-xl border transition-all ${isToday ? 'bg-blue-50/30 dark:bg-blue-900/10 border-blue-100 dark:border-blue-900/30' : 'border-transparent hover:bg-slate-50 dark:hover:bg-slate-800/50'}`}>
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-[10px] font-bold text-slate-400 font-mono">
-                                            {date.split('-').slice(1).join('/')}
-                                        </span>
-                                        <div className="flex gap-1">
-                                            {analysis?.isLate && <span className="text-[8px] px-1 bg-orange-100 text-orange-600 dark:bg-orange-900/40 dark:text-orange-300 rounded font-black">熬夜</span>}
-                                            {analysis?.isInsufficient && <span className="text-[8px] px-1 bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-300 rounded font-black">不足</span>}
-                                            {analysis?.isExcessive && <span className="text-[8px] px-1 bg-amber-100 text-amber-600 dark:bg-amber-900/40 dark:text-amber-300 rounded font-black">过长</span>}
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center justify-between mt-1">
-                                        <div className="flex items-center gap-1.5">
-                                            <div className="text-[11px] font-black text-slate-700 dark:text-slate-200">
-                                                {analysis ? `${analysis.durationHours.toFixed(1)}h` : <span className="text-slate-300 dark:text-slate-700 italic">未记录</span>}
-                                            </div>
-                                            {totalNapMinutes > 0 && (
-                                                <div className="flex items-center gap-0.5 px-1.5 py-0.5 bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 rounded-md">
-                                                    <CloudSun size={10} />
-                                                    <span className="text-[9px] font-bold">{totalNapMinutes}m</span>
-                                                </div>
-                                            )}
-                                        </div>
-                                        {log?.sleep?.quality && (
-                                            <div className="flex text-blue-400">
-                                                <Star size={8} fill="currentColor" />
-                                                <span className="text-[9px] font-bold ml-0.5">{log.sleep.quality}</span>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            );
-                        })}
+                    <div className="text-xs font-medium text-slate-400 font-mono">{sleepStats ? `${sleepStats.start} - ${sleepStats.end}` : '--:-- - --:--'}</div>
+                    <div className="flex gap-2 mt-2">
+                        <div className={`w-1.5 h-1.5 rounded-full ${sleepStats?.isLate ? 'bg-orange-500' : 'bg-slate-200'}`}></div>
+                        <span className="text-[10px] font-bold text-slate-400">熬夜状态</span>
                     </div>
                 </div>
 
-                {/* 活跃卡片 */}
-                <div className="bg-white dark:bg-slate-900/40 rounded-3xl p-5 shadow-soft border border-slate-100 dark:border-white/5 flex flex-col justify-between h-52 transition-colors">
+                <div className="bg-white dark:bg-slate-900/40 rounded-3xl p-5 shadow-soft border border-slate-100 dark:border-white/5 flex flex-col justify-between h-44 transition-colors">
                     <div className="flex items-center gap-2 mb-3">
                         <div className="p-2 bg-orange-50 dark:bg-orange-500/10 rounded-full text-orange-500"><Activity size={18}/></div>
                         <span className="text-sm font-bold text-slate-800 dark:text-slate-300">活跃</span>
@@ -203,11 +164,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                     <div className="space-y-2">
                         <div className="flex items-center justify-between text-xs"><span className="text-slate-400 font-bold">运动</span><span className="font-black text-slate-700 dark:text-slate-200">{latestLog?.exercise?.length || 0}次</span></div>
                         <div className="flex items-center justify-between text-xs"><span className="text-slate-400 font-bold">自慰</span><span className="font-black text-slate-700 dark:text-slate-200">{latestLog?.masturbation?.length || 0}次</span></div>
-                    </div>
-                    <div className="mt-4 pt-4 border-t border-slate-50 dark:border-slate-800">
-                        <div className="text-[10px] text-slate-400 font-bold flex items-center gap-1">
-                            <Zap size={10} className="text-amber-500"/> 今日能量状态正常
-                        </div>
                     </div>
                 </div>
             </div>
