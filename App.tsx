@@ -1,6 +1,6 @@
 
 import React, { useState, useCallback, useMemo, useEffect, Suspense, lazy } from 'react';
-import { LogEntry, AppSettings, ExerciseRecord, MasturbationRecordDetails } from './types';
+import { LogEntry, AppSettings, ExerciseRecord, MasturbationRecordDetails, NapRecord } from './types';
 import Dashboard from './components/Dashboard';
 import LogForm from './components/LogForm';
 import BottomNav from './components/BottomNav';
@@ -13,6 +13,7 @@ import MasturbationRecordModal from './components/MasturbationRecordModal';
 import ExerciseRecordModal from './components/ExerciseSelectorModal';
 import AlcoholRecordModal from './components/AlcoholRecordModal'; 
 import VersionHistoryModal from './components/VersionHistoryModal';
+import NapRecordModal from './components/NapRecordModal';
 import Welcome from './components/Welcome';
 import { useLogs } from './hooks/useLogs';
 import { ToastProvider, useToast } from './contexts/ToastContext';
@@ -48,7 +49,7 @@ const LoadingFallback = () => (
 );
 
 const AppContent: React.FC<{ data: any }> = ({ data }) => {
-  const { logs, partners, quickAddSex, quickAddMasturbation, saveExercise, saveAlcoholRecord, isInitializing } = data;
+  const { logs, partners, quickAddSex, quickAddMasturbation, saveExercise, saveAlcoholRecord, saveNap, isInitializing } = data;
   const { showToast } = useToast();
   
   const [settings, setSettings] = useLocalStorage<AppSettings>('appSettings', defaultSettings);
@@ -72,6 +73,8 @@ const AppContent: React.FC<{ data: any }> = ({ data }) => {
 
   const [isExerciseModalOpen, setIsExerciseModalOpen] = useState(false);
   const [isAlcoholModalOpen, setIsAlcoholModalOpen] = useState(false); 
+  const [isNapModalOpen, setIsNapModalOpen] = useState(false);
+  const [napToFinish, setNapToFinish] = useState<NapRecord | null>(null);
   
   // State for finishing ongoing exercise
   const [exerciseToFinish, setExerciseToFinish] = useState<ExerciseRecord | null>(null);
@@ -237,6 +240,19 @@ const AppContent: React.FC<{ data: any }> = ({ data }) => {
       }, isFinishing ? '运动已完成' : isInstantRecord ? '步数已记录' : '运动开始');
   };
 
+  const handleFinishNap = (record: NapRecord) => {
+      setNapToFinish(record);
+      setIsNapModalOpen(true);
+  };
+
+  const handleSaveNapFlow = (record: NapRecord) => {
+      wrapAction(async () => {
+          await saveNap(record);
+          setIsNapModalOpen(false);
+          setNapToFinish(null);
+      }, '午休记录已保存');
+  };
+
   // Masturbation Logic
   const handleStartMasturbation = () => {
       // FIX: Check if already ongoing to prevent duplicates
@@ -300,6 +316,7 @@ const AppContent: React.FC<{ data: any }> = ({ data }) => {
                     onNavigateToBackup={() => setActiveMainView('my')}
                     onFinishExercise={handleFinishExercise}
                     onFinishMasturbation={handleFinishMasturbation}
+                    onFinishNap={handleFinishNap}
                 />
             )}
             
@@ -400,6 +417,12 @@ const AppContent: React.FC<{ data: any }> = ({ data }) => {
             isOpen={isAlcoholModalOpen}
             onClose={() => setIsAlcoholModalOpen(false)}
             onSave={(r) => wrapAction(async () => await saveAlcoholRecord(r), '饮酒记录已保存')}
+        />
+        <NapRecordModal 
+            isOpen={isNapModalOpen} 
+            onClose={() => { setIsNapModalOpen(false); setNapToFinish(null); }} 
+            onSave={handleSaveNapFlow}
+            initialData={napToFinish || undefined}
         />
       </div>
     </div>

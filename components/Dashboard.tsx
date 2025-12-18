@@ -1,5 +1,6 @@
+
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { LogEntry, ExerciseRecord, SexRecordDetails, MasturbationRecordDetails } from '../types';
+import { LogEntry, ExerciseRecord, SexRecordDetails, MasturbationRecordDetails, NapRecord } from '../types';
 import CalendarHeatmap from './CalendarHeatmap';
 import { Moon, Zap, Activity, Hand, HeartPulse, Clock, Dumbbell, Footprints, Timer, CloudSun, Swords, TrendingUp, Beer, Film, ChevronLeft, ChevronRight, MapPin, Target, Play, ShieldAlert, Edit3, Trash2, FastForward, Coffee, Bed, ArrowRight, User } from 'lucide-react';
 import Modal from './Modal';
@@ -17,6 +18,7 @@ interface DashboardProps {
   onNavigateToBackup: () => void;
   onFinishExercise?: (record: ExerciseRecord) => void;
   onFinishMasturbation?: (record: MasturbationRecordDetails) => void;
+  onFinishNap?: (record: NapRecord) => void;
 }
 
 const SleepWidget = ({ log }: { log?: LogEntry | null }) => {
@@ -151,7 +153,7 @@ const ActivityWidget = ({ log }: { log?: LogEntry | null }) => {
     );
 };
 
-const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateToBackup, onFinishExercise, onFinishMasturbation }) => {
+const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateToBackup, onFinishExercise, onFinishMasturbation, onFinishNap }) => {
   const { logs, deleteLog, toggleNap, addOrUpdateLog } = useData();
   const { showToast } = useToast();
 
@@ -162,7 +164,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
   const [isHistoryView, setIsHistoryView] = useState(false);
   const [isMbActionModalOpen, setIsMbActionModalOpen] = useState(false);
 
-  const completedLogs = useMemo(() => logs.filter(log => log.status !== 'pending'), [logs]);
   const latestLog = useMemo(() => logs.length > 0 ? logs[0] : null, [logs]);
   const pendingLog = useMemo(() => logs.find(log => log.status === 'pending'), [logs]);
   const ongoingExercise = useMemo(() => logs.flatMap(l => l.exercise || []).find(e => e.ongoing), [logs]);
@@ -202,11 +203,15 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
   };
 
   const handleToggleNap = async () => {
-      try {
-          await toggleNap();
-          showToast('午休状态已更新', 'success');
-      } catch (e: any) {
-          showToast(e.message, 'error');
+      if (ongoingNap && onFinishNap) {
+          onFinishNap(ongoingNap);
+      } else {
+          try {
+              await toggleNap();
+              showToast('午吸开始', 'success');
+          } catch (e: any) {
+              showToast(e.message, 'error');
+          }
       }
   };
   

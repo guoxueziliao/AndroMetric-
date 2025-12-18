@@ -198,8 +198,11 @@ export interface NapRecord {
     endTime?: string | null;
     duration?: number;
     ongoing?: boolean;
+    quality?: number; // 1-5
+    hardness?: HardnessLevel | null; // 午起硬度
     hasDream?: boolean;
     dreamTypes?: string[];
+    notes?: string;
 }
 
 export interface AlcoholItem {

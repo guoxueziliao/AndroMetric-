@@ -1,8 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
-import { CloudSun, Clock, Play, Sparkles } from 'lucide-react';
+import { CloudSun, Clock, Play, Sparkles, Star, Zap, Trash2, Check, Minus, Plus } from 'lucide-react';
 import Modal from './Modal';
 import { NapRecord } from '../types';
+import HardnessSelector from './HardnessSelector';
 
 interface NapRecordModalProps {
     isOpen: boolean;
@@ -11,68 +12,78 @@ interface NapRecordModalProps {
     initialData?: NapRecord;
 }
 
-const DREAM_TYPES = ['情色', '噩梦', '普通梦', '模糊梦'];
+const DREAM_TYPES = ['情色', '噩梦', '普通梦', '模糊梦', '离奇', '清醒梦'];
 
 const NapRecordModal: React.FC<NapRecordModalProps> = ({ isOpen, onClose, onSave, initialData }) => {
-    const [startTime, setStartTime] = useState('');
+    const [record, setRecord] = useState<NapRecord>({
+        id: '', startTime: '', ongoing: false, duration: 30, quality: 3, hardness: null, hasDream: false, dreamTypes: [], notes: ''
+    });
     const [endTime, setEndTime] = useState('');
-    
-    // v0.0.5 Dream Support
-    const [hasDream, setHasDream] = useState(false);
-    const [dreamTypes, setDreamTypes] = useState<string[]>([]);
-    
-    // Calculate duration for display and saving
-    const duration = React.useMemo(() => {
-        if (!startTime || !endTime) return 0;
-        const [h1, m1] = startTime.split(':').map(Number);
-        const [h2, m2] = endTime.split(':').map(Number);
-        let diff = (h2 * 60 + m2) - (h1 * 60 + m1);
-        if (diff < 0) diff += 24 * 60; // Handle midnight crossing
-        return diff;
-    }, [startTime, endTime]);
 
     useEffect(() => {
         if (isOpen) {
             if (initialData) {
-                setStartTime(initialData.startTime || '');
-                setEndTime(initialData.endTime || '');
-                setHasDream(initialData.hasDream || false);
-                setDreamTypes(initialData.dreamTypes || []);
+                setRecord({
+                    ...initialData,
+                    quality: initialData.quality || 3,
+                    hardness: initialData.hardness || null,
+                    hasDream: initialData.hasDream || false,
+                    dreamTypes: initialData.dreamTypes || [],
+                    notes: initialData.notes || ''
+                });
                 
-                // If existing record has duration but no endTime, calculate it
-                if (initialData.duration && !initialData.endTime && initialData.startTime) {
+                if (initialData.startTime && initialData.duration) {
                     const [h, m] = initialData.startTime.split(':').map(Number);
                     const d = new Date(); d.setHours(h); d.setMinutes(m + initialData.duration);
                     setEndTime(d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }));
+                } else if (initialData.endTime) {
+                    setEndTime(initialData.endTime);
+                } else {
+                    const now = new Date();
+                    setEndTime(now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }));
                 }
             } else {
                 const now = new Date();
-                setStartTime(now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }));
-                
+                const nowStr = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
                 const endD = new Date(now); endD.setMinutes(now.getMinutes() + 30);
+                setRecord({
+                    id: Date.now().toString(),
+                    startTime: nowStr,
+                    ongoing: false,
+                    duration: 30,
+                    quality: 3,
+                    hardness: null,
+                    hasDream: false,
+                    dreamTypes: [],
+                    notes: ''
+                });
                 setEndTime(endD.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }));
-                
-                setHasDream(false);
-                setDreamTypes([]);
             }
         }
     }, [isOpen, initialData]);
 
-    const handleSave = () => {
-        onSave({
-            id: initialData?.id || Date.now().toString(),
-            startTime,
-            endTime,
-            duration,
-            ongoing: false, // Manual entry implies completed
-            hasDream,
-            dreamTypes: hasDream ? dreamTypes : []
-        });
-        onClose();
+    const handleEndTimeChange = (newEndTime: string) => {
+        setEndTime(newEndTime);
+        if (!record.startTime || !newEndTime) return;
+        const [h1, m1] = record.startTime.split(':').map(Number);
+        const [h2, m2] = newEndTime.split(':').map(Number);
+        let diff = (h2 * 60 + m2) - (h1 * 60 + m1);
+        if (diff < 0) diff += 24 * 60;
+        setRecord(prev => ({ ...prev, duration: diff }));
     };
-    
+
     const toggleDreamType = (t: string) => {
-        setDreamTypes(prev => prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t]);
+        setRecord(prev => ({
+            ...prev,
+            dreamTypes: prev.dreamTypes?.includes(t) 
+                ? prev.dreamTypes.filter(x => x !== t) 
+                : [...(prev.dreamTypes || []), t]
+        }));
+    };
+
+    const handleSave = () => {
+        onSave({ ...record, endTime, ongoing: false });
+        onClose();
     };
 
     if (!isOpen) return null;
@@ -81,69 +92,95 @@ const NapRecordModal: React.FC<NapRecordModalProps> = ({ isOpen, onClose, onSave
         <Modal
             isOpen={isOpen}
             onClose={onClose}
-            title={initialData ? "编辑午休" : "补录午休"}
+            title={initialData?.ongoing ? "结束午休" : "午休记录"}
             footer={
-                <div className="flex w-full gap-2">
-                    <button onClick={onClose} className="flex-1 py-3 bg-slate-100 dark:bg-slate-800 text-slate-500 font-bold rounded-xl">取消</button>
-                    <button 
-                        onClick={handleSave} 
-                        className="flex-1 py-3 text-white font-bold rounded-xl shadow-md flex items-center justify-center bg-orange-500"
-                    >
-                        <CloudSun size={18} className="mr-2"/>
-                        保存
-                    </button>
-                </div>
+                <button 
+                    onClick={handleSave} 
+                    className="w-full py-4 text-white font-black rounded-2xl shadow-xl transition-all active:scale-95 flex items-center justify-center gap-2 bg-orange-500 shadow-orange-500/20"
+                >
+                    <Check size={20} strokeWidth={3}/>
+                    保存记录
+                </button>
             }
         >
-            <div className="space-y-6 py-4">
-                <div className="flex gap-3">
-                    <div className="flex-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3">
-                         <label className="block text-[10px] text-slate-500 font-bold uppercase mb-1">开始时间</label>
-                         <input 
-                            type="time" 
-                            value={startTime}
-                            onChange={e => setStartTime(e.target.value)}
-                            className="bg-transparent font-mono text-xl font-bold text-brand-text dark:text-slate-200 outline-none w-full"
-                        />
-                    </div>
-                    <div className="flex-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3">
-                        <label className="block text-[10px] text-slate-500 font-bold uppercase mb-1">结束时间</label>
-                        <input 
-                            type="time" 
-                            value={endTime}
-                            onChange={e => setEndTime(e.target.value)}
-                            className="bg-transparent font-mono text-xl font-bold text-brand-text dark:text-slate-200 outline-none w-full"
-                        />
+            <div className="space-y-8 pb-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                
+                {/* 1. Header Card - Large Status */}
+                <div className="bg-slate-900 rounded-[2.5rem] p-8 text-white relative overflow-hidden shadow-2xl">
+                    <div className="absolute top-0 right-0 w-48 h-48 bg-orange-500/20 rounded-full blur-[60px] -translate-y-1/2 translate-x-1/2"></div>
+                    <div className="relative z-10 flex flex-col items-center">
+                        <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-orange-400 mb-2">
+                            <Clock size={14}/> Nap Summary
+                        </div>
+                        <div className="flex items-baseline gap-1">
+                            <span className="text-6xl font-black tabular-nums">{record.duration}</span>
+                            <span className="text-sm font-bold opacity-60 uppercase">Mins</span>
+                        </div>
+                        <div className="mt-6 flex gap-3 w-full">
+                            <div className="flex-1 bg-white/10 backdrop-blur-md rounded-2xl p-3 flex flex-col items-center">
+                                <span className="text-[9px] font-bold opacity-50 uppercase">Start</span>
+                                <input type="time" value={record.startTime} onChange={e => setRecord({...record, startTime: e.target.value})} className="bg-transparent text-sm font-mono font-bold outline-none text-center"/>
+                            </div>
+                            <div className="flex-1 bg-white/10 backdrop-blur-md rounded-2xl p-3 flex flex-col items-center">
+                                <span className="text-[9px] font-bold opacity-50 uppercase">End</span>
+                                <input type="time" value={endTime} onChange={e => handleEndTimeChange(e.target.value)} className="bg-transparent text-sm font-mono font-bold outline-none text-center"/>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <div className="bg-orange-50 dark:bg-orange-900/10 border border-orange-100 dark:border-orange-900/30 rounded-xl p-4 flex flex-col items-center justify-center">
-                    <div className="flex items-center gap-2 mb-1">
-                         <Clock size={18} className="text-orange-500"/>
-                         <span className="font-bold text-sm text-brand-text dark:text-slate-200">总时长</span>
-                    </div>
-                    <div className="text-3xl font-black text-orange-600 dark:text-orange-400">
-                        {duration} <span className="text-sm font-bold text-slate-400">分钟</span>
+                {/* 2. Quality Rating */}
+                <div className="space-y-4">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                        <Star size={12}/> 午休质量反馈
+                    </label>
+                    <div className="flex justify-between gap-2">
+                        {[1, 2, 3, 4, 5].map(star => (
+                            <button
+                                key={star}
+                                onClick={() => setRecord({...record, quality: star})}
+                                className={`flex-1 aspect-square rounded-2xl border-2 transition-all flex items-center justify-center ${record.quality === star ? 'bg-orange-50 border-orange-400 text-orange-600 shadow-md' : 'bg-slate-50 border-transparent text-slate-300'}`}
+                            >
+                                <Star size={24} fill={record.quality && record.quality >= star ? "currentColor" : "none"} strokeWidth={record.quality === star ? 3 : 2}/>
+                            </button>
+                        ))}
                     </div>
                 </div>
-                
-                {/* Dream Section (v0.0.5) */}
-                <div className="bg-purple-50 dark:bg-purple-900/10 rounded-xl p-3 border border-purple-100 dark:border-purple-900/30">
-                    <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center text-purple-700 dark:text-purple-300 font-bold text-xs uppercase tracking-wider">
-                            <Sparkles size={14} className="mr-1.5"/> 午休梦境
-                        </div>
-                        <div className="flex items-center">
-                            <input type="checkbox" className="toggle-checkbox h-4 w-8" checked={hasDream} onChange={e => setHasDream(e.target.checked)} />
-                        </div>
+
+                {/* 3. Hardness Selector */}
+                <div className="space-y-4">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                        <Zap size={12}/> 午起生理反馈 (生理需求)
+                    </label>
+                    <HardnessSelector value={record.hardness || 0} onChange={h => setRecord({...record, hardness: h as any})} />
+                    <button 
+                        onClick={() => setRecord({...record, hardness: record.hardness === null ? 3 : null})}
+                        className={`w-full py-3 rounded-xl text-xs font-bold transition-all border ${record.hardness === null ? 'bg-slate-100 text-slate-500 border-transparent' : 'bg-red-50 text-red-600 border-red-100'}`}
+                    >
+                        {record.hardness === null ? "开启生理记录" : "本次无明显勃起 (点此取消)"}
+                    </button>
+                </div>
+
+                {/* 4. Dreams */}
+                <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                            <Sparkles size={12}/> 梦境探测
+                        </label>
+                        <input 
+                            type="checkbox" 
+                            className="toggle-checkbox h-5 w-10" 
+                            checked={record.hasDream} 
+                            onChange={e => setRecord({...record, hasDream: e.target.checked})} 
+                        />
                     </div>
-                    {hasDream && (
-                        <div className="flex flex-wrap gap-2 animate-in fade-in">
+                    {record.hasDream && (
+                        <div className="flex flex-wrap gap-2 animate-in zoom-in-95 duration-300">
                             {DREAM_TYPES.map(t => (
                                 <button
                                     key={t}
                                     onClick={() => toggleDreamType(t)}
-                                    className={`text-[10px] px-2 py-1 rounded border transition-colors ${dreamTypes.includes(t) ? 'bg-purple-500 text-white border-purple-600' : 'bg-white dark:bg-slate-800 border-purple-200 dark:border-purple-800 text-slate-500'}`}
+                                    className={`px-4 py-2 rounded-xl text-xs font-bold border transition-all ${record.dreamTypes?.includes(t) ? 'bg-purple-100 text-purple-700 border-purple-200 shadow-sm' : 'bg-slate-50 text-slate-500 border-transparent'}`}
                                 >
                                     {t}
                                 </button>
@@ -152,8 +189,14 @@ const NapRecordModal: React.FC<NapRecordModalProps> = ({ isOpen, onClose, onSave
                     )}
                 </div>
 
-                <div className="text-xs text-brand-muted text-center italic">
-                    "建议使用首页右下角的快速按钮进行实时记录，就像记录睡眠一样。"
+                {/* Notes */}
+                <div className="space-y-2">
+                    <textarea 
+                        value={record.notes}
+                        onChange={e => setRecord({...record, notes: e.target.value})}
+                        placeholder="记录午休的心得，或者是周围环境对睡眠的影响..."
+                        className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-3xl p-4 text-xs font-medium outline-none focus:border-orange-400 transition-all min-h-[80px]"
+                    />
                 </div>
             </div>
         </Modal>
