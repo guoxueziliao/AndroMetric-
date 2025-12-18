@@ -25,8 +25,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
   const { logs, deleteLog, toggleNap, cancelOngoingNap, addOrUpdateLog, toggleSleepLog, cancelAlcoholRecord } = useData();
   const { showToast } = useToast();
 
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [logToDelete, setLogToDelete] = useState<string | null>(null);
   const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
   const [summaryLog, setSummaryLog] = useState<LogEntry | null>(null);
   
@@ -57,10 +55,18 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
     } else { onDateClick(date); }
   };
 
-  // --- 取消/删除进行中任务逻辑 ---
+  // --- 取消/删除逻辑 ---
+  const handleCancelSleep = async () => {
+      if (!pendingLog) return;
+      if (confirm('确定要取消本次睡眠记录吗？')) {
+          await deleteLog(pendingLog.date);
+          showToast('睡眠记录已取消', 'info');
+      }
+  };
+
   const handleCancelExercise = async () => {
       if (!ongoingExercise) return;
-      if (confirm('确定要取消本次运动记录吗？')) {
+      if (confirm('确定要取消本次运动计时吗？')) {
           const parentLog = logs.find(l => l.exercise?.some(e => e.id === ongoingExercise.id));
           if (parentLog) {
               await addOrUpdateLog({ ...parentLog, exercise: parentLog.exercise?.filter(e => e.id !== ongoingExercise.id) });
@@ -71,7 +77,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
 
   const handleCancelMb = async () => {
       if (!ongoingMb) return;
-      if (confirm('确定要取消本次自慰计时吗？')) {
+      if (confirm('确定要取消本次施法计时吗？')) {
           const parentLog = logs.find(l => l.masturbation?.some(m => m.id === ongoingMb.id));
           if (parentLog) {
               await addOrUpdateLog({ ...parentLog, masturbation: parentLog.masturbation?.filter(m => m.id !== ongoingMb.id) });
@@ -119,23 +125,32 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
 
         {(ongoingNap || ongoingExercise || ongoingMb || pendingLog || ongoingAlcohol) && (
             <section className="space-y-3">
-                {/* 1. 睡眠横幅 (绿色) */}
+                {/* 1. 睡眠横幅 */}
                 {pendingLog && (
                     <div className="bg-gradient-to-r from-emerald-500 to-teal-600 p-4 rounded-3xl shadow-lg text-white flex justify-between items-center animate-in slide-in-from-top-2">
                         <div className="flex items-center gap-3">
                             <div className="p-2 bg-white/20 rounded-full animate-pulse"><Bed size={20}/></div>
-                            <div><div className="font-bold text-sm">正在睡觉中...</div><div className="text-[10px] opacity-70">{formatTime(pendingLog.sleep?.startTime)} 开始</div></div>
+                            <div>
+                                <div className="font-bold text-sm">正在睡觉中...</div>
+                                <div className="text-[10px] opacity-70">{formatTime(pendingLog.sleep?.startTime)} 开始</div>
+                            </div>
                         </div>
-                        <button onClick={() => onEdit(pendingLog.date)} className="px-5 py-2 bg-white text-emerald-600 rounded-full text-xs font-bold shadow-sm active:scale-95">醒了</button>
+                        <div className="flex gap-2">
+                            <button onClick={handleCancelSleep} className="p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors"><Trash2 size={16}/></button>
+                            <button onClick={() => onEdit(pendingLog.date)} className="px-5 py-2 bg-white text-emerald-600 rounded-full text-xs font-bold shadow-sm active:scale-95">醒了</button>
+                        </div>
                     </div>
                 )}
 
-                {/* 2. 运动横幅 (橙色) */}
+                {/* 2. 运动横幅 */}
                 {ongoingExercise && (
                     <div className="bg-gradient-to-r from-orange-500 to-red-500 p-4 rounded-3xl shadow-lg text-white flex justify-between items-center animate-in slide-in-from-top-2">
                         <div className="flex items-center gap-3">
                             <div className="p-2 bg-white/20 rounded-full animate-pulse"><Dumbbell size={20}/></div>
-                            <div><div className="font-bold text-sm">正在{ongoingExercise.type}...</div><div className="text-[10px] opacity-70">{ongoingExercise.startTime} 开始</div></div>
+                            <div>
+                                <div className="font-bold text-sm">正在{ongoingExercise.type}...</div>
+                                <div className="text-[10px] opacity-70">{ongoingExercise.startTime} 开始</div>
+                            </div>
                         </div>
                         <div className="flex gap-2">
                             <button onClick={handleCancelExercise} className="p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors"><Trash2 size={16}/></button>
@@ -144,12 +159,15 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                     </div>
                 )}
 
-                {/* 3. 饮酒横幅 (琥珀色) */}
+                {/* 3. 饮酒横幅 */}
                 {ongoingAlcohol && (
                     <div className="bg-gradient-to-r from-amber-500 to-orange-600 p-4 rounded-3xl shadow-lg text-white flex justify-between items-center animate-in slide-in-from-top-2">
                         <div className="flex items-center gap-3">
                             <div className="p-2 bg-white/20 rounded-full animate-pulse"><Beer size={20}/></div>
-                            <div><div className="font-bold text-sm">正在哈啤中...</div><div className="text-[10px] opacity-70">{ongoingAlcohol.startTime} 开始</div></div>
+                            <div>
+                                <div className="font-bold text-sm">正在哈啤中...</div>
+                                <div className="text-[10px] opacity-70">{ongoingAlcohol.startTime} 开始</div>
+                            </div>
                         </div>
                         <div className="flex gap-2">
                             <button onClick={handleCancelAlcohol} className="p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors"><Trash2 size={16}/></button>
@@ -158,12 +176,15 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                     </div>
                 )}
 
-                {/* 4. 自慰横幅 (紫色) */}
+                {/* 4. 自慰横幅 */}
                 {ongoingMb && (
                     <div className="bg-gradient-to-r from-purple-500 to-pink-600 p-4 rounded-3xl shadow-lg text-white flex justify-between items-center animate-in slide-in-from-top-2">
                         <div className="flex items-center gap-3">
                             <div className="p-2 bg-white/20 rounded-full animate-pulse"><Hand size={20}/></div>
-                            <div><div className="font-bold text-sm">正在施法中...</div><div className="text-[10px] opacity-70">{ongoingMb.startTime} 开始</div></div>
+                            <div>
+                                <div className="font-bold text-sm">正在施法中...</div>
+                                <div className="text-[10px] opacity-70">{ongoingMb.startTime} 开始</div>
+                            </div>
                         </div>
                         <div className="flex gap-2">
                             <button onClick={handleCancelMb} className="p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors"><Trash2 size={16}/></button>
@@ -172,12 +193,15 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                     </div>
                 )}
 
-                {/* 5. 午休横幅 (橙黄) */}
+                {/* 5. 午休横幅 */}
                 {ongoingNap && (
                     <div className="bg-gradient-to-r from-orange-400 to-amber-500 p-4 rounded-3xl shadow-lg text-white flex justify-between items-center animate-in slide-in-from-top-2">
                         <div className="flex items-center gap-3">
                             <div className="p-2 bg-white/20 rounded-full animate-pulse"><CloudSun size={20}/></div>
-                            <div><div className="font-bold text-sm">正在午休中...</div><div className="text-[10px] opacity-70">{ongoingNap.startTime} 开始</div></div>
+                            <div>
+                                <div className="font-bold text-sm">正在午休中...</div>
+                                <div className="text-[10px] opacity-70">{ongoingNap.startTime} 开始</div>
+                            </div>
                         </div>
                         <div className="flex gap-2">
                             <button onClick={() => cancelOngoingNap()} className="p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors"><Trash2 size={16}/></button>
@@ -190,13 +214,13 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
 
         <CalendarHeatmap logs={logs} onDateClick={handleDateClickForSummary}>
             <div className="grid grid-cols-2 gap-4 mt-2">
-                <div className="bg-white dark:bg-slate-900 rounded-card p-6 shadow-soft border border-slate-100 dark:border-slate-800">
-                    <h3 className="font-bold text-lg flex items-center gap-2 mb-4"><Moon size={16} /> 睡眠</h3>
-                    <div className="text-2xl font-black">{latestLog?.sleep?.startTime ? calculateSleepDuration(latestLog.sleep.startTime, latestLog.sleep.endTime) || '记录中' : '未记录'}</div>
+                <div className="bg-white dark:bg-slate-900 rounded-card p-4 shadow-soft border border-slate-100 dark:border-slate-800">
+                    <h3 className="font-bold text-sm flex items-center gap-2 mb-2 text-brand-muted uppercase tracking-wider"><Moon size={14} /> 睡眠</h3>
+                    <div className="text-xl font-black text-brand-text dark:text-slate-200">{latestLog?.sleep?.startTime ? calculateSleepDuration(latestLog.sleep.startTime, latestLog.sleep.endTime) || '记录中' : '未记录'}</div>
                 </div>
-                <div className="bg-white dark:bg-slate-900 rounded-card p-6 shadow-soft border border-slate-100 dark:border-slate-800">
-                    <h3 className="font-bold text-lg flex items-center gap-2 mb-4"><Activity size={16} /> 活力</h3>
-                    <div className="text-2xl font-black">{latestLog?.morning?.hardness || '—'}<span className="text-sm font-bold text-brand-muted ml-1">级</span></div>
+                <div className="bg-white dark:bg-slate-900 rounded-card p-4 shadow-soft border border-slate-100 dark:border-slate-800">
+                    <h3 className="font-bold text-sm flex items-center gap-2 mb-2 text-brand-muted uppercase tracking-wider"><Activity size={14} /> 活力</h3>
+                    <div className="text-xl font-black text-brand-text dark:text-slate-200">{latestLog?.morning?.hardness || '—'}<span className="text-sm font-bold text-brand-muted ml-1">级</span></div>
                 </div>
             </div>
         </CalendarHeatmap>
@@ -213,7 +237,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
         )}
       </Modal>
 
-      {/* 自慰完成二选一弹窗 */}
       <Modal isOpen={isMbActionModalOpen} onClose={() => setIsMbActionModalOpen(false)} title="施法结束">
           <div className="space-y-3 pb-2">
               <button onClick={handleQuickFinishMb} className="w-full bg-blue-50 dark:bg-blue-900/20 border border-blue-200 p-4 rounded-2xl flex items-center justify-between group active:scale-[0.98] transition-all">
