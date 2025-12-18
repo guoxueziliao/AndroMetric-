@@ -401,7 +401,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
 
       <Modal isOpen={isMbActionModalOpen} onClose={() => setIsMbActionModalOpen(false)} title="施法结束">
           <div className="space-y-3 pb-2">
-              <button onClick={handleQuickFinishMb} className="w-full bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 p-4 rounded-2xl flex items-center justify-between group active:scale-[0.98] transition-all">
+              <button onClick={handleQuickFinishMb} className="w-full bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-red-800 p-4 rounded-2xl flex items-center justify-between group active:scale-[0.98] transition-all">
                   <div className="flex items-center gap-3">
                       <div className="p-2 bg-blue-100 dark:bg-blue-800 rounded-full text-blue-600 dark:text-blue-300 group-hover:bg-blue-200 dark:group-hover:bg-blue-700"><FastForward size={20} /></div>
                       <div className="text-left"><h4 className="font-bold text-brand-text dark:text-slate-200">快速结案</h4><p className="text-xs text-slate-500 dark:text-slate-400">仅记录时长</p></div>
