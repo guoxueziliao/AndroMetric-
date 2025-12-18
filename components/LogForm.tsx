@@ -1,7 +1,7 @@
 
-import React, { useState, useEffect, useRef, lazy, Suspense } from 'react';
-import { LogEntry, SexRecordDetails, MasturbationRecordDetails, ExerciseRecord, NapRecord, ChangeDetail, ChangeRecord, AlcoholRecord, PartnerProfile, MorningRecord, SleepRecord, CaffeineRecord } from '../types';
-import { CheckSquare, Tag, Beer, Film, Dumbbell, Sun, Cloud, CloudRain, Snowflake, Wind, CloudFog, Home, Users, Hotel, Plane, MapPin, Shirt, HeartPulse, Hand, Plus, Edit2, Trash2, Footprints, Save, Coffee, Calendar, X, Zap, Check, Sparkles, Settings } from 'lucide-react';
+import React, { useState, useEffect, useRef, lazy, Suspense, useMemo } from 'react';
+import { LogEntry, SexRecordDetails, MasturbationRecordDetails, ExerciseRecord, NapRecord, ChangeDetail, ChangeRecord, AlcoholRecord, PartnerProfile, MorningRecord, SleepRecord, CaffeineRecord, CaffeineItem } from '../types';
+import { CheckSquare, Tag, Beer, Film, Dumbbell, Sun, Cloud, CloudRain, Snowflake, Wind, CloudFog, Home, Users, Hotel, Plane, MapPin, Shirt, HeartPulse, Hand, Plus, Edit2, Trash2, Footprints, Save, Coffee, Calendar, X, Zap, Check, Sparkles, Settings, List, ChevronRight, ShoppingCart, Timer, CupSoda, Leaf, Flame } from 'lucide-react';
 import Modal from './Modal';
 import SexRecordModal from './SexRecordModal';
 import MasturbationRecordModal from './MasturbationRecordModal';
@@ -23,7 +23,45 @@ import { TagType } from './TagManager';
 // Lazy Load
 const TagManager = lazy(() => import('./TagManager'));
 
-// --- Options Config ---
+// --- Caffeine Menu Config ---
+const CAFFEINE_MENU = [
+    {
+        category: '咖啡 (Coffee)',
+        icon: Coffee,
+        items: [
+            { name: '美式咖啡', vol: 350, emoji: '☕' },
+            { name: '拿铁', vol: 350, emoji: '🥛' },
+            { name: '意式浓缩', vol: 30, emoji: '⚡' },
+            { name: '冷萃', vol: 300, emoji: '🧊' },
+            { name: '手冲咖啡', vol: 250, emoji: '🍯' },
+            { name: '速溶咖啡', vol: 200, emoji: '🎒' }
+        ]
+    },
+    {
+        category: '茶饮 (Tea)',
+        icon: Leaf,
+        items: [
+            { name: '绿茶', vol: 300, emoji: '🍵' },
+            { name: '红茶', vol: 300, emoji: '🍂' },
+            { name: '乌龙茶', vol: 300, emoji: '🪵' },
+            { name: '奶茶', vol: 500, emoji: '🧋' },
+            { name: '普洱/浓茶', vol: 200, emoji: '🗿' },
+            { name: '抹茶', vol: 150, emoji: '🍀' }
+        ]
+    },
+    {
+        category: '功能/软饮 (Energy)',
+        icon: CupSoda,
+        items: [
+            { name: '红牛', vol: 250, emoji: '🐂' },
+            { name: '魔爪', vol: 500, emoji: 'Ⓜ️' },
+            { name: '可乐', vol: 330, emoji: '🥤' },
+            { name: '氮泵', vol: 250, emoji: '🔥' },
+            { name: '乐虎', vol: 250, emoji: '🐯' }
+        ]
+    }
+];
+
 const PORN_OPTS = [{value: 'none', label: '无'}, {value: 'low', label: '少量'}, {value: 'medium', label: '适量'}, {value: 'high', label: '沉迷'}];
 const WEATHER_OPTS = [{value: 'sunny', label: '晴'}, {value: 'cloudy', label: '多云'}, {value: 'rainy', label: '雨'}, {value: 'snowy', label: '雪'}, {value: 'windy', label: '大风'}, {value: 'foggy', label: '雾'}];
 const LOCATION_OPTS = [{value: 'home', label: '家'}, {value: 'partner', label: '伴侣家'}, {value: 'hotel', label: '酒店'}, {value: 'travel', label: '旅途'}, {value: 'other', label: '其他'}];
@@ -103,7 +141,7 @@ const LogForm: React.FC<{
     const [editingExerciseRecord, setEditingExerciseRecord] = useState<ExerciseRecord | undefined>(undefined);
 
     const [isAddingCaffeine, setIsAddingCaffeine] = useState(false);
-    const [caffeineInput, setCaffeineInput] = useState({ time: '09:00', name: '美式咖啡', count: 1, volume: 350 });
+    const [activeCaffeineCat, setActiveCaffeineCat] = useState(0);
 
     const initialLogState = useRef(JSON.stringify(log));
     const qualityScore = calculateDataQuality(log);
@@ -129,22 +167,30 @@ const LogForm: React.FC<{
     const handleDeepChange = (parent: keyof LogEntry, field: string, value: any) => setLog(prev => ({ ...prev, [parent]: { ...((prev[parent] as any) || {}), [field]: value } }));
     const handleMorningChange = (field: keyof MorningRecord, value: any) => setLog(prev => ({ ...prev, morning: { ...prev.morning!, [field]: value } }));
     const handleSleepChange = (field: keyof SleepRecord, value: any) => setLog(prev => ({ ...prev, sleep: { ...prev.sleep!, [field]: value } }));
+    
     const handleSaveAlcohol = (record: AlcoholRecord) => {
         const alcoholLevel = record.totalGrams > 50 ? 'high' : record.totalGrams > 20 ? 'medium' : record.totalGrams > 0 ? 'low' : 'none';
         setLog(prev => ({ ...prev, alcoholRecord: record, alcohol: alcoholLevel }));
     };
 
-    const addCaffeine = () => {
+    const addCaffeine = (item: { name: string, vol: number }) => {
         const id = Date.now().toString();
-        const newItem = { id, ...caffeineInput };
+        const nowStr = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+        const newItem: CaffeineItem = { id, name: item.name, time: nowStr, count: 1, volume: item.vol };
+        
         setLog(prev => {
             const current = prev.caffeineRecord || { totalCount: 0, items: [] };
             const newItems = [...current.items, newItem];
             const totalCount = newItems.reduce((acc, i) => acc + i.count, 0);
-            return { ...prev, caffeineRecord: { totalCount, items: newItems }, caffeineIntake: totalCount > 3 ? 'high' : totalCount > 1 ? 'medium' : totalCount > 0 ? 'low' : 'none' };
+            return { 
+                ...prev, 
+                caffeineRecord: { totalCount, items: newItems }, 
+                caffeineIntake: totalCount > 3 ? 'high' : totalCount > 1 ? 'medium' : totalCount > 0 ? 'low' : 'none' 
+            };
         });
-        setIsAddingCaffeine(false);
+        showToast(`已添加: ${item.name}`, 'info');
     };
+
     const removeCaffeine = (id: string) => {
         setLog(prev => {
             const current = prev.caffeineRecord || { totalCount: 0, items: [] };
@@ -285,32 +331,55 @@ const LogForm: React.FC<{
                                 </div>
                             </div>
                             
-                            <div className="space-y-3">
-                                <div className="flex justify-between items-center">
-                                    <label className="text-xs font-bold text-slate-400 uppercase">咖啡因</label>
-                                    <button type="button" onClick={() => setIsAddingCaffeine(true)} className="text-[10px] bg-blue-50 text-blue-600 px-2 py-1 rounded font-bold">+ 添加</button>
+                            {/* Caffeine Reimagined (Ordering Style) */}
+                            <div className="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-800">
+                                <div className="flex justify-between items-center mb-1">
+                                    <label className="text-xs font-bold text-slate-400 uppercase">咖啡因摄入</label>
+                                    <button type="button" onClick={() => setIsAddingCaffeine(!isAddingCaffeine)} className={`text-xs px-3 py-1 rounded-full font-bold transition-all ${isAddingCaffeine ? 'bg-brand-accent text-white shadow-md' : 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-900'}`}>{isAddingCaffeine ? '收起菜单' : '+ 摄入'}</button>
                                 </div>
+
                                 {isAddingCaffeine && (
-                                    <div className="bg-slate-50 p-3 rounded-xl border border-blue-100 animate-in fade-in space-y-2">
-                                        <div className="flex gap-2">
-                                            <input type="time" value={caffeineInput.time} onChange={e => setCaffeineInput({...caffeineInput, time: e.target.value})} className="w-20 p-2 text-xs rounded-lg border-none outline-none"/>
-                                            <input type="text" value={caffeineInput.name} onChange={e => setCaffeineInput({...caffeineInput, name: e.target.value})} className="flex-1 p-2 text-xs rounded-lg border-none outline-none" placeholder="品类"/>
+                                    <div className="bg-slate-50 dark:bg-slate-950 rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden animate-in slide-in-from-top-4 duration-300">
+                                        {/* Category Selection */}
+                                        <div className="flex bg-slate-100 dark:bg-slate-900 p-1 border-b border-slate-200 dark:border-slate-800">
+                                            {CAFFEINE_MENU.map((cat, idx) => (
+                                                <button key={cat.category} onClick={() => setActiveCaffeineCat(idx)} className={`flex-1 py-2 text-[10px] font-black rounded-xl transition-all flex items-center justify-center gap-1.5 ${activeCaffeineCat === idx ? 'bg-white dark:bg-slate-800 text-brand-accent shadow-sm' : 'text-slate-400'}`}>
+                                                    <cat.icon size={12}/> {cat.category.split(' ')[0]}
+                                                </button>
+                                            ))}
                                         </div>
-                                        <div className="flex items-center gap-2 justify-end">
-                                            <input type="number" step="50" value={caffeineInput.volume} onChange={e => setCaffeineInput({...caffeineInput, volume: parseInt(e.target.value)||0})} className="w-16 p-2 text-xs rounded-lg text-center" placeholder="ml"/>
-                                            <button onClick={addCaffeine} className="p-2 bg-brand-accent text-white rounded-lg"><Check size={14}/></button>
+
+                                        {/* Item Grid */}
+                                        <div className="p-3 grid grid-cols-3 gap-2 max-h-[220px] overflow-y-auto custom-scrollbar">
+                                            {CAFFEINE_MENU[activeCaffeineCat].items.map(item => (
+                                                <button key={item.name} onClick={() => addCaffeine(item)} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-2.5 rounded-2xl flex flex-col items-center justify-center gap-1 hover:border-brand-accent active:scale-95 transition-all shadow-sm">
+                                                    <span className="text-xl">{item.emoji}</span>
+                                                    <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300 leading-tight text-center">{item.name}</span>
+                                                </button>
+                                            ))}
                                         </div>
                                     </div>
                                 )}
-                                <div className="flex flex-wrap gap-2">
+
+                                {/* Selected List (Cart Style) */}
+                                <div className="space-y-2">
                                     {log.caffeineRecord?.items.map(c => (
-                                        <div key={c.id} className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 rounded-lg text-xs font-medium text-slate-600 border border-slate-100">
-                                            <Coffee size={12}/>
-                                            <span>{c.name} {c.volume}ml</span>
-                                            <button onClick={() => removeCaffeine(c.id)} className="text-slate-400 hover:text-red-500"><X size={12}/></button>
+                                        <div key={c.id} className="flex items-center justify-between p-3 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl shadow-sm animate-in slide-in-from-right-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-brand-accent"><Coffee size={14}/></div>
+                                                <div>
+                                                    <div className="text-xs font-bold text-slate-800 dark:text-slate-200">{c.name} <span className="text-[10px] text-slate-400 ml-1 font-mono">{c.time}</span></div>
+                                                    <div className="text-[10px] text-slate-500 font-medium">{c.volume}ml · {c.count}份</div>
+                                                </div>
+                                            </div>
+                                            <button onClick={() => removeCaffeine(c.id)} className="p-2 text-slate-300 hover:text-red-500 transition-colors"><Trash2 size={14}/></button>
                                         </div>
                                     ))}
-                                    {(!log.caffeineRecord?.items || log.caffeineRecord.items.length === 0) && <span className="text-xs text-slate-300 italic">无记录</span>}
+                                    {(!log.caffeineRecord?.items || log.caffeineRecord.items.length === 0) && (
+                                        <div className="py-4 border-2 border-dashed border-slate-100 dark:border-slate-800 rounded-2xl text-center">
+                                            <p className="text-[10px] text-slate-300 font-bold uppercase tracking-widest">NO CAFFEINE LOGGED</p>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
