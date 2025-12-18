@@ -276,12 +276,12 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                 <div className="flex gap-4">
                     <div className="flex-1 bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
                         <label className="text-[10px] text-slate-500 font-bold uppercase block mb-1">开始时间</label>
-                        <div className="flex items-center justify-between"><input type="time" value={data.startTime} onChange={e => updateData('startTime', e.target.value)} className="bg-transparent text-xl font-mono font-bold text-brand-text dark:text-slate-200 outline-none w-full"/><Clock size={18} className="text-slate-300"/></div>
+                        <div className="flex items-center justify-between"><input type="time" value={data.startTime} onChange={e => updateData('startTime', e.target.value)} className="bg-transparent text-xl font-mono font-bold text-brand-text dark:text-slate-200 outline-none w-full"/></div>
                     </div>
                     <div className="flex-1 bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
                         <label className="text-[10px] text-slate-500 font-bold uppercase block mb-1">持续时长 (分)</label>
                         <div className="flex items-center justify-between">
-                            <div className="flex items-center w-full"><button type="button" onClick={() => updateData('duration', Math.max(1, (data.duration||0)-5))} className="p-1 rounded-full hover:bg-slate-100 text-slate-400"><Minus size={14}/></button><input type="number" value={data.duration} onChange={e => updateData('duration', parseInt(e.target.value) || 0)} className="bg-transparent text-xl font-mono font-bold text-brand-text dark:text-slate-200 outline-none w-full text-center"/><button type="button" onClick={() => updateData('duration', (data.duration||0)+5)} className="p-1 rounded-full hover:bg-slate-100 text-slate-400"><Plus size={14}/></button></div>
+                            <div className="flex items-center w-full"><button type="button" onClick={() => updateData('duration', Math.max(1, (data.duration||0)-1))} className="p-1 rounded-full hover:bg-slate-100 text-slate-400"><Minus size={14}/></button><input type="number" value={data.duration} onChange={e => updateData('duration', parseInt(e.target.value) || 0)} className="bg-transparent text-xl font-mono font-bold text-brand-text dark:text-slate-200 outline-none w-full text-center"/><button type="button" onClick={() => updateData('duration', (data.duration||0)+1)} className="p-1 rounded-full hover:bg-slate-100 text-slate-400"><Plus size={14}/></button></div>
                         </div>
                     </div>
                 </div>

@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { LogEntry, ExerciseRecord, SexRecordDetails, MasturbationRecordDetails } from '../types';
 import CalendarHeatmap from './CalendarHeatmap';
@@ -23,19 +22,16 @@ interface DashboardProps {
 const SleepWidget = ({ log }: { log?: LogEntry | null }) => {
     const sleep = log?.sleep;
     const duration = calculateSleepDuration(sleep?.startTime, sleep?.endTime);
-    // Parse duration to hours for progress bar
     let durationHours = 0;
     if (duration) {
         const match = duration.match(/(\d+)小时/);
         if (match) durationHours = parseInt(match[1]);
     }
     const hasData = !!(sleep?.startTime && sleep?.endTime);
-    const progress = Math.min(100, (durationHours / 8) * 100);
     const analysis = analyzeSleep(sleep?.startTime, sleep?.endTime);
 
     return (
         <div className="bg-white dark:bg-slate-900 rounded-card p-6 shadow-soft border border-slate-100 dark:border-slate-800 relative overflow-hidden">
-            {/* Background Decoration */}
             <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 dark:bg-blue-900/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
             
             <div className="flex justify-between items-start mb-6 relative z-10">
@@ -71,7 +67,6 @@ const SleepWidget = ({ log }: { log?: LogEntry | null }) => {
                 </div>
             </div>
 
-            {/* Visual Graph Area */}
             <div className="h-16 flex items-end gap-1 mb-4">
                 {[40, 60, 45, 70, 50, 80, 65, 55, 40, 30].map((h, i) => (
                     <div key={i} className="flex-1 bg-pastel-blue dark:bg-slate-800 rounded-t-sm relative group">
@@ -83,14 +78,12 @@ const SleepWidget = ({ log }: { log?: LogEntry | null }) => {
                 ))}
             </div>
 
-            {/* Footer Stats */}
             <div className="flex justify-between items-center relative z-10">
                 <div className="flex gap-4">
                     <div className="flex items-center gap-1.5">
                         <span className={`w-2 h-2 rounded-full ${analysis?.isLate ? 'bg-orange-400' : 'bg-green-400'}`}></span>
                         <span className="text-xs font-bold text-slate-500">{analysis?.isLate ? '熬夜' : '作息'}</span>
                     </div>
-                    {/* Fake data removed or kept for visual consistency? "Deep Sleep" is not real yet. Keep for UI stability but maybe rename or remove if strict. Keeping as placeholder for "Structure" */}
                     <div className="flex items-center gap-1.5">
                         <span className="w-2 h-2 rounded-full bg-blue-400"></span>
                         <span className="text-xs font-bold text-slate-500">深睡</span>
@@ -108,12 +101,10 @@ const SleepWidget = ({ log }: { log?: LogEntry | null }) => {
 
 const ActivityWidget = ({ log }: { log?: LogEntry | null }) => {
     const hasWorkout = log?.exercise && log.exercise.length > 0;
-    const hasSex = log?.sex && log.sex.length > 0;
-    const hasMb = log?.masturbation && log.masturbation.length > 0;
 
     return (
         <div className="bg-white dark:bg-slate-900 rounded-card p-6 shadow-soft border border-slate-100 dark:border-slate-800 relative overflow-hidden">
-             <div className="absolute top-0 right-0 w-32 h-32 bg-orange-50 dark:bg-orange-900/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+             <div className="absolute top-0 right-0 w-32 h-32 bg-orange-50 dark:bg-orange-900/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3"></div>
              
              <div className="flex justify-between items-start mb-4 relative z-10">
                 <div className="flex items-center gap-2">
@@ -169,8 +160,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
   const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
   const [summaryLog, setSummaryLog] = useState<LogEntry | null>(null);
   const [isHistoryView, setIsHistoryView] = useState(false);
-  
-  // Masturbation Action Modal
   const [isMbActionModalOpen, setIsMbActionModalOpen] = useState(false);
 
   const completedLogs = useMemo(() => logs.filter(log => log.status !== 'pending'), [logs]);
@@ -221,7 +210,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
       }
   };
   
-  // --- Masturbation Actions ---
   const handleQuickFinishMb = async () => {
       if (!ongoingMb) return;
       const now = new Date();
@@ -231,7 +219,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
       if (duration < 0) duration += 24 * 60;
       if (duration === 0) duration = 1;
 
-      // Find the log containing this record
       const parentLog = logs.find(l => l.masturbation?.some(r => r.id === ongoingMb.id));
       if (parentLog) {
           const updatedMb = parentLog.masturbation?.map(r => 
@@ -261,7 +248,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
   return (
     <>
       <div className="space-y-6">
-        {/* Header */}
         <div className="flex justify-between items-end px-2">
             <div>
                 <h1 className="text-3xl font-black text-brand-text dark:text-slate-100 tracking-tight">{greeting}</h1>
@@ -272,53 +258,69 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
             </div>
         </div>
 
-        {/* Ongoing Tasks */}
+        {/* Ongoing Tasks Section */}
         {(ongoingNap || ongoingExercise || ongoingMb || pendingLog) && (
             <section className="space-y-3">
-                {pendingLog && !ongoingExercise && !ongoingNap && !ongoingMb && (
-                    <div onClick={() => onEdit(pendingLog.date)} className="bg-pastel-orange dark:bg-orange-900/20 p-4 rounded-3xl border border-orange-100 dark:border-orange-900/50 flex items-center justify-between cursor-pointer active:scale-95 transition-transform">
+                {/* Sleep Banner */}
+                {pendingLog && (
+                    <div className="bg-gradient-to-r from-indigo-500 to-purple-600 p-4 rounded-3xl shadow-lg shadow-indigo-500/20 text-white flex justify-between items-center animate-in slide-in-from-top-2">
                         <div className="flex items-center gap-3">
-                            <div className="p-2 bg-orange-100 dark:bg-orange-800 rounded-full text-orange-600 dark:text-orange-200">
-                                <Bed size={20}/>
-                            </div>
+                            <div className="p-2 bg-white/20 rounded-full backdrop-blur-sm animate-pulse"><Moon size={20}/></div>
                             <div>
-                                <h4 className="font-bold text-orange-900 dark:text-orange-100 text-sm">记录待补充</h4>
-                                <p className="text-xs text-orange-700 dark:text-orange-300">⚠️ 夜间睡眠未记录</p>
+                                <div className="font-bold text-sm">睡眠中...</div>
+                                <div className="text-xs opacity-90 font-mono">
+                                    {pendingLog.sleep?.startTime ? new Date(pendingLog.sleep.startTime).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : '--:--'} 开始
+                                </div>
                             </div>
                         </div>
-                        <ArrowRight size={18} className="text-orange-400"/>
+                        <button onClick={() => onEdit(pendingLog.date)} className="px-4 py-2 bg-white text-indigo-600 rounded-full text-xs font-bold shadow-sm active:scale-95 transition-transform">醒了</button>
                     </div>
                 )}
                 
+                {/* Nap Banner */}
                 {ongoingNap && (
-                    <div className="bg-gradient-to-r from-orange-400 to-amber-500 p-4 rounded-3xl shadow-lg shadow-orange-500/20 text-white flex justify-between items-center">
+                    <div className="bg-gradient-to-r from-orange-400 to-amber-500 p-4 rounded-3xl shadow-lg shadow-orange-500/20 text-white flex justify-between items-center animate-in slide-in-from-top-2">
                         <div className="flex items-center gap-3">
-                            <div className="p-2 bg-white/20 rounded-full backdrop-blur-sm"><CloudSun size={20}/></div>
+                            <div className="p-2 bg-white/20 rounded-full backdrop-blur-sm animate-bounce"><CloudSun size={20}/></div>
                             <div>
                                 <div className="font-bold text-sm">午休中...</div>
                                 <div className="text-xs opacity-90 font-mono">{ongoingNap.startTime} 开始</div>
                             </div>
                         </div>
-                        <button onClick={handleToggleNap} className="px-4 py-2 bg-white text-orange-600 rounded-full text-xs font-bold shadow-sm">醒了</button>
+                        <button onClick={handleToggleNap} className="px-4 py-2 bg-white text-orange-600 rounded-full text-xs font-bold shadow-sm active:scale-95 transition-transform">醒了</button>
                     </div>
                 )}
 
-                {ongoingMb && onFinishMasturbation && (
-                    <div className="bg-gradient-to-r from-blue-500 to-indigo-600 p-4 rounded-3xl shadow-lg shadow-blue-500/20 text-white flex justify-between items-center">
+                {/* Exercise Banner */}
+                {ongoingExercise && onFinishExercise && (
+                    <div className="bg-gradient-to-r from-emerald-500 to-teal-600 p-4 rounded-3xl shadow-lg shadow-emerald-500/20 text-white flex justify-between items-center animate-in slide-in-from-top-2">
                         <div className="flex items-center gap-3">
-                            <div className="p-2 bg-white/20 rounded-full backdrop-blur-sm"><Hand size={20}/></div>
+                            <div className="p-2 bg-white/20 rounded-full backdrop-blur-sm animate-spin-slow"><Dumbbell size={20}/></div>
+                            <div>
+                                <div className="font-bold text-sm">{ongoingExercise.type}进行中...</div>
+                                <div className="text-xs opacity-90 font-mono">{ongoingExercise.startTime} 开始</div>
+                            </div>
+                        </div>
+                        <button onClick={() => onFinishExercise(ongoingExercise)} className="px-4 py-2 bg-white text-emerald-600 rounded-full text-xs font-bold shadow-sm active:scale-95 transition-transform">结束</button>
+                    </div>
+                )}
+
+                {/* Masturbation Banner */}
+                {ongoingMb && onFinishMasturbation && (
+                    <div className="bg-gradient-to-r from-blue-500 to-indigo-600 p-4 rounded-3xl shadow-lg shadow-blue-500/20 text-white flex justify-between items-center animate-in slide-in-from-top-2">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-white/20 rounded-full backdrop-blur-sm animate-pulse"><Hand size={20}/></div>
                             <div>
                                 <div className="font-bold text-sm">施法中...</div>
                                 <div className="text-xs opacity-90 font-mono">{ongoingMb.startTime} 开始</div>
                             </div>
                         </div>
-                        <button onClick={() => setIsMbActionModalOpen(true)} className="px-4 py-2 bg-white text-blue-600 rounded-full text-xs font-bold shadow-sm">结束</button>
+                        <button onClick={() => setIsMbActionModalOpen(true)} className="px-4 py-2 bg-white text-blue-600 rounded-full text-xs font-bold shadow-sm active:scale-95 transition-transform">结束</button>
                     </div>
                 )}
             </section>
         )}
 
-        {/* Calendar with Widgets & Stats */}
         <CalendarHeatmap logs={logs} onDateClick={handleDateClickForSummary}>
             <div className="grid grid-cols-2 gap-4 mt-2">
                 <SleepWidget log={latestLog} />
@@ -327,7 +329,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
         </CalendarHeatmap>
       </div>
       
-      {/* Modal Definitions (Summary, Actions, etc.) */}
       <Modal isOpen={isSummaryModalOpen} onClose={() => { setIsSummaryModalOpen(false); setIsHistoryView(false); }} title={isHistoryView ? "修改历史" : "记录详情"}>
         {summaryLog && (
             <div className="space-y-4 pb-4">
@@ -342,10 +343,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                 )}
                 
                 {isHistoryView ? <LogHistory log={summaryLog} /> : (
-                    // Simple Summary View (Can be elaborate)
                     <div className="bg-slate-50 dark:bg-slate-950 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 text-sm leading-relaxed whitespace-pre-wrap text-slate-600 dark:text-slate-300">
-                        {/* Reuse the helper to generate text, or build a custom UI here */}
-                        {/* For brevity, using the text generator logic or custom */}
                         <div className="space-y-4">
                             {summaryLog.morning?.wokeWithErection && (
                                 <div>
@@ -356,7 +354,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                                     </div>
                                 </div>
                             )}
-                            {/* ... more details ... */}
                         </div>
                         
                         <GlobalTimeline log={summaryLog} />
@@ -373,7 +370,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
         <SafeDeleteModal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} onConfirm={handleConfirmDelete} message="确认要删除这一整天的记录吗？"/>
       </Modal>
 
-      {/* Masturbation Action Modal */}
       <Modal isOpen={isMbActionModalOpen} onClose={() => setIsMbActionModalOpen(false)} title="施法结束">
           <div className="space-y-3 pb-2">
               <p className="text-sm text-center text-slate-500 mb-4">辛苦了！请选择如何记录本次施法。</p>
@@ -415,6 +411,16 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
               </button>
           </div>
       </Modal>
+
+      <style>{`
+        @keyframes spin-slow {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .animate-spin-slow {
+            animation: spin-slow 8s linear infinite;
+        }
+      `}</style>
     </>
   );
 };
