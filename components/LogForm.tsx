@@ -287,11 +287,11 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
                                             setLog(prev => ({ 
                                                 ...prev, 
                                                 health: { 
-                                                    ...prev.health!, 
+                                                    ...(prev.health || { isSick: false, symptoms: [], medications: [] }), 
                                                     isSick: checked,
-                                                    discomfortLevel: checked ? prev.health?.discomfortLevel : undefined,
-                                                    symptoms: checked ? prev.health?.symptoms || [] : [],
-                                                    medications: checked ? prev.health?.medications || [] : []
+                                                    discomfortLevel: checked ? (prev.health?.discomfortLevel || 'mild') : undefined,
+                                                    symptoms: checked ? (prev.health?.symptoms || []) : [],
+                                                    medications: checked ? (prev.health?.medications || []) : []
                                                 } 
                                             }));
                                             markDirty();

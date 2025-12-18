@@ -2,10 +2,10 @@
 import React, { useState, useMemo } from 'react';
 import { LogEntry, ExerciseRecord, SexRecordDetails, MasturbationRecordDetails, NapRecord, AlcoholRecord } from '../types';
 import CalendarHeatmap from './CalendarHeatmap';
-import { Moon, Zap, Activity, Hand, HeartPulse, Clock, Dumbbell, Footprints, Timer, CloudSun, Beer, TrendingUp, ShieldAlert, Edit3, Trash2, FastForward, Coffee, Bed, ArrowRight, User, Heart, History } from 'lucide-react';
+import { Moon, Zap, Activity, Hand, HeartPulse, Clock, Dumbbell, Footprints, Timer, CloudSun, Beer, TrendingUp, ShieldAlert, Edit3, Trash2, FastForward, Coffee, Bed, ArrowRight, User, Heart, History, RotateCcw } from 'lucide-react';
 import Modal from './Modal';
 import SafeDeleteModal from './SafeDeleteModal';
-import { formatTime, calculateSleepDuration, analyzeSleep } from '../utils/helpers';
+import { formatTime, calculateSleepDuration, analyzeSleep, formatDateFriendly, generateLogSummary } from '../utils/helpers';
 import { useData } from '../contexts/DataContext';
 import { useToast } from '../contexts/ToastContext';
 import { LogHistory } from './LogHistory';
@@ -21,12 +21,15 @@ interface DashboardProps {
   onFinishAlcohol?: (record: AlcoholRecord) => void;
 }
 
+type SummaryTab = 'diary' | 'track' | 'source';
+
 const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateToBackup, onFinishExercise, onFinishMasturbation, onFinishNap, onFinishAlcohol }) => {
   const { logs, deleteLog, toggleNap, cancelOngoingNap, addOrUpdateLog, toggleSleepLog, cancelAlcoholRecord } = useData();
   const { showToast } = useToast();
 
   const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
   const [summaryLog, setSummaryLog] = useState<LogEntry | null>(null);
+  const [activeSummaryTab, setActiveSummaryTab] = useState<SummaryTab>('diary');
   
   // 删除确认弹窗状态
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -55,14 +58,18 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
     const log = logs.find(l => l.date === date);
     if (log) {
         if (log.status === 'pending') onEdit(log.date);
-        else { setSummaryLog(log); setIsSummaryModalOpen(true); }
+        else { 
+          setSummaryLog(log); 
+          setActiveSummaryTab('diary');
+          setIsSummaryModalOpen(true); 
+        }
     } else { onDateClick(date); }
   };
 
   // --- 取消/删除逻辑 ---
   const handleCancelSleep = async () => {
       if (!pendingLog) return;
-      if (confirm('确定要取消本次睡眠记录吗？')) {
+      if (confirm('确定要取消当前的睡眠记录吗？')) {
           await deleteLog(pendingLog.date);
           showToast('睡眠记录已取消', 'info');
       }
@@ -141,6 +148,15 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
         isGood: (latestLog.sleep.quality || 0) >= 4
     };
   }, [latestLog]);
+
+  const diaryDateInfo = useMemo(() => {
+      if (!summaryLog) return { main: '', sub: '' };
+      const friendly = formatDateFriendly(summaryLog.date);
+      return {
+          main: friendly.split(' ')[0], // 12月6日
+          sub: friendly.split(' ')[1]   // 星期六
+      };
+  }, [summaryLog]);
 
   return (
     <>
@@ -289,34 +305,82 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
         </CalendarHeatmap>
       </div>
       
-      {/* 记录详情弹窗 */}
-      <Modal isOpen={isSummaryModalOpen} onClose={() => setIsSummaryModalOpen(false)} title="记录详情">
+      {/* 记录详情弹窗 (还原 Image 2 的原始视觉) */}
+      <Modal 
+        isOpen={isSummaryModalOpen} 
+        onClose={() => setIsSummaryModalOpen(false)} 
+        title="" // 我们在内容区自定义 Header
+      >
         {summaryLog && (
-            <div className="space-y-6 pb-6 animate-in fade-in duration-200">
-                {/* 时间轴展示 */}
-                <GlobalTimeline log={summaryLog} />
-                
-                {/* 历史修改记录 */}
-                <div className="space-y-3 pt-4 border-t border-slate-100 dark:border-white/5">
-                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center">
-                        <History size={14} className="mr-1.5"/> 修改历史
-                    </h3>
-                    <LogHistory log={summaryLog} />
+            <div className="space-y-6 animate-in fade-in duration-300 min-h-[500px] flex flex-col -mt-4">
+                {/* Custom Header (Image 2 style) */}
+                <div className="flex justify-between items-start pb-4">
+                    <div className="flex flex-col">
+                        <h2 className="text-3xl font-black text-brand-text dark:text-slate-100">{diaryDateInfo.main}</h2>
+                        <span className="text-sm font-bold text-brand-muted mt-1">{diaryDateInfo.sub}</span>
+                    </div>
+                    <div className="flex gap-2">
+                        <button onClick={() => setActiveSummaryTab('source')} className="p-3 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-500 hover:bg-slate-200 transition-colors">
+                            <RotateCcw size={20}/>
+                        </button>
+                        <button onClick={() => handleDeleteRecord(summaryLog.date)} className="p-3 bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-red-50 hover:text-red-500 transition-colors">
+                            <Trash2 size={20}/>
+                        </button>
+                    </div>
                 </div>
 
-                {/* 底部操作按钮 */}
-                <div className="mt-8 flex gap-3">
-                    <button 
-                        onClick={() => handleDeleteRecord(summaryLog.date)} 
-                        className="flex-1 py-3 bg-red-50 dark:bg-red-900/10 text-red-500 dark:text-red-400 rounded-2xl font-bold flex items-center justify-center gap-2 active:scale-95 transition-all border border-red-100 dark:border-red-900/30"
-                    >
-                        <Trash2 size={18}/> 删除
-                    </button>
+                {/* Tab Switcher (Segmented Control style) */}
+                <div className="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl shrink-0">
+                    {[
+                        { id: 'diary', label: '日记' },
+                        { id: 'track', label: '轨迹' },
+                        { id: 'source', label: '溯源' }
+                    ].map(tab => (
+                        <button
+                            key={tab.id}
+                            onClick={() => setActiveSummaryTab(tab.id as SummaryTab)}
+                            className={`flex-1 py-2.5 text-xs font-black rounded-xl transition-all ${activeSummaryTab === tab.id ? 'bg-white dark:bg-slate-700 text-brand-accent shadow-md' : 'text-slate-400 hover:text-slate-600'}`}
+                        >
+                            {tab.label}
+                        </button>
+                    ))}
+                </div>
+
+                {/* Tab Content */}
+                <div className="flex-1">
+                    {activeSummaryTab === 'diary' && (
+                        <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+                            <div className="border border-slate-100 dark:border-slate-800/50 rounded-[2rem] overflow-hidden bg-white/50 dark:bg-slate-900/50 shadow-sm">
+                                {generateLogSummary(summaryLog).map((item, i) => (
+                                    <div key={i} className="flex items-start py-5 px-6 border-b border-slate-100 dark:border-slate-800/50 last:border-0 hover:bg-slate-50/50 dark:hover:bg-slate-800/10 transition-colors">
+                                        <span className="w-24 shrink-0 text-[11px] font-black text-slate-400 uppercase tracking-widest pt-1">{item.label}</span>
+                                        <span className="flex-1 text-sm font-bold text-slate-700 dark:text-slate-200 whitespace-pre-wrap leading-relaxed">{item.value}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {activeSummaryTab === 'track' && (
+                        <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+                            <GlobalTimeline log={summaryLog} />
+                        </div>
+                    )}
+
+                    {activeSummaryTab === 'source' && (
+                        <div className="animate-in fade-in slide-in-from-right-4 duration-300 pt-2">
+                            <LogHistory log={summaryLog} />
+                        </div>
+                    )}
+                </div>
+
+                {/* Bottom Action Button */}
+                <div className="mt-auto pt-6">
                     <button 
                         onClick={() => { setIsSummaryModalOpen(false); onEdit(summaryLog.date); }} 
-                        className="flex-[2] py-3 bg-brand-accent text-white rounded-2xl font-bold shadow-lg shadow-blue-500/30 active:scale-95 transition-all flex items-center justify-center gap-2"
+                        className="w-full py-4.5 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-[2rem] font-black shadow-xl active:scale-[0.98] transition-all flex items-center justify-center gap-3"
                     >
-                        <Edit3 size={18}/> 编辑详情
+                        <Edit3 size={20}/> 编辑详情
                     </button>
                 </div>
             </div>
