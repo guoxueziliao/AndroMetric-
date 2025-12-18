@@ -1,4 +1,5 @@
 
+
 import { db } from '../db';
 import { LogEntry, PartnerProfile, StoredData, Snapshot, Health, ChangeRecord } from '../types';
 import { validateLogEntry } from '../utils/validators';
@@ -105,10 +106,11 @@ export const StorageService = {
                 modified = true;
                 
                 // Add system trace
+                // Fix: Added missing category property to ChangeDetail
                 const systemRepairRecord: ChangeRecord = {
                     timestamp: Date.now(),
                     summary: '系统自动修复 (v0.0.4)',
-                    details: [{ field: 'System', oldValue: 'Corrupt/Missing', newValue: 'Repaired via History' }],
+                    details: [{ field: 'System', oldValue: 'Corrupt/Missing', newValue: 'Repaired via History', category: 'system' }],
                     type: 'auto'
                 };
                 newLog.changeHistory = [...(newLog.changeHistory || []), systemRepairRecord];
@@ -153,11 +155,14 @@ export const StorageService = {
             if (newLog.sex) {
                 newLog.sex.forEach(sex => {
                     // Check for legacy top-level partner/location and migrate to interactions if empty
+                    // Fix: Added missing costumes and toys properties to SexInteraction
                     if ((!sex.interactions || sex.interactions.length === 0) && (sex.partner || sex.location)) {
                         sex.interactions = [{
                             id: `auto_mig_${Date.now()}`,
                             partner: sex.partner || '',
                             location: sex.location || '',
+                            costumes: [],
+                            toys: [],
                             chain: []
                         }];
                         modified = true;
@@ -167,10 +172,20 @@ export const StorageService = {
                     const checkPartner = (name: string) => {
                         if (name && !partnerNames.has(name) && !newPartners.some(p => p.name === name)) {
                             // Queue creation of missing partner
+                            // Fix: Added missing required properties for PartnerProfile
                             newPartners.push({
                                 id: `restored_${Date.now()}_${Math.random().toString(36).substr(2,5)}`,
                                 name: name,
                                 type: 'casual', // Default to casual
+                                isMarried: false,
+                                sensitiveSpots: [],
+                                stimulationPreferences: [],
+                                likedPositions: [],
+                                dislikedActs: [],
+                                socialTags: [],
+                                smoking: 'none',
+                                alcohol: 'none',
+                                milestones: {},
                                 notes: '系统自动恢复的关联档案',
                                 avatarColor: 'bg-slate-500'
                             });

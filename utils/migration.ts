@@ -1,4 +1,5 @@
 
+
 import { StoredData, LogEntry, SexRecordDetails, MasturbationRecordDetails, SexInteraction, SexAction, ExerciseRecord, MorningRecord, SleepRecord, ContentItem } from '../types';
 
 // The latest version of our data structure.
@@ -47,10 +48,13 @@ function migrateV1toV2(logs: any[]): any[] {
 
 // ... Keep existing migrations ...
 function migrateV3toV4(logs: any[]): any[] { return logs.map(log => ({ ...log, updatedAt: log.updatedAt || Date.now(), tags: log.tags || [] })); }
-function migrateV5toV6(logs: any[]): any[] { return logs.map(log => { if (log.sex && !Array.isArray(log.sex)) { const oldSex = log.sex; const newSexArray: SexRecordDetails[] = []; if (oldSex.details) { newSexArray.push({ ...oldSex.details, id: `migrated-${Date.now()}-${Math.random()}`, ejaculation: oldSex.ejaculation ?? true, interactions: [] }); } else if (oldSex.count > 0) { for (let i = 0; i < oldSex.count; i++) { newSexArray.push({ id: `migrated-placeholder-${Date.now()}-${i}`, startTime: '22:00', duration: 15, ejaculation: oldSex.ejaculation ?? true, protection: '无保护措施', indicators: { lingerie: false, orgasm: true, partnerOrgasm: false, squirting: false, toys: false }, interactions: [] }); } } return { ...log, sex: newSexArray.length > 0 ? newSexArray : undefined }; } return log; }); }
-function migrateV6toV7(logs: any[]): any[] { return logs.map(log => { if (log.masturbation && !Array.isArray(log.masturbation)) { const oldMb = log.masturbation; const newMbArray: MasturbationRecordDetails[] = []; if (oldMb.count > 0) { for (let i = 0; i < oldMb.count; i++) { newMbArray.push({ id: `migrated-mb-${Date.now()}-${i}`, startTime: '23:00', duration: 10, tools: ['手'], materials: [], props: [], ejaculation: oldMb.ejaculation ?? true, orgasmIntensity: 3, notes: '', contentItems: [] }); } } return { ...log, masturbation: newMbArray.length > 0 ? newMbArray : undefined }; } return log; }); }
+// Fix: Added missing required properties for SexRecordDetails (state, semenSwallowed, postSexActivity, mood, notes)
+function migrateV5toV6(logs: any[]): any[] { return logs.map(log => { if (log.sex && !Array.isArray(log.sex)) { const oldSex = log.sex; const newSexArray: SexRecordDetails[] = []; if (oldSex.details) { newSexArray.push({ ...oldSex.details, id: `migrated-${Date.now()}-${Math.random()}`, ejaculation: oldSex.ejaculation ?? true, interactions: [], state: '', semenSwallowed: false, postSexActivity: [], mood: 'neutral', notes: '' }); } else if (oldSex.count > 0) { for (let i = 0; i < oldSex.count; i++) { newSexArray.push({ id: `migrated-placeholder-${Date.now()}-${i}`, startTime: '22:00', duration: 15, ejaculation: oldSex.ejaculation ?? true, protection: '无保护措施', indicators: { lingerie: false, orgasm: true, partnerOrgasm: false, squirting: false, toys: false }, interactions: [], state: '', semenSwallowed: false, postSexActivity: [], mood: 'neutral', notes: '' }); } } return { ...log, sex: newSexArray.length > 0 ? newSexArray : undefined }; } return log; }); }
+// Fix: Added missing required properties for MasturbationRecordDetails (status, edging, edgingCount, useCondom, mood, stressLevel, energyLevel, interrupted, interruptionReasons)
+function migrateV6toV7(logs: any[]): any[] { return logs.map(log => { if (log.masturbation && !Array.isArray(log.masturbation)) { const oldMb = log.masturbation; const newMbArray: MasturbationRecordDetails[] = []; if (oldMb.count > 0) { for (let i = 0; i < oldMb.count; i++) { newMbArray.push({ id: `migrated-mb-${Date.now()}-${i}`, startTime: '23:00', duration: 10, tools: ['手'], materials: [], props: [], ejaculation: oldMb.ejaculation ?? true, orgasmIntensity: 3, notes: '', contentItems: [], status: 'completed', edging: 'none', edgingCount: 0, useCondom: false, mood: 'neutral', stressLevel: 3, energyLevel: 3, interrupted: false, interruptionReasons: [] }); } } return { ...log, masturbation: newMbArray.length > 0 ? newMbArray : undefined }; } return log; }); }
 function migrateV7toV8(logs: any[]): any[] { return logs.map(log => { if (log.sex && Array.isArray(log.sex)) { const newSex = log.sex.map((record: any) => ({ ...record, acts: record.acts || [], interactions: record.interactions || [] })); return { ...log, sex: newSex }; } return log; }); }
-function migrateV8toV9(logs: any[]): any[] { return logs.map(log => { if (log.sex && Array.isArray(log.sex)) { const newSex = log.sex.map((record: any) => { if (record.interactions && record.interactions.length > 0) { return record; } const chain: SexAction[] = []; if (record.acts && Array.isArray(record.acts)) { record.acts.forEach((act: string) => { chain.push({ id: `mig-act-${Math.random()}`, type: 'act', name: act }); }); } if (record.positions && Array.isArray(record.positions)) { record.positions.forEach((pos: string) => { chain.push({ id: `mig-pos-${Math.random()}`, type: 'position', name: pos }); }); } const interaction: SexInteraction = { id: `mig-int-${Math.random()}`, partner: record.partner || '', location: record.location || '', chain: chain }; return { ...record, interactions: [interaction] }; }); return { ...log, sex: newSex }; } return log; }); }
+// Fix: Added missing costumes and toys properties to SexInteraction
+function migrateV8toV9(logs: any[]): any[] { return logs.map(log => { if (log.sex && Array.isArray(log.sex)) { const newSex = log.sex.map((record: any) => { if (record.interactions && record.interactions.length > 0) { return record; } const chain: SexAction[] = []; if (record.acts && Array.isArray(record.acts)) { record.acts.forEach((act: string) => { chain.push({ id: `mig-act-${Math.random()}`, type: 'act', name: act }); }); } if (record.positions && Array.isArray(record.positions)) { record.positions.forEach((pos: string) => { chain.push({ id: `mig-pos-${Math.random()}`, type: 'position', name: pos }); }); } const interaction: SexInteraction = { id: `mig-int-${Math.random()}`, partner: record.partner || '', location: record.location || '', costumes: [], toys: [], chain: chain }; return { ...record, interactions: [interaction] }; }); return { ...log, sex: newSex }; } return log; }); }
 function migrateV9toV10(logs: any[]): any[] { return logs.map(log => { if (log.sex && Array.isArray(log.sex)) { const newSex = log.sex.map((record: SexRecordDetails) => ({ ...record, interactions: (record.interactions || []).map(i => ({ ...i, role: i.role || '' })) })); return { ...log, sex: newSex }; } return log; }); }
 function migrateV10toV11(logs: any[]): any[] { return logs.map(log => { if (log.sex && Array.isArray(log.sex)) { const newSex = log.sex.map((record: SexRecordDetails) => ({ ...record, interactions: (record.interactions || []).map(i => ({ ...i, costumes: i.costumes || [] })) })); return { ...log, sex: newSex }; } return log; }); }
 function migrateV11toV12(logs: any[]): any[] { return logs.map(log => { if (log.sex && Array.isArray(log.sex)) { const newSex = log.sex.map((record: SexRecordDetails) => ({ ...record, postSexActivity: record.postSexActivity || [] })); return { ...log, sex: newSex }; } return log; }); }
@@ -66,6 +70,7 @@ function migrateV29toV30(logs: any[]): any[] { return logs.map(log => ({ ...log,
 function migrateV30toV31(logs: any[]): any[] { return logs.map(log => ({ ...log, masturbation: log.masturbation?.map((m: any) => ({ ...m, materialsList: m.materialsList || [], useCondom: m.useCondom || false })) })); }
 
 // V32: Standardize Flat Fields into Domain Objects
+// Fix: Added missing hasDream, dreamTypes, and environment properties to SleepRecord
 function migrateV31toV32(logs: any[]): LogEntry[] {
     return logs.map(log => {
         // Construct MorningRecord
@@ -90,7 +95,10 @@ function migrateV31toV32(logs: any[]): LogEntry[] {
             nocturnalEmission: log.nocturnalEmission,
             withPartner: log.sleepWithPartner,
             preSleepState: log.preSleepState,
-            naps: log.naps || []
+            naps: log.naps || [],
+            hasDream: log.hasDream ?? false,
+            dreamTypes: log.dreamTypes || [],
+            environment: log.environment || { location: 'home', temperature: 'comfortable' }
         };
 
         // Remove old fields

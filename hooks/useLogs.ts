@@ -1,4 +1,5 @@
 
+
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { StorageService } from '../services/StorageService';
@@ -85,10 +86,11 @@ export function useLogs() {
         const existingLog = await StorageService.logs.get(targetDateStr);
         try {
             if (existingLog) {
+                // Fix: Added missing category property to ChangeDetail
                 const historyEntry: ChangeRecord = { 
                     timestamp: Date.now(), 
                     summary: '快速记录: 性生活',
-                    details: [{ field: '性生活次数', oldValue: String(existingLog.sex?.length || 0), newValue: String((existingLog.sex?.length || 0) + 1) }],
+                    details: [{ field: '性生活次数', oldValue: String(existingLog.sex?.length || 0), newValue: String((existingLog.sex?.length || 0) + 1), category: 'sex' }],
                     type: 'quick'
                 };
                 await addOrUpdateLog({
@@ -97,10 +99,11 @@ export function useLogs() {
                     changeHistory: [...(existingLog.changeHistory || []), historyEntry]
                 });
             } else {
+                // Fix: Added missing category property to ChangeDetail
                 const historyEntry: ChangeRecord = { 
                     timestamp: Date.now(), 
                     summary: '快速记录: 性生活',
-                    details: [{ field: '性生活次数', oldValue: '0', newValue: '1' }],
+                    details: [{ field: '性生活次数', oldValue: '0', newValue: '1', category: 'sex' }],
                     type: 'quick'
                 };
                 const skeleton = hydrateLog({ date: targetDateStr });
@@ -121,10 +124,11 @@ export function useLogs() {
         const actionType = record.status === 'inProgress' ? '开始自慰' : '快速记录: 自慰';
         try {
             if (existingLog) {
+                // Fix: Added missing category property to ChangeDetail
                 const historyEntry: ChangeRecord = { 
                     timestamp: Date.now(), 
                     summary: actionType,
-                    details: [{ field: '自慰次数', oldValue: String(existingLog.masturbation?.length || 0), newValue: String((existingLog.masturbation?.length || 0) + 1) }],
+                    details: [{ field: '自慰次数', oldValue: String(existingLog.masturbation?.length || 0), newValue: String((existingLog.masturbation?.length || 0) + 1), category: 'masturbation' }],
                     type: 'quick'
                 };
                 const newMbList = [...(existingLog.masturbation || [])];
@@ -137,10 +141,11 @@ export function useLogs() {
                     changeHistory: [...(existingLog.changeHistory || []), historyEntry]
                 });
             } else {
+                // Fix: Added missing category property to ChangeDetail
                 const historyEntry: ChangeRecord = { 
                     timestamp: Date.now(), 
                     summary: actionType,
-                    details: [{ field: '自慰次数', oldValue: '0', newValue: '1' }],
+                    details: [{ field: '自慰次数', oldValue: '0', newValue: '1', category: 'masturbation' }],
                     type: 'quick'
                 };
                 const skeleton = hydrateLog({ date: targetDateStr });
@@ -166,10 +171,12 @@ export function useLogs() {
                 let details = [];
                 if (exIdx > -1) {
                      newExercises[exIdx] = record;
-                     details.push({ field: '运动更新', oldValue: '...', newValue: `${record.type} (${record.duration}m)` });
+                     // Fix: Added missing category property to ChangeDetail
+                     details.push({ field: '运动更新', oldValue: '...', newValue: `${record.type} (${record.duration}m)`, category: 'exercise' as const });
                 } else {
                      newExercises.push(record);
-                     details.push({ field: '运动次数', oldValue: String(existingLog.exercise?.length || 0), newValue: String((existingLog.exercise?.length || 0) + 1) });
+                     // Fix: Added missing category property to ChangeDetail
+                     details.push({ field: '运动次数', oldValue: String(existingLog.exercise?.length || 0), newValue: String((existingLog.exercise?.length || 0) + 1), category: 'exercise' as const });
                 }
                 const historyEntry: ChangeRecord = { timestamp: Date.now(), summary: actionType + ': ' + record.type, details, type: 'quick' };
                 await addOrUpdateLog({
@@ -178,7 +185,8 @@ export function useLogs() {
                     changeHistory: [...(existingLog.changeHistory || []), historyEntry]
                 });
             } else {
-                const historyEntry: ChangeRecord = { timestamp: Date.now(), summary: actionType + ': ' + record.type, details: [{ field: '运动次数', oldValue: '0', newValue: '1' }], type: 'quick' };
+                // Fix: Added missing category property to ChangeDetail
+                const historyEntry: ChangeRecord = { timestamp: Date.now(), summary: actionType + ': ' + record.type, details: [{ field: '运动次数', oldValue: '0', newValue: '1', category: 'exercise' }], type: 'quick' };
                 const skeleton = hydrateLog({ date: targetDateStr });
                 const newLog: LogEntry = {
                     ...skeleton,
@@ -227,10 +235,11 @@ export function useLogs() {
         const alcoholLevel = record.totalGrams > 50 ? 'high' : record.totalGrams > 20 ? 'medium' : record.totalGrams > 0 ? 'low' : 'none';
         try {
             if (existingLog) {
+                // Fix: Added missing category property to ChangeDetail
                 const historyEntry: ChangeRecord = { 
                     timestamp: Date.now(), 
                     summary: summaryText,
-                    details: [{ field: '酒精摄入', oldValue: existingLog.alcoholRecord ? `${existingLog.alcoholRecord.totalGrams}g` : '0g', newValue: `${record.totalGrams}g` }],
+                    details: [{ field: '酒精摄入', oldValue: existingLog.alcoholRecord ? `${existingLog.alcoholRecord.totalGrams}g` : '0g', newValue: `${record.totalGrams}g`, category: 'lifestyle' }],
                     type: 'quick'
                 };
                 await addOrUpdateLog({

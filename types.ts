@@ -173,6 +173,8 @@ export interface MasturbationRecordDetails {
     postMood?: string;
     fatigue?: string;
     quickLog?: boolean;
+    // Fix: Added location to satisfy SexLifeView timeline logic
+    location?: string;
 }
 
 export interface SexAction {
@@ -291,6 +293,8 @@ export interface PartnerProfile {
     primaryValues?: string;
     petPeeves?: string;
     notes?: string;
+    // Fix: Added occupation to satisfy PartnerManager form
+    occupation?: string;
 }
 
 export interface Snapshot {
