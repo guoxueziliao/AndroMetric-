@@ -1,9 +1,8 @@
-
 import React, { useState, useMemo } from 'react';
 import { LogEntry, ExerciseRecord, SexRecordDetails, MasturbationRecordDetails, NapRecord, AlcoholRecord } from '../types';
 import CalendarHeatmap from './CalendarHeatmap';
 /* Added Check to lucide-react imports to fix line 270 error */
-import { Moon, Zap, Activity, Hand, HeartPulse, Clock, Dumbbell, Footprints, Timer, CloudSun, Beer, TrendingUp, ShieldAlert, Edit3, Trash2, FastForward, Coffee, Bed, ArrowRight, User, Heart, History, RotateCcw, MapPin, Sparkles, Shirt, Star, Thermometer, BrainCircuit, Tag, Film, Smile, AlertTriangle, ChevronRight, Calendar, Check } from 'lucide-react';
+import { Moon, Zap, Activity, Hand, HeartPulse, Clock, Dumbbell, Footprints, Timer, CloudSun, Beer, TrendingUp, ShieldAlert, Edit3, Trash2, FastForward, Coffee, Bed, ArrowRight, User, Heart, RotateCcw, MapPin, Sparkles, Shirt, Star, Thermometer, BrainCircuit, Tag, Film, Smile, AlertTriangle, ChevronRight, Calendar, Check } from 'lucide-react';
 import Modal from './Modal';
 import SafeDeleteModal from './SafeDeleteModal';
 import { formatTime, calculateSleepDuration, analyzeSleep, formatDateFriendly, LABELS } from '../utils/helpers';
@@ -50,44 +49,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
       if (hour < 18) return '下午好';
       return '晚上好';
   }, []);
-
-  // --- 近七日睡眠计算逻辑 ---
-  const lastSevenDaysSleep = useMemo(() => {
-    const dates = [];
-    const today = new Date();
-    for (let i = 0; i < 7; i++) {
-        const d = new Date(today);
-        d.setDate(today.getDate() - i);
-        dates.push(d.toISOString().split('T')[0]);
-    }
-
-    return dates.map(dateStr => {
-        const log = logs.find(l => l.date === dateStr);
-        if (!log || !log.sleep) return { date: dateStr, hasData: false };
-
-        const analysis = analyzeSleep(log.sleep.startTime || undefined, log.sleep.endTime || undefined);
-        const napTotalDuration = log.sleep.naps?.reduce((acc, n) => acc + (n.duration || 0), 0) || 0;
-
-        return {
-            date: dateStr,
-            hasData: true,
-            status: log.status,
-            nightSleep: {
-                startTime: log.sleep.startTime,
-                endTime: log.sleep.endTime,
-                duration: analysis?.durationHours || 0,
-                isLate: analysis?.isLate || false,
-                isInsufficient: analysis?.isInsufficient || false,
-                isExcessive: analysis?.isExcessive || false,
-                quality: log.sleep.quality
-            },
-            nap: {
-                count: log.sleep.naps?.length || 0,
-                duration: napTotalDuration
-            }
-        };
-    });
-  }, [logs]);
 
   const handleDateClickForSummary = (date: string) => {
     const log = logs.find(l => l.date === date);
@@ -207,90 +168,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                 </div>
             </div>
         </CalendarHeatmap>
-
-        {/* --- 新增：近七日睡眠轨迹 --- */}
-        <section className="space-y-4">
-            <div className="flex items-center justify-between px-2">
-                <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                    <History size={16}/> 近七日睡眠轨迹
-                </h3>
-                <span className="text-[10px] font-bold text-slate-300">Night & Nap</span>
-            </div>
-
-            <div className="space-y-3">
-                {lastSevenDaysSleep.map((item, idx) => (
-                    <div 
-                        key={item.date} 
-                        onClick={() => handleDateClickForSummary(item.date)}
-                        className={`bg-white dark:bg-slate-900/40 p-4 rounded-[2rem] border transition-all hover:scale-[1.01] active:scale-[0.98] cursor-pointer flex items-center justify-between shadow-soft ${idx === 0 ? 'border-brand-accent/30 ring-1 ring-brand-accent/5' : 'border-slate-100 dark:border-white/5'}`}
-                    >
-                        <div className="flex items-center gap-4">
-                            <div className="flex flex-col items-center">
-                                <span className="text-[10px] font-black text-slate-300 uppercase leading-none mb-1">{idx === 0 ? 'Today' : new Date(item.date).toLocaleDateString('zh-CN', { weekday: 'short' })}</span>
-                                <span className={`text-sm font-black ${item.hasData ? 'text-slate-700 dark:text-slate-200' : 'text-slate-300'}`}>{item.date.split('-')[2]}</span>
-                            </div>
-                            
-                            <div className="w-px h-8 bg-slate-100 dark:bg-slate-800"></div>
-
-                            <div className="space-y-1">
-                                {item.hasData && item.nightSleep?.duration ? (
-                                    <div className="flex items-center gap-2">
-                                        <div className="flex items-center gap-1 text-xs font-black text-slate-700 dark:text-slate-200">
-                                            <Moon size={12} className="text-blue-500"/>
-                                            {item.nightSleep.duration.toFixed(1)}h
-                                        </div>
-                                        {item.nap.duration > 0 && (
-                                            <div className="flex items-center gap-1 text-[10px] font-bold text-orange-500 bg-orange-50 dark:bg-orange-900/20 px-1.5 py-0.5 rounded-lg">
-                                                <CloudSun size={10}/>
-                                                午休 {item.nap.duration}m
-                                            </div>
-                                        )}
-                                    </div>
-                                ) : (
-                                    <span className="text-xs font-bold text-slate-300 italic">未记录睡眠</span>
-                                )}
-                                
-                                <div className="flex flex-wrap gap-1">
-                                    {item.hasData && item.nightSleep?.isLate && (
-                                        <span className="text-[9px] font-black text-red-500 border border-red-100 dark:border-red-900/30 px-1 rounded flex items-center gap-0.5">
-                                            <Clock size={8}/> 熬夜
-                                        </span>
-                                    )}
-                                    {item.hasData && item.nightSleep?.isInsufficient && (
-                                        <span className="text-[9px] font-black text-orange-500 border border-orange-100 dark:border-orange-900/30 px-1 rounded flex items-center gap-0.5">
-                                            <AlertTriangle size={8}/> 缺觉
-                                        </span>
-                                    )}
-                                    {item.hasData && item.nightSleep?.isExcessive && (
-                                        <span className="text-[9px] font-black text-blue-400 border border-blue-100 dark:border-blue-900/30 px-1 rounded flex items-center gap-0.5">
-                                            <Zap size={8}/> 睡太久
-                                        </span>
-                                    )}
-                                    {item.hasData && !item.nightSleep?.isLate && !item.nightSleep?.isInsufficient && item.nightSleep?.duration > 0 && (
-                                        <span className="text-[9px] font-black text-green-500 flex items-center gap-0.5">
-                                            <Check size={8}/> 规律
-                                        </span>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="flex items-center gap-3">
-                            <div className="text-right">
-                                {item.hasData && item.nightSleep?.startTime && item.nightSleep?.endTime ? (
-                                    <span className="text-[10px] font-mono font-bold text-slate-400 block">
-                                        {formatTime(item.nightSleep.startTime)} - {formatTime(item.nightSleep.endTime)}
-                                    </span>
-                                ) : (
-                                    <span className="text-3xl font-black text-slate-100 dark:text-slate-800">未</span>
-                                )}
-                            </div>
-                            <ChevronRight size={16} className="text-slate-200"/>
-                        </div>
-                    </div>
-                ))}
-            </div>
-        </section>
       </div>
       
       {/* 记录详情弹窗 */}
