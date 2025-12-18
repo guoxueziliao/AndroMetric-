@@ -151,10 +151,13 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
 
   const diaryDateInfo = useMemo(() => {
       if (!summaryLog) return { main: '', sub: '' };
-      const friendly = formatDateFriendly(summaryLog.date);
+      const d = new Date(summaryLog.date + 'T00:00:00');
+      const month = d.getMonth() + 1;
+      const date = d.getDate();
+      const weekday = d.toLocaleDateString('zh-CN', { weekday: 'long' });
       return {
-          main: friendly.split(' ')[0], // 12月6日
-          sub: friendly.split(' ')[1]   // 星期六
+          main: `${month}月${date}日`,
+          sub: weekday
       };
   }, [summaryLog]);
 
@@ -305,7 +308,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
         </CalendarHeatmap>
       </div>
       
-      {/* 记录详情弹窗 (还原 Image 2 的原始视觉) */}
+      {/* 记录详情弹窗 (还原视觉布局，星期几另起一行，移除冗余图标) */}
       <Modal 
         isOpen={isSummaryModalOpen} 
         onClose={() => setIsSummaryModalOpen(false)} 
@@ -313,17 +316,19 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
       >
         {summaryLog && (
             <div className="space-y-6 animate-in fade-in duration-300 min-h-[500px] flex flex-col -mt-4">
-                {/* Custom Header (Image 2 style) */}
+                {/* Custom Header (适配用户截图 2 布局) */}
                 <div className="flex justify-between items-start pb-4">
                     <div className="flex flex-col">
-                        <h2 className="text-3xl font-black text-brand-text dark:text-slate-100">{diaryDateInfo.main}</h2>
-                        <span className="text-sm font-bold text-brand-muted mt-1">{diaryDateInfo.sub}</span>
+                        <h2 className="text-3xl font-black text-brand-text dark:text-slate-100 leading-tight">
+                            {diaryDateInfo.main}
+                        </h2>
+                        <span className="text-sm font-bold text-brand-muted mt-1 leading-none">
+                            {diaryDateInfo.sub}
+                        </span>
                     </div>
                     <div className="flex gap-2">
-                        <button onClick={() => setActiveSummaryTab('source')} className="p-3 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-500 hover:bg-slate-200 transition-colors">
-                            <RotateCcw size={20}/>
-                        </button>
-                        <button onClick={() => handleDeleteRecord(summaryLog.date)} className="p-3 bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-red-50 hover:text-red-500 transition-colors">
+                        {/* 移除已由“溯源”Tab覆盖的冗余图标 */}
+                        <button onClick={() => handleDeleteRecord(summaryLog.date)} className="p-3 bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-red-50 hover:text-red-500 transition-colors rounded-xl shadow-sm">
                             <Trash2 size={20}/>
                         </button>
                     </div>
