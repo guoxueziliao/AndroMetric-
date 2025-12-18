@@ -22,18 +22,18 @@ interface DashboardProps {
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateToBackup, onFinishExercise, onFinishMasturbation, onFinishNap, onFinishAlcohol }) => {
-  const { logs, deleteLog, toggleNap, cancelOngoingNap, addOrUpdateLog, toggleSleepLog } = useData();
+  const { logs, deleteLog, toggleNap, cancelOngoingNap, addOrUpdateLog, toggleSleepLog, cancelAlcoholRecord } = useData();
   const { showToast } = useToast();
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [logToDelete, setLogToDelete] = useState<string | null>(null);
   const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
   const [summaryLog, setSummaryLog] = useState<LogEntry | null>(null);
-  const [isHistoryView, setIsHistoryView] = useState(false);
   
-  // 恢复自慰的操作弹窗状态
+  // 自慰操作弹窗
   const [isMbActionModalOpen, setIsMbActionModalOpen] = useState(false);
 
+  // 状态提取
   const latestLog = useMemo(() => logs.length > 0 ? logs[0] : null, [logs]);
   const pendingLog = useMemo(() => logs.find(log => log.status === 'pending'), [logs]);
   const ongoingExercise = useMemo(() => logs.flatMap(l => l.exercise || []).find(e => e.ongoing), [logs]);
@@ -49,21 +49,45 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
       return '晚上好';
   }, []);
 
-  const handleDeleteRequest = (date: string) => { setLogToDelete(date); setIsDeleteModalOpen(true); };
-  const handleConfirmDelete = async () => { 
-      if (logToDelete) { await deleteLog(logToDelete); showToast('记录已删除', 'success'); }
-      setIsDeleteModalOpen(false); 
-  };
-  
   const handleDateClickForSummary = (date: string) => {
     const log = logs.find(l => l.date === date);
     if (log) {
         if (log.status === 'pending') onEdit(log.date);
-        else { setSummaryLog(log); setIsSummaryModalOpen(true); setIsHistoryView(false); }
+        else { setSummaryLog(log); setIsSummaryModalOpen(true); }
     } else { onDateClick(date); }
   };
 
-  // 自慰快速结案逻辑
+  // --- 取消/删除进行中任务逻辑 ---
+  const handleCancelExercise = async () => {
+      if (!ongoingExercise) return;
+      if (confirm('确定要取消本次运动记录吗？')) {
+          const parentLog = logs.find(l => l.exercise?.some(e => e.id === ongoingExercise.id));
+          if (parentLog) {
+              await addOrUpdateLog({ ...parentLog, exercise: parentLog.exercise?.filter(e => e.id !== ongoingExercise.id) });
+              showToast('运动已取消', 'info');
+          }
+      }
+  };
+
+  const handleCancelMb = async () => {
+      if (!ongoingMb) return;
+      if (confirm('确定要取消本次自慰计时吗？')) {
+          const parentLog = logs.find(l => l.masturbation?.some(m => m.id === ongoingMb.id));
+          if (parentLog) {
+              await addOrUpdateLog({ ...parentLog, masturbation: parentLog.masturbation?.filter(m => m.id !== ongoingMb.id) });
+              showToast('施法已取消', 'info');
+          }
+      }
+  };
+
+  const handleCancelAlcohol = async () => {
+      if (confirm('确定要放弃本次酒局计时吗？')) {
+          await cancelAlcoholRecord();
+          showToast('已放弃记录', 'info');
+      }
+  };
+
+  // --- 完成/保存逻辑 ---
   const handleQuickFinishMb = async () => {
       if (!ongoingMb) return;
       const now = new Date();
@@ -78,13 +102,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
           showToast(`已快速结案: ${duration}分钟`, 'success');
       }
       setIsMbActionModalOpen(false);
-  };
-
-  // 饮酒买单：直接打开 Modal 补全
-  const handleSettleAlcohol = () => {
-      if (ongoingAlcohol && onFinishAlcohol) {
-          onFinishAlcohol(ongoingAlcohol);
-      }
   };
 
   return (
@@ -102,49 +119,69 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
 
         {(ongoingNap || ongoingExercise || ongoingMb || pendingLog || ongoingAlcohol) && (
             <section className="space-y-3">
-                {/* 睡眠横幅 - 还原样式 */}
+                {/* 1. 睡眠横幅 (绿色) */}
                 {pendingLog && (
                     <div className="bg-gradient-to-r from-emerald-500 to-teal-600 p-4 rounded-3xl shadow-lg text-white flex justify-between items-center animate-in slide-in-from-top-2">
                         <div className="flex items-center gap-3">
                             <div className="p-2 bg-white/20 rounded-full animate-pulse"><Bed size={20}/></div>
-                            <div><div className="font-bold text-sm">正在睡觉中...</div></div>
+                            <div><div className="font-bold text-sm">正在睡觉中...</div><div className="text-[10px] opacity-70">{formatTime(pendingLog.sleep?.startTime)} 开始</div></div>
                         </div>
-                        <button onClick={() => onEdit(pendingLog.date)} className="px-5 py-2 bg-white text-emerald-600 rounded-full text-xs font-bold shadow-sm">醒了</button>
+                        <button onClick={() => onEdit(pendingLog.date)} className="px-5 py-2 bg-white text-emerald-600 rounded-full text-xs font-bold shadow-sm active:scale-95">醒了</button>
                     </div>
                 )}
-                
-                {/* 饮酒横幅 - 按新要求：买单去 Modal */}
+
+                {/* 2. 运动横幅 (橙色) */}
+                {ongoingExercise && (
+                    <div className="bg-gradient-to-r from-orange-500 to-red-500 p-4 rounded-3xl shadow-lg text-white flex justify-between items-center animate-in slide-in-from-top-2">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-white/20 rounded-full animate-pulse"><Dumbbell size={20}/></div>
+                            <div><div className="font-bold text-sm">正在{ongoingExercise.type}...</div><div className="text-[10px] opacity-70">{ongoingExercise.startTime} 开始</div></div>
+                        </div>
+                        <div className="flex gap-2">
+                            <button onClick={handleCancelExercise} className="p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors"><Trash2 size={16}/></button>
+                            <button onClick={() => onFinishExercise && onFinishExercise(ongoingExercise)} className="px-5 py-2 bg-white text-orange-600 rounded-full text-xs font-bold shadow-sm active:scale-95">结束</button>
+                        </div>
+                    </div>
+                )}
+
+                {/* 3. 饮酒横幅 (琥珀色) */}
                 {ongoingAlcohol && (
                     <div className="bg-gradient-to-r from-amber-500 to-orange-600 p-4 rounded-3xl shadow-lg text-white flex justify-between items-center animate-in slide-in-from-top-2">
                         <div className="flex items-center gap-3">
                             <div className="p-2 bg-white/20 rounded-full animate-pulse"><Beer size={20}/></div>
-                            <div><div className="font-bold text-sm">正在哈啤中...</div><div className="text-xs opacity-80">{ongoingAlcohol.startTime} 开始</div></div>
+                            <div><div className="font-bold text-sm">正在哈啤中...</div><div className="text-[10px] opacity-70">{ongoingAlcohol.startTime} 开始</div></div>
                         </div>
-                        <button onClick={handleSettleAlcohol} className="px-5 py-2 bg-white text-amber-600 rounded-full text-xs font-bold shadow-sm">买单</button>
+                        <div className="flex gap-2">
+                            <button onClick={handleCancelAlcohol} className="p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors"><Trash2 size={16}/></button>
+                            <button onClick={() => onFinishAlcohol && onFinishAlcohol(ongoingAlcohol)} className="px-5 py-2 bg-white text-amber-600 rounded-full text-xs font-bold shadow-sm active:scale-95">买单</button>
+                        </div>
                     </div>
                 )}
 
-                {/* 自慰横幅 - 还原样式与操作 */}
+                {/* 4. 自慰横幅 (紫色) */}
                 {ongoingMb && (
                     <div className="bg-gradient-to-r from-purple-500 to-pink-600 p-4 rounded-3xl shadow-lg text-white flex justify-between items-center animate-in slide-in-from-top-2">
                         <div className="flex items-center gap-3">
                             <div className="p-2 bg-white/20 rounded-full animate-pulse"><Hand size={20}/></div>
-                            <div><div className="font-bold text-sm">正在施法中...</div></div>
+                            <div><div className="font-bold text-sm">正在施法中...</div><div className="text-[10px] opacity-70">{ongoingMb.startTime} 开始</div></div>
                         </div>
-                        <button onClick={() => setIsMbActionModalOpen(true)} className="px-5 py-2 bg-white text-purple-600 rounded-full text-xs font-bold shadow-sm">完成</button>
+                        <div className="flex gap-2">
+                            <button onClick={handleCancelMb} className="p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors"><Trash2 size={16}/></button>
+                            <button onClick={() => setIsMbActionModalOpen(true)} className="px-5 py-2 bg-white text-purple-600 rounded-full text-xs font-bold shadow-sm active:scale-95">完成</button>
+                        </div>
                     </div>
                 )}
 
-                {/* 午休横幅 - 还原样式 */}
+                {/* 5. 午休横幅 (橙黄) */}
                 {ongoingNap && (
                     <div className="bg-gradient-to-r from-orange-400 to-amber-500 p-4 rounded-3xl shadow-lg text-white flex justify-between items-center animate-in slide-in-from-top-2">
                         <div className="flex items-center gap-3">
                             <div className="p-2 bg-white/20 rounded-full animate-pulse"><CloudSun size={20}/></div>
-                            <div><div className="font-bold text-sm">正在午休中...</div></div>
+                            <div><div className="font-bold text-sm">正在午休中...</div><div className="text-[10px] opacity-70">{ongoingNap.startTime} 开始</div></div>
                         </div>
                         <div className="flex gap-2">
                             <button onClick={() => cancelOngoingNap()} className="p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors"><Trash2 size={16}/></button>
-                            <button onClick={() => onFinishNap && onFinishNap(ongoingNap)} className="px-5 py-2 bg-white text-orange-600 rounded-full text-xs font-bold shadow-sm">醒了</button>
+                            <button onClick={() => onFinishNap && onFinishNap(ongoingNap)} className="px-5 py-2 bg-white text-orange-600 rounded-full text-xs font-bold shadow-sm active:scale-95">醒了</button>
                         </div>
                     </div>
                 )}
@@ -176,11 +213,23 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
         )}
       </Modal>
 
-      {/* 还原自慰操作弹窗 */}
+      {/* 自慰完成二选一弹窗 */}
       <Modal isOpen={isMbActionModalOpen} onClose={() => setIsMbActionModalOpen(false)} title="施法结束">
           <div className="space-y-3 pb-2">
-              <button onClick={handleQuickFinishMb} className="w-full bg-blue-50 dark:bg-blue-900/20 border border-blue-200 p-4 rounded-2xl flex items-center justify-between"><div className="flex items-center gap-3"><div className="p-2 bg-blue-100 rounded-full"><FastForward size={20} /></div><div><h4 className="font-bold">快速结案</h4><p className="text-xs text-slate-500">仅记录时间</p></div></div><ArrowRight size={18}/></button>
-              <button onClick={() => { if(ongoingMb && onFinishMasturbation) onFinishMasturbation(ongoingMb); setIsMbActionModalOpen(false); }} className="w-full bg-slate-50 dark:bg-slate-800 border p-4 rounded-2xl flex items-center justify-between"><div className="flex items-center gap-3"><div className="p-2 bg-slate-200 rounded-full"><Edit3 size={20} /></div><div><h4 className="font-bold">补全详情</h4><p className="text-xs text-slate-500">记录素材、感受</p></div></div><ArrowRight size={18}/></button>
+              <button onClick={handleQuickFinishMb} className="w-full bg-blue-50 dark:bg-blue-900/20 border border-blue-200 p-4 rounded-2xl flex items-center justify-between group active:scale-[0.98] transition-all">
+                  <div className="flex items-center gap-3">
+                      <div className="p-2 bg-blue-100 rounded-full text-blue-600 group-hover:bg-blue-200"><FastForward size={20} /></div>
+                      <div className="text-left"><h4 className="font-bold text-brand-text dark:text-slate-200">快速结案</h4><p className="text-xs text-slate-500">仅记录时长</p></div>
+                  </div>
+                  <ArrowRight size={18} className="text-slate-300"/>
+              </button>
+              <button onClick={() => { if(ongoingMb && onFinishMasturbation) onFinishMasturbation(ongoingMb); setIsMbActionModalOpen(false); }} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-4 rounded-2xl flex items-center justify-between group active:scale-[0.98] transition-all">
+                  <div className="flex items-center gap-3">
+                      <div className="p-2 bg-slate-200 dark:bg-slate-700 rounded-full text-slate-600 group-hover:bg-slate-300"><Edit3 size={20} /></div>
+                      <div className="text-left"><h4 className="font-bold text-brand-text dark:text-slate-200">补全详情</h4><p className="text-xs text-slate-500">记录素材、体感、评价</p></div>
+                  </div>
+                  <ArrowRight size={18} className="text-slate-300"/>
+              </button>
           </div>
       </Modal>
     </>
