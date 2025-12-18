@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo, Suspense, lazy } from 'react';
 import { X, Check, Clock, Film, PenLine, Plus, Minus, BatteryCharging, Wind, Sparkles, Hash, Settings, Users, ChevronRight, ArrowLeft, Trash2, Tag, MonitorPlay, Search } from 'lucide-react';
 import { MasturbationRecordDetails, LogEntry, PartnerProfile, ContentItem } from '../types';
@@ -112,7 +111,12 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
     };
 
     const handleSave = () => {
-        const finalData = { ...data };
+        // Ensure status is marked as completed when saving from modal
+        const finalData: MasturbationRecordDetails = { 
+            ...data, 
+            status: 'completed' as const 
+        };
+        
         if (finalData.edgingCount && finalData.edgingCount > 0) finalData.edging = finalData.edgingCount === 1 ? 'once' : 'multiple';
         else finalData.edging = 'none';
         
