@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef, lazy, Suspense, useMemo } from 'react';
 import { LogEntry, SexRecordDetails, MasturbationRecordDetails, ExerciseRecord, NapRecord, ChangeDetail, ChangeRecord, AlcoholRecord, PartnerProfile, MorningRecord, SleepRecord, CaffeineRecord, CaffeineItem } from '../types';
-import { CheckSquare, Tag, Beer, Film, Dumbbell, Sun, Cloud, CloudRain, Snowflake, Wind, CloudFog, Home, Users, Hotel, Plane, MapPin, Shirt, HeartPulse, Hand, Plus, Edit2, Trash2, Footprints, Save, Coffee, Calendar, X, Zap, Check, Sparkles, Settings, List, ChevronRight, ShoppingCart, Timer, CupSoda, Leaf, Flame } from 'lucide-react';
+import { CheckSquare, Tag, Beer, Film, Dumbbell, Sun, Cloud, CloudRain, Snowflake, Wind, CloudFog, Home, Users, Hotel, Plane, MapPin, Shirt, HeartPulse, Hand, Plus, Edit2, Trash2, Footprints, Save, Coffee, Calendar, X, Zap, Check, Sparkles, Settings, List, ChevronRight, ShoppingCart, Timer, CupSoda, Leaf, Flame, Pill } from 'lucide-react';
 import Modal from './Modal';
 import SexRecordModal from './SexRecordModal';
 import MasturbationRecordModal from './MasturbationRecordModal';
@@ -23,10 +23,10 @@ import { TagType } from './TagManager';
 // Lazy Load
 const TagManager = lazy(() => import('./TagManager'));
 
-// --- Caffeine Menu Config ---
-const CAFFEINE_MENU = [
+// --- Ordering Menu Config ---
+const BEVERAGE_MENU = [
     {
-        category: '咖啡 (Coffee)',
+        category: '咖啡',
         icon: Coffee,
         items: [
             { name: '美式咖啡', vol: 350, emoji: '☕' },
@@ -38,26 +38,35 @@ const CAFFEINE_MENU = [
         ]
     },
     {
-        category: '茶饮 (Tea)',
+        category: '茶饮',
         icon: Leaf,
         items: [
             { name: '绿茶', vol: 300, emoji: '🍵' },
             { name: '红茶', vol: 300, emoji: '🍂' },
             { name: '乌龙茶', vol: 300, emoji: '🪵' },
             { name: '奶茶', vol: 500, emoji: '🧋' },
-            { name: '普洱/浓茶', vol: 200, emoji: '🗿' },
+            { name: '浓茶', vol: 200, emoji: '🗿' },
             { name: '抹茶', vol: 150, emoji: '🍀' }
         ]
     },
     {
-        category: '功能/软饮 (Energy)',
+        category: '功能',
         icon: CupSoda,
         items: [
             { name: '红牛', vol: 250, emoji: '🐂' },
             { name: '魔爪', vol: 500, emoji: 'Ⓜ️' },
-            { name: '可乐', vol: 330, emoji: '🥤' },
+            { name: '乐虎', vol: 250, emoji: '🐯' },
+            { name: '可乐', vol: 330, emoji: '🥤' }
+        ]
+    },
+    {
+        category: '补剂',
+        icon: Pill,
+        items: [
             { name: '氮泵', vol: 250, emoji: '🔥' },
-            { name: '乐虎', vol: 250, emoji: '🐯' }
+            { name: '锌片/补剂', vol: 1, emoji: '💊' },
+            { name: '电解质水', vol: 500, emoji: '💧' },
+            { name: '蛋白粉', vol: 300, emoji: '💪' }
         ]
     }
 ];
@@ -141,7 +150,7 @@ const LogForm: React.FC<{
     const [editingExerciseRecord, setEditingExerciseRecord] = useState<ExerciseRecord | undefined>(undefined);
 
     const [isAddingCaffeine, setIsAddingCaffeine] = useState(false);
-    const [activeCaffeineCat, setActiveCaffeineCat] = useState(0);
+    const [activeBeverageCat, setActiveBeverageCat] = useState(0);
 
     const initialLogState = useRef(JSON.stringify(log));
     const qualityScore = calculateDataQuality(log);
@@ -173,7 +182,7 @@ const LogForm: React.FC<{
         setLog(prev => ({ ...prev, alcoholRecord: record, alcohol: alcoholLevel }));
     };
 
-    const addCaffeine = (item: { name: string, vol: number }) => {
+    const addBeverage = (item: { name: string, vol: number }) => {
         const id = Date.now().toString();
         const nowStr = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
         const newItem: CaffeineItem = { id, name: item.name, time: nowStr, count: 1, volume: item.vol };
@@ -191,7 +200,7 @@ const LogForm: React.FC<{
         showToast(`已添加: ${item.name}`, 'info');
     };
 
-    const removeCaffeine = (id: string) => {
+    const removeBeverage = (id: string) => {
         setLog(prev => {
             const current = prev.caffeineRecord || { totalCount: 0, items: [] };
             const newItems = current.items.filter(i => i.id !== id);
@@ -310,12 +319,12 @@ const LogForm: React.FC<{
                                 <div className="space-y-2">
                                     <label className="text-xs font-bold text-slate-400 uppercase">饮酒</label>
                                     {log.alcoholRecord && log.alcoholRecord.totalGrams > 0 ? (
-                                        <div onClick={() => setIsAlcoholModalOpen(true)} className="p-3 bg-amber-50 rounded-xl border border-amber-100 cursor-pointer flex flex-col gap-1 items-center justify-center h-24">
+                                        <div onClick={() => setIsAlcoholModalOpen(true)} className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-100 dark:border-amber-800 cursor-pointer flex flex-col gap-1 items-center justify-center h-24">
                                             <Beer size={20} className="text-amber-500"/>
-                                            <span className="font-bold text-amber-900">{log.alcoholRecord.totalGrams}g</span>
+                                            <span className="font-bold text-amber-900 dark:text-amber-300">{log.alcoholRecord.totalGrams}g</span>
                                         </div>
                                     ) : (
-                                        <button type="button" onClick={() => setIsAlcoholModalOpen(true)} className="w-full h-24 border-2 border-dashed border-slate-200 rounded-xl flex flex-col items-center justify-center text-slate-400 hover:border-amber-300 hover:text-amber-500 transition-colors">
+                                        <button type="button" onClick={() => setIsAlcoholModalOpen(true)} className="w-full h-24 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl flex flex-col items-center justify-center text-slate-400 hover:border-amber-300 hover:text-amber-500 transition-colors">
                                             <Plus size={20}/>
                                             <span className="text-xs font-bold mt-1">添加记录</span>
                                         </button>
@@ -325,83 +334,101 @@ const LogForm: React.FC<{
                                     <label className="text-xs font-bold text-slate-400 uppercase">看片</label>
                                     <div className="grid grid-cols-2 gap-2 h-24">
                                         {PORN_OPTS.map(opt => (
-                                            <button key={opt.value} onClick={() => handleChange('pornConsumption', opt.value)} className={`rounded-lg text-xs font-bold ${log.pornConsumption === opt.value ? 'bg-purple-100 text-purple-700 border border-purple-200' : 'bg-slate-50 text-slate-500'}`}>{opt.label}</button>
+                                            <button key={opt.value} onClick={() => handleChange('pornConsumption', opt.value)} className={`rounded-lg text-xs font-bold ${log.pornConsumption === opt.value ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800' : 'bg-slate-50 dark:bg-slate-800 text-slate-500'}`}>{opt.label}</button>
                                         ))}
                                     </div>
                                 </div>
                             </div>
                             
-                            {/* Caffeine Reimagined (Ordering Style) */}
+                            {/* Beverage Ordering (Milk Tea Style) */}
                             <div className="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-800">
                                 <div className="flex justify-between items-center mb-1">
-                                    <label className="text-xs font-bold text-slate-400 uppercase">咖啡因摄入</label>
-                                    <button type="button" onClick={() => setIsAddingCaffeine(!isAddingCaffeine)} className={`text-xs px-3 py-1 rounded-full font-bold transition-all ${isAddingCaffeine ? 'bg-brand-accent text-white shadow-md' : 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-900'}`}>{isAddingCaffeine ? '收起菜单' : '+ 摄入'}</button>
+                                    <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">提神与补剂</label>
+                                    <button type="button" onClick={() => setIsAddingCaffeine(!isAddingCaffeine)} className={`text-xs px-3 py-1 rounded-full font-bold transition-all ${isAddingCaffeine ? 'bg-brand-accent text-white shadow-md' : 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-900'}`}>{isAddingCaffeine ? '收起菜单' : '+ 饮用'}</button>
                                 </div>
 
                                 {isAddingCaffeine && (
-                                    <div className="bg-slate-50 dark:bg-slate-950 rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden animate-in slide-in-from-top-4 duration-300">
-                                        {/* Category Selection */}
-                                        <div className="flex bg-slate-100 dark:bg-slate-900 p-1 border-b border-slate-200 dark:border-slate-800">
-                                            {CAFFEINE_MENU.map((cat, idx) => (
-                                                <button key={cat.category} onClick={() => setActiveCaffeineCat(idx)} className={`flex-1 py-2 text-[10px] font-black rounded-xl transition-all flex items-center justify-center gap-1.5 ${activeCaffeineCat === idx ? 'bg-white dark:bg-slate-800 text-brand-accent shadow-sm' : 'text-slate-400'}`}>
-                                                    <cat.icon size={12}/> {cat.category.split(' ')[0]}
+                                    <div className="bg-white dark:bg-[#020617] rounded-3xl border border-slate-200 dark:border-slate-800 flex h-[320px] overflow-hidden animate-in slide-in-from-top-4 duration-300 shadow-xl">
+                                        {/* Left Category Menu */}
+                                        <div className="w-20 bg-slate-50 dark:bg-slate-900/50 border-r border-slate-200 dark:border-slate-800 flex flex-col pt-2">
+                                            {BEVERAGE_MENU.map((cat, idx) => (
+                                                <button 
+                                                    key={cat.category} 
+                                                    onClick={() => setActiveBeverageCat(idx)} 
+                                                    className={`py-4 px-1 flex flex-col items-center justify-center gap-1 transition-all relative ${activeBeverageCat === idx ? 'text-brand-accent font-black' : 'text-slate-400'}`}
+                                                >
+                                                    {activeBeverageCat === idx && <div className="absolute left-0 top-1/4 bottom-1/4 w-1 bg-brand-accent rounded-r-full"></div>}
+                                                    <cat.icon size={16} strokeWidth={activeBeverageCat === idx ? 3 : 2}/>
+                                                    <span className="text-[10px]">{cat.category}</span>
                                                 </button>
                                             ))}
                                         </div>
 
-                                        {/* Item Grid */}
-                                        <div className="p-3 grid grid-cols-3 gap-2 max-h-[220px] overflow-y-auto custom-scrollbar">
-                                            {CAFFEINE_MENU[activeCaffeineCat].items.map(item => (
-                                                <button key={item.name} onClick={() => addCaffeine(item)} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-2.5 rounded-2xl flex flex-col items-center justify-center gap-1 hover:border-brand-accent active:scale-95 transition-all shadow-sm">
-                                                    <span className="text-xl">{item.emoji}</span>
-                                                    <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300 leading-tight text-center">{item.name}</span>
-                                                </button>
-                                            ))}
+                                        {/* Right Items Grid */}
+                                        <div className="flex-1 p-3 overflow-y-auto custom-scrollbar bg-white dark:bg-transparent">
+                                            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1">{BEVERAGE_MENU[activeBeverageCat].category}系列</h4>
+                                            <div className="grid grid-cols-2 gap-2">
+                                                {BEVERAGE_MENU[activeBeverageCat].items.map(item => (
+                                                    <button 
+                                                        key={item.name} 
+                                                        onClick={() => addBeverage(item)} 
+                                                        className="bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 p-3 rounded-2xl flex flex-col items-center justify-center gap-1.5 hover:border-brand-accent active:scale-95 transition-all shadow-sm"
+                                                    >
+                                                        <span className="text-2xl">{item.emoji}</span>
+                                                        <div className="text-center">
+                                                            <div className="text-[11px] font-black text-slate-700 dark:text-slate-200 leading-tight">{item.name}</div>
+                                                            <div className="text-[8px] text-slate-400 font-bold">{item.vol}ml</div>
+                                                        </div>
+                                                    </button>
+                                                ))}
+                                            </div>
                                         </div>
                                     </div>
                                 )}
 
-                                {/* Selected List (Cart Style) */}
+                                {/* Cart Style List */}
                                 <div className="space-y-2">
                                     {log.caffeineRecord?.items.map(c => (
                                         <div key={c.id} className="flex items-center justify-between p-3 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl shadow-sm animate-in slide-in-from-right-4">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-brand-accent"><Coffee size={14}/></div>
+                                                <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-brand-accent font-black text-sm">
+                                                    {BEVERAGE_MENU.flatMap(cat => cat.items).find(i => i.name === c.name)?.emoji || '☕'}
+                                                </div>
                                                 <div>
-                                                    <div className="text-xs font-bold text-slate-800 dark:text-slate-200">{c.name} <span className="text-[10px] text-slate-400 ml-1 font-mono">{c.time}</span></div>
-                                                    <div className="text-[10px] text-slate-500 font-medium">{c.volume}ml · {c.count}份</div>
+                                                    <div className="text-xs font-black text-slate-800 dark:text-slate-200">{c.name} <span className="text-[10px] text-slate-400 ml-1 font-mono font-bold opacity-60">{c.time}</span></div>
+                                                    <div className="text-[10px] text-slate-500 font-bold">{c.volume}ml · {c.count}份</div>
                                                 </div>
                                             </div>
-                                            <button onClick={() => removeCaffeine(c.id)} className="p-2 text-slate-300 hover:text-red-500 transition-colors"><Trash2 size={14}/></button>
+                                            <button onClick={() => removeBeverage(c.id)} className="p-2 text-slate-300 hover:text-red-500 transition-colors active:scale-90"><Trash2 size={14}/></button>
                                         </div>
                                     ))}
-                                    {(!log.caffeineRecord?.items || log.caffeineRecord.items.length === 0) && (
-                                        <div className="py-4 border-2 border-dashed border-slate-100 dark:border-slate-800 rounded-2xl text-center">
-                                            <p className="text-[10px] text-slate-300 font-bold uppercase tracking-widest">NO CAFFEINE LOGGED</p>
+                                    {(!log.caffeineRecord?.items || log.caffeineRecord.items.length === 0) && !isAddingCaffeine && (
+                                        <div className="py-6 border-2 border-dashed border-slate-100 dark:border-slate-800 rounded-2xl text-center">
+                                            <p className="text-[10px] text-slate-300 dark:text-slate-700 font-black uppercase tracking-[0.2em]">暂无补剂记录</p>
                                         </div>
                                     )}
                                 </div>
                             </div>
 
                             {/* Exercises */}
-                            <div className="pt-2 border-t border-slate-100">
+                            <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
                                 <div className="flex justify-between items-center mb-3">
-                                    <label className="text-xs font-bold text-slate-400 uppercase">运动</label>
-                                    <button type="button" onClick={() => { setEditingExerciseRecord(undefined); setIsExerciseModalOpen(true); }} className="text-[10px] bg-green-50 text-green-600 px-2 py-1 rounded font-bold">+ 添加</button>
+                                    <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">运动</label>
+                                    <button type="button" onClick={() => { setEditingExerciseRecord(undefined); setIsExerciseModalOpen(true); }} className="text-[10px] bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 px-2 py-1 rounded font-bold">+ 添加</button>
                                 </div>
                                 <div className="space-y-2">
                                     {log.exercise?.map(r => (
-                                        <div key={r.id} className="bg-green-50/50 border border-green-100 p-3 rounded-xl flex justify-between items-center group">
+                                        <div key={r.id} className="bg-green-50/50 dark:bg-green-900/10 border border-green-100 dark:border-green-900/30 p-3 rounded-xl flex justify-between items-center group">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-green-500 shadow-sm"><Dumbbell size={14}/></div>
+                                                <div className="w-8 h-8 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center text-green-500 shadow-sm"><Dumbbell size={14}/></div>
                                                 <div>
-                                                    <div className="text-sm font-bold text-green-900">{r.type}</div>
-                                                    <div className="text-xs text-green-600">{r.steps ? `${r.steps}步` : `${r.duration}分钟`}</div>
+                                                    <div className="text-sm font-bold text-green-900 dark:text-green-300">{r.type}</div>
+                                                    <div className="text-xs text-green-600 dark:text-green-500">{r.steps ? `${r.steps}步` : `${r.duration}分钟`}</div>
                                                 </div>
                                             </div>
                                             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <button className="p-1.5 text-green-600 hover:bg-green-100 rounded" onClick={() => { setEditingExerciseRecord(r); setIsExerciseModalOpen(true); }}><Edit2 size={14}/></button>
-                                                <button className="p-1.5 text-green-600 hover:bg-green-100 rounded" onClick={() => deleteRecord('exercise', r.id)}><Trash2 size={14}/></button>
+                                                <button className="p-1.5 text-green-600 hover:bg-green-100 dark:hover:bg-green-900/30 rounded" onClick={() => { setEditingExerciseRecord(r); setIsExerciseModalOpen(true); }}><Edit2 size={14}/></button>
+                                                <button className="p-1.5 text-green-600 hover:bg-green-100 dark:hover:bg-green-900/30 rounded" onClick={() => deleteRecord('exercise', r.id)}><Trash2 size={14}/></button>
                                             </div>
                                         </div>
                                     ))}
@@ -409,27 +436,27 @@ const LogForm: React.FC<{
                             </div>
 
                             {/* Sex/MB */}
-                            <div className="pt-2 border-t border-slate-100">
-                                <label className="text-xs font-bold text-slate-400 uppercase mb-3 block">性活动</label>
+                            <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+                                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 block">性活动</label>
                                 <div className="grid grid-cols-2 gap-3">
-                                    <button onClick={() => { setEditingSexRecord(undefined); setIsSexModalOpen(true); }} className="p-3 bg-pink-50 rounded-xl border border-pink-100 flex items-center justify-center gap-2 text-pink-600 font-bold text-xs hover:bg-pink-100 transition-colors">
+                                    <button type="button" onClick={() => { setEditingSexRecord(undefined); setIsSexModalOpen(true); }} className="p-3 bg-pink-50 dark:bg-pink-900/20 rounded-xl border border-pink-100 dark:border-pink-900/50 flex items-center justify-center gap-2 text-pink-600 dark:text-pink-400 font-bold text-xs hover:bg-pink-100 transition-colors">
                                         <HeartPulse size={16}/> 记录性爱
                                     </button>
-                                    <button onClick={() => { setEditingMbRecord(undefined); setIsMbModalOpen(true); }} className="p-3 bg-blue-50 rounded-xl border border-blue-100 flex items-center justify-center gap-2 text-blue-600 font-bold text-xs hover:bg-blue-100 transition-colors">
+                                    <button type="button" onClick={() => { setEditingMbRecord(undefined); setIsMbModalOpen(true); }} className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-100 dark:border-blue-900/50 flex items-center justify-center gap-2 text-blue-600 dark:text-blue-400 font-bold text-xs hover:bg-blue-100 transition-colors">
                                         <Hand size={16}/> 记录自慰
                                     </button>
                                 </div>
                                 <div className="mt-3 space-y-2">
                                     {log.sex?.map(r => (
-                                        <div key={r.id} className="bg-pink-50/50 border border-pink-100 p-3 rounded-xl flex justify-between items-center text-sm">
-                                            <span className="font-bold text-pink-700">❤️ 性生活 ({r.startTime})</span>
-                                            <button className="text-pink-400 hover:text-pink-600" onClick={() => { setEditingSexRecord(r); setIsSexModalOpen(true); }}><Edit2 size={14}/></button>
+                                        <div key={r.id} className="bg-pink-50/50 dark:bg-pink-900/10 border border-pink-100 dark:border-pink-900/30 p-3 rounded-xl flex justify-between items-center text-sm">
+                                            <span className="font-bold text-pink-700 dark:text-pink-300">❤️ 性生活 ({r.startTime})</span>
+                                            <button type="button" className="text-pink-400 hover:text-pink-600" onClick={() => { setEditingSexRecord(r); setIsSexModalOpen(true); }}><Edit2 size={14}/></button>
                                         </div>
                                     ))}
                                     {log.masturbation?.map(r => (
-                                        <div key={r.id} className="bg-blue-50/50 border border-blue-100 p-3 rounded-xl flex justify-between items-center text-sm">
-                                            <span className="font-bold text-blue-700">🖐️ 自慰 ({r.startTime})</span>
-                                            <button className="text-blue-400 hover:text-blue-600" onClick={() => { setEditingMbRecord(r); setIsMbModalOpen(true); }}><Edit2 size={14}/></button>
+                                        <div key={r.id} className="bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/30 p-3 rounded-xl flex justify-between items-center text-sm">
+                                            <span className="font-bold text-blue-700 dark:text-blue-300">🖐️ 自慰 ({r.startTime})</span>
+                                            <button type="button" className="text-blue-400 hover:text-blue-600" onClick={() => { setEditingMbRecord(r); setIsMbModalOpen(true); }}><Edit2 size={14}/></button>
                                         </div>
                                     ))}
                                 </div>
@@ -441,15 +468,15 @@ const LogForm: React.FC<{
                     {activeDetailTab === 'environment' && (
                         <div className="space-y-6 animate-in fade-in">
                             <div className="space-y-3">
-                                <label className="text-xs font-bold text-slate-400 uppercase">天气</label>
+                                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">天气</label>
                                 <IconToggleButton options={WEATHER_OPTS} selected={log.weather || 'sunny'} onSelect={v => handleChange('weather', v)} renderIcon={renderWeatherIcon}/>
                             </div>
                             <div className="space-y-3">
-                                <label className="text-xs font-bold text-slate-400 uppercase">地点</label>
+                                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">地点</label>
                                 <IconToggleButton options={LOCATION_OPTS} selected={log.location || 'home'} onSelect={v => handleChange('location', v)} renderIcon={renderLocationIcon}/>
                             </div>
                             <div className="space-y-3">
-                                <label className="text-xs font-bold text-slate-400 uppercase">睡衣</label>
+                                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">睡衣</label>
                                 <IconToggleButton options={ATTIRE_OPTS} selected={log.sleep?.attire || 'light'} onSelect={v => handleSleepChange('attire', v)} renderIcon={renderAttireIcon}/>
                             </div>
                         </div>
@@ -471,16 +498,16 @@ const LogForm: React.FC<{
             <CardSection title="备注与事件" icon={Calendar} className="space-y-4">
                 <div className="flex flex-wrap gap-2">
                     {EVENT_PRESETS.map(evt => (
-                        <button key={evt} type="button" onClick={() => toggleEvent(evt)} className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-all ${log.dailyEvents?.includes(evt) ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-500 border-slate-200'}`}>{evt}</button>
+                        <button key={evt} type="button" onClick={() => toggleEvent(evt)} className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-all ${log.dailyEvents?.includes(evt) ? 'bg-slate-800 text-white border-slate-800 dark:bg-slate-200 dark:text-slate-900 dark:border-slate-200' : 'bg-white text-slate-500 border-slate-200 dark:bg-slate-900 dark:border-slate-800'}`}>{evt}</button>
                     ))}
                 </div>
                 <div className="flex gap-2">
                     <div className="relative flex-1">
-                        <input value={eventInput} onChange={e => setEventInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleManageTags('event', eventInput))} className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs" placeholder="搜索或创建事件标签..." />
+                        <input value={eventInput} onChange={e => setEventInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleManageTags('event', eventInput))} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-xs text-brand-text dark:text-slate-200" placeholder="搜索或创建事件标签..." />
                         <button 
                             type="button" 
                             onClick={() => handleManageTags('event', eventInput)}
-                            className="absolute right-1 top-1 p-1 bg-slate-200 text-slate-600 rounded text-xs hover:bg-slate-300"
+                            className="absolute right-1 top-1 p-1 bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded text-xs hover:bg-slate-300"
                         >
                             <Settings size={14}/>
                         </button>
@@ -489,21 +516,21 @@ const LogForm: React.FC<{
                 {log.dailyEvents && log.dailyEvents.filter(e => !EVENT_PRESETS.includes(e)).length > 0 && (
                     <div className="flex flex-wrap gap-2">
                         {log.dailyEvents.filter(e => !EVENT_PRESETS.includes(e)).map(e => (
-                            <span key={e} className="px-2 py-1 text-xs rounded-lg bg-slate-100 text-slate-600 flex items-center border border-slate-200">{e} <button type="button" onClick={() => toggleEvent(e)} className="ml-1"><X size={10}/></button></span>
+                            <span key={e} className="px-2 py-1 text-xs rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center border border-slate-200 dark:border-slate-700">{e} <button type="button" onClick={() => toggleEvent(e)} className="ml-1 text-slate-400 hover:text-red-500"><X size={10}/></button></span>
                         ))}
                     </div>
                 )}
-                <div className="border-t border-slate-100 pt-3">
-                    <textarea value={log.notes || ''} onChange={(e) => handleChange('notes', e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm min-h-[80px] outline-none focus:border-brand-accent" placeholder="今天感觉如何？写点什么吧..."/>
+                <div className="border-t border-slate-100 dark:border-slate-800 pt-3">
+                    <textarea value={log.notes || ''} onChange={(e) => handleChange('notes', e.target.value)} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm min-h-[80px] outline-none focus:border-brand-accent dark:text-slate-200" placeholder="今天感觉如何？写点什么吧..."/>
                 </div>
             </CardSection>
 
-            <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/90 backdrop-blur-md border-t border-slate-100 flex gap-3 z-30">
-                 <button type="button" onClick={handleSaveDraft} className="flex-1 py-3 font-bold text-slate-500 bg-slate-100 rounded-2xl">保存草稿</button>
-                <button type="submit" className="flex-[2] py-3 text-lg font-bold text-white bg-brand-accent rounded-2xl shadow-lg shadow-blue-500/30">完成记录</button>
+            <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/90 dark:bg-slate-950/90 backdrop-blur-md border-t border-slate-100 dark:border-slate-800 flex gap-3 z-30">
+                 <button type="button" onClick={handleSaveDraft} className="flex-1 py-3 font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 rounded-2xl">保存草稿</button>
+                <button type="submit" className="flex-[2] py-3 text-lg font-bold text-white bg-brand-accent rounded-2xl shadow-lg shadow-blue-500/30 active:scale-[0.98]">完成记录</button>
             </div>
 
-            <Modal isOpen={isSummaryModalOpen} onClose={() => setIsSummaryModalOpen(false)} title="确认记录" footer={<><button onClick={() => setIsSummaryModalOpen(false)} className="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-brand-text dark:text-slate-300 rounded">返回修改</button><button onClick={handleConfirmSave} className="px-4 py-2 bg-brand-accent text-white rounded font-bold">确认保存</button></>}>
+            <Modal isOpen={isSummaryModalOpen} onClose={() => setIsSummaryModalOpen(false)} title="确认记录" footer={<><button onClick={() => setIsSummaryModalOpen(false)} className="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-brand-text dark:text-slate-300 rounded">返回修改</button><button onClick={handleConfirmSave} className="px-4 py-2 bg-brand-accent text-white rounded font-bold shadow-lg shadow-blue-500/20">确认保存</button></>}>
               <div className="space-y-3 text-sm text-brand-text dark:text-slate-300 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
                   {summaryData.map(({ label, value }) => (
                       <div key={label} className="grid grid-cols-[80px_1fr] gap-4 border-b border-slate-100 dark:border-slate-800 pb-2 last:border-0">
