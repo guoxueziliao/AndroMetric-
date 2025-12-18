@@ -71,7 +71,7 @@ export const GlobalTimeline: React.FC<GlobalTimelineProps> = ({ log }) => {
                 list.push({
                     time: item.time,
                     type: 'caffeine',
-                    title: '咖啡因',
+                    title: '提神饮品',
                     desc: `${item.name} (${item.volume}ml x ${item.count})`,
                     icon: Coffee,
                     color: 'text-amber-700 bg-amber-100 dark:bg-amber-900/30',

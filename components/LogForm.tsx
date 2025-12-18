@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useMemo } from 'react';
 import { 
     Plus, Heart, Hand, Dumbbell, 
@@ -95,7 +96,7 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
             'sex': '性爱记录',
             'masturbation': '自慰记录',
             'exercise': '运动记录',
-            'caffeine': '咖啡因记录',
+            'caffeine': '饮品记录',
             'alcohol': '饮酒记录',
             'nap': '午休记录'
         };
@@ -244,9 +245,9 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
                                     </div>
                                 </div>
 
-                                {/* 格子 3: 咖啡因汇总 */}
+                                {/* 格子 3: 提神饮品汇总 */}
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest block">咖啡因 (CAFF)</label>
+                                    <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest block">提神饮品 (BOOST)</label>
                                     <div 
                                         onClick={() => { setEditTarget(null); setModalState(s => ({ ...s, bev: true })); }}
                                         className={`aspect-square rounded-3xl border-2 flex flex-col items-center justify-center p-4 text-center cursor-pointer transition-all shadow-sm ${caffeineCountTotal > 0 ? 'bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800 hover:border-orange-400' : 'border-dashed border-slate-200 dark:border-slate-800 text-slate-300 bg-slate-50/30 hover:border-brand-accent'}`}
@@ -264,7 +265,7 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
                                         ) : (
                                             <>
                                                 <Plus size={24} strokeWidth={3} />
-                                                <span className="text-[10px] font-black mt-2">添加咖啡</span>
+                                                <span className="text-[10px] font-black mt-2">添加饮品</span>
                                             </>
                                         )}
                                     </div>
@@ -300,7 +301,7 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
                             {/* 详细列表区 */}
                             {caffeineCountTotal > 0 && (
                                 <div className="animate-in slide-in-from-top-2">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2 px-1">咖啡因详情</label>
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2 px-1">提神饮品详情</label>
                                     <div className="space-y-2">
                                         {log.caffeineRecord?.items.map(item => (
                                             <div key={item.id} className="group flex justify-between items-center bg-white dark:bg-slate-800 p-3 rounded-2xl border border-slate-100 dark:border-white/5 shadow-sm">

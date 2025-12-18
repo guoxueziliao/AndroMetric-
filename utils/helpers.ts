@@ -171,9 +171,9 @@ export const generateLogSummary = (log: Partial<LogEntry>): Array<{ label: strin
         const detailStr = log.caffeineRecord.items
             .map(i => `${i.name} ${i.volume}ml${i.count > 1 ? 'x'+i.count : ''}`)
             .join(', ');
-        life.push(`☕ 咖啡因: ${log.caffeineRecord.totalCount}杯 [${detailStr}]`);
+        life.push(`☕ 提神饮品: ${log.caffeineRecord.totalCount}杯 [${detailStr}]`);
     } else {
-        life.push(`☕ 咖啡因: 无`);
+        life.push(`☕ 提神饮品: 无`);
     }
     
     if (log.exercise && log.exercise.length > 0) {
@@ -217,7 +217,7 @@ export const generateLogSummary = (log: Partial<LogEntry>): Array<{ label: strin
         });
         summary.push({ label: `自慰 (${log.masturbation.length})`, value: mbDetails.join('\n') });
     } else {
-        summary.push({ label: '自慰', value: '无' });
+        summary.push({ label: `自慰`, value: '无' });
     }
 
     // 7. Health (New V0.0.6 structure)
