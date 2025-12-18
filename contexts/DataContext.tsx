@@ -5,6 +5,8 @@ import { LogEntry, PartnerProfile, SexRecordDetails, MasturbationRecordDetails, 
 interface DataContextType {
     logs: LogEntry[];
     partners: PartnerProfile[];
+    // Add isInitializing to match useLogs return value
+    isInitializing: boolean;
     addOrUpdateLog: (log: LogEntry) => Promise<void>;
     deleteLog: (date: string) => Promise<void>;
     addOrUpdatePartner: (partner: PartnerProfile) => Promise<void>;
@@ -15,6 +17,8 @@ interface DataContextType {
     saveNap: (record: NapRecord) => Promise<void>;
     saveAlcoholRecord: (record: AlcoholRecord) => Promise<void>;
     toggleNap: () => Promise<void>;
+    // Fix: Added missing cancelOngoingNap property to interface
+    cancelOngoingNap: () => Promise<void>;
     toggleSleepLog: (pendingLog?: LogEntry) => Promise<void>;
     importLogs: (importedLogs: LogEntry[], importedPartners?: PartnerProfile[]) => Promise<void>;
 }

@@ -154,7 +154,7 @@ const ActivityWidget = ({ log }: { log?: LogEntry | null }) => {
 };
 
 const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateToBackup, onFinishExercise, onFinishMasturbation, onFinishNap }) => {
-  const { logs, deleteLog, toggleNap, addOrUpdateLog, toggleSleepLog } = useData();
+  const { logs, deleteLog, toggleNap, cancelOngoingNap, addOrUpdateLog, toggleSleepLog } = useData();
   const { showToast } = useToast();
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -209,6 +209,18 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
           try {
               await toggleNap();
               showToast('午休开始', 'success');
+          } catch (e: any) {
+              showToast(e.message, 'error');
+          }
+      }
+  };
+
+  const handleCancelNap = async () => {
+      if (!ongoingNap) return;
+      if (confirm('确定要取消当前的午休记录吗？')) {
+          try {
+              await cancelOngoingNap();
+              showToast('午休记录已取消', 'info');
           } catch (e: any) {
               showToast(e.message, 'error');
           }
@@ -276,7 +288,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
         {/* Ongoing Tasks Section */}
         {(ongoingNap || ongoingExercise || ongoingMb || pendingLog) && (
             <section className="space-y-3">
-                {/* Sleep Banner (Fixed) */}
+                {/* Sleep Banner */}
                 {pendingLog && (
                     <div className="bg-gradient-to-r from-emerald-500 to-teal-600 p-4 rounded-3xl shadow-lg shadow-emerald-500/20 text-white flex justify-between items-center animate-in slide-in-from-top-2">
                         <div className="flex items-center gap-3">
@@ -303,7 +315,10 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                                 <div className="text-xs opacity-90 font-mono">{ongoingNap.startTime} 开始</div>
                             </div>
                         </div>
-                        <button onClick={handleToggleNap} className="px-4 py-2 bg-white text-orange-600 rounded-full text-xs font-bold shadow-sm active:scale-95 transition-transform">醒了</button>
+                        <div className="flex gap-2">
+                            <button onClick={handleCancelNap} className="px-3 py-2 bg-black/10 hover:bg-black/20 text-white rounded-full text-xs font-bold transition-colors">取消</button>
+                            <button onClick={handleToggleNap} className="px-5 py-2 bg-white text-orange-600 rounded-full text-xs font-bold shadow-sm active:scale-95 transition-transform">醒了</button>
+                        </div>
                     </div>
                 )}
 
