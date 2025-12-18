@@ -23,67 +23,74 @@ import { TagType } from './TagManager';
 // Lazy Load
 const TagManager = lazy(() => import('./TagManager'));
 
-// --- Professional Beverage Menu ---
+// --- Professional Beverage Menu Config ---
 const BEVERAGE_MENU = [
     {
-        category: '意式经典',
+        category: '精品咖啡',
         icon: Coffee,
         items: [
             { name: '美式咖啡', vol: 350, emoji: '☕', desc: 'Luckin/Starbucks' },
+            { name: '拿铁', vol: 450, emoji: '🥛', desc: '经典奶咖' },
+            { name: '生椰拿铁', vol: 450, emoji: '🥥', desc: '国民爆款' },
+            { name: '丝绒拿铁', vol: 450, emoji: '✨', desc: '厚乳风味' },
             { name: '意式浓缩', vol: 30, emoji: '⚡', desc: 'Espresso' },
-            { name: 'Dirty', vol: 200, emoji: '🥃', desc: '污咖啡' },
-            { name: '冷萃/冰滴', vol: 300, emoji: '🧊', desc: 'Cold Brew' }
-        ]
-    },
-    {
-        category: '奶咖特调',
-        icon: CupSoda,
-        items: [
-            { name: '拿铁', vol: 450, emoji: '🥛', desc: 'Latte' },
-            { name: '生椰拿铁', vol: 450, emoji: '🥥', desc: 'Luckin Style' },
             { name: '澳瑞白', vol: 300, emoji: '⚪', desc: 'Flat White' },
-            { name: '燕麦拿铁', vol: 450, emoji: '🌾', desc: 'Oat Latte' }
+            { name: 'Dirty', vol: 200, emoji: '🥃', desc: '脏咖啡' },
+            { name: '冷萃/冰滴', vol: 350, emoji: '🧊', desc: 'Cold Brew' },
+            { name: '燕麦拿铁', vol: 450, emoji: '🌾', desc: '健康油脂' },
+            { name: '摩卡', vol: 450, emoji: '🍫', desc: '巧克力风味' }
         ]
     },
     {
-        category: '中国原叶',
+        category: '国民经典',
         icon: Leaf,
         items: [
-            { name: '绿茶/龙井', vol: 350, emoji: '🍵', desc: '传统中式' },
-            { name: '乌龙/普洱', vol: 350, emoji: '🍂', desc: '茶多酚高' },
-            { name: '茉莉花茶', vol: 350, emoji: '🌸', desc: '清香提神' },
-            { name: '大红袍', vol: 200, emoji: '🪵', desc: '岩茶浓郁' }
+            { name: '西湖龙井', vol: 300, emoji: '🍵', desc: '绿茶之首' },
+            { name: '安溪铁观音', vol: 150, emoji: '🍃', desc: '清香乌龙' },
+            { name: '武夷大红袍', vol: 150, emoji: '🍂', desc: '岩韵浓厚' },
+            { name: '云南普洱', vol: 200, emoji: '🪵', desc: '熟普/生普' },
+            { name: '茉莉花茶', vol: 350, emoji: '🌸', desc: '国民香气' },
+            { name: '正山小种', vol: 250, emoji: '🍯', desc: '烟熏红茶' },
+            { name: '洞庭碧螺春', vol: 300, emoji: '🌱', desc: '花果鲜嫩' },
+            { name: '金骏眉', vol: 150, emoji: '🐎', desc: '顶级红茶' }
         ]
     },
     {
-        category: '新式奶茶',
-        icon: CupSoda,
+        category: '传统六大类',
+        icon: List,
         items: [
-            { name: '原叶鲜奶茶', vol: 500, emoji: '🍃', desc: '霸王茶姬/伯牙绝弦' },
-            { name: '厚乳奶茶', vol: 500, emoji: '🧋', desc: '蜜雪冰城/沪上阿姨' },
-            { name: '芝士茗茶', vol: 500, emoji: '🧀', desc: '喜茶风格' },
-            { name: '柠檬果茶', vol: 600, emoji: '🍋', desc: '清爽解腻' }
+            { name: '绿茶系列', vol: 300, emoji: '🟢', desc: '毛峰/瓜片/猴魁' },
+            { name: '红茶系列', vol: 300, emoji: '🔴', desc: '滇红/祁门' },
+            { name: '乌龙/青茶', vol: 150, emoji: '🔵', desc: '单丛/高山茶' },
+            { name: '白茶系列', vol: 200, emoji: '⚪', desc: '银针/牡丹/寿眉' },
+            { name: '黑茶系列', vol: 200, emoji: '⚫', desc: '六堡/藏茶' },
+            { name: '黄茶系列', vol: 200, emoji: '🟡', desc: '君山银针' }
         ]
     },
     {
         category: '功能能量',
         icon: Zap,
         items: [
-            { name: '红牛', vol: 250, emoji: '🐂', desc: 'Red Bull' },
-            { name: '魔爪', vol: 500, emoji: 'Ⓜ️', desc: 'Monster' },
-            { name: '东鹏特饮', vol: 250, emoji: '🐯', desc: 'Eastroc' },
-            { name: '电解质水', vol: 500, emoji: '💧', desc: '佳得乐/外星人' }
+            { name: '红牛', vol: 250, emoji: '🐂', desc: '经典提神' },
+            { name: '魔爪', vol: 500, emoji: 'Ⓜ️', desc: '高咖啡因' },
+            { name: '东鹏特饮', vol: 250, emoji: '🐯', desc: '国产能量' },
+            { name: '电解质水', vol: 500, emoji: '💧', desc: '外星人/宝矿力' },
+            { name: '佳得乐', vol: 600, emoji: '⚽', desc: '运动补给' },
+            { name: '战马', vol: 310, emoji: '🐎', desc: '熬夜必备' },
+            { name: '力保健', vol: 100, emoji: '🧪', desc: '日系提神液' }
         ]
     },
     {
-        category: '日常补剂',
+        category: '现代补剂',
         icon: Pill,
         items: [
-            { name: '锌镁片/ZMA', vol: 1, emoji: '💊', desc: '活力核心' },
-            { name: 'B族维生素', vol: 1, emoji: '🐝', desc: '代谢支持' },
+            { name: '锌镁片/ZMA', vol: 1, emoji: '💊', desc: '雄性支持' },
+            { name: '复合B族', vol: 1, emoji: '🐝', desc: '代谢/熬夜' },
             { name: '咖啡因片', vol: 1, emoji: '⚪', desc: '纯净摄入' },
-            { name: '精氨酸/氮泵', vol: 250, emoji: '🔥', desc: '运动前夕' },
-            { name: '肌酸', vol: 300, emoji: '💪', desc: '力量储备' }
+            { name: '氮泵', vol: 250, emoji: '🔥', desc: '运动兴奋' },
+            { name: '肌酸', vol: 300, emoji: '💪', desc: '力量储备' },
+            { name: '辅酶Q10', vol: 1, emoji: '❤️', desc: '心脏泵感' },
+            { name: '红参液', vol: 50, emoji: '🪵', desc: '中式补正气' }
         ]
     }
 ];
@@ -199,13 +206,13 @@ const LogForm: React.FC<{
         setLog(prev => ({ ...prev, alcoholRecord: record, alcohol: alcoholLevel }));
     };
 
-    // --- Beverage Ordering Logic ---
+    // --- Ordered Beverage Logic ---
     const addBeverage = (item: { name: string, vol: number }) => {
         setLog(prev => {
             const current = prev.caffeineRecord || { totalCount: 0, items: [] };
             const nowStr = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
             
-            // 同名、同品牌饮品在短时间内（同一条日记内）点单，默认为增加份数
+            // 自动合并逻辑：同名饮品直接增加份数
             const existingItemIdx = current.items.findIndex(i => i.name === item.name);
             let newItems = [...current.items];
 
@@ -215,7 +222,13 @@ const LogForm: React.FC<{
                     count: newItems[existingItemIdx].count + 1 
                 };
             } else {
-                newItems.push({ id: Date.now().toString(), name: item.name, time: nowStr, count: 1, volume: item.vol });
+                newItems.push({ 
+                    id: Date.now().toString(), 
+                    name: item.name, 
+                    time: nowStr, 
+                    count: 1, 
+                    volume: item.vol 
+                });
             }
 
             const totalCount = newItems.reduce((acc, i) => acc + i.count, 0);
@@ -387,24 +400,24 @@ const LogForm: React.FC<{
                                 {isAddingCaffeine && (
                                     <div className="bg-white dark:bg-[#020617] rounded-3xl border border-slate-200 dark:border-slate-800 flex h-[350px] overflow-hidden animate-in slide-in-from-top-4 duration-300 shadow-xl">
                                         {/* Sidebar Navigation */}
-                                        <div className="w-20 bg-slate-50 dark:bg-slate-900/50 border-r border-slate-200 dark:border-slate-800 flex flex-col pt-2 shrink-0">
+                                        <div className="w-24 bg-slate-50 dark:bg-slate-900/50 border-r border-slate-200 dark:border-slate-800 flex flex-col pt-2 shrink-0 overflow-y-auto scrollbar-hide">
                                             {BEVERAGE_MENU.map((cat, idx) => (
                                                 <button 
                                                     key={cat.category} 
                                                     type="button"
                                                     onClick={() => setActiveBeverageCat(idx)} 
-                                                    className={`py-4 px-1 flex flex-col items-center justify-center gap-1 transition-all relative ${activeBeverageCat === idx ? 'text-brand-accent font-black' : 'text-slate-400'}`}
+                                                    className={`py-4 px-1 flex flex-col items-center justify-center gap-1 transition-all relative shrink-0 ${activeBeverageCat === idx ? 'text-brand-accent font-black' : 'text-slate-400'}`}
                                                 >
                                                     {activeBeverageCat === idx && <div className="absolute left-0 top-1/4 bottom-1/4 w-1 bg-brand-accent rounded-r-full"></div>}
                                                     <cat.icon size={16} strokeWidth={activeBeverageCat === idx ? 3 : 2}/>
-                                                    <span className="text-[10px]">{cat.category}</span>
+                                                    <span className="text-[10px] text-center leading-tight">{cat.category}</span>
                                                 </button>
                                             ))}
                                         </div>
 
                                         {/* Products Grid */}
                                         <div className="flex-1 p-3 overflow-y-auto custom-scrollbar bg-white dark:bg-transparent">
-                                            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1">{BEVERAGE_MENU[activeBeverageCat].category}系列</h4>
+                                            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1">{BEVERAGE_MENU[activeBeverageCat].category}</h4>
                                             <div className="grid grid-cols-2 gap-2">
                                                 {BEVERAGE_MENU[activeBeverageCat].items.map(item => (
                                                     <button 
@@ -436,7 +449,7 @@ const LogForm: React.FC<{
                                                     </div>
                                                     <div>
                                                         <div className="text-xs font-black">{c.name} <span className="text-[10px] text-slate-400 ml-1 font-mono font-bold opacity-60">{c.time}</span></div>
-                                                        <div className="text-[10px] text-slate-500 font-bold">总计: {(c.volume || 350) * c.count}ml</div>
+                                                        <div className="text-[10px] text-slate-500 font-bold">单次容量: {c.volume}ml</div>
                                                     </div>
                                                 </div>
                                                 <button type="button" onClick={() => updateBeverageValue(c.id, 'count', -100)} className="p-2 text-slate-300 hover:text-red-500 active:scale-90"><Trash2 size={14}/></button>
@@ -447,7 +460,7 @@ const LogForm: React.FC<{
                                                 <div className="flex items-center gap-2">
                                                     <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter w-8">容量</span>
                                                     <button type="button" onClick={() => updateBeverageValue(c.id, 'volume', -50)} className="p-1 rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 active:scale-90"><Minus size={12}/></button>
-                                                    <span className="text-[11px] font-bold w-12 text-center tabular-nums">{c.volume}ml</span>
+                                                    <span className="text-[11px] font-bold w-12 text-center tabular-nums">{c.volume}</span>
                                                     <button type="button" onClick={() => updateBeverageValue(c.id, 'volume', 50)} className="p-1 rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 active:scale-90"><Plus size={12}/></button>
                                                 </div>
                                                 
