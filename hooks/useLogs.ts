@@ -80,8 +80,6 @@ export function useLogs() {
         return `${year}-${month}-${day}`;
     }, []);
 
-    // --- Action Helpers ---
-
     const quickAddSex = useCallback(async (record: SexRecordDetails) => {
         const targetDateStr = getActivityTargetDate();
         const existingLog = await StorageService.logs.get(targetDateStr);
@@ -225,7 +223,7 @@ export function useLogs() {
     const saveAlcoholRecord = useCallback(async (record: AlcoholRecord) => {
         const targetDateStr = getActivityTargetDate();
         const existingLog = await StorageService.logs.get(targetDateStr);
-        const summaryText = record.ongoing ? '开始饮酒' : `饮酒: ${record.totalGrams}g纯酒精`;
+        const summaryText = record.ongoing ? '酒局计时中' : `饮酒记录: ${record.totalGrams}g纯酒精`;
         const alcoholLevel = record.totalGrams > 50 ? 'high' : record.totalGrams > 20 ? 'medium' : record.totalGrams > 0 ? 'low' : 'none';
         try {
             if (existingLog) {
@@ -261,10 +259,8 @@ export function useLogs() {
         const ongoingLog = allLogs.find(l => l.alcoholRecord?.ongoing);
         
         if (ongoingLog) {
-            // Already ongoing, return current record to UI for handling
             return ongoingLog.alcoholRecord;
         } else {
-            // Start new session
             const targetDateStr = getActivityTargetDate();
             const nowStr = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
             const newRecord: AlcoholRecord = {
@@ -280,6 +276,19 @@ export function useLogs() {
             return null;
         }
     }, [getActivityTargetDate, saveAlcoholRecord]);
+
+    const cancelAlcoholRecord = useCallback(async () => {
+        const allLogs = await StorageService.logs.getAll();
+        const ongoingLog = allLogs.find(l => l.alcoholRecord?.ongoing);
+        if (ongoingLog) {
+            const hydrated = hydrateLog(ongoingLog);
+            await addOrUpdateLog({
+                ...hydrated,
+                alcohol: 'none',
+                alcoholRecord: null
+            });
+        }
+    }, [addOrUpdateLog]);
 
     const cancelOngoingNap = useCallback(async () => {
         const allLogs = await StorageService.logs.getAll(); 
@@ -404,7 +413,7 @@ export function useLogs() {
         addOrUpdateLog, deleteLog,
         addOrUpdatePartner, deletePartner,
         quickAddSex, quickAddMasturbation,
-        saveExercise, saveNap, saveAlcoholRecord,
+        saveExercise, saveNap, saveAlcoholRecord, cancelAlcoholRecord,
         toggleNap, cancelOngoingNap, toggleSleepLog, importLogs, toggleAlcohol
     };
 }

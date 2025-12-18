@@ -30,8 +30,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
   const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
   const [summaryLog, setSummaryLog] = useState<LogEntry | null>(null);
   const [isHistoryView, setIsHistoryView] = useState(false);
+  
+  // 恢复自慰的操作弹窗状态
   const [isMbActionModalOpen, setIsMbActionModalOpen] = useState(false);
-  const [isAlcActionModalOpen, setIsAlcActionModalOpen] = useState(false);
 
   const latestLog = useMemo(() => logs.length > 0 ? logs[0] : null, [logs]);
   const pendingLog = useMemo(() => logs.find(log => log.status === 'pending'), [logs]);
@@ -62,11 +63,11 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
     } else { onDateClick(date); }
   };
 
-  const handleToggleNap = () => ongoingNap && onFinishNap ? onFinishNap(ongoingNap) : null;
+  // 自慰快速结案逻辑
   const handleQuickFinishMb = async () => {
       if (!ongoingMb) return;
       const now = new Date();
-      const [h, m] = ongoingMb.startTime.split(':').map(Number);
+      const [h, m] = ongoingMb.startTime!.split(':').map(Number);
       const startDate = new Date(); startDate.setHours(h); startDate.setMinutes(m);
       let duration = Math.round((now.getTime() - startDate.getTime()) / 60000);
       if (duration < 0) duration += 24 * 60;
@@ -79,14 +80,11 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
       setIsMbActionModalOpen(false);
   };
 
-  const handleQuickFinishAlc = async () => {
-      if (!ongoingAlcohol) return;
-      const parentLog = logs.find(l => l.alcoholRecord?.ongoing);
-      if (parentLog) {
-          await addOrUpdateLog({ ...parentLog, alcoholRecord: { ...ongoingAlcohol, ongoing: false, totalGrams: 10, items: [] } });
-          showToast('酒局已结束', 'success');
+  // 饮酒买单：直接打开 Modal 补全
+  const handleSettleAlcohol = () => {
+      if (ongoingAlcohol && onFinishAlcohol) {
+          onFinishAlcohol(ongoingAlcohol);
       }
-      setIsAlcActionModalOpen(false);
   };
 
   return (
@@ -104,6 +102,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
 
         {(ongoingNap || ongoingExercise || ongoingMb || pendingLog || ongoingAlcohol) && (
             <section className="space-y-3">
+                {/* 睡眠横幅 - 还原样式 */}
                 {pendingLog && (
                     <div className="bg-gradient-to-r from-emerald-500 to-teal-600 p-4 rounded-3xl shadow-lg text-white flex justify-between items-center animate-in slide-in-from-top-2">
                         <div className="flex items-center gap-3">
@@ -113,15 +112,19 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                         <button onClick={() => onEdit(pendingLog.date)} className="px-5 py-2 bg-white text-emerald-600 rounded-full text-xs font-bold shadow-sm">醒了</button>
                     </div>
                 )}
+                
+                {/* 饮酒横幅 - 按新要求：买单去 Modal */}
                 {ongoingAlcohol && (
                     <div className="bg-gradient-to-r from-amber-500 to-orange-600 p-4 rounded-3xl shadow-lg text-white flex justify-between items-center animate-in slide-in-from-top-2">
                         <div className="flex items-center gap-3">
                             <div className="p-2 bg-white/20 rounded-full animate-pulse"><Beer size={20}/></div>
                             <div><div className="font-bold text-sm">正在哈啤中...</div><div className="text-xs opacity-80">{ongoingAlcohol.startTime} 开始</div></div>
                         </div>
-                        <button onClick={() => setIsAlcActionModalOpen(true)} className="px-5 py-2 bg-white text-amber-600 rounded-full text-xs font-bold shadow-sm">买单</button>
+                        <button onClick={handleSettleAlcohol} className="px-5 py-2 bg-white text-amber-600 rounded-full text-xs font-bold shadow-sm">买单</button>
                     </div>
                 )}
+
+                {/* 自慰横幅 - 还原样式与操作 */}
                 {ongoingMb && (
                     <div className="bg-gradient-to-r from-purple-500 to-pink-600 p-4 rounded-3xl shadow-lg text-white flex justify-between items-center animate-in slide-in-from-top-2">
                         <div className="flex items-center gap-3">
@@ -129,6 +132,20 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                             <div><div className="font-bold text-sm">正在施法中...</div></div>
                         </div>
                         <button onClick={() => setIsMbActionModalOpen(true)} className="px-5 py-2 bg-white text-purple-600 rounded-full text-xs font-bold shadow-sm">完成</button>
+                    </div>
+                )}
+
+                {/* 午休横幅 - 还原样式 */}
+                {ongoingNap && (
+                    <div className="bg-gradient-to-r from-orange-400 to-amber-500 p-4 rounded-3xl shadow-lg text-white flex justify-between items-center animate-in slide-in-from-top-2">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-white/20 rounded-full animate-pulse"><CloudSun size={20}/></div>
+                            <div><div className="font-bold text-sm">正在午休中...</div></div>
+                        </div>
+                        <div className="flex gap-2">
+                            <button onClick={() => cancelOngoingNap()} className="p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors"><Trash2 size={16}/></button>
+                            <button onClick={() => onFinishNap && onFinishNap(ongoingNap)} className="px-5 py-2 bg-white text-orange-600 rounded-full text-xs font-bold shadow-sm">醒了</button>
+                        </div>
                     </div>
                 )}
             </section>
@@ -159,18 +176,11 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
         )}
       </Modal>
 
+      {/* 还原自慰操作弹窗 */}
       <Modal isOpen={isMbActionModalOpen} onClose={() => setIsMbActionModalOpen(false)} title="施法结束">
           <div className="space-y-3 pb-2">
               <button onClick={handleQuickFinishMb} className="w-full bg-blue-50 dark:bg-blue-900/20 border border-blue-200 p-4 rounded-2xl flex items-center justify-between"><div className="flex items-center gap-3"><div className="p-2 bg-blue-100 rounded-full"><FastForward size={20} /></div><div><h4 className="font-bold">快速结案</h4><p className="text-xs text-slate-500">仅记录时间</p></div></div><ArrowRight size={18}/></button>
               <button onClick={() => { if(ongoingMb && onFinishMasturbation) onFinishMasturbation(ongoingMb); setIsMbActionModalOpen(false); }} className="w-full bg-slate-50 dark:bg-slate-800 border p-4 rounded-2xl flex items-center justify-between"><div className="flex items-center gap-3"><div className="p-2 bg-slate-200 rounded-full"><Edit3 size={20} /></div><div><h4 className="font-bold">补全详情</h4><p className="text-xs text-slate-500">记录素材、感受</p></div></div><ArrowRight size={18}/></button>
-          </div>
-      </Modal>
-
-      <Modal isOpen={isAlcActionModalOpen} onClose={() => setIsAlcActionModalOpen(false)} title="饮酒结束">
-          <div className="space-y-3 pb-2">
-              <p className="text-sm text-center text-slate-500 mb-4">酒局结束，来记录一下吧！</p>
-              <button onClick={handleQuickFinishAlc} className="w-full bg-amber-50 dark:bg-amber-900/20 border border-amber-200 p-4 rounded-2xl flex items-center justify-between"><div className="flex items-center gap-3"><div className="p-2 bg-amber-100 rounded-full text-amber-600"><FastForward size={20} /></div><div><h4 className="font-bold">快速结案</h4><p className="text-xs text-slate-500">默认少量饮酒</p></div></div><ArrowRight size={18}/></button>
-              <button onClick={() => { if(ongoingAlcohol && onFinishAlcohol) onFinishAlcohol(ongoingAlcohol); setIsAlcActionModalOpen(false); }} className="w-full bg-slate-50 dark:bg-slate-800 border p-4 rounded-2xl flex items-center justify-between"><div className="flex items-center gap-3"><div className="p-2 bg-slate-200 rounded-full"><Beer size={20} /></div><div><h4 className="font-bold">补全详情</h4><p className="text-xs text-slate-500">记录具体酒水与醉意</p></div></div><ArrowRight size={18}/></button>
           </div>
       </Modal>
     </>

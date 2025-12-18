@@ -16,6 +16,9 @@ interface DataContextType {
     saveExercise: (record: ExerciseRecord) => Promise<void>;
     saveNap: (record: NapRecord) => Promise<void>;
     saveAlcoholRecord: (record: AlcoholRecord) => Promise<void>;
+    /* Added missing alcohol-related methods */
+    toggleAlcohol: () => Promise<AlcoholRecord | null | undefined>;
+    cancelAlcoholRecord: () => Promise<void>;
     toggleNap: () => Promise<void>;
     // Fix: Added missing cancelOngoingNap property to interface
     cancelOngoingNap: () => Promise<void>;
