@@ -1,3 +1,4 @@
+
 export type HardnessLevel = 1 | 2 | 3 | 4 | 5;
 export type StressLevel = 1 | 2 | 3 | 4 | 5;
 export type ErectionDurationImpression = 'brief' | 'long' | 'unsure';
@@ -228,6 +229,9 @@ export interface AlcoholRecord {
     alcoholScene?: string;
     // v0.0.6
     time?: string; // HH:mm
+    startTime?: string; // v0.0.7 Start for sessions
+    endTime?: string;   // v0.0.7 End for sessions
+    ongoing?: boolean;  // v0.0.7 Status
 }
 
 // v0.0.6 Caffeine (Updated to use Cups)

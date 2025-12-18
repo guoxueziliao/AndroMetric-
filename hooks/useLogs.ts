@@ -225,7 +225,7 @@ export function useLogs() {
     const saveAlcoholRecord = useCallback(async (record: AlcoholRecord) => {
         const targetDateStr = getActivityTargetDate();
         const existingLog = await StorageService.logs.get(targetDateStr);
-        const summaryText = `饮酒: ${record.totalGrams}g纯酒精`;
+        const summaryText = record.ongoing ? '开始饮酒' : `饮酒: ${record.totalGrams}g纯酒精`;
         const alcoholLevel = record.totalGrams > 50 ? 'high' : record.totalGrams > 20 ? 'medium' : record.totalGrams > 0 ? 'low' : 'none';
         try {
             if (existingLog) {
@@ -255,6 +255,31 @@ export function useLogs() {
             }
         } catch (e) { throw e; }
     }, [addOrUpdateLog, getActivityTargetDate]);
+
+    const toggleAlcohol = useCallback(async () => {
+        const allLogs = await StorageService.logs.getAll();
+        const ongoingLog = allLogs.find(l => l.alcoholRecord?.ongoing);
+        
+        if (ongoingLog) {
+            // Already ongoing, return current record to UI for handling
+            return ongoingLog.alcoholRecord;
+        } else {
+            // Start new session
+            const targetDateStr = getActivityTargetDate();
+            const nowStr = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+            const newRecord: AlcoholRecord = {
+                totalGrams: 0,
+                durationMinutes: 0,
+                isLate: new Date().getHours() < 5,
+                items: [],
+                startTime: nowStr,
+                time: nowStr,
+                ongoing: true
+            };
+            await saveAlcoholRecord(newRecord);
+            return null;
+        }
+    }, [getActivityTargetDate, saveAlcoholRecord]);
 
     const cancelOngoingNap = useCallback(async () => {
         const allLogs = await StorageService.logs.getAll(); 
@@ -380,6 +405,6 @@ export function useLogs() {
         addOrUpdatePartner, deletePartner,
         quickAddSex, quickAddMasturbation,
         saveExercise, saveNap, saveAlcoholRecord,
-        toggleNap, cancelOngoingNap, toggleSleepLog, importLogs
+        toggleNap, cancelOngoingNap, toggleSleepLog, importLogs, toggleAlcohol
     };
 }
