@@ -1,194 +1,59 @@
 
+
 export type HardnessLevel = 1 | 2 | 3 | 4 | 5;
-export type StressLevel = 1 | 2 | 3 | 4 | 5;
-export type ErectionDurationImpression = 'brief' | 'long' | 'unsure';
 export type MorningWoodRetention = 'instant' | 'brief' | 'normal' | 'extended';
-export type SleepAttire = 'naked' | 'light' | 'pajamas' | 'other';
-export type ExerciseIntensity = 'low' | 'medium' | 'high';
-export type SexQuality = 'good' | 'medium' | 'bad';
-export type PreSleepState = 'tired' | 'energetic' | 'stressed' | 'calm' | 'other';
-export type Weather = 'sunny' | 'cloudy' | 'rainy' | 'snowy' | 'foggy' | 'windy';
-export type Location = 'home' | 'partner' | 'hotel' | 'travel' | 'other';
-export type Mood = 'happy' | 'excited' | 'neutral' | 'anxious' | 'sad' | 'angry';
+export type StressLevel = 1 | 2 | 3 | 4 | 5;
 export type AlcoholConsumption = 'none' | 'low' | 'medium' | 'high';
 export type PornConsumption = 'none' | 'low' | 'medium' | 'high';
-export type IllnessType = 'cold' | 'fever' | 'headache' | 'other';
-export type PartnerType = 'stable' | 'dating' | 'casual' | 'service';
-
-export type SleepLocation = 'home' | 'hotel' | 'others_home' | 'dorm' | 'office' | 'transport' | 'other';
-export type SleepTemperature = 'cold' | 'comfortable' | 'hot';
+export type ExerciseIntensity = 'low' | 'medium' | 'high';
+export type SexQuality = 1 | 2 | 3 | 4 | 5;
+export type IllnessType = 'cold' | 'fever' | 'headache' | 'other' | string;
+export type PreSleepState = 'tired' | 'energetic' | 'stressed' | 'calm' | 'other' | string;
+export type Weather = 'sunny' | 'cloudy' | 'rainy' | 'snowy' | 'windy' | 'foggy';
+export type Location = 'home' | 'partner' | 'hotel' | 'travel' | 'other' | string;
+export type Mood = 'happy' | 'excited' | 'neutral' | 'anxious' | 'sad' | 'angry';
+export type SleepAttire = 'naked' | 'light' | 'pajamas' | 'other';
 export type DrunkLevel = 'none' | 'tipsy' | 'drunk' | 'wasted';
-export type HealthFeeling = 'normal' | 'minor_discomfort' | 'bad'; 
-export type DiscomfortLevel = 'mild' | 'moderate' | 'severe';
 export type ExerciseFeeling = 'great' | 'ok' | 'tired' | 'bad';
-export type CaffeineIntake = 'none' | 'low' | 'medium' | 'high';
-
-export type HistoryCategory = 'sleep' | 'morning' | 'nap' | 'exercise' | 'masturbation' | 'sex' | 'health' | 'lifestyle' | 'meta' | 'system';
+export type PartnerType = 'stable' | 'dating' | 'casual' | 'service';
+export type HistoryCategory = 'sex' | 'masturbation' | 'exercise' | 'sleep' | 'morning' | 'lifestyle' | 'health' | 'nap' | 'system' | 'meta';
 export type HistoryEventType = 'manual' | 'quick' | 'auto';
+export type EventType = 'morning_wood' | 'sleep' | 'alcohol' | 'exercise' | 'sex' | 'masturbation' | 'stress' | 'health';
+export type SleepLocation = 'home' | 'office' | 'transport' | 'hotel' | 'other' | string;
+export type SleepTemperature = 'cold' | 'comfortable' | 'hot';
 
-export type EventType = 'morning_wood' | 'sleep' | 'sex' | 'masturbation' | 'exercise' | 'alcohol' | 'stress' | 'emotion' | 'health';
+export interface ChangeDetail {
+    field: string;
+    oldValue: any;
+    newValue: any;
+    category: HistoryCategory;
+}
 
-export interface UnifiedEvent {
-    schemaVersion: number;
-    id: string;
-    type: EventType;
+export interface ChangeRecord {
     timestamp: number;
-    dateStr: string;
-    metrics: {
-        value?: number;
-        duration?: number;
-        count?: number;
-        amount?: number;
-        intensity?: number;
-    };
-    flags: {
-        isLate?: boolean;
-        isGood?: boolean;
-        withPartner?: boolean;
-        orgasm?: boolean;
-        ejaculation?: boolean;
-    };
-    tags: string[];
-    refId?: string;
+    summary: string;
+    details?: ChangeDetail[];
+    type: HistoryEventType;
 }
 
-export interface AppSettings {
-  version: string;
-  theme: 'system' | 'light' | 'dark';
-  privacyMode: boolean;
-  enableNotifications: boolean;
-  notificationTime: {
-    morning: string;
-    evening: string;
-  };
-  hiddenFields: string[];
-  userGoal?: 'recovery' | 'tracking' | 'biohacking';
-  lastBackupAt?: number;
-  lastExportAt?: number;
-}
-
-export type SexActionType = 'act' | 'position';
-
-export interface SexAction {
-  id: string;
-  type: SexActionType;
-  name: string;
-}
-
-export interface SexInteraction {
-  id: string;
-  partner: string;
-  role?: string | null;
-  location: string;
-  costumes?: string[];
-  toys?: string[];
-  chain: SexAction[];
-}
-
-export interface SexRecordDetails {
-  id: string; 
-  startTime?: string | null; 
-  duration?: number; 
-  protection?: string | null;
-  state?: string | null;
-  interactions: SexInteraction[];
-  partner?: string | null;
-  location?: string | null;
-  role?: string | null;
-  costumes?: string[];
-  acts?: string[];
-  positions?: string[];
-  indicators: {
-    lingerie: boolean;
-    orgasm: boolean;
-    partnerOrgasm: boolean;
-    squirting: boolean;
-    toys: boolean;
-  };
-  ejaculation?: boolean;
-  ejaculationLocation?: string | null;
-  semenSwallowed?: boolean;
-  postSexActivity?: string[];
-  partnerScore?: number;
-  mood?: Mood | null;
-  notes?: string | null;
-}
-
-export interface MasturbationMaterial {
+export interface MorningRecord {
     id: string;
-    label?: string | null;
-    publisher?: string | null;
-    actors: string[];
-    tags: string[];
-}
-
-export interface ContentItem {
-    id: string;
-    type: string; 
-    platform?: string; 
-    title?: string;
-    actors: string[];
-    xpTags: string[]; 
-    notes?: string;
-}
-
-export interface MasturbationRecordDetails {
-  id: string;
-  startTime?: string | null;
-  duration?: number;
-  location?: string | null;
-  tools: string[];
-  contentItems: ContentItem[];
-  materials?: string[]; 
-  materialsList?: MasturbationMaterial[]; 
-  assets?: {
-      sources: string[];
-      platforms: string[];
-      categories: string[];
-      actors?: string[];
-      target?: string | null;
-  };
-  props?: string[];
-  edging?: 'none' | 'once' | 'multiple';
-  edgingCount?: number;
-  lubricant?: string | null;
-  useCondom?: boolean;
-  ejaculation?: boolean;
-  orgasmIntensity?: number;
-  mood?: Mood | null;
-  stressLevel?: number;
-  energyLevel?: number;
-  interrupted?: boolean;
-  interruptionReasons?: string[];
-  notes?: string | null;
-  status?: 'completed' | 'inProgress'; 
-  volumeForceLevel?: 1 | 2 | 3 | 4 | 5; 
-  postMood?: string;    
-  fatigue?: string;     
-  quickLog?: boolean;   
-}
-
-export interface ExerciseRecord {
-    id: string;
-    type: string;
-    startTime: string;
-    duration?: number;
-    intensity?: ExerciseIntensity | null;
-    bodyParts?: string[];
-    ongoing?: boolean;
-    steps?: number | null;
-    notes?: string | null;
-    feeling?: ExerciseFeeling;
+    timestamp: number;
+    wokeWithErection: boolean;
+    hardness?: HardnessLevel | null;
+    retention?: MorningWoodRetention | null;
+    wokenByErection: boolean;
+    durationImpression?: string | null;
 }
 
 export interface NapRecord {
     id: string;
     startTime: string;
-    endTime?: string | null;
-    duration?: number;
-    ongoing?: boolean;
-    quality?: number; 
-    hardness?: HardnessLevel | null; 
+    endTime?: string;
+    ongoing: boolean;
+    duration: number;
+    quality?: number;
+    hardness?: HardnessLevel | null;
     hasDream?: boolean;
     dreamTypes?: string[];
     notes?: string;
@@ -198,6 +63,36 @@ export interface NapRecord {
     attire?: SleepAttire;
     withPartner?: boolean;
     preSleepState?: PreSleepState;
+}
+
+export interface SleepRecord {
+    id: string;
+    startTime?: string | null;
+    endTime?: string | null;
+    quality: number;
+    attire?: SleepAttire | null;
+    naturalAwakening: boolean;
+    nocturnalEmission: boolean;
+    withPartner: boolean;
+    preSleepState?: PreSleepState | null;
+    naps: NapRecord[];
+    hasDream: boolean;
+    dreamTypes: string[];
+    environment: {
+        location: SleepLocation;
+        temperature: SleepTemperature;
+    };
+}
+
+export interface Health {
+    isSick: boolean;
+    illnessType?: IllnessType | null;
+    medicationTaken?: boolean | null;
+    medicationName?: string | null;
+    feeling?: 'normal' | 'bad' | 'minor_discomfort';
+    discomfortLevel?: 'mild' | 'moderate' | 'severe' | null;
+    symptoms: string[];
+    medications: string[];
 }
 
 export interface AlcoholItem {
@@ -212,149 +107,190 @@ export interface AlcoholItem {
 export interface AlcoholRecord {
     totalGrams: number;
     durationMinutes: number;
-    isLate: boolean;
     items: AlcoholItem[];
+    isLate: boolean;
     drunkLevel?: DrunkLevel;
     alcoholScene?: string;
-    time?: string; 
-    startTime?: string; 
-    endTime?: string;   
-    ongoing?: boolean;  
+    time: string;
+    startTime?: string;
+    endTime?: string;
+    ongoing: boolean;
+}
+
+export interface ExerciseRecord {
+    id: string;
+    type: string;
+    startTime: string;
+    duration: number;
+    intensity: ExerciseIntensity;
+    bodyParts?: string[];
+    steps?: number;
     notes?: string;
+    feeling?: ExerciseFeeling;
+    ongoing?: boolean;
+}
+
+export interface ContentItem {
+    id: string;
+    type?: string;
+    platform?: string;
+    title?: string;
+    actors: string[];
+    xpTags: string[];
+    notes?: string;
+}
+
+export interface MasturbationRecordDetails {
+    id: string;
+    startTime?: string;
+    duration: number;
+    status: 'inProgress' | 'completed';
+    tools: string[];
+    contentItems: ContentItem[];
+    materials?: string[]; // Legacy
+    props?: string[]; // Legacy
+    assets?: {
+        sources: string[];
+        platforms: string[];
+        categories: string[];
+        target: string;
+        actors: string[];
+    };
+    materialsList?: any[]; // Legacy
+    edging: 'none' | 'once' | 'multiple';
+    edgingCount: number;
+    lubricant?: string;
+    useCondom: boolean;
+    ejaculation: boolean;
+    orgasmIntensity?: number;
+    mood: Mood | string;
+    stressLevel: number;
+    energyLevel: number;
+    interrupted: boolean;
+    interruptionReasons: string[];
+    notes: string;
+    volumeForceLevel?: number;
+    postMood?: string;
+    fatigue?: string;
+    quickLog?: boolean;
+}
+
+export interface SexAction {
+    id: string;
+    type: 'act' | 'position';
+    name: string;
+}
+
+export type SexActionType = 'act' | 'position';
+
+export interface SexInteraction {
+    id: string;
+    partner: string;
+    location: string;
+    role?: string;
+    costumes: string[];
+    toys: string[];
+    chain: SexAction[];
+}
+
+export interface SexRecordDetails {
+    id: string;
+    startTime?: string;
+    interactions: SexInteraction[];
+    partner?: string; // Legacy
+    location?: string; // Legacy
+    acts?: string[]; // Legacy
+    positions?: string[]; // Legacy
+    duration: number;
+    protection: string;
+    state: string;
+    indicators: {
+        lingerie: boolean;
+        orgasm: boolean;
+        partnerOrgasm: boolean;
+        squirting: boolean;
+        toys: boolean;
+    };
+    ejaculation: boolean;
+    ejaculationLocation?: string;
+    semenSwallowed: boolean;
+    postSexActivity: string[];
+    partnerScore?: number;
+    mood: Mood | string;
+    notes: string;
 }
 
 export interface CaffeineItem {
     id: string;
     name: string;
-    time: string; 
-    count: number; 
-    volume?: number; 
+    time: string;
+    count: number;
+    volume: number;
+    category?: string;
+    isCustom?: boolean;
+    mg?: number; // Legacy migration
 }
 
 export interface CaffeineRecord {
-    totalCount: number; 
+    totalCount: number;
     items: CaffeineItem[];
+    totalMg?: number; // Legacy migration
+}
+
+export interface LogEntry {
+    date: string;
+    status: 'pending' | 'completed';
+    updatedAt: number;
+    morning?: MorningRecord;
+    sleep?: SleepRecord;
+    weather?: Weather | null;
+    location?: Location | null;
+    mood?: Mood | null;
+    stressLevel?: StressLevel | null;
+    alcohol?: AlcoholConsumption | null;
+    pornConsumption?: PornConsumption | null;
+    caffeineIntake?: 'none' | 'low' | 'medium' | 'high' | null;
+    dailyEvents: string[];
+    tags: string[];
+    notes: string | null;
+    exercise: ExerciseRecord[];
+    sex: SexRecordDetails[];
+    masturbation: MasturbationRecordDetails[];
+    caffeineRecord?: CaffeineRecord;
+    alcoholRecord?: AlcoholRecord | null;
+    health?: Health;
+    changeHistory: ChangeRecord[];
 }
 
 export interface PartnerProfile {
     id: string;
     name: string;
-    avatarColor?: string | null;
-    age?: number | null;
-    height?: number | null;
-    weight?: number | null;
-    cupSize?: string | null;
-    type?: PartnerType | null;
-    isMarried?: boolean;
-    origin?: string | null;
-    firstEncounterDate?: string | null;
-    smoking?: 'none' | 'occasional' | 'frequent' | null;
-    alcohol?: 'none' | 'occasional' | 'frequent' | null;
-    occupation?: string | null;
-    primaryValues?: string | null;
-    petPeeves?: string | null;
-    notes?: string | null;
-    contrastDaily?: string | null;
-    contrastBedroom?: string | null;
-    sensitiveSpots?: string[];
-    stimulationPreferences?: string[];
-    likedPositions?: string[];
-    dislikedActs?: string[];
-    socialTags?: string[];
-    milestones?: Record<string, string>;
-    deepThroatLevel?: number;
-    orgasmDifficulty?: 'easy' | 'medium' | 'hard' | null;
+    avatarColor?: string;
+    type: PartnerType;
+    isMarried: boolean;
+    age?: number;
+    height?: number;
+    weight?: number;
+    cupSize?: string;
+    origin?: string;
+    firstEncounterDate?: string;
+    contrastDaily?: string;
+    contrastBedroom?: string;
+    sensitiveSpots: string[];
+    stimulationPreferences: string[];
+    likedPositions: string[];
+    dislikedActs: string[];
+    socialTags: string[];
+    smoking: 'none' | 'occasional' | 'frequent';
+    alcohol: 'none' | 'occasional' | 'frequent';
+    milestones: Record<string, string>;
+    deepThroatLevel?: 0 | 1 | 2 | 3;
+    orgasmDifficulty?: 'easy' | 'medium' | 'hard';
     analDeveloped?: boolean;
     squirtingAbility?: boolean;
-}
-
-export interface ChangeDetail {
-    field: string;
-    oldValue: string;
-    newValue: string;
-    category?: HistoryCategory;
-}
-
-export interface ChangeRecord {
-    timestamp: number;
-    summary: string;
-    details: ChangeDetail[];
-    type?: HistoryEventType;
-}
-
-export interface MorningRecord {
-    id: string;
-    timestamp?: number; 
-    wokeWithErection: boolean;
-    hardness?: HardnessLevel | null;
-    retention?: MorningWoodRetention | null;
-    wokenByErection?: boolean;
-    durationImpression?: ErectionDurationImpression | null;
-}
-
-export interface SleepRecord {
-    id: string;
-    startTime?: string | null; 
-    endTime?: string | null; 
-    quality: number; 
-    attire?: SleepAttire | null;
-    naturalAwakening?: boolean;
-    nocturnalEmission?: boolean;
-    withPartner?: boolean;
-    preSleepState?: PreSleepState | null;
-    naps: NapRecord[];
-    hasDream?: boolean;
-    dreamTypes?: string[];
-    environment?: {
-        location: SleepLocation;
-        temperature: SleepTemperature;
-    };
-}
-
-export interface Health {
-    isSick: boolean; 
-    discomfortLevel?: DiscomfortLevel | null;
-    symptoms?: string[];
-    medications?: string[];
-    feeling?: HealthFeeling | null;
-    illnessType?: IllnessType | null;
-    medicationTaken?: boolean | null;
-    medicationName?: string | null;
-}
-
-export interface LogEntry {
-    date: string; 
-    status: 'pending' | 'completed';
-    updatedAt: number;
-    morning?: MorningRecord | null;
-    sleep?: SleepRecord | null;
-    location?: Location | null;
-    weather?: Weather | null;
-    mood?: Mood | null;
-    stressLevel?: StressLevel | null;
-    health?: Health | null;
-    alcohol?: AlcoholConsumption | null;
-    alcoholRecord?: AlcoholRecord | null;
-    pornConsumption?: PornConsumption | null;
-    caffeineIntake?: CaffeineIntake | null; 
-    caffeineRecord?: CaffeineRecord | null; 
-    dailyEvents?: string[];
-    exercise?: ExerciseRecord[];
-    sex?: SexRecordDetails[];
-    masturbation?: MasturbationRecordDetails[];
-    tags?: string[];
-    notes?: string | null;
-    changeHistory?: ChangeRecord[];
-}
-
-export interface StoredData {
-    version: number;
-    logs: LogEntry[];
-}
-
-export interface BackupState {
-    timestamp: string;
-    logs: LogEntry[];
+    primaryValues?: string;
+    petPeeves?: string;
+    notes?: string;
 }
 
 export interface Snapshot {
@@ -367,4 +303,49 @@ export interface Snapshot {
         logs: LogEntry[];
         partners: PartnerProfile[];
     };
+}
+
+export interface StoredData {
+    version: number;
+    logs: LogEntry[];
+}
+
+export interface AppSettings {
+    version: string;
+    theme: 'system' | 'light' | 'dark';
+    privacyMode: boolean;
+    enableNotifications: boolean;
+    notificationTime: { morning: string; evening: string };
+    hiddenFields: string[];
+    lastExportAt?: number;
+}
+
+export interface UnifiedEvent {
+    schemaVersion: number;
+    id: string;
+    type: EventType;
+    dateStr: string;
+    timestamp: number;
+    metrics: {
+        value?: number;
+        intensity?: number;
+        duration?: number;
+        amount?: number;
+        [key: string]: any;
+    };
+    flags: {
+        isGood?: boolean;
+        isLate?: boolean;
+        withPartner?: boolean;
+        orgasm?: boolean;
+        ejaculation?: boolean;
+        [key: string]: any;
+    };
+    tags: string[];
+    refId?: string;
+}
+
+export interface BackupState {
+    lastBackup?: number;
+    isAutoBackupEnabled: boolean;
 }
