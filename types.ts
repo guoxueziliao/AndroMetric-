@@ -1,4 +1,3 @@
-
 export type HardnessLevel = 1 | 2 | 3 | 4 | 5;
 export type StressLevel = 1 | 2 | 3 | 4 | 5;
 export type ErectionDurationImpression = 'brief' | 'long' | 'unsure';
@@ -16,7 +15,7 @@ export type IllnessType = 'cold' | 'fever' | 'headache' | 'other';
 export type PartnerType = 'stable' | 'dating' | 'casual' | 'service';
 
 // v0.0.5 New Enums
-export type SleepLocation = 'home' | 'hotel' | 'others_home' | 'dorm' | 'other';
+export type SleepLocation = 'home' | 'hotel' | 'others_home' | 'dorm' | 'office' | 'transport' | 'other';
 export type SleepTemperature = 'cold' | 'comfortable' | 'hot';
 export type DrunkLevel = 'none' | 'tipsy' | 'drunk' | 'wasted';
 export type HealthFeeling = 'normal' | 'minor_discomfort' | 'bad'; // Deprecated in v0.0.6
@@ -203,6 +202,8 @@ export interface NapRecord {
     hasDream?: boolean;
     dreamTypes?: string[];
     notes?: string;
+    location?: SleepLocation;
+    naturalAwakening?: boolean;
 }
 
 export interface AlcoholItem {

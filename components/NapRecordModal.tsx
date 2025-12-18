@@ -1,8 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
-import { CloudSun, Clock, Play, Sparkles, Star, Zap, Trash2, Check, Minus, Plus } from 'lucide-react';
+import { CloudSun, Clock, Play, Sparkles, Star, Zap, Trash2, Check, Minus, Plus, MapPin, Leaf, RotateCcw } from 'lucide-react';
 import Modal from './Modal';
-import { NapRecord } from '../types';
+import { NapRecord, SleepLocation } from '../types';
 import HardnessSelector from './HardnessSelector';
 
 interface NapRecordModalProps {
@@ -13,10 +12,18 @@ interface NapRecordModalProps {
 }
 
 const DREAM_TYPES = ['情色', '噩梦', '普通梦', '模糊梦', '离奇', '清醒梦'];
+const NAP_LOCATIONS: { value: SleepLocation, label: string }[] = [
+    { value: 'home', label: '家里' },
+    { value: 'office', label: '办公室' },
+    { value: 'transport', label: '通勤中' },
+    { value: 'hotel', label: '酒店' },
+    { value: 'other', label: '其他' }
+];
 
 const NapRecordModal: React.FC<NapRecordModalProps> = ({ isOpen, onClose, onSave, initialData }) => {
     const [record, setRecord] = useState<NapRecord>({
-        id: '', startTime: '', ongoing: false, duration: 30, quality: 3, hardness: null, hasDream: false, dreamTypes: [], notes: ''
+        id: '', startTime: '', ongoing: false, duration: 30, quality: 3, hardness: null, hasDream: false, dreamTypes: [], notes: '',
+        location: 'home', naturalAwakening: true
     });
     const [endTime, setEndTime] = useState('');
 
@@ -29,7 +36,9 @@ const NapRecordModal: React.FC<NapRecordModalProps> = ({ isOpen, onClose, onSave
                     hardness: initialData.hardness || null,
                     hasDream: initialData.hasDream || false,
                     dreamTypes: initialData.dreamTypes || [],
-                    notes: initialData.notes || ''
+                    notes: initialData.notes || '',
+                    location: initialData.location || 'home',
+                    naturalAwakening: initialData.naturalAwakening ?? true
                 });
                 
                 if (initialData.startTime && initialData.duration) {
@@ -55,7 +64,9 @@ const NapRecordModal: React.FC<NapRecordModalProps> = ({ isOpen, onClose, onSave
                     hardness: null,
                     hasDream: false,
                     dreamTypes: [],
-                    notes: ''
+                    notes: '',
+                    location: 'home',
+                    naturalAwakening: true
                 });
                 setEndTime(endD.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }));
             }
@@ -88,6 +99,8 @@ const NapRecordModal: React.FC<NapRecordModalProps> = ({ isOpen, onClose, onSave
 
     if (!isOpen) return null;
 
+    const isHardnessSelected = record.hardness !== null;
+
     return (
         <Modal
             isOpen={isOpen}
@@ -99,37 +112,61 @@ const NapRecordModal: React.FC<NapRecordModalProps> = ({ isOpen, onClose, onSave
                     className="w-full py-4 text-white font-black rounded-2xl shadow-xl transition-all active:scale-95 flex items-center justify-center gap-2 bg-orange-500 shadow-orange-500/20"
                 >
                     <Check size={20} strokeWidth={3}/>
-                    保存记录
+                    完成午休
                 </button>
             }
         >
             <div className="space-y-8 pb-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                 
-                {/* 1. Header Card - Large Status */}
+                {/* 1. Header Card - Summary */}
                 <div className="bg-slate-900 rounded-[2.5rem] p-8 text-white relative overflow-hidden shadow-2xl">
                     <div className="absolute top-0 right-0 w-48 h-48 bg-orange-500/20 rounded-full blur-[60px] -translate-y-1/2 translate-x-1/2"></div>
                     <div className="relative z-10 flex flex-col items-center">
                         <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-orange-400 mb-2">
-                            <Clock size={14}/> Nap Summary
+                            <Clock size={14}/> Nap Statistics
                         </div>
                         <div className="flex items-baseline gap-1">
                             <span className="text-6xl font-black tabular-nums">{record.duration}</span>
-                            <span className="text-sm font-bold opacity-60 uppercase">Mins</span>
+                            <span className="text-sm font-bold opacity-60 uppercase">分钟</span>
                         </div>
                         <div className="mt-6 flex gap-3 w-full">
                             <div className="flex-1 bg-white/10 backdrop-blur-md rounded-2xl p-3 flex flex-col items-center">
-                                <span className="text-[9px] font-bold opacity-50 uppercase">Start</span>
-                                <input type="time" value={record.startTime} onChange={e => setRecord({...record, startTime: e.target.value})} className="bg-transparent text-sm font-mono font-bold outline-none text-center"/>
+                                <span className="text-[9px] font-bold opacity-50 uppercase">开始</span>
+                                <input type="time" value={record.startTime} onChange={e => setRecord({...record, startTime: e.target.value})} className="bg-transparent text-sm font-mono font-bold outline-none text-center w-full"/>
                             </div>
                             <div className="flex-1 bg-white/10 backdrop-blur-md rounded-2xl p-3 flex flex-col items-center">
-                                <span className="text-[9px] font-bold opacity-50 uppercase">End</span>
-                                <input type="time" value={endTime} onChange={e => handleEndTimeChange(e.target.value)} className="bg-transparent text-sm font-mono font-bold outline-none text-center"/>
+                                <span className="text-[9px] font-bold opacity-50 uppercase">醒来</span>
+                                <input type="time" value={endTime} onChange={e => handleEndTimeChange(e.target.value)} className="bg-transparent text-sm font-mono font-bold outline-none text-center w-full"/>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {/* 2. Quality Rating */}
+                {/* 2. Environment & Quality */}
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><MapPin size={12}/> 午休地点</label>
+                        <select 
+                            value={record.location} 
+                            onChange={e => setRecord({...record, location: e.target.value as any})}
+                            className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-xs font-bold outline-none appearance-none"
+                        >
+                            {NAP_LOCATIONS.map(loc => <option key={loc.value} value={loc.value}>{loc.label}</option>)}
+                        </select>
+                    </div>
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><Leaf size={12}/> 是否自然醒</label>
+                        <button 
+                            onClick={() => setRecord({...record, naturalAwakening: !record.naturalAwakening})}
+                            className={`w-full p-3 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-2 ${record.naturalAwakening ? 'bg-green-50 border-green-200 text-green-600' : 'bg-slate-50 border-transparent text-slate-400'}`}
+                        >
+                            {record.naturalAwakening ? <Check size={14}/> : null}
+                            {record.naturalAwakening ? '自然觉醒' : '闹钟惊醒'}
+                        </button>
+                    </div>
+                </div>
+
+                {/* 3. Quality Rating */}
                 <div className="space-y-4">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
                         <Star size={12}/> 午休质量反馈
@@ -147,21 +184,27 @@ const NapRecordModal: React.FC<NapRecordModalProps> = ({ isOpen, onClose, onSave
                     </div>
                 </div>
 
-                {/* 3. Hardness Selector */}
+                {/* 4. Hardness Selector - Logic Fixed */}
                 <div className="space-y-4">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                        <Zap size={12}/> 午起生理反馈 (生理需求)
+                        <Zap size={12}/> 午起生理反馈 (勃起硬度)
                     </label>
                     <HardnessSelector value={record.hardness || 0} onChange={h => setRecord({...record, hardness: h as any})} />
+                    
                     <button 
-                        onClick={() => setRecord({...record, hardness: record.hardness === null ? 3 : null})}
-                        className={`w-full py-3 rounded-xl text-xs font-bold transition-all border ${record.hardness === null ? 'bg-slate-100 text-slate-500 border-transparent' : 'bg-red-50 text-red-600 border-red-100'}`}
+                        onClick={() => setRecord({...record, hardness: isHardnessSelected ? null : 3})}
+                        className={`w-full py-3 rounded-xl text-xs font-bold transition-all border flex items-center justify-center gap-2 ${isHardnessSelected ? 'bg-slate-100 text-slate-500 border-slate-200 hover:bg-slate-200' : 'bg-orange-50 text-orange-600 border-orange-100 animate-pulse'}`}
                     >
-                        {record.hardness === null ? "开启生理记录" : "本次无明显勃起 (点此取消)"}
+                        {isHardnessSelected ? <RotateCcw size={14}/> : <Plus size={14}/>}
+                        {isHardnessSelected ? "重置生理记录" : "开启生理记录 (本次有勃起)"}
                     </button>
+                    
+                    {!isHardnessSelected && (
+                        <p className="text-[10px] text-slate-400 text-center italic">若午起无明显生理反应，保持为空即可</p>
+                    )}
                 </div>
 
-                {/* 4. Dreams */}
+                {/* 5. Dreams */}
                 <div className="space-y-4">
                     <div className="flex items-center justify-between">
                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
@@ -194,8 +237,8 @@ const NapRecordModal: React.FC<NapRecordModalProps> = ({ isOpen, onClose, onSave
                     <textarea 
                         value={record.notes}
                         onChange={e => setRecord({...record, notes: e.target.value})}
-                        placeholder="记录午休的心得，或者是周围环境对睡眠的影响..."
-                        className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-3xl p-4 text-xs font-medium outline-none focus:border-orange-400 transition-all min-h-[80px]"
+                        placeholder="记录午休的心得，或者是周围环境对睡眠的影响（如：空调太冷、噪音等）..."
+                        className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-3xl p-4 text-xs font-medium outline-none focus:border-orange-400 transition-all min-h-[100px]"
                     />
                 </div>
             </div>
