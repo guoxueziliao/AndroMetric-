@@ -203,7 +203,11 @@ export interface NapRecord {
     dreamTypes?: string[];
     notes?: string;
     location?: SleepLocation;
+    temperature?: SleepTemperature;
     naturalAwakening?: boolean;
+    attire?: SleepAttire;
+    withPartner?: boolean;
+    preSleepState?: PreSleepState;
 }
 
 export interface AlcoholItem {

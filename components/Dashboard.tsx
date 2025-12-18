@@ -154,7 +154,7 @@ const ActivityWidget = ({ log }: { log?: LogEntry | null }) => {
 };
 
 const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateToBackup, onFinishExercise, onFinishMasturbation, onFinishNap }) => {
-  const { logs, deleteLog, toggleNap, addOrUpdateLog } = useData();
+  const { logs, deleteLog, toggleNap, addOrUpdateLog, toggleSleepLog } = useData();
   const { showToast } = useToast();
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -208,7 +208,17 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
       } else {
           try {
               await toggleNap();
-              showToast('午吸开始', 'success');
+              showToast('午休开始', 'success');
+          } catch (e: any) {
+              showToast(e.message, 'error');
+          }
+      }
+  };
+
+  const handleCancelSleep = async () => {
+      if (pendingLog) {
+          try {
+              await toggleSleepLog(pendingLog);
           } catch (e: any) {
               showToast(e.message, 'error');
           }
@@ -266,6 +276,20 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
         {/* Ongoing Tasks Section */}
         {(ongoingNap || ongoingExercise || ongoingMb || pendingLog) && (
             <section className="space-y-3">
+                {/* Sleep Banner (Brought back and logic fixed) */}
+                {pendingLog && (
+                    <div className="bg-gradient-to-r from-emerald-500 to-teal-600 p-4 rounded-3xl shadow-lg shadow-emerald-500/20 text-white flex justify-between items-center animate-in slide-in-from-top-2">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-white/20 rounded-full backdrop-blur-sm animate-pulse"><Bed size={20}/></div>
+                            <div>
+                                <div className="font-bold text-sm">入睡记录中...</div>
+                                <div className="text-xs opacity-90">醒来后请前往日记补全</div>
+                            </div>
+                        </div>
+                        <button onClick={handleCancelSleep} className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-full text-xs font-bold transition-colors">取消</button>
+                    </div>
+                )}
+
                 {/* Nap Banner */}
                 {ongoingNap && (
                     <div className="bg-gradient-to-r from-orange-400 to-amber-500 p-4 rounded-3xl shadow-lg shadow-orange-500/20 text-white flex justify-between items-center animate-in slide-in-from-top-2">
@@ -282,7 +306,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
 
                 {/* Exercise Banner */}
                 {ongoingExercise && onFinishExercise && (
-                    <div className="bg-gradient-to-r from-emerald-500 to-teal-600 p-4 rounded-3xl shadow-lg shadow-emerald-500/20 text-white flex justify-between items-center animate-in slide-in-from-top-2">
+                    <div className="bg-gradient-to-r from-blue-500 to-indigo-600 p-4 rounded-3xl shadow-lg shadow-blue-500/20 text-white flex justify-between items-center animate-in slide-in-from-top-2">
                         <div className="flex items-center gap-3">
                             <div className="p-2 bg-white/20 rounded-full backdrop-blur-sm animate-pulse"><Timer size={20}/></div>
                             <div>
@@ -290,13 +314,13 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                                 <div className="text-xs opacity-90 font-mono">{ongoingExercise.startTime} 开始</div>
                             </div>
                         </div>
-                        <button onClick={() => onFinishExercise(ongoingExercise)} className="px-4 py-2 bg-white text-emerald-600 rounded-full text-xs font-bold shadow-sm active:scale-95 transition-transform">结束</button>
+                        <button onClick={() => onFinishExercise(ongoingExercise)} className="px-4 py-2 bg-white text-blue-600 rounded-full text-xs font-bold shadow-sm active:scale-95 transition-transform">结束</button>
                     </div>
                 )}
 
                 {/* Masturbation Banner */}
                 {ongoingMb && onFinishMasturbation && (
-                    <div className="bg-gradient-to-r from-blue-500 to-indigo-600 p-4 rounded-3xl shadow-lg shadow-blue-500/20 text-white flex justify-between items-center animate-in slide-in-from-top-2">
+                    <div className="bg-gradient-to-r from-purple-500 to-pink-600 p-4 rounded-3xl shadow-lg shadow-purple-500/20 text-white flex justify-between items-center animate-in slide-in-from-top-2">
                         <div className="flex items-center gap-3">
                             <div className="p-2 bg-white/20 rounded-full backdrop-blur-sm animate-pulse"><Hand size={20}/></div>
                             <div>
@@ -304,7 +328,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                                 <div className="text-xs opacity-90 font-mono">{ongoingMb.startTime} 开始</div>
                             </div>
                         </div>
-                        <button onClick={() => setIsMbActionModalOpen(true)} className="px-4 py-2 bg-white text-blue-600 rounded-full text-xs font-bold shadow-sm active:scale-95 transition-transform">结束</button>
+                        <button onClick={() => setIsMbActionModalOpen(true)} className="px-4 py-2 bg-white text-purple-600 rounded-full text-xs font-bold shadow-sm active:scale-95 transition-transform">结束</button>
                     </div>
                 )}
             </section>
@@ -318,6 +342,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
         </CalendarHeatmap>
       </div>
       
+      {/* ... (Modals remain same) */}
       <Modal isOpen={isSummaryModalOpen} onClose={() => { setIsSummaryModalOpen(false); setIsHistoryView(false); }} title={isHistoryView ? "修改历史" : "记录详情"}>
         {summaryLog && (
             <div className="space-y-4 pb-4">
