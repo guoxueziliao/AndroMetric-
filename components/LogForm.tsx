@@ -5,7 +5,7 @@ import {
     StickyNote, Check, Trash2, Clock, MapPin, 
     Zap, Activity, Sparkles, Sun, Cloud, CloudRain, 
     Snowflake, Wind, CloudFog, Home, Navigation, Hotel, Plane, 
-    Shirt, Droplets, ShieldAlert, Search, Coffee, Film, BrainCircuit, Edit3, ChevronRight
+    Shirt, Droplets, ShieldAlert, Search, Coffee, Film, BrainCircuit, Edit3, ChevronRight, Beer
 } from 'lucide-react';
 import BeverageModal from './BeverageModal';
 import SexRecordModal from './SexRecordModal';
@@ -44,7 +44,7 @@ const QualityScoreRing = ({ score }: { score: number }) => {
                 <circle cx="32" cy="32" r={radius} stroke="currentColor" strokeWidth="4" fill="transparent" strokeDasharray={circumference} strokeDashoffset={offset} strokeLinecap="round" className="text-orange-500 transition-all duration-1000 ease-out" />
             </svg>
             <div className="absolute flex flex-col items-center">
-                <span className="text-[8px] font-black text-slate-400 leading-none uppercase">Quality</span>
+                <span className="text-[9px] font-black text-slate-400 leading-none uppercase">质量</span>
                 <span className="text-sm font-black text-slate-800 dark:text-slate-100 leading-none mt-0.5">{score}</span>
             </div>
         </div>
@@ -86,7 +86,7 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
         markDirty();
     };
 
-    const handleEdit = (type: 'bev' | 'ex' | 'sex' | 'mb' | 'nap', data: any) => {
+    const handleEdit = (type: 'alc' | 'bev' | 'ex' | 'sex' | 'mb' | 'nap', data: any) => {
         setEditTarget({ type, data });
         setModalState(s => ({ ...s, [type]: true }));
     };
@@ -96,7 +96,7 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
             'sex': '性爱记录',
             'masturbation': '自慰记录',
             'exercise': '运动记录',
-            'caffeine': '饮品记录',
+            'caffeine': '提神饮品',
             'alcohol': '饮酒记录',
             'nap': '午休记录'
         };
@@ -135,14 +135,6 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
         }));
         markDirty();
     };
-
-    const exerciseDurationTotal = useMemo(() => {
-        return (log.exercise || []).reduce((acc, cur) => acc + (cur.duration || 0), 0);
-    }, [log.exercise]);
-
-    const caffeineCountTotal = useMemo(() => {
-        return (log.caffeineRecord?.items || []).length;
-    }, [log.caffeineRecord]);
 
     return (
         <div className="space-y-6">
@@ -185,165 +177,115 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
 
                 <div className="p-6 min-h-[340px]">
                     {activeMidTab === 'life' && (
-                        <div className="space-y-6 animate-in fade-in duration-300">
-                            {/* 核心指标 2x2 格子矩阵 */}
-                            <div className="grid grid-cols-2 gap-4">
-                                {/* 格子 1: 饮酒 */}
+                        <div className="space-y-8 animate-in fade-in duration-300">
+                            {/* 饮酒部分 - 扁平化列表布局 */}
+                            <div>
+                                <div className="flex justify-between items-center mb-3">
+                                    <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">饮酒</label>
+                                    <button onClick={() => { setEditTarget(null); setModalState(s => ({ ...s, alc: true })); }} className="text-[11px] text-amber-600 font-black">+ 添加</button>
+                                </div>
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest block">饮酒 (ALCOHOL)</label>
                                     {log.alcoholRecord ? (
-                                        <div 
-                                            onClick={() => setModalState(s => ({ ...s, alc: true }))}
-                                            className="relative aspect-square bg-amber-50 dark:bg-amber-900/20 border-2 border-amber-200 dark:border-amber-800 rounded-3xl flex flex-col items-center justify-center p-4 text-center cursor-pointer group hover:border-amber-400 transition-all shadow-sm"
-                                        >
-                                            <div className="absolute top-2 left-2 flex items-center gap-1 text-amber-500 opacity-60 group-hover:opacity-100">
-                                                <Edit3 size={12}/><span className="text-[9px] font-black">修改</span>
+                                        <div className="group flex justify-between items-center bg-white dark:bg-slate-800 p-3.5 rounded-2xl border border-slate-100 dark:border-white/5 shadow-sm">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-9 h-9 bg-amber-50 dark:bg-amber-900/30 rounded-xl flex items-center justify-center text-amber-500"><Beer size={18}/></div>
+                                                <div>
+                                                    <div className="text-sm font-black text-slate-700 dark:text-slate-200">
+                                                        {log.alcoholRecord.totalGrams}g <span className="text-[10px] text-slate-400">纯酒精</span>
+                                                    </div>
+                                                    <div className="text-[10px] text-slate-400 font-bold mt-0.5 line-clamp-1">{log.alcoholRecord.items.map(i => i.name).join(', ')}</div>
+                                                </div>
                                             </div>
-                                            <div className="text-2xl mb-1">🍺</div>
-                                            <div className="text-xl font-black text-amber-600 dark:text-amber-400 tabular-nums">
-                                                {log.alcoholRecord.totalGrams}<span className="text-[10px] ml-0.5">g</span>
+                                            <div className="flex gap-1.5">
+                                                <button onClick={() => handleEdit('alc', log.alcoholRecord)} className="p-2 bg-slate-50 dark:bg-slate-700 rounded-xl text-slate-400 hover:text-brand-accent transition-colors"><Edit3 size={15}/></button>
+                                                <button onClick={() => removeItem('alcohol', '')} className="p-2 bg-slate-50 dark:bg-slate-700 rounded-xl text-slate-400 hover:text-red-500 transition-colors"><Trash2 size={15}/></button>
                                             </div>
-                                            <div className="text-[9px] font-bold text-amber-500/70 mt-1 line-clamp-2 px-1">
-                                                {log.alcoholRecord.items.map(i => i.name).join(', ')}
-                                            </div>
-                                            <button 
-                                                onClick={(e) => { e.stopPropagation(); removeItem('alcohol', ''); }}
-                                                className="absolute -top-1 -right-1 p-2 bg-white dark:bg-slate-800 rounded-full shadow-md text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all border border-slate-100 dark:border-slate-700"
-                                            >
-                                                <Trash2 size={14}/>
-                                            </button>
                                         </div>
                                     ) : (
-                                        <div 
-                                            onClick={() => setModalState(s => ({ ...s, alc: true }))}
-                                            className="aspect-square border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-3xl flex flex-col items-center justify-center text-slate-300 dark:text-slate-700 hover:border-brand-accent hover:text-brand-accent transition-all cursor-pointer bg-slate-50/30 dark:bg-slate-950/30"
-                                        >
-                                            <Plus size={24} strokeWidth={3} />
-                                            <span className="text-[10px] font-black mt-2">添加饮酒</span>
-                                        </div>
+                                        <p className="text-[11px] text-slate-300 italic pl-1">未记录饮酒</p>
                                     )}
-                                </div>
-
-                                {/* 格子 2: 看片 */}
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest block">看片 (PORN)</label>
-                                    <div className="aspect-square grid grid-cols-2 gap-2 h-full content-start">
-                                        {[
-                                            { id: 'none', label: '无' },
-                                            { id: 'low', label: '少量' },
-                                            { id: 'medium', label: '适量' },
-                                            { id: 'high', label: '沉迷' }
-                                        ].map(opt => (
-                                            <button 
-                                                key={opt.id}
-                                                onClick={() => setField('pornConsumption', opt.id)}
-                                                className={`flex items-center justify-center rounded-2xl text-xs font-black border transition-all ${log.pornConsumption === opt.id ? 'bg-blue-50 dark:bg-blue-900/30 text-brand-accent border-brand-accent shadow-sm' : 'bg-slate-50 dark:bg-slate-800 border-transparent text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'}`}
-                                            >
-                                                {opt.label}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                {/* 格子 3: 提神饮品汇总 */}
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest block">提神饮品 (BOOST)</label>
-                                    <div 
-                                        onClick={() => { setEditTarget(null); setModalState(s => ({ ...s, bev: true })); }}
-                                        className={`aspect-square rounded-3xl border-2 flex flex-col items-center justify-center p-4 text-center cursor-pointer transition-all shadow-sm ${caffeineCountTotal > 0 ? 'bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800 hover:border-orange-400' : 'border-dashed border-slate-200 dark:border-slate-800 text-slate-300 bg-slate-50/30 hover:border-brand-accent'}`}
-                                    >
-                                        {caffeineCountTotal > 0 ? (
-                                            <>
-                                                <div className="text-2xl mb-1">☕</div>
-                                                <div className="text-xl font-black text-orange-600 dark:text-orange-400 tabular-nums">
-                                                    {caffeineCountTotal}<span className="text-[10px] ml-0.5">杯</span>
-                                                </div>
-                                                <div className="text-[9px] font-bold text-orange-500/70 mt-1 line-clamp-2 px-1">
-                                                    {log.caffeineRecord?.items.map(i => i.name).join(', ')}
-                                                </div>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Plus size={24} strokeWidth={3} />
-                                                <span className="text-[10px] font-black mt-2">添加饮品</span>
-                                            </>
-                                        )}
-                                    </div>
-                                </div>
-
-                                {/* 格子 4: 运动汇总 */}
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest block">运动 (EXER)</label>
-                                    <div 
-                                        onClick={() => { setEditTarget(null); setModalState(s => ({ ...s, ex: true })); }}
-                                        className={`aspect-square rounded-3xl border-2 flex flex-col items-center justify-center p-4 text-center cursor-pointer transition-all shadow-sm ${exerciseDurationTotal > 0 ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800 hover:border-emerald-400' : 'border-dashed border-slate-200 dark:border-slate-800 text-slate-300 bg-slate-50/30 hover:border-brand-accent'}`}
-                                    >
-                                        {exerciseDurationTotal > 0 ? (
-                                            <>
-                                                <div className="text-2xl mb-1">🏃</div>
-                                                <div className="text-xl font-black text-emerald-600 dark:text-emerald-400 tabular-nums">
-                                                    {exerciseDurationTotal}<span className="text-[10px] ml-0.5">分</span>
-                                                </div>
-                                                <div className="text-[9px] font-bold text-emerald-500/70 mt-1 line-clamp-2 px-1">
-                                                    {log.exercise?.map(i => i.type).join(', ')}
-                                                </div>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Plus size={24} strokeWidth={3} />
-                                                <span className="text-[10px] font-black mt-2">记录运动</span>
-                                            </>
-                                        )}
-                                    </div>
                                 </div>
                             </div>
 
-                            {/* 详细列表区 */}
-                            {caffeineCountTotal > 0 && (
-                                <div className="animate-in slide-in-from-top-2">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2 px-1">提神饮品详情</label>
-                                    <div className="space-y-2">
-                                        {log.caffeineRecord?.items.map(item => (
-                                            <div key={item.id} className="group flex justify-between items-center bg-white dark:bg-slate-800 p-3 rounded-2xl border border-slate-100 dark:border-white/5 shadow-sm">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-8 h-8 bg-orange-50 dark:bg-orange-900/30 rounded-lg flex items-center justify-center text-orange-500"><Coffee size={14}/></div>
-                                                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{item.name} <span className="opacity-40 text-[10px] ml-1">{item.time}</span></span>
-                                                </div>
-                                                <div className="flex gap-1">
-                                                    <button onClick={() => handleEdit('bev', item)} className="p-1.5 bg-slate-50 dark:bg-slate-700 rounded-lg text-slate-400 hover:text-brand-accent transition-colors"><Edit3 size={14}/></button>
-                                                    <button onClick={() => removeItem('caffeine', item.id)} className="p-1.5 bg-slate-50 dark:bg-slate-700 rounded-lg text-slate-400 hover:text-red-500 transition-colors"><Trash2 size={14}/></button>
+                            {/* 提神饮品部分 */}
+                            <div>
+                                <div className="flex justify-between items-center mb-3">
+                                    <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">提神饮品</label>
+                                    <button onClick={() => { setEditTarget(null); setModalState(s => ({ ...s, bev: true })); }} className="text-[11px] text-orange-600 font-black">+ 添加</button>
+                                </div>
+                                <div className="space-y-2">
+                                    {log.caffeineRecord?.items.map(item => (
+                                        <div key={item.id} className="group flex justify-between items-center bg-white dark:bg-slate-800 p-3.5 rounded-2xl border border-slate-100 dark:border-white/5 shadow-sm">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-9 h-9 bg-orange-50 dark:bg-orange-900/30 rounded-xl flex items-center justify-center text-orange-500"><Coffee size={18}/></div>
+                                                <div>
+                                                    <div className="text-sm font-black text-slate-700 dark:text-slate-200">{item.name}</div>
+                                                    <div className="text-[10px] text-slate-400 font-bold mt-0.5">{item.time} · {item.volume}ml</div>
                                                 </div>
                                             </div>
-                                        ))}
-                                    </div>
+                                            <div className="flex gap-1.5">
+                                                <button onClick={() => handleEdit('bev', item)} className="p-2 bg-slate-50 dark:bg-slate-700 rounded-xl text-slate-400 hover:text-brand-accent transition-colors"><Edit3 size={15}/></button>
+                                                <button onClick={() => removeItem('caffeine', item.id)} className="p-2 bg-slate-50 dark:bg-slate-700 rounded-xl text-slate-400 hover:text-red-500 transition-colors"><Trash2 size={15}/></button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {(!log.caffeineRecord || log.caffeineRecord.items.length === 0) && <p className="text-[11px] text-slate-300 italic pl-1">未记录饮品</p>}
                                 </div>
-                            )}
+                            </div>
 
-                            {exerciseDurationTotal > 0 && (
-                                <div className="animate-in slide-in-from-top-2">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2 px-1">运动详情</label>
-                                    <div className="space-y-2">
-                                        {log.exercise?.map(item => (
-                                            <div key={item.id} className="group flex justify-between items-center bg-white dark:bg-slate-800 p-3 rounded-2xl border border-slate-100 dark:border-white/5 shadow-sm">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-8 h-8 bg-emerald-50 dark:bg-emerald-900/30 rounded-lg flex items-center justify-center text-emerald-500"><Dumbbell size={14}/></div>
-                                                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{item.type} <span className="opacity-40 text-[10px] ml-1">{item.duration}分</span></span>
-                                                </div>
-                                                <div className="flex gap-1">
-                                                    <button onClick={() => handleEdit('ex', item)} className="p-1.5 bg-slate-50 dark:bg-slate-700 rounded-lg text-slate-400 hover:text-brand-accent transition-colors"><Edit3 size={14}/></button>
-                                                    <button onClick={() => removeItem('exercise', item.id)} className="p-1.5 bg-slate-50 dark:bg-slate-700 rounded-lg text-slate-400 hover:text-red-500 transition-colors"><Trash2 size={14}/></button>
+                            {/* 运动部分 */}
+                            <div>
+                                <div className="flex justify-between items-center mb-3">
+                                    <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">运动</label>
+                                    <button onClick={() => { setEditTarget(null); setModalState(s => ({ ...s, ex: true })); }} className="text-[11px] text-emerald-600 font-black">+ 添加</button>
+                                </div>
+                                <div className="space-y-2">
+                                    {log.exercise?.map(item => (
+                                        <div key={item.id} className="group flex justify-between items-center bg-white dark:bg-slate-800 p-3.5 rounded-2xl border border-slate-100 dark:border-white/5 shadow-sm">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-9 h-9 bg-emerald-50 dark:bg-emerald-900/30 rounded-xl flex items-center justify-center text-emerald-500"><Dumbbell size={18}/></div>
+                                                <div>
+                                                    <div className="text-sm font-black text-slate-700 dark:text-slate-200">{item.type}</div>
+                                                    <div className="text-[10px] text-slate-400 font-bold mt-0.5">{item.duration}分钟 · {item.startTime}</div>
                                                 </div>
                                             </div>
-                                        ))}
-                                    </div>
+                                            <div className="flex gap-1.5">
+                                                <button onClick={() => handleEdit('ex', item)} className="p-2 bg-slate-50 dark:bg-slate-700 rounded-xl text-slate-400 hover:text-brand-accent transition-colors"><Edit3 size={15}/></button>
+                                                <button onClick={() => removeItem('exercise', item.id)} className="p-2 bg-slate-50 dark:bg-slate-700 rounded-xl text-slate-400 hover:text-red-500 transition-colors"><Trash2 size={15}/></button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {(!log.exercise || log.exercise.length === 0) && <p className="text-[11px] text-slate-300 italic pl-1">未记录运动</p>}
                                 </div>
-                            )}
+                            </div>
 
+                            {/* 看片部分 - 扁平横向布局 */}
+                            <div>
+                                <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-3 block">看片</label>
+                                <div className="flex gap-2">
+                                    {[
+                                        { id: 'none', label: '无' },
+                                        { id: 'low', label: '少量' },
+                                        { id: 'medium', label: '适量' },
+                                        { id: 'high', label: '沉迷' }
+                                    ].map(opt => (
+                                        <button 
+                                            key={opt.id}
+                                            onClick={() => setField('pornConsumption', opt.id)}
+                                            className={`flex-1 py-3.5 rounded-2xl text-xs font-black border transition-all ${log.pornConsumption === opt.id ? 'bg-blue-50 dark:bg-blue-900/30 text-brand-accent border-brand-accent shadow-sm' : 'bg-slate-50 dark:bg-slate-800 border-transparent text-slate-400 hover:bg-slate-100'}`}
+                                        >
+                                            {opt.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* 性活动部分 */}
                             <div className="pt-4 border-t border-slate-100 dark:border-white/5">
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block px-1">性活动 (SEXUAL)</label>
-                                <div className="space-y-3 mb-4">
+                                <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-4 block">性活动</label>
+                                <div className="space-y-3 mb-5">
                                     {log.masturbation?.map(m => (
-                                        <div key={m.id} className="group flex justify-between items-center bg-blue-50/50 dark:bg-blue-900/10 p-3 rounded-2xl border border-blue-100 dark:border-blue-900/30 shadow-sm">
+                                        <div key={m.id} className="group flex justify-between items-center bg-blue-50/50 dark:bg-blue-900/10 p-3.5 rounded-2xl border border-blue-100 dark:border-blue-900/30 shadow-sm">
                                             <div className="flex items-center gap-3">
                                                 <div className="w-10 h-10 bg-white dark:bg-slate-800 rounded-full flex items-center justify-center text-blue-500 shadow-sm"><Hand size={18}/></div>
                                                 <div>
@@ -351,14 +293,14 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
                                                     <div className="text-[9px] text-blue-500/70 font-bold">{m.contentItems?.length ? m.contentItems.map(i => i.type).join(', ') : '无素材'}</div>
                                                 </div>
                                             </div>
-                                            <div className="flex gap-1">
+                                            <div className="flex gap-1.5">
                                                 <button onClick={() => handleEdit('mb', m)} className="p-2 bg-white dark:bg-slate-700 rounded-xl text-slate-400 hover:text-brand-accent transition-colors shadow-sm"><Edit3 size={16}/></button>
                                                 <button onClick={() => removeItem('masturbation', m.id)} className="p-2 bg-white dark:bg-slate-700 rounded-xl text-slate-400 hover:text-red-500 transition-colors shadow-sm"><Trash2 size={16}/></button>
                                             </div>
                                         </div>
                                     ))}
                                     {log.sex?.map(s => (
-                                        <div key={s.id} className="group flex justify-between items-center bg-pink-50/50 dark:bg-pink-900/10 p-3 rounded-2xl border border-pink-100 dark:border-pink-900/30 shadow-sm">
+                                        <div key={s.id} className="group flex justify-between items-center bg-pink-50/50 dark:bg-pink-900/10 p-3.5 rounded-2xl border border-pink-100 dark:border-pink-900/30 shadow-sm">
                                             <div className="flex items-center gap-3">
                                                 <div className="w-10 h-10 bg-white dark:bg-slate-800 rounded-full flex items-center justify-center text-pink-500 shadow-sm"><Heart size={18} fill="currentColor" fillOpacity={0.2}/></div>
                                                 <div>
@@ -366,7 +308,7 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
                                                     <div className="text-[9px] text-pink-500/70 font-bold">{s.interactions?.length || 1} 阶段</div>
                                                 </div>
                                             </div>
-                                            <div className="flex gap-1">
+                                            <div className="flex gap-1.5">
                                                 <button onClick={() => handleEdit('sex', s)} className="p-2 bg-white dark:bg-slate-700 rounded-xl text-slate-400 hover:text-brand-accent transition-colors shadow-sm"><Edit3 size={16}/></button>
                                                 <button onClick={() => removeItem('sex', s.id)} className="p-2 bg-white dark:bg-slate-700 rounded-xl text-slate-400 hover:text-red-500 transition-colors shadow-sm"><Trash2 size={16}/></button>
                                             </div>
@@ -423,11 +365,11 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
                     {activeMidTab === 'health' && (
                         <div className="space-y-10 animate-in fade-in duration-300">
                             <div className="space-y-4">
-                                <label className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest block">心情 (MOOD)</label>
+                                <label className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest block">心情</label>
                                 <FaceSelector options={MOOD_FACES} value={log.mood || null} onChange={v => setField('mood', v)} />
                             </div>
                             <div className="space-y-4">
-                                <label className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest block">压力等级 (STRESS)</label>
+                                <label className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest block">压力等级</label>
                                 <FaceSelector options={STRESS_FACES} value={log.stressLevel || null} onChange={v => setField('stressLevel', v)} />
                             </div>
                             
@@ -651,7 +593,7 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
             />
             <AlcoholRecordModal 
                 isOpen={modalState.alc} 
-                onClose={() => setModalState(s => ({ ...s, alc: false }))} 
+                onClose={() => { setModalState(s => ({ ...s, alc: false })); setEditTarget(null); }} 
                 onSave={handleSaveAlcohol} 
                 initialData={log.alcoholRecord || undefined} 
             />

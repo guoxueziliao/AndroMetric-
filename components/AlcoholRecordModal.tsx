@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { Check, Minus, Plus, Moon, Clock, Trash2, Users, MapPin, Target, ChevronDown, ChevronUp, ChevronRight, Beer, Sparkles } from 'lucide-react';
 import Modal from './Modal';
@@ -20,9 +21,9 @@ const DRUNK_LEVELS: { id: DrunkLevel, label: string, emoji: string }[] = [
 ];
 
 const SCENE_OPTIONS = {
-    where: { label: '1. 哪里喝的？ (WHERE)', icon: MapPin, options: ['家', '烧烤摊', '大排档', '饭店', '餐厅', '酒吧', 'KTV', '夜店', '公司', '户外'], activeColor: 'bg-indigo-600 border-indigo-600' },
-    who: { label: '2. 和谁喝的？ (WHO)', icon: Users, options: ['独自', '朋友', '伴侣', '同事', '客户', '家人', '同学'], activeColor: 'bg-blue-600 border-blue-600' },
-    why: { label: '3. 为什么喝？ (WHY)', icon: Target, options: ['放松', '应酬', '聚会', '助兴', '借酒浇愁', '庆祝', '品鉴'], activeColor: 'bg-emerald-600 border-emerald-600' }
+    where: { label: '1. 哪里喝的？', icon: MapPin, options: ['家', '烧烤摊', '大排档', '饭店', '餐厅', '酒吧', 'KTV', '夜店', '公司', '户外'], activeColor: 'bg-indigo-600 border-indigo-600' },
+    who: { label: '2. 和谁喝的？', icon: Users, options: ['独自', '朋友', '伴侣', '同事', '客户', '家人', '同学'], activeColor: 'bg-blue-600 border-blue-600' },
+    why: { label: '3. 为什么喝？', icon: Target, options: ['放松', '应酬', '聚会', '助兴', '借酒浇愁', '庆祝', '品鉴'], activeColor: 'bg-emerald-600 border-emerald-600' }
 };
 
 const AlcoholRecordModal: React.FC<AlcoholRecordModalProps> = ({ isOpen, onClose, onSave, initialData }) => {
@@ -156,7 +157,6 @@ const AlcoholRecordModal: React.FC<AlcoholRecordModalProps> = ({ isOpen, onClose
                                                             <div className="text-[10px] text-slate-400 dark:text-slate-500 font-bold">{item.vol}ml · {item.abv}% ABV</div>
                                                         </div>
                                                     </div>
-                                                    {/* 修复黑色背景：改为自适应浅色/深色背景 */}
                                                     <div className="flex items-center gap-3 bg-slate-100 dark:bg-[#0a0f1d] p-1.5 rounded-xl border border-slate-200 dark:border-white/5 shadow-inner">
                                                         <button onClick={(e) => { e.stopPropagation(); updateItemValue(key, 'count', item.count - 1); }} className="p-1.5 text-slate-400 hover:text-red-500 transition-colors"><Minus size={16} strokeWidth={3}/></button>
                                                         <span className="text-lg font-black text-slate-900 dark:text-white w-5 text-center tabular-nums">{item.count}</span>

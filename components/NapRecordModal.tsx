@@ -123,12 +123,12 @@ const NapRecordModal: React.FC<NapRecordModalProps> = ({ isOpen, onClose, onSave
         >
             <div className="space-y-8 pb-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                 
-                {/* 1. Header Card - 时间追踪 (视觉修正：不再使用纯黑 bg-slate-900) */}
+                {/* 1. Header Card - 时间追踪 */}
                 <div className="bg-orange-50 dark:bg-slate-900 rounded-[2.5rem] p-8 text-orange-950 dark:text-white relative overflow-hidden shadow-inner border border-orange-100 dark:border-white/5">
                     <div className="absolute top-0 right-0 w-48 h-48 bg-orange-500/10 rounded-full blur-[60px] -translate-y-1/2 translate-x-1/2"></div>
                     <div className="relative z-10 flex flex-col items-center">
                         <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-orange-600 dark:text-orange-400 mb-2">
-                            <Clock size={14}/> Nap statistics
+                            <Clock size={14}/> 统计
                         </div>
                         <div className="flex items-baseline gap-1">
                             <span className="text-6xl font-black tabular-nums">{record.duration}</span>
