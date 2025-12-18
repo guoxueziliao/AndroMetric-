@@ -1,11 +1,9 @@
-
 import React, { createContext, useContext } from 'react';
 import { LogEntry, PartnerProfile, SexRecordDetails, MasturbationRecordDetails, ExerciseRecord, NapRecord, AlcoholRecord } from '../types';
 
 interface DataContextType {
     logs: LogEntry[];
     partners: PartnerProfile[];
-    // Add isInitializing to match useLogs return value
     isInitializing: boolean;
     addOrUpdateLog: (log: LogEntry) => Promise<void>;
     deleteLog: (date: string) => Promise<void>;
@@ -16,12 +14,13 @@ interface DataContextType {
     saveExercise: (record: ExerciseRecord) => Promise<void>;
     saveNap: (record: NapRecord) => Promise<void>;
     saveAlcoholRecord: (record: AlcoholRecord) => Promise<void>;
-    /* Added missing alcohol-related methods */
     toggleAlcohol: () => Promise<AlcoholRecord | null | undefined>;
     cancelAlcoholRecord: () => Promise<void>;
-    toggleNap: () => Promise<void>;
-    // Fix: Added missing cancelOngoingNap property to interface
+    // Fixed: toggleNap return type to match useLogs implementation
+    toggleNap: () => Promise<NapRecord | null | undefined>;
     cancelOngoingNap: () => Promise<void>;
+    cancelOngoingExercise: () => Promise<void>;
+    cancelOngoingMasturbation: () => Promise<void>;
     toggleSleepLog: (pendingLog?: LogEntry) => Promise<void>;
     importLogs: (importedLogs: LogEntry[], importedPartners?: PartnerProfile[]) => Promise<void>;
 }

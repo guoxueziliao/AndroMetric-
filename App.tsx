@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useMemo, useEffect, Suspense, lazy } from 'react';
 import { LogEntry, AppSettings, ExerciseRecord, MasturbationRecordDetails, NapRecord, AlcoholRecord } from './types';
 import Dashboard from './components/Dashboard';
@@ -49,7 +48,7 @@ const LoadingFallback = () => (
 );
 
 const AppContent: React.FC<{ data: any }> = ({ data }) => {
-  const { logs, partners, quickAddSex, quickAddMasturbation, saveExercise, saveAlcoholRecord, saveNap, isInitializing, toggleAlcohol } = data;
+  const { logs, partners, quickAddSex, quickAddMasturbation, saveExercise, saveAlcoholRecord, saveNap, isInitializing, toggleAlcohol, toggleNap } = data;
   const { showToast } = useToast();
   
   const [settings, setSettings] = useLocalStorage<AppSettings>('appSettings', defaultSettings);
@@ -123,7 +122,7 @@ const AppContent: React.FC<{ data: any }> = ({ data }) => {
   }, [settings.theme]);
 
   // --- Handlers ---
-  const wrapAction = async (action: () => Promise<void>, successMsg: string) => {
+  const wrapAction = async (action: () => Promise<any>, successMsg: string) => {
       try {
           await action();
           showToast(successMsg, 'success');
@@ -179,6 +178,17 @@ const AppContent: React.FC<{ data: any }> = ({ data }) => {
   const handleFinishAlcohol = (record: AlcoholRecord) => {
       setAlcToFinish(record);
       setIsAlcoholModalOpen(true);
+  };
+
+  const handleNapAction = async () => {
+      const ongoing = await toggleNap();
+      if (ongoing) {
+          // If already ongoing, open modal to finish
+          setNapToFinish(ongoing);
+          setIsNapModalOpen(true);
+      } else {
+          showToast('午休记录已开始', 'success');
+      }
   };
 
   // Exercise Logic
@@ -269,7 +279,7 @@ const AppContent: React.FC<{ data: any }> = ({ data }) => {
                 onSex={() => setIsQuickSexModalOpen(true)}
                 onMasturbation={handleStartMasturbation}
                 onExercise={handleStartExercise}
-                onNap={() => wrapAction(async () => await data.toggleNap(), '午休状态更新')}
+                onNap={handleNapAction}
                 onAlcohol={handleStartAlcohol} 
                 isSleepPending={!!pendingLog} 
                 isExerciseOngoing={!!ongoingExercise}

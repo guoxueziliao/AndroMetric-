@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { LogEntry, ExerciseRecord, SexRecordDetails, MasturbationRecordDetails, NapRecord, AlcoholRecord } from '../types';
 import CalendarHeatmap from './CalendarHeatmap';
-import { Moon, Zap, Activity, Hand, HeartPulse, Clock, Dumbbell, Footprints, Timer, CloudSun, Beer, TrendingUp, ShieldAlert, Edit3, Trash2, FastForward, Coffee, Bed, ArrowRight, User, Heart, RotateCcw, MapPin, Sparkles, Shirt, Star, Thermometer, BrainCircuit, Tag, Film, Smile, AlertTriangle, ChevronRight, Calendar, Check, AlertCircle, Sofa } from 'lucide-react';
+import { Moon, Zap, Activity, Hand, HeartPulse, Clock, Dumbbell, Footprints, Timer, CloudSun, Beer, TrendingUp, ShieldAlert, Edit3, Trash2, FastForward, Coffee, Bed, ArrowRight, User, Heart, RotateCcw, MapPin, Sparkles, Shirt, Star, Thermometer, BrainCircuit, Tag, Film, Smile, AlertTriangle, ChevronRight, Calendar, Check, AlertCircle, Sofa, X } from 'lucide-react';
 import Modal from './Modal';
 import SafeDeleteModal from './SafeDeleteModal';
 import { formatTime, calculateSleepDuration, analyzeSleep, formatDateFriendly, LABELS } from '../utils/helpers';
@@ -23,7 +23,7 @@ interface DashboardProps {
 type SummaryTab = 'diary' | 'track' | 'source';
 
 const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateToBackup, onFinishExercise, onFinishMasturbation, onFinishNap, onFinishAlcohol }) => {
-  const { logs, deleteLog, toggleNap, cancelOngoingNap, addOrUpdateLog, toggleSleepLog, cancelAlcoholRecord } = useData();
+  const { logs, deleteLog, toggleNap, cancelOngoingNap, addOrUpdateLog, toggleSleepLog, cancelAlcoholRecord, cancelOngoingExercise, cancelOngoingMasturbation } = useData();
   const { showToast } = useToast();
 
   const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
@@ -88,6 +88,22 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
       }
   };
 
+  const handleCancelTask = async (type: 'sleep' | 'nap' | 'mb' | 'exercise' | 'alcohol') => {
+      if (!confirm('确定要取消并丢弃当前计时的记录吗？')) return;
+      try {
+          switch(type) {
+              case 'sleep': await toggleSleepLog(pendingLog || undefined); break;
+              case 'nap': await cancelOngoingNap(); break;
+              case 'mb': await cancelOngoingMasturbation(); break;
+              case 'exercise': await cancelOngoingExercise(); break;
+              case 'alcohol': await cancelAlcoholRecord(); break;
+          }
+          showToast('记录已取消', 'info');
+      } catch (e) {
+          showToast('取消失败', 'error');
+      }
+  };
+
   const diaryDateInfo = useMemo(() => {
     if (!summaryLog) return { main: '', sub: '' };
     const d = new Date(summaryLog.date + 'T00:00:00');
@@ -136,7 +152,10 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                                 <div className="text-[10px] opacity-70">{formatTime(pendingLog.sleep?.startTime)} 开始</div>
                             </div>
                         </div>
-                        <button onClick={() => onEdit(pendingLog.date)} className="px-5 py-2 bg-white text-emerald-600 rounded-full text-xs font-bold shadow-sm active:scale-95 transition-all">醒了</button>
+                        <div className="flex items-center gap-2">
+                            <button onClick={() => handleCancelTask('sleep')} className="p-2 text-white/60 hover:text-white transition-colors"><X size={18}/></button>
+                            <button onClick={() => onEdit(pendingLog.date)} className="px-5 py-2 bg-white text-emerald-600 rounded-full text-xs font-bold shadow-sm active:scale-95 transition-all">醒了</button>
+                        </div>
                     </div>
                 )}
 
@@ -150,7 +169,10 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                                 <div className="text-[10px] opacity-70">{ongoingNap.startTime} 开始</div>
                             </div>
                         </div>
-                        <button onClick={() => onFinishNap?.(ongoingNap)} className="px-5 py-2 bg-white text-orange-600 rounded-full text-xs font-bold shadow-sm active:scale-95 transition-all">醒了</button>
+                        <div className="flex items-center gap-2">
+                            <button onClick={() => handleCancelTask('nap')} className="p-2 text-white/60 hover:text-white transition-colors"><X size={18}/></button>
+                            <button onClick={() => onFinishNap?.(ongoingNap)} className="px-5 py-2 bg-white text-orange-600 rounded-full text-xs font-bold shadow-sm active:scale-95 transition-all">醒了</button>
+                        </div>
                     </div>
                 )}
 
@@ -164,7 +186,10 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                                 <div className="text-[10px] opacity-70">{ongoingMb.startTime} 开始</div>
                             </div>
                         </div>
-                        <button onClick={() => onFinishMasturbation?.(ongoingMb)} className="px-5 py-2 bg-white text-blue-600 rounded-full text-xs font-bold shadow-sm active:scale-95 transition-all">收工</button>
+                        <div className="flex items-center gap-2">
+                            <button onClick={() => handleCancelTask('mb')} className="p-2 text-white/60 hover:text-white transition-colors"><X size={18}/></button>
+                            <button onClick={() => onFinishMasturbation?.(ongoingMb)} className="px-5 py-2 bg-white text-blue-600 rounded-full text-xs font-bold shadow-sm active:scale-95 transition-all">收工</button>
+                        </div>
                     </div>
                 )}
 
@@ -178,7 +203,10 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                                 <div className="text-[10px] opacity-70">{ongoingExercise.startTime} 开始</div>
                             </div>
                         </div>
-                        <button onClick={() => onFinishExercise?.(ongoingExercise)} className="px-5 py-2 bg-white text-orange-600 rounded-full text-xs font-bold shadow-sm active:scale-95 transition-all">完成</button>
+                        <div className="flex items-center gap-2">
+                            <button onClick={() => handleCancelTask('exercise')} className="p-2 text-white/60 hover:text-white transition-colors"><X size={18}/></button>
+                            <button onClick={() => onFinishExercise?.(ongoingExercise)} className="px-5 py-2 bg-white text-orange-600 rounded-full text-xs font-bold shadow-sm active:scale-95 transition-all">完成</button>
+                        </div>
                     </div>
                 )}
 
@@ -192,7 +220,10 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                                 <div className="text-[10px] opacity-70">{ongoingAlcohol.time} 开始</div>
                             </div>
                         </div>
-                        <button onClick={() => onFinishAlcohol?.(ongoingAlcohol)} className="px-5 py-2 bg-white text-indigo-600 rounded-full text-xs font-bold shadow-sm active:scale-95 transition-all">结算</button>
+                        <div className="flex items-center gap-2">
+                            <button onClick={() => handleCancelTask('alcohol')} className="p-2 text-white/60 hover:text-white transition-colors"><X size={18}/></button>
+                            <button onClick={() => onFinishAlcohol?.(ongoingAlcohol)} className="px-5 py-2 bg-white text-indigo-600 rounded-full text-xs font-bold shadow-sm active:scale-95 transition-all">结算</button>
+                        </div>
                     </div>
                 )}
             </section>

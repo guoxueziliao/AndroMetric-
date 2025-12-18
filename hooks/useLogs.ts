@@ -1,4 +1,3 @@
-
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { StorageService } from '../services/StorageService';
@@ -155,6 +154,14 @@ export function useLogs() {
         } catch (e) { throw e; }
     }, [addOrUpdateLog, getActivityTargetDate]);
 
+    const cancelOngoingMasturbation = useCallback(async () => {
+        const logToUpdate = logs.find(l => l.masturbation?.some(m => m.status === 'inProgress'));
+        if (logToUpdate) {
+            const nextMb = logToUpdate.masturbation.filter(m => m.status !== 'inProgress');
+            await addOrUpdateLog({ ...logToUpdate, masturbation: nextMb });
+        }
+    }, [logs, addOrUpdateLog]);
+
     const saveExercise = useCallback(async (record: ExerciseRecord) => {
         const targetDateStr = getActivityTargetDate();
         const existingLog = await StorageService.logs.get(targetDateStr);
@@ -191,6 +198,14 @@ export function useLogs() {
         } catch (e) { throw e; }
     }, [addOrUpdateLog, getActivityTargetDate]);
 
+    const cancelOngoingExercise = useCallback(async () => {
+        const logToUpdate = logs.find(l => l.exercise?.some(e => e.ongoing));
+        if (logToUpdate) {
+            const nextExercises = logToUpdate.exercise.filter(e => !e.ongoing);
+            await addOrUpdateLog({ ...logToUpdate, exercise: nextExercises });
+        }
+    }, [logs, addOrUpdateLog]);
+
     const saveNap = useCallback(async (record: NapRecord) => {
         const targetDateStr = getActivityTargetDate();
         const existingLog = await StorageService.logs.get(targetDateStr);
@@ -219,6 +234,40 @@ export function useLogs() {
             }
         } catch (e) { throw e; }
     }, [addOrUpdateLog, getActivityTargetDate]);
+
+    const toggleNap = useCallback(async () => {
+        const allLogs = await StorageService.logs.getAll();
+        const ongoingNapLog = allLogs.find(l => l.sleep?.naps?.some(n => n.ongoing));
+        
+        if (ongoingNapLog) {
+            const nap = ongoingNapLog.sleep!.naps.find(n => n.ongoing);
+            return nap;
+        } else {
+            const now = new Date();
+            const nowStr = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+            const newNap: NapRecord = {
+                id: Date.now().toString(),
+                startTime: nowStr,
+                ongoing: true,
+                duration: 0,
+                quality: 3
+            };
+            await saveNap(newNap);
+            return null;
+        }
+    }, [saveNap]);
+
+    const cancelOngoingNap = useCallback(async () => {
+        const allLogs = await StorageService.logs.getAll();
+        const ongoingLog = allLogs.find(l => l.sleep?.naps?.some(n => n.ongoing));
+        if (ongoingLog) {
+            const nextNaps = ongoingLog.sleep!.naps.filter(n => !n.ongoing);
+            await addOrUpdateLog({
+                ...ongoingLog,
+                sleep: { ...ongoingLog.sleep!, naps: nextNaps }
+            });
+        }
+    }, [addOrUpdateLog]);
 
     const saveAlcoholRecord = useCallback(async (record: AlcoholRecord) => {
         const targetDateStr = getActivityTargetDate();
@@ -292,136 +341,48 @@ export function useLogs() {
             const total = nextRecords.reduce((s,r) => s+r.totalGrams, 0);
             await addOrUpdateLog({
                 ...ongoingLog,
-                alcohol: total > 0 ? (total > 50 ? 'high' : 'medium') : 'none',
+                alcohol: total > 0 ? (total > 50 ? 'high' : total > 20 ? 'medium' : 'low') : 'none',
                 alcoholRecords: nextRecords
             });
         }
     }, [addOrUpdateLog]);
 
-    const cancelOngoingNap = useCallback(async () => {
-        const allLogs = await StorageService.logs.getAll(); 
-        const ongoingLog = allLogs.find(l => l.sleep?.naps?.some(n => n.ongoing));
-        if (ongoingLog) {
-            const hydratedOngoingLog = hydrateLog(ongoingLog);
-            const updatedNaps = hydratedOngoingLog.sleep!.naps.filter(n => !n.ongoing);
-            await addOrUpdateLog({
-                ...hydratedOngoingLog,
-                sleep: { ...hydratedOngoingLog.sleep!, naps: updatedNaps }
-            });
+    const toggleSleepLog = useCallback(async (pendingLog?: LogEntry) => {
+        if (pendingLog) {
+            // Cancel/Delete pending sleep log
+            await deleteLog(pendingLog.date);
+        } else {
+            // Start new sleep timer
+            const targetDateStr = getSleepTargetDate();
+            const skeleton = hydrateLog({ date: targetDateStr });
+            const newLog: LogEntry = {
+                ...skeleton,
+                status: 'pending',
+                sleep: {
+                    ...skeleton.sleep!,
+                    startTime: new Date().toISOString()
+                },
+                updatedAt: Date.now(),
+                changeHistory: [{ timestamp: Date.now(), summary: '开始睡觉', type: 'quick' }]
+            };
+            await addOrUpdateLog(newLog);
         }
-    }, [addOrUpdateLog]);
-
-    const toggleNap = useCallback(async () => {
-        const allLogs = await StorageService.logs.getAll(); 
-        const ongoingLog = allLogs.find(l => l.sleep?.naps?.some(n => n.ongoing));
-        const pendingSleepLog = allLogs.find(log => log.status === 'pending');
-        
-        try {
-            if (ongoingLog) {
-                const hydratedOngoingLog = hydrateLog(ongoingLog);
-                const ongoingNap = hydratedOngoingLog.sleep!.naps.find(n => n.ongoing)!;
-                const now = new Date();
-                const nowStr = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-                const [startH, startM] = ongoingNap.startTime.split(':').map(Number);
-                const startDate = new Date(); startDate.setHours(startH); startDate.setMinutes(startM); startDate.setSeconds(0);
-                let duration = Math.round((now.getTime() - startDate.getTime()) / 60000);
-                if (duration < 0) duration += 24 * 60;
-                if (duration === 0) duration = 1;
-                const updatedNaps = hydratedOngoingLog.sleep!.naps.map(n => n.id === ongoingNap.id ? { ...n, ongoing: false, duration, endTime: nowStr } : n);
-                const historyEntry: ChangeRecord = { timestamp: Date.now(), summary: `完成午休 (${duration}m)`, details: [], type: 'quick' };
-                await addOrUpdateLog({
-                    ...hydratedOngoingLog,
-                    sleep: { ...hydratedOngoingLog.sleep!, naps: updatedNaps },
-                    changeHistory: [...(hydratedOngoingLog.changeHistory||[]), historyEntry]
-                });
-            } else {
-                if (pendingSleepLog) {
-                    throw new Error('当前正在记录睡眠，请先结束睡眠再开启午休');
-                }
-                const targetDateStr = getActivityTargetDate();
-                const nowStr = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-                const newNap: NapRecord = { id: Date.now().toString(), startTime: nowStr, ongoing: true, duration: 0, hasDream: false, dreamTypes: [] };
-                const existingLog = await StorageService.logs.get(targetDateStr);
-                if (existingLog) {
-                    const historyEntry: ChangeRecord = { timestamp: Date.now(), summary: '开始午休', details: [], type: 'quick' };
-                    await addOrUpdateLog({
-                        ...existingLog,
-                        sleep: { ...existingLog.sleep!, naps: [...(existingLog.sleep?.naps || []), newNap] },
-                        changeHistory: [...(existingLog.changeHistory || []), historyEntry]
-                    });
-                } else {
-                    const historyEntry: ChangeRecord = { timestamp: Date.now(), summary: '开始午休', details: [], type: 'quick' };
-                    const skeleton = hydrateLog({ date: targetDateStr });
-                    const newLog: LogEntry = {
-                        ...skeleton,
-                        status: 'completed',
-                        sleep: { ...skeleton.sleep!, naps: [newNap] },
-                        changeHistory: [historyEntry]
-                    };
-                    await addOrUpdateLog(newLog);
-                }
-            }
-        } catch (e) { throw e; }
-    }, [addOrUpdateLog, getActivityTargetDate]);
-
-    const toggleSleepLog = useCallback(async (pendingLog: LogEntry | undefined) => {
-        try {
-            if (pendingLog) {
-                if (confirm('您确定要取消当前的睡眠记录吗？')) {
-                    await deleteLog(pendingLog.date);
-                }
-            } else {
-                const allLogs = await StorageService.logs.getAll(); 
-                const ongoingNap = allLogs.find(l => l.sleep?.naps?.some(n => n.ongoing));
-                if (ongoingNap) {
-                    throw new Error('当前正在记录午休，请先结束午休再开启睡眠记录');
-                }
-
-                const targetDateString = getSleepTargetDate();
-                const existingLog = await StorageService.logs.get(targetDateString);
-                const historyEntry: ChangeRecord = { timestamp: Date.now(), summary: '记录睡眠时间 (入睡)', details: [], type: 'quick' };
-                if (existingLog) {
-                    if (confirm(`检测到 ${targetDateString} 已有活动记录。要将睡眠状态合并到该记录中吗？`)) {
-                        await addOrUpdateLog({
-                            ...existingLog,
-                            status: 'pending',
-                            sleep: { ...existingLog.sleep!, startTime: new Date().toISOString() },
-                            changeHistory: [...(existingLog.changeHistory || []), historyEntry]
-                        });
-                    }
-                } else {
-                    const skeleton = hydrateLog({ date: targetDateString });
-                    const newLog: LogEntry = {
-                        ...skeleton,
-                        status: 'pending',
-                        sleep: { ...skeleton.sleep!, startTime: new Date().toISOString() },
-                        changeHistory: [historyEntry]
-                    };
-                    await addOrUpdateLog(newLog);
-                }
-            }
-        } catch (e) { throw e; }
     }, [addOrUpdateLog, deleteLog, getSleepTargetDate]);
 
     const importLogs = useCallback(async (importedLogs: LogEntry[], importedPartners?: PartnerProfile[]) => {
-        try {
-            const hydratedLogs = importedLogs.map(hydrateLog);
-            await StorageService.logs.bulkImport(hydratedLogs);
-            if (importedPartners && importedPartners.length > 0) {
-                await StorageService.partners.bulkImport(importedPartners);
-            }
-        } catch (error) {
-            console.error("Import failed", error);
-            throw new Error('导入失败');
-        }
+        if (importedLogs.length > 0) await StorageService.logs.bulkImport(importedLogs);
+        if (importedPartners && importedPartners.length > 0) await StorageService.partners.bulkImport(importedPartners);
     }, []);
 
     return {
         logs, partners, isInitializing,
         addOrUpdateLog, deleteLog,
         addOrUpdatePartner, deletePartner,
-        quickAddSex, quickAddMasturbation,
-        saveExercise, saveNap, saveAlcoholRecord, cancelAlcoholRecord,
-        toggleNap, cancelOngoingNap, toggleSleepLog, importLogs, toggleAlcohol
+        quickAddSex, quickAddMasturbation, cancelOngoingMasturbation,
+        saveExercise, cancelOngoingExercise,
+        saveNap, toggleNap, cancelOngoingNap,
+        saveAlcoholRecord, toggleAlcohol, cancelAlcoholRecord,
+        toggleSleepLog,
+        importLogs
     };
 }
