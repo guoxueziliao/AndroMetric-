@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef, lazy, Suspense, useMemo } from 'react';
 import { LogEntry, SexRecordDetails, MasturbationRecordDetails, ExerciseRecord, NapRecord, ChangeDetail, ChangeRecord, AlcoholRecord, PartnerProfile, MorningRecord, SleepRecord, CaffeineRecord, CaffeineItem } from '../types';
-import { CheckSquare, Tag, Beer, Film, Dumbbell, Sun, Cloud, CloudRain, Snowflake, Wind, CloudFog, Home, Users, Hotel, Plane, MapPin, Shirt, HeartPulse, Hand, Plus, Edit2, Trash2, Footprints, Save, Coffee, Calendar, X, Zap, Check, Sparkles, Settings, List, ChevronRight, ShoppingCart, Timer, CupSoda, Leaf, Flame, Pill } from 'lucide-react';
+import { CheckSquare, Tag, Beer, Film, Dumbbell, Sun, Cloud, CloudRain, Snowflake, Wind, CloudFog, Home, Users, Hotel, Plane, MapPin, Shirt, HeartPulse, Hand, Plus, Edit2, Trash2, Footprints, Save, Coffee, Calendar, X, Zap, Check, Sparkles, Settings, List, ChevronRight, ShoppingCart, Timer, CupSoda, Leaf, Flame, Pill, Minus } from 'lucide-react';
 import Modal from './Modal';
 import SexRecordModal from './SexRecordModal';
 import MasturbationRecordModal from './MasturbationRecordModal';
@@ -182,14 +182,25 @@ const LogForm: React.FC<{
         setLog(prev => ({ ...prev, alcoholRecord: record, alcohol: alcoholLevel }));
     };
 
+    // --- Ordered Beverage Logic ---
     const addBeverage = (item: { name: string, vol: number }) => {
-        const id = Date.now().toString();
-        const nowStr = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-        const newItem: CaffeineItem = { id, name: item.name, time: nowStr, count: 1, volume: item.vol };
-        
         setLog(prev => {
             const current = prev.caffeineRecord || { totalCount: 0, items: [] };
-            const newItems = [...current.items, newItem];
+            const existingItemIdx = current.items.findIndex(i => i.name === item.name);
+            
+            let newItems = [...current.items];
+            if (existingItemIdx > -1) {
+                // 如果已经点了这个，增加份数
+                newItems[existingItemIdx] = { 
+                    ...newItems[existingItemIdx], 
+                    count: newItems[existingItemIdx].count + 1 
+                };
+            } else {
+                // 没点过，新增
+                const nowStr = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+                newItems.push({ id: Date.now().toString(), name: item.name, time: nowStr, count: 1, volume: item.vol });
+            }
+
             const totalCount = newItems.reduce((acc, i) => acc + i.count, 0);
             return { 
                 ...prev, 
@@ -197,15 +208,22 @@ const LogForm: React.FC<{
                 caffeineIntake: totalCount > 3 ? 'high' : totalCount > 1 ? 'medium' : totalCount > 0 ? 'low' : 'none' 
             };
         });
-        showToast(`已添加: ${item.name}`, 'info');
     };
 
-    const removeBeverage = (id: string) => {
+    const updateBeverageCount = (id: string, delta: number) => {
         setLog(prev => {
             const current = prev.caffeineRecord || { totalCount: 0, items: [] };
-            const newItems = current.items.filter(i => i.id !== id);
+            const newItems = current.items.map(i => {
+                if (i.id === id) return { ...i, count: Math.max(0, i.count + delta) };
+                return i;
+            }).filter(i => i.count > 0);
+
             const totalCount = newItems.reduce((acc, i) => acc + i.count, 0);
-            return { ...prev, caffeineRecord: { totalCount, items: newItems } };
+            return { 
+                ...prev, 
+                caffeineRecord: { totalCount, items: newItems },
+                caffeineIntake: totalCount > 3 ? 'high' : totalCount > 1 ? 'medium' : totalCount > 0 ? 'low' : 'none' 
+            };
         });
     };
 
@@ -334,7 +352,7 @@ const LogForm: React.FC<{
                                     <label className="text-xs font-bold text-slate-400 uppercase">看片</label>
                                     <div className="grid grid-cols-2 gap-2 h-24">
                                         {PORN_OPTS.map(opt => (
-                                            <button key={opt.value} onClick={() => handleChange('pornConsumption', opt.value)} className={`rounded-lg text-xs font-bold ${log.pornConsumption === opt.value ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800' : 'bg-slate-50 dark:bg-slate-800 text-slate-500'}`}>{opt.label}</button>
+                                            <button key={opt.value} type="button" onClick={() => handleChange('pornConsumption', opt.value)} className={`rounded-lg text-xs font-bold ${log.pornConsumption === opt.value ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800' : 'bg-slate-50 dark:bg-slate-800 text-slate-500'}`}>{opt.label}</button>
                                         ))}
                                     </div>
                                 </div>
@@ -354,6 +372,7 @@ const LogForm: React.FC<{
                                             {BEVERAGE_MENU.map((cat, idx) => (
                                                 <button 
                                                     key={cat.category} 
+                                                    type="button"
                                                     onClick={() => setActiveBeverageCat(idx)} 
                                                     className={`py-4 px-1 flex flex-col items-center justify-center gap-1 transition-all relative ${activeBeverageCat === idx ? 'text-brand-accent font-black' : 'text-slate-400'}`}
                                                 >
@@ -371,6 +390,7 @@ const LogForm: React.FC<{
                                                 {BEVERAGE_MENU[activeBeverageCat].items.map(item => (
                                                     <button 
                                                         key={item.name} 
+                                                        type="button"
                                                         onClick={() => addBeverage(item)} 
                                                         className="bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 p-3 rounded-2xl flex flex-col items-center justify-center gap-1.5 hover:border-brand-accent active:scale-95 transition-all shadow-sm"
                                                     >
@@ -399,7 +419,11 @@ const LogForm: React.FC<{
                                                     <div className="text-[10px] text-slate-500 font-bold">{c.volume}ml · {c.count}份</div>
                                                 </div>
                                             </div>
-                                            <button onClick={() => removeBeverage(c.id)} className="p-2 text-slate-300 hover:text-red-500 transition-colors active:scale-90"><Trash2 size={14}/></button>
+                                            <div className="flex items-center gap-2">
+                                                <button type="button" onClick={() => updateBeverageCount(c.id, -1)} className="p-1.5 bg-slate-50 dark:bg-slate-800 rounded-lg text-slate-400 hover:text-red-500 active:scale-90"><Minus size={14}/></button>
+                                                <span className="text-xs font-black w-4 text-center">{c.count}</span>
+                                                <button type="button" onClick={() => updateBeverageCount(c.id, 1)} className="p-1.5 bg-slate-50 dark:bg-slate-800 rounded-lg text-slate-400 hover:text-brand-accent active:scale-90"><Plus size={14}/></button>
+                                            </div>
                                         </div>
                                     ))}
                                     {(!log.caffeineRecord?.items || log.caffeineRecord.items.length === 0) && !isAddingCaffeine && (
@@ -427,8 +451,8 @@ const LogForm: React.FC<{
                                                 </div>
                                             </div>
                                             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <button className="p-1.5 text-green-600 hover:bg-green-100 dark:hover:bg-green-900/30 rounded" onClick={() => { setEditingExerciseRecord(r); setIsExerciseModalOpen(true); }}><Edit2 size={14}/></button>
-                                                <button className="p-1.5 text-green-600 hover:bg-green-100 dark:hover:bg-green-900/30 rounded" onClick={() => deleteRecord('exercise', r.id)}><Trash2 size={14}/></button>
+                                                <button type="button" className="p-1.5 text-green-600 hover:bg-green-100 dark:hover:bg-green-900/30 rounded" onClick={() => { setEditingExerciseRecord(r); setIsExerciseModalOpen(true); }}><Edit2 size={14}/></button>
+                                                <button type="button" className="p-1.5 text-green-600 hover:bg-green-100 dark:hover:bg-green-900/30 rounded" onClick={() => deleteRecord('exercise', r.id)}><Trash2 size={14}/></button>
                                             </div>
                                         </div>
                                     ))}
@@ -530,14 +554,17 @@ const LogForm: React.FC<{
                 <button type="submit" className="flex-[2] py-3 text-lg font-bold text-white bg-brand-accent rounded-2xl shadow-lg shadow-blue-500/30 active:scale-[0.98]">完成记录</button>
             </div>
 
-            <Modal isOpen={isSummaryModalOpen} onClose={() => setIsSummaryModalOpen(false)} title="确认记录" footer={<><button onClick={() => setIsSummaryModalOpen(false)} className="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-brand-text dark:text-slate-300 rounded">返回修改</button><button onClick={handleConfirmSave} className="px-4 py-2 bg-brand-accent text-white rounded font-bold shadow-lg shadow-blue-500/20">确认保存</button></>}>
-              <div className="space-y-3 text-sm text-brand-text dark:text-slate-300 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+            <Modal isOpen={isSummaryModalOpen} onClose={() => setIsSummaryModalOpen(false)} title="确认记录" footer={<><button type="button" onClick={() => setIsSummaryModalOpen(false)} className="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-brand-text dark:text-slate-300 rounded font-bold">返回修改</button><button type="button" onClick={handleConfirmSave} className="px-4 py-2 bg-brand-accent text-white rounded font-bold shadow-lg shadow-blue-500/20">确认保存</button></>}>
+              <div className="space-y-4 text-sm text-brand-text dark:text-slate-300 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
                   {summaryData.map(({ label, value }) => (
-                      <div key={label} className="grid grid-cols-[80px_1fr] gap-4 border-b border-slate-100 dark:border-slate-800 pb-2 last:border-0">
-                          <span className="font-bold text-brand-muted text-xs uppercase tracking-wide pt-0.5">{label}</span>
-                          <span className="text-right whitespace-pre-wrap font-medium leading-relaxed">{value}</span>
+                      <div key={label} className="grid grid-cols-[85px_1fr] gap-4 border-b border-slate-100 dark:border-slate-800 pb-3 last:border-0">
+                          <span className="font-bold text-slate-400 dark:text-slate-500 text-[10px] uppercase tracking-widest pt-1">{label}</span>
+                          <span className="text-right whitespace-pre-wrap font-bold leading-relaxed text-slate-700 dark:text-slate-200">{value}</span>
                       </div>
                   ))}
+                  <div className="py-4 text-center">
+                    <p className="text-[10px] text-slate-300 dark:text-slate-700 font-black tracking-[0.3em] uppercase">End of Receipt</p>
+                  </div>
               </div>
             </Modal>
             
