@@ -1,8 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { LogEntry, ExerciseRecord, SexRecordDetails, MasturbationRecordDetails, NapRecord, AlcoholRecord } from '../types';
 import CalendarHeatmap from './CalendarHeatmap';
-/* Added Check to lucide-react imports to fix line 270 error */
-import { Moon, Zap, Activity, Hand, HeartPulse, Clock, Dumbbell, Footprints, Timer, CloudSun, Beer, TrendingUp, ShieldAlert, Edit3, Trash2, FastForward, Coffee, Bed, ArrowRight, User, Heart, RotateCcw, MapPin, Sparkles, Shirt, Star, Thermometer, BrainCircuit, Tag, Film, Smile, AlertTriangle, ChevronRight, Calendar, Check } from 'lucide-react';
+import { Moon, Zap, Activity, Hand, HeartPulse, Clock, Dumbbell, Footprints, Timer, CloudSun, Beer, TrendingUp, ShieldAlert, Edit3, Trash2, FastForward, Coffee, Bed, ArrowRight, User, Heart, RotateCcw, MapPin, Sparkles, Shirt, Star, Thermometer, BrainCircuit, Tag, Film, Smile, AlertTriangle, ChevronRight, Calendar, Check, AlertCircle, Sofa } from 'lucide-react';
 import Modal from './Modal';
 import SafeDeleteModal from './SafeDeleteModal';
 import { formatTime, calculateSleepDuration, analyzeSleep, formatDateFriendly, LABELS } from '../utils/helpers';
@@ -40,7 +39,21 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
   const ongoingExercise = useMemo(() => logs.flatMap(l => l.exercise || []).find(e => e.ongoing), [logs]);
   const ongoingNap = useMemo(() => logs.flatMap(l => l.sleep?.naps || []).find(n => n.ongoing), [logs]);
   const ongoingMb = useMemo(() => logs.flatMap(l => l.masturbation || []).find(m => m.status === 'inProgress'), [logs]);
-  const ongoingAlcohol = useMemo(() => logs.find(l => l.alcoholRecord?.ongoing)?.alcoholRecord, [logs]);
+  const ongoingAlcohol = useMemo(() => logs.flatMap(l => l.alcoholRecords || []).find(r => r.ongoing), [logs]);
+
+  // 生成最近7天的日期列表（含今天），确保格式与 logs 匹配
+  const last7Days = useMemo(() => {
+      const dates = [];
+      for (let i = 0; i < 7; i++) {
+          const d = new Date();
+          d.setDate(d.getDate() - i);
+          const y = d.getFullYear();
+          const m = String(d.getMonth() + 1).padStart(2, '0');
+          const day = String(d.getDate()).padStart(2, '0');
+          dates.push(`${y}-${m}-${day}`);
+      }
+      return dates;
+  }, []);
 
   const greeting = useMemo(() => {
       const hour = new Date().getHours();
@@ -75,27 +88,13 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
       }
   };
 
-  const sleepStats = useMemo(() => {
-    if (!latestLog?.sleep?.startTime || !latestLog?.sleep?.endTime) return null;
-    const analysis = analyzeSleep(latestLog.sleep.startTime, latestLog.sleep.endTime);
-    const durationStr = calculateSleepDuration(latestLog.sleep.startTime, latestLog.sleep.endTime) || '';
-    const hours = durationStr.split('小时')[0].trim();
-    return {
-        hours,
-        start: formatTime(latestLog.sleep.startTime),
-        end: formatTime(latestLog.sleep.endTime),
-        isLate: analysis?.isLate,
-        isGood: (latestLog.sleep.quality || 0) >= 4
-    };
-  }, [latestLog]);
-
   const diaryDateInfo = useMemo(() => {
-      if (!summaryLog) return { main: '', sub: '' };
-      const d = new Date(summaryLog.date + 'T00:00:00');
-      const month = d.getMonth() + 1;
-      const date = d.getDate();
-      const weekday = d.toLocaleDateString('zh-CN', { weekday: 'long' });
-      return { main: `${month}月${date}日`, sub: weekday };
+    if (!summaryLog) return { main: '', sub: '' };
+    const d = new Date(summaryLog.date + 'T00:00:00');
+    return {
+      main: `${d.getMonth() + 1}月${d.getDate()}日`,
+      sub: d.toLocaleDateString('zh-CN', { weekday: 'long' })
+    };
   }, [summaryLog]);
 
   const SummarySection = ({ title, icon: Icon, children, colorClass = "text-slate-400" }: any) => (
@@ -124,16 +123,76 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
             </div>
         </div>
 
-        {/* Ongoing Tasks */}
+        {/* Ongoing Tasks Banners */}
         {(ongoingNap || ongoingExercise || ongoingMb || pendingLog || ongoingAlcohol) && (
-            <section className="space-y-3">
+            <section className="space-y-3 animate-in fade-in slide-in-from-top-4 duration-500">
+                {/* 1. 睡眠中 */}
                 {pendingLog && (
-                    <div className="bg-gradient-to-r from-emerald-500 to-teal-600 p-4 rounded-3xl shadow-lg text-white flex justify-between items-center animate-in slide-in-from-top-2">
+                    <div className="bg-gradient-to-r from-emerald-500 to-teal-600 p-4 rounded-3xl shadow-lg text-white flex justify-between items-center transform transition-transform hover:scale-[1.01]">
                         <div className="flex items-center gap-3">
                             <div className="p-2 bg-white/20 rounded-full animate-pulse"><Bed size={20}/></div>
-                            <div><div className="font-bold text-sm">正在睡觉中...</div><div className="text-[10px] opacity-70">{formatTime(pendingLog.sleep?.startTime)} 开始</div></div>
+                            <div>
+                                <div className="font-bold text-sm">正在睡觉中...</div>
+                                <div className="text-[10px] opacity-70">{formatTime(pendingLog.sleep?.startTime)} 开始</div>
+                            </div>
                         </div>
-                        <button onClick={() => onEdit(pendingLog.date)} className="px-5 py-2 bg-white text-emerald-600 rounded-full text-xs font-bold shadow-sm active:scale-95">醒了</button>
+                        <button onClick={() => onEdit(pendingLog.date)} className="px-5 py-2 bg-white text-emerald-600 rounded-full text-xs font-bold shadow-sm active:scale-95 transition-all">醒了</button>
+                    </div>
+                )}
+
+                {/* 2. 午休中 */}
+                {ongoingNap && (
+                    <div className="bg-gradient-to-r from-orange-400 to-amber-500 p-4 rounded-3xl shadow-lg text-white flex justify-between items-center transform transition-transform hover:scale-[1.01]">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-white/20 rounded-full animate-pulse"><Sofa size={20}/></div>
+                            <div>
+                                <div className="font-bold text-sm">正在午休中...</div>
+                                <div className="text-[10px] opacity-70">{ongoingNap.startTime} 开始</div>
+                            </div>
+                        </div>
+                        <button onClick={() => onFinishNap?.(ongoingNap)} className="px-5 py-2 bg-white text-orange-600 rounded-full text-xs font-bold shadow-sm active:scale-95 transition-all">醒了</button>
+                    </div>
+                )}
+
+                {/* 3. 施法中 (自慰) */}
+                {ongoingMb && (
+                    <div className="bg-gradient-to-r from-blue-500 to-indigo-600 p-4 rounded-3xl shadow-lg text-white flex justify-between items-center transform transition-transform hover:scale-[1.01]">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-white/20 rounded-full animate-pulse"><Hand size={20}/></div>
+                            <div>
+                                <div className="font-bold text-sm">正在施法中...</div>
+                                <div className="text-[10px] opacity-70">{ongoingMb.startTime} 开始</div>
+                            </div>
+                        </div>
+                        <button onClick={() => onFinishMasturbation?.(ongoingMb)} className="px-5 py-2 bg-white text-blue-600 rounded-full text-xs font-bold shadow-sm active:scale-95 transition-all">收工</button>
+                    </div>
+                )}
+
+                {/* 4. 运动中 */}
+                {ongoingExercise && (
+                    <div className="bg-gradient-to-r from-yellow-400 to-orange-500 p-4 rounded-3xl shadow-lg text-white flex justify-between items-center transform transition-transform hover:scale-[1.01]">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-white/20 rounded-full animate-pulse"><Dumbbell size={20}/></div>
+                            <div>
+                                <div className="font-bold text-sm">正在{ongoingExercise.type}中...</div>
+                                <div className="text-[10px] opacity-70">{ongoingExercise.startTime} 开始</div>
+                            </div>
+                        </div>
+                        <button onClick={() => onFinishExercise?.(ongoingExercise)} className="px-5 py-2 bg-white text-orange-600 rounded-full text-xs font-bold shadow-sm active:scale-95 transition-all">完成</button>
+                    </div>
+                )}
+
+                {/* 5. 酒局中 */}
+                {ongoingAlcohol && (
+                    <div className="bg-gradient-to-r from-purple-500 to-indigo-600 p-4 rounded-3xl shadow-lg text-white flex justify-between items-center transform transition-transform hover:scale-[1.01]">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-white/20 rounded-full animate-pulse"><Beer size={20}/></div>
+                            <div>
+                                <div className="font-bold text-sm">正在酒局中...</div>
+                                <div className="text-[10px] opacity-70">{ongoingAlcohol.time} 开始</div>
+                            </div>
+                        </div>
+                        <button onClick={() => onFinishAlcohol?.(ongoingAlcohol)} className="px-5 py-2 bg-white text-indigo-600 rounded-full text-xs font-bold shadow-sm active:scale-95 transition-all">结算</button>
                     </div>
                 )}
             </section>
@@ -141,22 +200,74 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
 
         <CalendarHeatmap logs={logs} onDateClick={handleDateClickForSummary}>
             <div className="grid grid-cols-2 gap-4 mt-2">
-                <div className="bg-white dark:bg-slate-900/40 rounded-3xl p-5 shadow-soft border border-slate-100 dark:border-white/5 flex flex-col justify-between h-44 transition-colors">
-                    <div className="flex justify-between items-start">
+                {/* 睡眠卡片 */}
+                <div className="bg-white dark:bg-slate-900/40 rounded-3xl p-4 shadow-soft border border-slate-100 dark:border-white/5 flex flex-col h-60 transition-colors overflow-hidden">
+                    <div className="flex justify-between items-center mb-3 shrink-0">
                         <div className="flex items-center gap-2">
-                            <div className="p-2 bg-blue-50 dark:bg-blue-500/10 rounded-full text-blue-500"><Moon size={18} fill="currentColor" fillOpacity={0.2}/></div>
-                            <span className="text-sm font-bold text-slate-800 dark:text-slate-300">睡眠</span>
+                            <div className="p-1.5 bg-blue-50 dark:bg-blue-500/10 rounded-lg text-blue-500"><Moon size={14} fill="currentColor" fillOpacity={0.2}/></div>
+                            <span className="text-[11px] font-black text-slate-800 dark:text-slate-300">7日睡眠流</span>
                         </div>
-                        <div className="flex items-baseline"><span className="text-3xl font-black text-slate-800 dark:text-slate-100">{sleepStats?.hours || (pendingLog ? '记' : '未')}</span><span className="text-xs font-bold text-slate-400 ml-0.5">{pendingLog ? '录中' : 'h'}</span></div>
+                        {(pendingLog || ongoingNap) && <span className="text-[9px] font-black text-emerald-500 animate-pulse">正在休息</span>}
                     </div>
-                    <div className="text-xs font-medium text-slate-400 font-mono">{sleepStats ? `${sleepStats.start} - ${sleepStats.end}` : '--:-- - --:--'}</div>
-                    <div className="flex gap-2 mt-2">
-                        <div className={`w-1.5 h-1.5 rounded-full ${sleepStats?.isLate ? 'bg-orange-500' : 'bg-slate-200'}`}></div>
-                        <span className="text-[10px] font-bold text-slate-400">熬夜状态</span>
+
+                    <div className="flex-1 overflow-y-auto custom-scrollbar pr-0.5 space-y-2">
+                        {last7Days.map(date => {
+                            const log = logs.find(l => l.date === date);
+                            const analysis = log?.sleep?.startTime && log?.sleep?.endTime ? analyzeSleep(log.sleep.startTime, log.sleep.endTime) : null;
+                            const nocturnalHours = analysis?.durationHours || 0;
+                            const totalNapMinutes = log?.sleep?.naps?.reduce((acc, n) => acc + (n.duration || 0), 0) || 0;
+                            const napHours = totalNapMinutes / 60;
+                            const totalHours = nocturnalHours + napHours;
+                            const isToday = date === last7Days[0];
+
+                            return (
+                                <div key={date} className={`flex flex-col gap-1 p-1.5 rounded-xl transition-all ${isToday ? 'bg-blue-50/40 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/30' : 'border border-transparent'}`}>
+                                    <div className="flex justify-between items-center text-[9px] font-bold text-slate-400">
+                                        <span className="font-mono">{date.split('-').slice(1).join('/')}</span>
+                                        <div className="flex gap-1">
+                                            {analysis?.isLate && <span className="px-1 bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 rounded">熬夜</span>}
+                                            {analysis?.isInsufficient && <span className="px-1 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded">不足</span>}
+                                            {analysis?.isExcessive && <span className="px-1 bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded">过长</span>}
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <div className="flex-1 h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full flex overflow-hidden">
+                                            {nocturnalHours > 0 && (
+                                                <div 
+                                                    className="bg-blue-500 h-full" 
+                                                    style={{ width: `${Math.min(100, (nocturnalHours / 12) * 100)}%` }}
+                                                />
+                                            )}
+                                            {napHours > 0 && (
+                                                <div 
+                                                    className="bg-orange-400 h-full border-l border-white/20" 
+                                                    style={{ width: `${Math.min(100, (napHours / 12) * 100)}%` }}
+                                                />
+                                            )}
+                                            {totalHours === 0 && (
+                                                <div className="w-full flex items-center justify-center text-[7px] text-slate-300 italic">未记录</div>
+                                            )}
+                                        </div>
+                                        <div className="text-[10px] font-black text-slate-600 dark:text-slate-300 w-8 text-right tabular-nums">
+                                            {totalHours > 0 ? `${totalHours.toFixed(1)}h` : '--'}
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                    
+                    <div className="mt-2 pt-2 border-t border-slate-50 dark:border-white/5 flex justify-between items-center shrink-0">
+                         <div className="flex items-center gap-2 opacity-60">
+                             <div className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div><span className="text-[8px] font-bold dark:text-slate-400">睡眠</span></div>
+                             <div className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-orange-400"></div><span className="text-[8px] font-bold dark:text-slate-400">午休</span></div>
+                         </div>
+                         <ChevronRight size={12} className="text-slate-300"/>
                     </div>
                 </div>
 
-                <div className="bg-white dark:bg-slate-900/40 rounded-3xl p-5 shadow-soft border border-slate-100 dark:border-white/5 flex flex-col justify-between h-44 transition-colors">
+                {/* 活跃卡片 */}
+                <div className="bg-white dark:bg-slate-900/40 rounded-3xl p-5 shadow-soft border border-slate-100 dark:border-white/5 flex flex-col justify-between h-60 transition-colors">
                     <div className="flex items-center gap-2 mb-3">
                         <div className="p-2 bg-orange-50 dark:bg-orange-500/10 rounded-full text-orange-500"><Activity size={18}/></div>
                         <span className="text-sm font-bold text-slate-800 dark:text-slate-300">活跃</span>
@@ -164,6 +275,11 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                     <div className="space-y-2">
                         <div className="flex items-center justify-between text-xs"><span className="text-slate-400 font-bold">运动</span><span className="font-black text-slate-700 dark:text-slate-200">{latestLog?.exercise?.length || 0}次</span></div>
                         <div className="flex items-center justify-between text-xs"><span className="text-slate-400 font-bold">自慰</span><span className="font-black text-slate-700 dark:text-slate-200">{latestLog?.masturbation?.length || 0}次</span></div>
+                    </div>
+                    <div className="mt-4 pt-4 border-t border-slate-50 dark:border-slate-800">
+                        <div className="text-[10px] text-slate-400 font-bold flex items-center gap-1">
+                            <Zap size={10} className="text-amber-500"/> 今日能量状态正常
+                        </div>
                     </div>
                 </div>
             </div>
