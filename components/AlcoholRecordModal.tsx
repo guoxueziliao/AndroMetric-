@@ -109,10 +109,8 @@ const AlcoholRecordModal: React.FC<AlcoholRecordModalProps> = ({ isOpen, onClose
                 </div>
             }
         >
-            {/* 核心容器：解决黑白冲突的关键，移除硬编码的背景颜色 */}
             <div className="h-[75vh] flex flex-col -mx-4 -mt-4 bg-white dark:bg-[#0a0f1d] overflow-hidden">
                 
-                {/* 顶部状态显示：浅色/深色自适应 */}
                 <div className="px-6 py-6 bg-slate-50 dark:bg-[#0f172a] border-b border-slate-100 dark:border-white/5 relative shrink-0">
                     <div className="relative z-10 flex justify-between items-center">
                         <div className="flex items-center gap-4">
@@ -137,15 +135,12 @@ const AlcoholRecordModal: React.FC<AlcoholRecordModalProps> = ({ isOpen, onClose
 
                 <div className="flex-1 overflow-y-auto custom-scrollbar px-5 py-6">
                     {step === 0 ? (
-                        /* 清单录入 */
                         <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">
-                            {/* 模式选择 */}
                             <div className="flex p-1 bg-slate-100 dark:bg-[#111827] rounded-2xl border border-slate-200 dark:border-white/5">
                                 <button onClick={() => setMode('session')} className={`flex-1 py-2 text-xs font-black rounded-xl transition-all ${mode === 'session' ? 'bg-white dark:bg-[#1e293b] text-amber-500 shadow-md' : 'text-slate-400 dark:text-slate-500'}`}>持续性饮酒</button>
                                 <button onClick={() => setMode('sip')} className={`flex-1 py-2 text-xs font-black rounded-xl transition-all ${mode === 'sip' ? 'bg-white dark:bg-[#1e293b] text-amber-500 shadow-md' : 'text-slate-400 dark:text-slate-500'}`}>一口/一杯</button>
                             </div>
 
-                            {/* 已添加列表 */}
                             {Object.keys(selectedItems).length > 0 && (
                                 <div className="space-y-4">
                                     <h4 className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase px-1">已添加 ({Object.keys(selectedItems).length})</h4>
@@ -162,11 +157,11 @@ const AlcoholRecordModal: React.FC<AlcoholRecordModalProps> = ({ isOpen, onClose
                                                             <div className="text-[10px] text-slate-400 dark:text-slate-500 font-bold">{item.vol}ml · {item.abv}% ABV</div>
                                                         </div>
                                                     </div>
-                                                    {/* 加减控制器：浅色下深灰色，深色下全黑 */}
-                                                    <div className="flex items-center gap-3 bg-slate-900 dark:bg-[#0a0f1d] p-1 rounded-xl border border-white/5">
-                                                        <button onClick={(e) => { e.stopPropagation(); updateItemValue(key, 'count', item.count - 1); }} className="p-2 text-slate-400 hover:text-red-400"><Minus size={16} strokeWidth={3}/></button>
-                                                        <span className="text-lg font-black text-white w-4 text-center tabular-nums">{item.count}</span>
-                                                        <button onClick={(e) => { e.stopPropagation(); updateItemValue(key, 'count', item.count + 1); }} className="p-2 text-amber-500"><Plus size={16} strokeWidth={3}/></button>
+                                                    {/* 步进器背景自适应，解决黑白冲突 */}
+                                                    <div className="flex items-center gap-3 bg-slate-200/50 dark:bg-[#0a0f1d] p-1 rounded-xl border border-slate-300 dark:border-white/5">
+                                                        <button onClick={(e) => { e.stopPropagation(); updateItemValue(key, 'count', item.count - 1); }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-red-500 transition-colors"><Minus size={16} strokeWidth={3}/></button>
+                                                        <span className="text-lg font-black text-slate-900 dark:text-white w-4 text-center tabular-nums">{item.count}</span>
+                                                        <button onClick={(e) => { e.stopPropagation(); updateItemValue(key, 'count', item.count + 1); }} className="p-2 text-amber-500 hover:text-amber-400 transition-colors"><Plus size={16} strokeWidth={3}/></button>
                                                     </div>
                                                 </div>
                                                 {isExp && (
@@ -188,7 +183,6 @@ const AlcoholRecordModal: React.FC<AlcoholRecordModalProps> = ({ isOpen, onClose
                                 </div>
                             )}
 
-                            {/* 快速加酒网格 */}
                             <div className="space-y-4 pb-10">
                                 <h4 className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase px-1">快速加酒 (点击添加)</h4>
                                 <div className="grid grid-cols-3 gap-3">
@@ -209,7 +203,6 @@ const AlcoholRecordModal: React.FC<AlcoholRecordModalProps> = ({ isOpen, onClose
                             </div>
                         </div>
                     ) : (
-                        /* 场景总结 */
                         <div className="space-y-10 animate-in fade-in slide-in-from-left-4 duration-300">
                             {Object.entries(SCENE_OPTIONS).map(([key, dim]) => {
                                 const state = key === 'where' ? drinkWhere : key === 'who' ? drinkWith : drinkWhy;
@@ -233,7 +226,6 @@ const AlcoholRecordModal: React.FC<AlcoholRecordModalProps> = ({ isOpen, onClose
                                 );
                             })}
 
-                            {/* 醉酒程度 */}
                             <div className="space-y-5 pt-4 border-t border-slate-100 dark:border-white/5">
                                 <h4 className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-1 flex items-center gap-2"><Sparkles size={14} /> 4. 醉到什么程度？</h4>
                                 <div className="grid grid-cols-4 gap-3 pb-10">

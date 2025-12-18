@@ -11,8 +11,9 @@ import BeverageModal from './BeverageModal';
 import SexRecordModal from './SexRecordModal';
 import MasturbationRecordModal from './MasturbationRecordModal';
 import ExerciseRecordModal from './ExerciseSelectorModal';
+import AlcoholRecordModal from './AlcoholRecordModal';
 import { 
-    LogEntry, PartnerProfile, Weather, Location, SleepAttire
+    LogEntry, PartnerProfile, Weather, Location, SleepAttire, AlcoholRecord
 } from '../types';
 import MorningSection from './MorningSection';
 import SleepSection from './SleepSection';
@@ -60,7 +61,7 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
     } as LogEntry);
 
     const [activeMidTab, setActiveMidTab] = useState<MidTabType>('life');
-    const [modalState, setModalState] = useState({ bev: false, sex: false, mb: false, ex: false });
+    const [modalState, setModalState] = useState({ bev: false, sex: false, mb: false, ex: false, alc: false });
     const [eventSearch, setEventSearch] = useState('');
 
     const markDirty = useCallback(() => onDirtyStateChange(true), [onDirtyStateChange]);
@@ -81,10 +82,13 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
         markDirty();
     };
 
-    const removeItem = (field: 'sex' | 'masturbation' | 'exercise' | 'caffeine', id: string) => {
+    const removeItem = (field: 'sex' | 'masturbation' | 'exercise' | 'caffeine' | 'alcohol', id: string) => {
         if (field === 'caffeine') {
             const newItems = (log.caffeineRecord?.items || []).filter(i => i.id !== id);
             setLog(prev => ({ ...prev, caffeineRecord: { totalCount: newItems.length, items: newItems } }));
+        } else if (field === 'alcohol') {
+            setField('alcoholRecord', null);
+            setField('alcohol', 'none');
         } else {
             setLog(prev => ({ ...prev, [field]: (log[field] as any[]).filter(i => i.id !== id) }));
         }
@@ -99,6 +103,15 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
             setField('dailyEvents', [...current, tag]);
         }
         setEventSearch('');
+    };
+
+    const handleSaveAlcohol = (r: AlcoholRecord) => {
+        setLog(prev => ({ 
+            ...prev, 
+            alcoholRecord: r, 
+            alcohol: r.totalGrams > 50 ? 'high' : r.totalGrams > 20 ? 'medium' : 'low' 
+        }));
+        markDirty();
     };
 
     return (
@@ -151,10 +164,34 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest block">饮酒</label>
-                                    <div className="aspect-square border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-3xl flex flex-col items-center justify-center text-slate-300 dark:text-slate-700 hover:border-brand-accent hover:text-brand-accent transition-all cursor-pointer bg-slate-50/30 dark:bg-slate-950/30">
-                                        <Plus size={24} strokeWidth={3} />
-                                        <span className="text-[10px] font-black mt-2">添加记录</span>
-                                    </div>
+                                    {log.alcoholRecord ? (
+                                        <div 
+                                            onClick={() => setModalState(s => ({ ...s, alc: true }))}
+                                            className="relative aspect-square bg-amber-50 dark:bg-amber-900/20 border-2 border-amber-200 dark:border-amber-800 rounded-3xl flex flex-col items-center justify-center p-4 text-center cursor-pointer group hover:border-amber-400 transition-all shadow-sm"
+                                        >
+                                            <div className="text-2xl mb-1">🍺</div>
+                                            <div className="text-xl font-black text-amber-600 dark:text-amber-400 tabular-nums">
+                                                {log.alcoholRecord.totalGrams}<span className="text-[10px] ml-0.5">g</span>
+                                            </div>
+                                            <div className="text-[9px] font-bold text-amber-500/70 mt-1 uppercase tracking-tighter line-clamp-1 px-1">
+                                                {log.alcoholRecord.items.length} 种饮品
+                                            </div>
+                                            <button 
+                                                onClick={(e) => { e.stopPropagation(); removeItem('alcohol', ''); }}
+                                                className="absolute -top-1 -right-1 p-1.5 bg-white dark:bg-slate-800 rounded-full shadow-md text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all border border-slate-100 dark:border-slate-700"
+                                            >
+                                                <Trash2 size={12}/>
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <div 
+                                            onClick={() => setModalState(s => ({ ...s, alc: true }))}
+                                            className="aspect-square border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-3xl flex flex-col items-center justify-center text-slate-300 dark:text-slate-700 hover:border-brand-accent hover:text-brand-accent transition-all cursor-pointer bg-slate-50/30 dark:bg-slate-950/30"
+                                        >
+                                            <Plus size={24} strokeWidth={3} />
+                                            <span className="text-[10px] font-black mt-2">添加记录</span>
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest block">看片</label>
@@ -238,7 +275,7 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
                                 ]}
                             ].map(group => (
                                 <div key={group.label} className="space-y-3">
-                                    <label className="text-xs font-bold text-slate-400 uppercase tracking-widest block">{group.label}</label>
+                                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block">{group.label}</label>
                                     <div className="grid grid-cols-5 gap-2">
                                         {group.options.map(opt => {
                                             const isSelected = group.field === 'sleep_attire' ? log.sleep?.attire === opt.id : (log as any)[group.field] === opt.id;
@@ -259,7 +296,7 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
                         </div>
                     )}
 
-                    {/* 健康 Tab (完全还原详细体感记录) */}
+                    {/* 健康 Tab */}
                     {activeMidTab === 'health' && (
                         <div className="space-y-10 animate-in fade-in duration-300">
                             <div className="space-y-4">
@@ -271,7 +308,6 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
                                 <FaceSelector options={STRESS_FACES} value={log.stressLevel || null} onChange={v => setField('stressLevel', v)} />
                             </div>
                             
-                            {/* 身体不适详细卡片 */}
                             <div className={`mt-6 rounded-[1.5rem] border transition-all duration-300 overflow-hidden ${log.health?.isSick ? 'bg-red-50/50 dark:bg-red-900/10 border-red-200 dark:border-red-900/30' : 'bg-slate-50/50 dark:bg-slate-950/50 border-slate-100 dark:border-slate-800'}`}>
                                 <div className="flex items-center justify-between p-5">
                                     <div className="flex items-center gap-4">
@@ -301,7 +337,6 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
 
                                 {log.health?.isSick && (
                                     <div className="px-5 pb-6 space-y-6 animate-in slide-in-from-top-2 duration-300">
-                                        {/* 不适程度选择 */}
                                         <div className="space-y-3">
                                             <label className="text-[10px] font-black text-red-600/70 dark:text-red-400/50 uppercase tracking-widest block">程度评价</label>
                                             <div className="flex bg-white dark:bg-slate-900/50 rounded-xl p-1 border border-red-100 dark:border-red-900/30 shadow-sm">
@@ -324,7 +359,6 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
                                             </div>
                                         </div>
 
-                                        {/* 症状标签 */}
                                         <div className="space-y-3">
                                             <label className="text-[10px] font-black text-red-600/70 dark:text-red-400/50 uppercase tracking-widest block">具体症状</label>
                                             <div className="flex flex-wrap gap-2">
@@ -348,7 +382,6 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
                                             </div>
                                         </div>
 
-                                        {/* 用药记录 */}
                                         <div className="space-y-3 pt-2 border-t border-red-100 dark:border-red-900/30">
                                             <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest block">用药情况</label>
                                             <div className="flex flex-wrap gap-2">
@@ -453,6 +486,7 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
             <SexRecordModal isOpen={modalState.sex} onClose={() => setModalState(s => ({ ...s, sex: false }))} onSave={(r) => { setField('sex', [...(log.sex || []), r]); setModalState(s => ({ ...s, sex: false })); }} dateStr={log.date} partners={partners} logs={logs} />
             <MasturbationRecordModal isOpen={modalState.mb} onClose={() => setModalState(s => ({ ...s, mb: false }))} onSave={(r) => { setField('masturbation', [...(log.masturbation || []), r]); setModalState(s => ({ ...s, mb: false })); }} dateStr={log.date} logs={logs} partners={partners} />
             <ExerciseRecordModal isOpen={modalState.ex} onClose={() => setModalState(s => ({ ...s, ex: false }))} onSave={(r) => { setField('exercise', [...(log.exercise || []), r]); setModalState(s => ({ ...s, ex: false })); }} />
+            <AlcoholRecordModal isOpen={modalState.alc} onClose={() => setModalState(s => ({ ...s, alc: false }))} onSave={handleSaveAlcohol} initialData={log.alcoholRecord || undefined} />
         </div>
     );
 };
