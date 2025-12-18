@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { LogEntry, ExerciseRecord, SexRecordDetails, MasturbationRecordDetails, NapRecord, AlcoholRecord } from '../types';
 import CalendarHeatmap from './CalendarHeatmap';
-/* Added BatteryWarning, Info to lucide-react imports */
-import { Moon, Zap, Activity, Hand, HeartPulse, Clock, Dumbbell, Footprints, Timer, CloudSun, Beer, TrendingUp, ShieldAlert, Edit3, Trash2, FastForward, Coffee, Bed, ArrowRight, User, Heart, RotateCcw, MapPin, Sparkles, Shirt, Star, Thermometer, BrainCircuit, Tag, Film, Smile, AlertTriangle, ChevronRight, Calendar, Check, BatteryWarning, Info } from 'lucide-react';
+/* Added Check to lucide-react imports to fix line 270 error */
+import { Moon, Zap, Activity, Hand, HeartPulse, Clock, Dumbbell, Footprints, Timer, CloudSun, Beer, TrendingUp, ShieldAlert, Edit3, Trash2, FastForward, Coffee, Bed, ArrowRight, User, Heart, RotateCcw, MapPin, Sparkles, Shirt, Star, Thermometer, BrainCircuit, Tag, Film, Smile, AlertTriangle, ChevronRight, Calendar, Check } from 'lucide-react';
 import Modal from './Modal';
 import SafeDeleteModal from './SafeDeleteModal';
 import { formatTime, calculateSleepDuration, analyzeSleep, formatDateFriendly, LABELS } from '../utils/helpers';
@@ -98,47 +98,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
       return { main: `${month}月${date}日`, sub: weekday };
   }, [summaryLog]);
 
-  // --- 7日睡眠轨迹数据计算 ---
-  const trajectoryData = useMemo(() => {
-      const days = [];
-      const now = new Date();
-      // 获取过去7天（含今天）
-      for (let i = 6; i >= 0; i--) {
-          const d = new Date();
-          d.setDate(now.getDate() - i);
-          const dateStr = d.toISOString().split('T')[0];
-          const log = logs.find(l => l.date === dateStr);
-          
-          let mainHours = 0;
-          let napHours = 0;
-          let status = null;
-
-          if (log?.sleep) {
-              const analysis = analyzeSleep(log.sleep.startTime, log.sleep.endTime);
-              mainHours = analysis?.durationHours || 0;
-              status = analysis;
-              
-              if (log.sleep.naps) {
-                  const totalNapMins = log.sleep.naps.reduce((acc, n) => acc + (n.duration || 0), 0);
-                  napHours = totalNapMins / 60;
-              }
-          }
-
-          days.push({
-              date: dateStr,
-              label: d.getDate(),
-              isToday: i === 0,
-              mainHours,
-              napHours,
-              totalHours: mainHours + napHours,
-              status
-          });
-      }
-      return days;
-  }, [logs]);
-
-  const maxHours = useMemo(() => Math.max(10, ...trajectoryData.map(d => d.totalHours)), [trajectoryData]);
-
   const SummarySection = ({ title, icon: Icon, children, colorClass = "text-slate-400" }: any) => (
       <div className="space-y-3">
           <div className="flex items-center gap-2 px-1">
@@ -181,66 +140,12 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
         )}
 
         <CalendarHeatmap logs={logs} onDateClick={handleDateClickForSummary}>
-            {/* 7日睡眠轨迹统计柱状图 - 插入日历下方区域 */}
-            <div className="bg-white dark:bg-slate-900/40 rounded-3xl p-5 shadow-soft border border-slate-100 dark:border-white/5 mt-4 mb-2">
-                <div className="flex justify-between items-center mb-5">
-                    <div className="flex items-center gap-2">
-                        <div className="p-1.5 bg-indigo-50 dark:bg-indigo-500/10 rounded-lg text-indigo-500"><Moon size={16} fill="currentColor" fillOpacity={0.2}/></div>
-                        <span className="text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest">近七日睡眠轨迹</span>
-                    </div>
-                    <div className="flex gap-3">
-                        <div className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div><span className="text-[9px] text-slate-400 font-bold">晚间</span></div>
-                        <div className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-orange-400"></div><span className="text-[9px] text-slate-400 font-bold">午休</span></div>
-                    </div>
-                </div>
-
-                <div className="flex justify-between items-end h-24 gap-2 px-1">
-                    {trajectoryData.map((day, idx) => {
-                        const mainHeight = (day.mainHours / maxHours) * 100;
-                        const napHeight = (day.napHours / maxHours) * 100;
-                        const isShort = day.status?.isInsufficient;
-                        const isLong = day.status?.isExcessive;
-                        const isLate = day.status?.isLate;
-
-                        return (
-                            <div key={idx} className="flex-1 flex flex-col items-center group cursor-pointer" onClick={() => handleDateClickForSummary(day.date)}>
-                                <div className="relative w-full flex flex-col items-center justify-end h-16 mb-1.5">
-                                    {/* 顶部异常图标 */}
-                                    <div className="absolute -top-4 flex flex-col items-center">
-                                        {isShort && <BatteryWarning size={10} className="text-orange-500" strokeWidth={3}/>}
-                                        {isLong && <Zap size={10} className="text-purple-500" strokeWidth={3}/>}
-                                    </div>
-
-                                    {/* 柱子容器 */}
-                                    <div className="relative w-full max-w-[10px] flex flex-col items-center justify-end rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800 h-full">
-                                        {/* 夜间睡眠 (蓝色) */}
-                                        <div 
-                                            className={`w-full transition-all duration-500 rounded-t-full ${isShort ? 'bg-orange-400' : isLong ? 'bg-purple-500' : 'bg-blue-500'}`} 
-                                            style={{ height: `${mainHeight}%` }}
-                                        ></div>
-                                        {/* 午休 (橙色) */}
-                                        <div 
-                                            className="w-full bg-orange-300 transition-all duration-500" 
-                                            style={{ height: `${napHeight}%` }}
-                                        ></div>
-                                    </div>
-                                    
-                                    {/* 底部熬夜标记 */}
-                                    {isLate && <div className="absolute -bottom-1 text-indigo-400"><Moon size={6} fill="currentColor"/></div>}
-                                </div>
-                                <span className={`text-[9px] font-black ${day.isToday ? 'text-brand-accent' : 'text-slate-400'}`}>{day.label}</span>
-                            </div>
-                        );
-                    })}
-                </div>
-            </div>
-
             <div className="grid grid-cols-2 gap-4 mt-2">
                 <div className="bg-white dark:bg-slate-900/40 rounded-3xl p-5 shadow-soft border border-slate-100 dark:border-white/5 flex flex-col justify-between h-44 transition-colors">
                     <div className="flex justify-between items-start">
                         <div className="flex items-center gap-2">
                             <div className="p-2 bg-blue-50 dark:bg-blue-500/10 rounded-full text-blue-500"><Moon size={18} fill="currentColor" fillOpacity={0.2}/></div>
-                            <span className="text-sm font-bold text-slate-800 dark:text-slate-300">今日睡眠</span>
+                            <span className="text-sm font-bold text-slate-800 dark:text-slate-300">睡眠</span>
                         </div>
                         <div className="flex items-baseline"><span className="text-3xl font-black text-slate-800 dark:text-slate-100">{sleepStats?.hours || (pendingLog ? '记' : '未')}</span><span className="text-xs font-bold text-slate-400 ml-0.5">{pendingLog ? '录中' : 'h'}</span></div>
                     </div>
