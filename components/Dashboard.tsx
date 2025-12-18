@@ -2,7 +2,7 @@
 import React, { useState, useMemo } from 'react';
 import { LogEntry, ExerciseRecord, SexRecordDetails, MasturbationRecordDetails, NapRecord, AlcoholRecord } from '../types';
 import CalendarHeatmap from './CalendarHeatmap';
-import { Moon, Zap, Activity, Hand, HeartPulse, Clock, Dumbbell, Footprints, Timer, CloudSun, Beer, TrendingUp, ShieldAlert, Edit3, Trash2, FastForward, Coffee, Bed, ArrowRight, User, Heart } from 'lucide-react';
+import { Moon, Zap, Activity, Hand, HeartPulse, Clock, Dumbbell, Footprints, Timer, CloudSun, Beer, TrendingUp, ShieldAlert, Edit3, Trash2, FastForward, Coffee, Bed, ArrowRight, User, Heart, History } from 'lucide-react';
 import Modal from './Modal';
 import SafeDeleteModal from './SafeDeleteModal';
 import { formatTime, calculateSleepDuration, analyzeSleep } from '../utils/helpers';
@@ -28,6 +28,10 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
   const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
   const [summaryLog, setSummaryLog] = useState<LogEntry | null>(null);
   
+  // 删除确认弹窗状态
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [dateToDelete, setDateToDelete] = useState<string | null>(null);
+
   // 自慰操作弹窗
   const [isMbActionModalOpen, setIsMbActionModalOpen] = useState(false);
 
@@ -90,6 +94,19 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
       if (confirm('确定要放弃本次酒局计时吗？')) {
           await cancelAlcoholRecord();
           showToast('已放弃记录', 'info');
+      }
+  };
+
+  const handleDeleteRecord = (date: string) => {
+      setDateToDelete(date);
+      setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+      if (dateToDelete) {
+          await deleteLog(dateToDelete);
+          setIsSummaryModalOpen(false);
+          showToast('记录已成功删除', 'success');
       }
   };
 
@@ -272,16 +289,47 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
         </CalendarHeatmap>
       </div>
       
+      {/* 记录详情弹窗 */}
       <Modal isOpen={isSummaryModalOpen} onClose={() => setIsSummaryModalOpen(false)} title="记录详情">
         {summaryLog && (
-            <div className="space-y-4 pb-4">
+            <div className="space-y-6 pb-6 animate-in fade-in duration-200">
+                {/* 时间轴展示 */}
                 <GlobalTimeline log={summaryLog} />
-                <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-800 text-center">
-                    <button onClick={() => { setIsSummaryModalOpen(false); onEdit(summaryLog.date); }} className="px-6 py-2 bg-brand-accent text-white rounded-full font-bold shadow-lg shadow-blue-500/30 active:scale-95 transition-all">编辑详情</button>
+                
+                {/* 历史修改记录 */}
+                <div className="space-y-3 pt-4 border-t border-slate-100 dark:border-white/5">
+                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center">
+                        <History size={14} className="mr-1.5"/> 修改历史
+                    </h3>
+                    <LogHistory log={summaryLog} />
+                </div>
+
+                {/* 底部操作按钮 */}
+                <div className="mt-8 flex gap-3">
+                    <button 
+                        onClick={() => handleDeleteRecord(summaryLog.date)} 
+                        className="flex-1 py-3 bg-red-50 dark:bg-red-900/10 text-red-500 dark:text-red-400 rounded-2xl font-bold flex items-center justify-center gap-2 active:scale-95 transition-all border border-red-100 dark:border-red-900/30"
+                    >
+                        <Trash2 size={18}/> 删除
+                    </button>
+                    <button 
+                        onClick={() => { setIsSummaryModalOpen(false); onEdit(summaryLog.date); }} 
+                        className="flex-[2] py-3 bg-brand-accent text-white rounded-2xl font-bold shadow-lg shadow-blue-500/30 active:scale-95 transition-all flex items-center justify-center gap-2"
+                    >
+                        <Edit3 size={18}/> 编辑详情
+                    </button>
                 </div>
             </div>
         )}
       </Modal>
+
+      {/* 删除确认弹窗 */}
+      <SafeDeleteModal 
+        isOpen={isDeleteDialogOpen} 
+        onClose={() => setIsDeleteDialogOpen(false)} 
+        onConfirm={confirmDelete}
+        message={`确定要删除 ${dateToDelete} 的所有记录吗？删除后将无法找回。`}
+      />
 
       <Modal isOpen={isMbActionModalOpen} onClose={() => setIsMbActionModalOpen(false)} title="施法结束">
           <div className="space-y-3 pb-2">
