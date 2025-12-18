@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef, lazy, Suspense, useMemo } from 'react';
 import { LogEntry, SexRecordDetails, MasturbationRecordDetails, ExerciseRecord, NapRecord, ChangeDetail, ChangeRecord, AlcoholRecord, PartnerProfile, MorningRecord, SleepRecord, CaffeineRecord, CaffeineItem } from '../types';
-import { CheckSquare, Tag, Beer, Film, Dumbbell, Sun, Cloud, CloudRain, Snowflake, Wind, CloudFog, Home, Users, Hotel, Plane, MapPin, Shirt, HeartPulse, Hand, Plus, Edit2, Trash2, Footprints, Save, Coffee, Calendar, X, Zap, Check, Sparkles, Settings, List, ChevronRight, ShoppingCart, Timer, CupSoda, Leaf, Flame, Pill, Minus } from 'lucide-react';
+import { CheckSquare, Tag, Beer, Film, Dumbbell, Sun, Cloud, CloudRain, Snowflake, Wind, CloudFog, Home, Users, Hotel, Plane, MapPin, Shirt, HeartPulse, Hand, Plus, Edit2, Trash2, Footprints, Save, Coffee, Calendar, X, Zap, Check, Sparkles, Settings, List, ChevronRight, ShoppingCart, Timer, CupSoda, Leaf, Flame, Pill, Minus, Droplets } from 'lucide-react';
 import Modal from './Modal';
 import SexRecordModal from './SexRecordModal';
 import MasturbationRecordModal from './MasturbationRecordModal';
@@ -23,50 +23,67 @@ import { TagType } from './TagManager';
 // Lazy Load
 const TagManager = lazy(() => import('./TagManager'));
 
-// --- Ordering Menu Config ---
+// --- Professional Beverage Menu ---
 const BEVERAGE_MENU = [
     {
-        category: '咖啡',
+        category: '意式经典',
         icon: Coffee,
         items: [
-            { name: '美式咖啡', vol: 350, emoji: '☕' },
-            { name: '拿铁', vol: 350, emoji: '🥛' },
-            { name: '意式浓缩', vol: 30, emoji: '⚡' },
-            { name: '冷萃', vol: 300, emoji: '🧊' },
-            { name: '手冲咖啡', vol: 250, emoji: '🍯' },
-            { name: '速溶咖啡', vol: 200, emoji: '🎒' }
+            { name: '美式咖啡', vol: 350, emoji: '☕', desc: 'Luckin/Starbucks' },
+            { name: '意式浓缩', vol: 30, emoji: '⚡', desc: 'Espresso' },
+            { name: 'Dirty', vol: 200, emoji: '🥃', desc: '污咖啡' },
+            { name: '冷萃/冰滴', vol: 300, emoji: '🧊', desc: 'Cold Brew' }
         ]
     },
     {
-        category: '茶饮',
-        icon: Leaf,
-        items: [
-            { name: '绿茶', vol: 300, emoji: '🍵' },
-            { name: '红茶', vol: 300, emoji: '🍂' },
-            { name: '乌龙茶', vol: 300, emoji: '🪵' },
-            { name: '奶茶', vol: 500, emoji: '🧋' },
-            { name: '浓茶', vol: 200, emoji: '🗿' },
-            { name: '抹茶', vol: 150, emoji: '🍀' }
-        ]
-    },
-    {
-        category: '功能',
+        category: '奶咖特调',
         icon: CupSoda,
         items: [
-            { name: '红牛', vol: 250, emoji: '🐂' },
-            { name: '魔爪', vol: 500, emoji: 'Ⓜ️' },
-            { name: '乐虎', vol: 250, emoji: '🐯' },
-            { name: '可乐', vol: 330, emoji: '🥤' }
+            { name: '拿铁', vol: 450, emoji: '🥛', desc: 'Latte' },
+            { name: '生椰拿铁', vol: 450, emoji: '🥥', desc: 'Luckin Style' },
+            { name: '澳瑞白', vol: 300, emoji: '⚪', desc: 'Flat White' },
+            { name: '燕麦拿铁', vol: 450, emoji: '🌾', desc: 'Oat Latte' }
         ]
     },
     {
-        category: '补剂',
+        category: '中国原叶',
+        icon: Leaf,
+        items: [
+            { name: '绿茶/龙井', vol: 350, emoji: '🍵', desc: '传统中式' },
+            { name: '乌龙/普洱', vol: 350, emoji: '🍂', desc: '茶多酚高' },
+            { name: '茉莉花茶', vol: 350, emoji: '🌸', desc: '清香提神' },
+            { name: '大红袍', vol: 200, emoji: '🪵', desc: '岩茶浓郁' }
+        ]
+    },
+    {
+        category: '新式奶茶',
+        icon: CupSoda,
+        items: [
+            { name: '原叶鲜奶茶', vol: 500, emoji: '🍃', desc: '霸王茶姬/伯牙绝弦' },
+            { name: '厚乳奶茶', vol: 500, emoji: '🧋', desc: '蜜雪冰城/沪上阿姨' },
+            { name: '芝士茗茶', vol: 500, emoji: '🧀', desc: '喜茶风格' },
+            { name: '柠檬果茶', vol: 600, emoji: '🍋', desc: '清爽解腻' }
+        ]
+    },
+    {
+        category: '功能能量',
+        icon: Zap,
+        items: [
+            { name: '红牛', vol: 250, emoji: '🐂', desc: 'Red Bull' },
+            { name: '魔爪', vol: 500, emoji: 'Ⓜ️', desc: 'Monster' },
+            { name: '东鹏特饮', vol: 250, emoji: '🐯', desc: 'Eastroc' },
+            { name: '电解质水', vol: 500, emoji: '💧', desc: '佳得乐/外星人' }
+        ]
+    },
+    {
+        category: '日常补剂',
         icon: Pill,
         items: [
-            { name: '氮泵', vol: 250, emoji: '🔥' },
-            { name: '锌片/补剂', vol: 1, emoji: '💊' },
-            { name: '电解质水', vol: 500, emoji: '💧' },
-            { name: '蛋白粉', vol: 300, emoji: '💪' }
+            { name: '锌镁片/ZMA', vol: 1, emoji: '💊', desc: '活力核心' },
+            { name: 'B族维生素', vol: 1, emoji: '🐝', desc: '代谢支持' },
+            { name: '咖啡因片', vol: 1, emoji: '⚪', desc: '纯净摄入' },
+            { name: '精氨酸/氮泵', vol: 250, emoji: '🔥', desc: '运动前夕' },
+            { name: '肌酸', vol: 300, emoji: '💪', desc: '力量储备' }
         ]
     }
 ];
@@ -182,22 +199,22 @@ const LogForm: React.FC<{
         setLog(prev => ({ ...prev, alcoholRecord: record, alcohol: alcoholLevel }));
     };
 
-    // --- Ordered Beverage Logic ---
+    // --- Beverage Ordering Logic ---
     const addBeverage = (item: { name: string, vol: number }) => {
         setLog(prev => {
             const current = prev.caffeineRecord || { totalCount: 0, items: [] };
-            const existingItemIdx = current.items.findIndex(i => i.name === item.name);
+            const nowStr = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
             
+            // 同名、同品牌饮品在短时间内（同一条日记内）点单，默认为增加份数
+            const existingItemIdx = current.items.findIndex(i => i.name === item.name);
             let newItems = [...current.items];
+
             if (existingItemIdx > -1) {
-                // 如果已经点了这个，增加份数
                 newItems[existingItemIdx] = { 
                     ...newItems[existingItemIdx], 
                     count: newItems[existingItemIdx].count + 1 
                 };
             } else {
-                // 没点过，新增
-                const nowStr = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
                 newItems.push({ id: Date.now().toString(), name: item.name, time: nowStr, count: 1, volume: item.vol });
             }
 
@@ -210,11 +227,14 @@ const LogForm: React.FC<{
         });
     };
 
-    const updateBeverageCount = (id: string, delta: number) => {
+    const updateBeverageValue = (id: string, field: 'count' | 'volume', delta: number) => {
         setLog(prev => {
             const current = prev.caffeineRecord || { totalCount: 0, items: [] };
             const newItems = current.items.map(i => {
-                if (i.id === id) return { ...i, count: Math.max(0, i.count + delta) };
+                if (i.id === id) {
+                    const nextVal = Math.max(field === 'count' ? 0 : 1, (i[field] || 0) + delta);
+                    return { ...i, [field]: nextVal };
+                }
                 return i;
             }).filter(i => i.count > 0);
 
@@ -305,10 +325,10 @@ const LogForm: React.FC<{
     const renderAttireIcon = (v: string) => <Shirt size={20}/>; 
 
     return (
-        <form onSubmit={(e) => { e.preventDefault(); handleReview(); }} className="space-y-6 pb-24 relative">
-             {/* Date Header with Quality Score */}
+        <form onSubmit={(e) => { e.preventDefault(); handleReview(); }} className="space-y-6 pb-24 relative text-brand-text dark:text-slate-100">
+             {/* Date Header */}
              <div className="flex justify-between items-center bg-brand-card dark:bg-slate-900 py-3 px-5 rounded-card shadow-soft border border-slate-100 dark:border-slate-800">
-                 <p className="text-xl font-black text-brand-text dark:text-slate-200 tracking-tight">
+                 <p className="text-xl font-black tracking-tight">
                      {new Date(log.date).toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })}
                  </p>
                  <div className="flex items-center gap-3">
@@ -322,7 +342,7 @@ const LogForm: React.FC<{
             <MorningSection morning={log.morning!} onChange={handleMorningChange} />
             <SleepSection sleep={log.sleep!} onChange={handleSleepChange} onEditNap={(r) => { setEditingNapRecord(r); setIsNapModalOpen(true); }} onDeleteNap={(id) => deleteRecord('naps', id)} onAddNap={() => { setEditingNapRecord(undefined); setIsNapModalOpen(true); }} />
 
-            {/* Tabbed Card for Details */}
+            {/* Detailed Info Tabs */}
             <div className="bg-brand-card dark:bg-slate-900 rounded-card shadow-soft border border-slate-100 dark:border-slate-800 overflow-hidden">
                 <div className="flex border-b border-slate-100 dark:border-slate-800 px-2 pt-2">
                      {['lifestyle', 'environment', 'health'].map(tab => (
@@ -330,7 +350,6 @@ const LogForm: React.FC<{
                      ))}
                 </div>
                 <div className="p-5">
-                    {/* TAB: LIFESTYLE */}
                     {activeDetailTab === 'lifestyle' && (
                         <div className="space-y-6 animate-in fade-in">
                             <div className="grid grid-cols-2 gap-4">
@@ -358,7 +377,7 @@ const LogForm: React.FC<{
                                 </div>
                             </div>
                             
-                            {/* Beverage Ordering (Milk Tea Style) */}
+                            {/* Beverage "Ordering Machine" Section */}
                             <div className="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-800">
                                 <div className="flex justify-between items-center mb-1">
                                     <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">提神与补剂</label>
@@ -366,9 +385,9 @@ const LogForm: React.FC<{
                                 </div>
 
                                 {isAddingCaffeine && (
-                                    <div className="bg-white dark:bg-[#020617] rounded-3xl border border-slate-200 dark:border-slate-800 flex h-[320px] overflow-hidden animate-in slide-in-from-top-4 duration-300 shadow-xl">
-                                        {/* Left Category Menu */}
-                                        <div className="w-20 bg-slate-50 dark:bg-slate-900/50 border-r border-slate-200 dark:border-slate-800 flex flex-col pt-2">
+                                    <div className="bg-white dark:bg-[#020617] rounded-3xl border border-slate-200 dark:border-slate-800 flex h-[350px] overflow-hidden animate-in slide-in-from-top-4 duration-300 shadow-xl">
+                                        {/* Sidebar Navigation */}
+                                        <div className="w-20 bg-slate-50 dark:bg-slate-900/50 border-r border-slate-200 dark:border-slate-800 flex flex-col pt-2 shrink-0">
                                             {BEVERAGE_MENU.map((cat, idx) => (
                                                 <button 
                                                     key={cat.category} 
@@ -383,7 +402,7 @@ const LogForm: React.FC<{
                                             ))}
                                         </div>
 
-                                        {/* Right Items Grid */}
+                                        {/* Products Grid */}
                                         <div className="flex-1 p-3 overflow-y-auto custom-scrollbar bg-white dark:bg-transparent">
                                             <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1">{BEVERAGE_MENU[activeBeverageCat].category}系列</h4>
                                             <div className="grid grid-cols-2 gap-2">
@@ -392,12 +411,12 @@ const LogForm: React.FC<{
                                                         key={item.name} 
                                                         type="button"
                                                         onClick={() => addBeverage(item)} 
-                                                        className="bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 p-3 rounded-2xl flex flex-col items-center justify-center gap-1.5 hover:border-brand-accent active:scale-95 transition-all shadow-sm"
+                                                        className="bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 p-3 rounded-2xl flex flex-col items-center justify-center gap-1.5 hover:border-brand-accent active:scale-95 transition-all shadow-sm group"
                                                     >
-                                                        <span className="text-2xl">{item.emoji}</span>
+                                                        <span className="text-2xl group-hover:scale-110 transition-transform">{item.emoji}</span>
                                                         <div className="text-center">
                                                             <div className="text-[11px] font-black text-slate-700 dark:text-slate-200 leading-tight">{item.name}</div>
-                                                            <div className="text-[8px] text-slate-400 font-bold">{item.vol}ml</div>
+                                                            <div className="text-[8px] text-slate-400 font-bold mt-0.5">{item.desc}</div>
                                                         </div>
                                                     </button>
                                                 ))}
@@ -406,35 +425,51 @@ const LogForm: React.FC<{
                                     </div>
                                 )}
 
-                                {/* Cart Style List */}
+                                {/* Selected Beverage List (Cart) */}
                                 <div className="space-y-2">
                                     {log.caffeineRecord?.items.map(c => (
-                                        <div key={c.id} className="flex items-center justify-between p-3 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl shadow-sm animate-in slide-in-from-right-4">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-brand-accent font-black text-sm">
-                                                    {BEVERAGE_MENU.flatMap(cat => cat.items).find(i => i.name === c.name)?.emoji || '☕'}
+                                        <div key={c.id} className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl p-3 shadow-sm animate-in slide-in-from-right-4">
+                                            <div className="flex items-center justify-between mb-2">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-brand-accent text-sm">
+                                                        {BEVERAGE_MENU.flatMap(cat => cat.items).find(i => i.name === c.name)?.emoji || '☕'}
+                                                    </div>
+                                                    <div>
+                                                        <div className="text-xs font-black">{c.name} <span className="text-[10px] text-slate-400 ml-1 font-mono font-bold opacity-60">{c.time}</span></div>
+                                                        <div className="text-[10px] text-slate-500 font-bold">总计: {(c.volume || 350) * c.count}ml</div>
+                                                    </div>
                                                 </div>
-                                                <div>
-                                                    <div className="text-xs font-black text-slate-800 dark:text-slate-200">{c.name} <span className="text-[10px] text-slate-400 ml-1 font-mono font-bold opacity-60">{c.time}</span></div>
-                                                    <div className="text-[10px] text-slate-500 font-bold">{c.volume}ml · {c.count}份</div>
-                                                </div>
+                                                <button type="button" onClick={() => updateBeverageValue(c.id, 'count', -100)} className="p-2 text-slate-300 hover:text-red-500 active:scale-90"><Trash2 size={14}/></button>
                                             </div>
-                                            <div className="flex items-center gap-2">
-                                                <button type="button" onClick={() => updateBeverageCount(c.id, -1)} className="p-1.5 bg-slate-50 dark:bg-slate-800 rounded-lg text-slate-400 hover:text-red-500 active:scale-90"><Minus size={14}/></button>
-                                                <span className="text-xs font-black w-4 text-center">{c.count}</span>
-                                                <button type="button" onClick={() => updateBeverageCount(c.id, 1)} className="p-1.5 bg-slate-50 dark:bg-slate-800 rounded-lg text-slate-400 hover:text-brand-accent active:scale-90"><Plus size={14}/></button>
+                                            
+                                            <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-800/40 rounded-xl px-2 py-1.5">
+                                                {/* Volume Controller (ml) */}
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter w-8">容量</span>
+                                                    <button type="button" onClick={() => updateBeverageValue(c.id, 'volume', -50)} className="p-1 rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 active:scale-90"><Minus size={12}/></button>
+                                                    <span className="text-[11px] font-bold w-12 text-center tabular-nums">{c.volume}ml</span>
+                                                    <button type="button" onClick={() => updateBeverageValue(c.id, 'volume', 50)} className="p-1 rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 active:scale-90"><Plus size={12}/></button>
+                                                </div>
+                                                
+                                                {/* Count Controller (Cups) */}
+                                                <div className="flex items-center gap-2 border-l border-slate-200 dark:border-slate-700 pl-3">
+                                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter w-8">份数</span>
+                                                    <button type="button" onClick={() => updateBeverageValue(c.id, 'count', -1)} className="p-1 rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 active:scale-90"><Minus size={12}/></button>
+                                                    <span className="text-[11px] font-black w-4 text-center tabular-nums">{c.count}</span>
+                                                    <button type="button" onClick={() => updateBeverageValue(c.id, 'count', 1)} className="p-1 rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 active:scale-90"><Plus size={12}/></button>
+                                                </div>
                                             </div>
                                         </div>
                                     ))}
                                     {(!log.caffeineRecord?.items || log.caffeineRecord.items.length === 0) && !isAddingCaffeine && (
                                         <div className="py-6 border-2 border-dashed border-slate-100 dark:border-slate-800 rounded-2xl text-center">
-                                            <p className="text-[10px] text-slate-300 dark:text-slate-700 font-black uppercase tracking-[0.2em]">暂无补剂记录</p>
+                                            <p className="text-[10px] text-slate-300 dark:text-slate-700 font-black uppercase tracking-[0.2em]">暂无记录</p>
                                         </div>
                                     )}
                                 </div>
                             </div>
 
-                            {/* Exercises */}
+                            {/* Activity Sections (Exercise/Sex) */}
                             <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
                                 <div className="flex justify-between items-center mb-3">
                                     <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">运动</label>
@@ -446,8 +481,8 @@ const LogForm: React.FC<{
                                             <div className="flex items-center gap-3">
                                                 <div className="w-8 h-8 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center text-green-500 shadow-sm"><Dumbbell size={14}/></div>
                                                 <div>
-                                                    <div className="text-sm font-bold text-green-900 dark:text-green-300">{r.type}</div>
-                                                    <div className="text-xs text-green-600 dark:text-green-500">{r.steps ? `${r.steps}步` : `${r.duration}分钟`}</div>
+                                                    <div className="text-sm font-bold">{r.type}</div>
+                                                    <div className="text-xs opacity-60">{r.steps ? `${r.steps}步` : `${r.duration}分钟`}</div>
                                                 </div>
                                             </div>
                                             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -459,7 +494,6 @@ const LogForm: React.FC<{
                                 </div>
                             </div>
 
-                            {/* Sex/MB */}
                             <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
                                 <label className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 block">性活动</label>
                                 <div className="grid grid-cols-2 gap-3">
@@ -473,13 +507,13 @@ const LogForm: React.FC<{
                                 <div className="mt-3 space-y-2">
                                     {log.sex?.map(r => (
                                         <div key={r.id} className="bg-pink-50/50 dark:bg-pink-900/10 border border-pink-100 dark:border-pink-900/30 p-3 rounded-xl flex justify-between items-center text-sm">
-                                            <span className="font-bold text-pink-700 dark:text-pink-300">❤️ 性生活 ({r.startTime})</span>
+                                            <span className="font-bold">❤️ 性生活 ({r.startTime})</span>
                                             <button type="button" className="text-pink-400 hover:text-pink-600" onClick={() => { setEditingSexRecord(r); setIsSexModalOpen(true); }}><Edit2 size={14}/></button>
                                         </div>
                                     ))}
                                     {log.masturbation?.map(r => (
                                         <div key={r.id} className="bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/30 p-3 rounded-xl flex justify-between items-center text-sm">
-                                            <span className="font-bold text-blue-700 dark:text-blue-300">🖐️ 自慰 ({r.startTime})</span>
+                                            <span className="font-bold">🖐️ 自慰 ({r.startTime})</span>
                                             <button type="button" className="text-blue-400 hover:text-blue-600" onClick={() => { setEditingMbRecord(r); setIsMbModalOpen(true); }}><Edit2 size={14}/></button>
                                         </div>
                                     ))}
@@ -488,7 +522,6 @@ const LogForm: React.FC<{
                         </div>
                     )}
 
-                    {/* TAB: ENVIRONMENT */}
                     {activeDetailTab === 'environment' && (
                         <div className="space-y-6 animate-in fade-in">
                             <div className="space-y-3">
@@ -506,19 +539,12 @@ const LogForm: React.FC<{
                         </div>
                     )}
 
-                    {/* TAB: HEALTH */}
                     {activeDetailTab === 'health' && (
-                        <HealthSection 
-                            log={log} 
-                            onChange={handleChange} 
-                            onDeepChange={handleDeepChange} 
-                            onManageTags={handleManageTags}
-                        />
+                        <HealthSection log={log} onChange={handleChange} onDeepChange={handleDeepChange} onManageTags={handleManageTags} />
                     )}
                 </div>
             </div>
             
-            {/* Daily Events & Tags */}
             <CardSection title="备注与事件" icon={Calendar} className="space-y-4">
                 <div className="flex flex-wrap gap-2">
                     {EVENT_PRESETS.map(evt => (
@@ -527,57 +553,35 @@ const LogForm: React.FC<{
                 </div>
                 <div className="flex gap-2">
                     <div className="relative flex-1">
-                        <input value={eventInput} onChange={e => setEventInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleManageTags('event', eventInput))} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-xs text-brand-text dark:text-slate-200" placeholder="搜索或创建事件标签..." />
-                        <button 
-                            type="button" 
-                            onClick={() => handleManageTags('event', eventInput)}
-                            className="absolute right-1 top-1 p-1 bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded text-xs hover:bg-slate-300"
-                        >
-                            <Settings size={14}/>
-                        </button>
+                        <input value={eventInput} onChange={e => setEventInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleManageTags('event', eventInput))} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-xs outline-none focus:border-brand-accent" placeholder="搜索或创建标签..." />
+                        <button type="button" onClick={() => handleManageTags('event', eventInput)} className="absolute right-1 top-1 p-1 bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded text-xs"><Settings size={14}/></button>
                     </div>
                 </div>
-                {log.dailyEvents && log.dailyEvents.filter(e => !EVENT_PRESETS.includes(e)).length > 0 && (
-                    <div className="flex flex-wrap gap-2">
-                        {log.dailyEvents.filter(e => !EVENT_PRESETS.includes(e)).map(e => (
-                            <span key={e} className="px-2 py-1 text-xs rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center border border-slate-200 dark:border-slate-700">{e} <button type="button" onClick={() => toggleEvent(e)} className="ml-1 text-slate-400 hover:text-red-500"><X size={10}/></button></span>
-                        ))}
-                    </div>
-                )}
                 <div className="border-t border-slate-100 dark:border-slate-800 pt-3">
-                    <textarea value={log.notes || ''} onChange={(e) => handleChange('notes', e.target.value)} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm min-h-[80px] outline-none focus:border-brand-accent dark:text-slate-200" placeholder="今天感觉如何？写点什么吧..."/>
+                    <textarea value={log.notes || ''} onChange={(e) => handleChange('notes', e.target.value)} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm min-h-[80px] outline-none focus:border-brand-accent" placeholder="今天写点什么吧..."/>
                 </div>
             </CardSection>
 
             <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/90 dark:bg-slate-950/90 backdrop-blur-md border-t border-slate-100 dark:border-slate-800 flex gap-3 z-30">
-                 <button type="button" onClick={handleSaveDraft} className="flex-1 py-3 font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 rounded-2xl">保存草稿</button>
-                <button type="submit" className="flex-[2] py-3 text-lg font-bold text-white bg-brand-accent rounded-2xl shadow-lg shadow-blue-500/30 active:scale-[0.98]">完成记录</button>
+                 <button type="button" onClick={handleSaveDraft} className="flex-1 py-3 font-bold text-slate-500 bg-slate-100 dark:bg-slate-800 rounded-2xl">保存草稿</button>
+                <button type="submit" className="flex-[2] py-3 text-lg font-bold text-white bg-brand-accent rounded-2xl shadow-lg shadow-blue-500/30">完成记录</button>
             </div>
 
-            <Modal isOpen={isSummaryModalOpen} onClose={() => setIsSummaryModalOpen(false)} title="确认记录" footer={<><button type="button" onClick={() => setIsSummaryModalOpen(false)} className="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-brand-text dark:text-slate-300 rounded font-bold">返回修改</button><button type="button" onClick={handleConfirmSave} className="px-4 py-2 bg-brand-accent text-white rounded font-bold shadow-lg shadow-blue-500/20">确认保存</button></>}>
-              <div className="space-y-4 text-sm text-brand-text dark:text-slate-300 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+            <Modal isOpen={isSummaryModalOpen} onClose={() => setIsSummaryModalOpen(false)} title="确认记录" footer={<><button type="button" onClick={() => setIsSummaryModalOpen(false)} className="px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded font-bold">返回修改</button><button type="button" onClick={handleConfirmSave} className="px-4 py-2 bg-brand-accent text-white rounded font-bold shadow-lg shadow-blue-500/20">确认保存</button></>}>
+              <div className="space-y-4 text-sm max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
                   {summaryData.map(({ label, value }) => (
                       <div key={label} className="grid grid-cols-[85px_1fr] gap-4 border-b border-slate-100 dark:border-slate-800 pb-3 last:border-0">
-                          <span className="font-bold text-slate-400 dark:text-slate-500 text-[10px] uppercase tracking-widest pt-1">{label}</span>
-                          <span className="text-right whitespace-pre-wrap font-bold leading-relaxed text-slate-700 dark:text-slate-200">{value}</span>
+                          <span className="font-bold text-slate-400 text-[10px] uppercase tracking-widest pt-1">{label}</span>
+                          <span className="text-right whitespace-pre-wrap font-bold leading-relaxed">{value}</span>
                       </div>
                   ))}
                   <div className="py-4 text-center">
-                    <p className="text-[10px] text-slate-300 dark:text-slate-700 font-black tracking-[0.3em] uppercase">End of Receipt</p>
+                    <p className="text-[10px] text-slate-300 font-black tracking-[0.3em] uppercase">End of Receipt</p>
                   </div>
               </div>
             </Modal>
             
-            <Suspense fallback={null}>
-                <TagManager 
-                    isOpen={isTagManagerOpen} 
-                    onClose={() => setIsTagManagerOpen(false)} 
-                    defaultTab={tagManagerMode}
-                    initialSearch={tagSearch}
-                    onSelectTag={handleTagSelect}
-                />
-            </Suspense>
-
+            <Suspense fallback={null}><TagManager isOpen={isTagManagerOpen} onClose={() => setIsTagManagerOpen(false)} defaultTab={tagManagerMode} initialSearch={tagSearch} onSelectTag={handleTagSelect}/></Suspense>
             <SexRecordModal isOpen={isSexModalOpen} onClose={() => setIsSexModalOpen(false)} onSave={(r) => handleSaveRecord('sex', r)} initialData={editingSexRecord} dateStr={log.date || ''} partners={partners} logs={logs} />
             <MasturbationRecordModal isOpen={isMbModalOpen} onClose={() => setIsMbModalOpen(false)} onSave={(r) => handleSaveRecord('masturbation', r)} initialData={editingMbRecord} dateStr={log.date || ''} logs={logs} partners={partners} />
             <ExerciseRecordModal isOpen={isExerciseModalOpen} onClose={() => setIsExerciseModalOpen(false)} onSave={(r) => handleSaveRecord('exercise', r)} initialData={editingExerciseRecord} />
