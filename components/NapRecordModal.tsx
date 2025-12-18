@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { CloudSun, Clock, Play, Sparkles, Star, Zap, Trash2, Check, Minus, Plus, MapPin, Leaf, RotateCcw, Heart, Shirt, Thermometer, BrainCircuit } from 'lucide-react';
 import Modal from './Modal';
@@ -12,7 +13,14 @@ interface NapRecordModalProps {
     initialData?: NapRecord;
 }
 
-const DREAM_TYPES = ['情色', '噩梦', '普通梦', '模糊梦', '离奇', '清醒梦'];
+const DREAM_TYPES = [
+    { value: 'erotic', label: '春梦' },
+    { value: 'nightmare', label: '噩梦' },
+    { value: 'normal', label: '普通' },
+    { value: 'lucid', label: '清醒梦' },
+    { value: 'weird', label: '离奇' },
+];
+
 const LOCATIONS: { value: SleepLocation, label: string }[] = [
     { value: 'home', label: '家里' },
     { value: 'office', label: '办公室' },
@@ -20,9 +28,11 @@ const LOCATIONS: { value: SleepLocation, label: string }[] = [
     { value: 'hotel', label: '酒店' },
     { value: 'other', label: '其他' }
 ];
+
 const ATTIRE_OPTS = [
     {value: 'naked', label: '裸睡'}, {value: 'light', label: '内衣'}, {value: 'pajamas', label: '睡衣'}, {value: 'other', label: '其他'}
 ];
+
 const PRE_SLEEP_OPTS = [
     {value: 'tired', label: '疲劳'}, {value: 'calm', label: '平静'}, {value: 'energetic', label: '亢奋'}, {value: 'stressed', label: '压力'}, {value: 'other', label: '其他'}
 ];
@@ -118,7 +128,7 @@ const NapRecordModal: React.FC<NapRecordModalProps> = ({ isOpen, onClose, onSave
                     <div className="absolute top-0 right-0 w-48 h-48 bg-orange-500/20 rounded-full blur-[60px] -translate-y-1/2 translate-x-1/2"></div>
                     <div className="relative z-10 flex flex-col items-center">
                         <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-orange-400 mb-2">
-                            <Clock size={14}/> Nap Statistics
+                            <Clock size={14}/> Nap statistics
                         </div>
                         <div className="flex items-baseline gap-1">
                             <span className="text-6xl font-black tabular-nums">{record.duration}</span>
@@ -197,18 +207,22 @@ const NapRecordModal: React.FC<NapRecordModalProps> = ({ isOpen, onClose, onSave
                     </div>
                 </div>
 
-                {/* 6. Hardness Selector - Fixed UX */}
+                {/* 6. Hardness Selector - Fixed UI Conflict */}
                 <div className="space-y-4">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><Zap size={12}/> 午起生理反馈 (勃起硬度)</label>
                     <HardnessSelector value={record.hardness || 0} onChange={h => setRecord({...record, hardness: h as any})} />
+                    
                     <button 
                         onClick={() => setRecord({...record, hardness: isHardnessSelected ? null : 3})}
-                        className={`w-full py-3 rounded-xl text-xs font-bold transition-all border flex items-center justify-center gap-2 ${isHardnessSelected ? 'bg-slate-100 text-slate-500 border-slate-200' : 'bg-orange-50 text-orange-600 border-orange-100 animate-pulse'}`}
+                        className={`w-full py-3 rounded-xl text-xs font-bold transition-all border flex items-center justify-center gap-2 ${isHardnessSelected ? 'bg-slate-100 text-slate-500 border-slate-200 hover:bg-slate-200' : 'bg-orange-50 text-orange-600 border-orange-100 animate-pulse'}`}
                     >
                         {isHardnessSelected ? <RotateCcw size={14}/> : <Plus size={14}/>}
                         {isHardnessSelected ? "重置生理记录" : "开启生理记录 (本次有勃起)"}
                     </button>
-                    {!isHardnessSelected && <p className="text-[10px] text-slate-400 text-center italic">若午起无明显生理反应，保持为空即可</p>}
+                    
+                    {!isHardnessSelected && (
+                        <p className="text-[10px] text-slate-400 text-center italic">若午起无明显生理反应，保持为空即可</p>
+                    )}
                 </div>
 
                 {/* 7. Dreams */}
@@ -220,7 +234,7 @@ const NapRecordModal: React.FC<NapRecordModalProps> = ({ isOpen, onClose, onSave
                     {record.hasDream && (
                         <div className="flex flex-wrap gap-2 animate-in fade-in zoom-in-95">
                             {DREAM_TYPES.map(t => (
-                                <button key={t} onClick={() => toggleDreamType(t)} className={`px-4 py-2 rounded-xl text-[11px] font-bold border transition-all ${record.dreamTypes?.includes(t) ? 'bg-purple-500 text-white border-purple-600 shadow-sm' : 'bg-white dark:bg-slate-800 text-slate-500 border-purple-100 dark:border-purple-800'}`}>{t}</button>
+                                <button key={t.value} onClick={() => toggleDreamType(t.value)} className={`px-4 py-2 rounded-xl text-[11px] font-bold border transition-all ${record.dreamTypes?.includes(t.value) ? 'bg-purple-500 text-white border-purple-600 shadow-sm' : 'bg-white dark:bg-slate-800 text-slate-500 border-purple-100 dark:border-purple-800'}`}>{t.label}</button>
                             ))}
                         </div>
                     )}
@@ -230,7 +244,7 @@ const NapRecordModal: React.FC<NapRecordModalProps> = ({ isOpen, onClose, onSave
                 <textarea 
                     value={record.notes} onChange={e => setRecord({...record, notes: e.target.value})}
                     placeholder="记录午休的心得，或者是周围环境对睡眠的影响..."
-                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-3xl p-4 text-xs font-medium outline-none focus:border-orange-400 min-h-[100px]"
+                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-800 rounded-3xl p-4 text-xs font-medium outline-none focus:border-orange-400 min-h-[100px]"
                 />
             </div>
         </Modal>

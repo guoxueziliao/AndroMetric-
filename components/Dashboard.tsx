@@ -276,17 +276,20 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
         {/* Ongoing Tasks Section */}
         {(ongoingNap || ongoingExercise || ongoingMb || pendingLog) && (
             <section className="space-y-3">
-                {/* Sleep Banner (Brought back and logic fixed) */}
+                {/* Sleep Banner (Fixed) */}
                 {pendingLog && (
                     <div className="bg-gradient-to-r from-emerald-500 to-teal-600 p-4 rounded-3xl shadow-lg shadow-emerald-500/20 text-white flex justify-between items-center animate-in slide-in-from-top-2">
                         <div className="flex items-center gap-3">
                             <div className="p-2 bg-white/20 rounded-full backdrop-blur-sm animate-pulse"><Bed size={20}/></div>
                             <div>
-                                <div className="font-bold text-sm">入睡记录中...</div>
-                                <div className="text-xs opacity-90">醒来后请前往日记补全</div>
+                                <div className="font-bold text-sm">正在记录睡眠中...</div>
+                                <div className="text-xs opacity-90">醒来后点击右侧按钮补全日记</div>
                             </div>
                         </div>
-                        <button onClick={handleCancelSleep} className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-full text-xs font-bold transition-colors">取消</button>
+                        <div className="flex gap-2">
+                            <button onClick={handleCancelSleep} className="px-3 py-2 bg-black/10 hover:bg-black/20 text-white rounded-full text-xs font-bold transition-colors">取消</button>
+                            <button onClick={() => onEdit(pendingLog.date)} className="px-5 py-2 bg-white text-emerald-600 rounded-full text-xs font-bold shadow-sm active:scale-95 transition-transform">醒了</button>
+                        </div>
                     </div>
                 )}
 
@@ -342,7 +345,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
         </CalendarHeatmap>
       </div>
       
-      {/* ... (Modals remain same) */}
       <Modal isOpen={isSummaryModalOpen} onClose={() => { setIsSummaryModalOpen(false); setIsHistoryView(false); }} title={isHistoryView ? "修改历史" : "记录详情"}>
         {summaryLog && (
             <div className="space-y-4 pb-4">
