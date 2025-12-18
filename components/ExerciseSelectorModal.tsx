@@ -1,8 +1,9 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { X, Search, ChevronDown, ChevronUp, Check, Dumbbell, Clock, Activity, PenLine, Play, Flag, Footprints, Smile, Frown, Meh, Zap, Timer, TrendingUp, Sparkles, Target } from 'lucide-react';
+import { X, Search, ChevronDown, ChevronUp, Check, Dumbbell, Clock, Activity, PenLine, Play, Flag, Footprints, Smile, Frown, Meh, Zap, Timer, TrendingUp, Sparkles, Target, Flame, HeartPulse } from 'lucide-react';
 import Modal from './Modal';
 import { ExerciseRecord, ExerciseIntensity, ExerciseFeeling } from '../types';
 
+// Content strictly preserved from the provided schema
 const EXERCISE_CATEGORIES = [
   {
     name: "步行",
@@ -55,10 +56,10 @@ const INTENSITY_OPTS: { value: ExerciseIntensity, label: string, desc: string }[
 ];
 
 const FEELING_OPTS: { value: ExerciseFeeling, label: string, icon: React.ElementType, color: string }[] = [
-    { value: 'great', label: '爽爆', icon: Zap, color: 'text-yellow-500' },
-    { value: 'ok', label: '正常', icon: Smile, color: 'text-green-500' },
-    { value: 'tired', label: '累爆', icon: Meh, color: 'text-orange-500' },
-    { value: 'bad', label: '不适', icon: Frown, color: 'text-red-500' },
+    { value: 'great', label: '状态极佳', icon: Zap, color: 'text-yellow-500' },
+    { value: 'ok', label: '还算不错', icon: Smile, color: 'text-green-500' },
+    { value: 'tired', label: '有点累了', icon: Meh, color: 'text-orange-500' },
+    { value: 'bad', label: '身体不适', icon: Frown, color: 'text-red-500' },
 ];
 
 interface ExerciseRecordModalProps {
@@ -83,7 +84,7 @@ const ExerciseRecordModal: React.FC<ExerciseRecordModalProps> = ({ isOpen, onClo
             setSearchTerm('');
             if (initialData) {
                 setRecord({ ...initialData, feeling: initialData.feeling || 'ok' });
-                const [h, m] = initialData.startTime.split(':').map(Number);
+                const [h, m] = (initialData.startTime || '00:00').split(':').map(Number);
                 const d = new Date(); d.setHours(h); d.setMinutes(m + (initialData.duration || 0));
                 setEndTime(d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }));
             } else {
@@ -120,47 +121,51 @@ const ExerciseRecordModal: React.FC<ExerciseRecordModalProps> = ({ isOpen, onClo
         })).filter(cat => cat.items.length > 0);
     }, [searchTerm]);
 
-    if (!isOpen) return null;
+    const toggleCategory = (name: string) => {
+        setExpandedCategory(prev => prev === name ? null : name);
+    };
 
-    const title = isFinishMode ? "训练结算" : isStartMode ? "开启运动" : "编辑运动";
+    if (!isOpen) return null;
 
     return (
         <Modal
             isOpen={isOpen}
             onClose={onClose}
-            title={title}
+            title={isFinishMode ? "训练报告" : isStartMode ? "开始训练" : "编辑训练记录"}
             footer={
                 <button 
                     onClick={() => { onSave(record); onClose(); }} 
                     disabled={!record.type || (isStepBased && !record.steps)}
-                    className={`w-full py-4 text-white font-black rounded-2xl shadow-xl transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 ${isStartMode ? 'bg-emerald-500 shadow-emerald-500/20' : 'bg-brand-accent shadow-blue-500/20'}`}
+                    className={`w-full py-4 text-white font-black rounded-2xl shadow-xl transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 ${isStartMode ? 'bg-emerald-500 shadow-emerald-500/30' : 'bg-brand-accent shadow-blue-500/30'}`}
                 >
                     {isStartMode ? <Play size={20} fill="currentColor"/> : <Check size={20} strokeWidth={3}/>}
-                    {isStartMode ? "开始训练" : "完成提交"}
+                    {isStartMode ? "开启运动" : "完成提交"}
                 </button>
             }
         >
-            <div className="space-y-6 pb-4">
-                {/* 1. Dashboard Header */}
+            <div className="space-y-6 pb-6">
+                {/* 1. Immersive Header (Keep Settlement Style) */}
                 {isFinishMode ? (
-                    <div className="bg-slate-900 rounded-[2.5rem] p-8 text-white relative overflow-hidden shadow-2xl">
-                        <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-500/20 rounded-full blur-[60px] -translate-y-1/2 translate-x-1/2"></div>
+                    <div className="bg-slate-950 rounded-[2rem] p-8 text-white relative overflow-hidden shadow-2xl">
+                        {/* Energy Wave Decoration */}
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-[40px] -translate-y-1/2 translate-x-1/2 animate-pulse"></div>
+                        <div className="absolute bottom-0 left-0 w-24 h-24 bg-blue-500/10 rounded-full blur-[30px] translate-y-1/2 -translate-x-1/2"></div>
+                        
                         <div className="relative z-10 flex flex-col items-center">
-                            <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-emerald-400 mb-2">
-                                <Timer size={14}/> Workout Completed
+                            <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-emerald-400 mb-3">
+                                <Flame size={14}/> Workout Accomplished
                             </div>
                             <div className="flex items-baseline gap-1">
                                 <span className="text-6xl font-black tabular-nums">{record.duration}</span>
-                                <span className="text-sm font-bold opacity-60">MINS</span>
+                                <span className="text-sm font-bold opacity-60">分钟</span>
                             </div>
-                            <div className="mt-6 flex gap-4 w-full justify-center">
-                                <div className="text-center">
-                                    <div className="text-[9px] font-black opacity-40 uppercase mb-0.5">Start</div>
+                            <div className="mt-8 flex gap-3 w-full">
+                                <div className="flex-1 bg-white/10 backdrop-blur-md rounded-2xl p-3 text-center border border-white/5">
+                                    <div className="text-[9px] font-bold opacity-40 uppercase mb-0.5">Start</div>
                                     <div className="text-sm font-mono font-bold">{record.startTime}</div>
                                 </div>
-                                <div className="w-px h-8 bg-white/10 self-center"></div>
-                                <div className="text-center">
-                                    <div className="text-[9px] font-black opacity-40 uppercase mb-0.5">End</div>
+                                <div className="flex-1 bg-white/10 backdrop-blur-md rounded-2xl p-3 text-center border border-white/5">
+                                    <div className="text-[9px] font-bold opacity-40 uppercase mb-0.5">End</div>
                                     <div className="text-sm font-mono font-bold">{endTime}</div>
                                 </div>
                             </div>
@@ -168,13 +173,13 @@ const ExerciseRecordModal: React.FC<ExerciseRecordModalProps> = ({ isOpen, onClo
                     </div>
                 ) : (
                     <div className="grid grid-cols-2 gap-4">
-                        <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-3xl border border-slate-100 dark:border-slate-800 focus-within:border-emerald-500 transition-colors">
+                        <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-3xl border border-slate-100 dark:border-slate-800 transition-all focus-within:border-emerald-500">
                              <label className="text-[10px] text-slate-400 font-black uppercase mb-1 flex items-center gap-1"><Clock size={10}/> 开始时间</label>
                              <input type="time" value={record.startTime} onChange={e => setRecord({...record, startTime: e.target.value})} className="bg-transparent font-mono text-2xl font-bold text-brand-text dark:text-slate-100 outline-none w-full"/>
                         </div>
                         {isStepBased ? (
                              <div className="bg-emerald-50 dark:bg-emerald-900/10 p-4 rounded-3xl border border-emerald-100 dark:border-emerald-900/30">
-                                 <label className="text-[10px] text-emerald-500 font-black uppercase mb-1 flex items-center gap-1"><Footprints size={10}/> 步数统计</label>
+                                 <label className="text-[10px] text-emerald-500 font-black uppercase mb-1 flex items-center gap-1"><Footprints size={10}/> 今日步数</label>
                                  <input type="number" value={record.steps || ''} onChange={e => setRecord({...record, steps: parseInt(e.target.value)})} placeholder="0" className="bg-transparent font-mono text-2xl font-bold text-emerald-600 dark:text-emerald-400 outline-none w-full"/>
                              </div>
                         ) : !isStartMode && (
@@ -186,106 +191,128 @@ const ExerciseRecordModal: React.FC<ExerciseRecordModalProps> = ({ isOpen, onClo
                     </div>
                 )}
 
-                {/* 2. Type Selector (Focused in Start Mode) */}
+                {/* 2. Professional Selector (Grid tiles) */}
                 {!isFinishMode && (
                     <div className="space-y-4">
                         <div className="relative group">
                             <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-500 transition-colors" size={20} />
                             <input 
                                 className="w-full bg-slate-100 dark:bg-slate-800/80 border-none rounded-2xl py-4 pl-14 pr-4 text-sm font-bold focus:ring-2 focus:ring-emerald-500/30 outline-none transition-all"
-                                placeholder="选择运动项目..."
+                                placeholder="查找运动项..."
                                 value={searchTerm}
                                 onChange={e => setSearchTerm(e.target.value)}
                             />
                         </div>
 
-                        <div className="max-h-[380px] overflow-y-auto custom-scrollbar -mx-2 px-2 space-y-6">
-                            {filteredCategories.map(cat => (
-                                <div key={cat.name} className="space-y-3">
-                                    <div className="flex items-center gap-2 px-1">
-                                        <div className="w-1 h-3 bg-emerald-500 rounded-full"></div>
-                                        <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest">{cat.name}</h4>
+                        <div className="max-h-[360px] overflow-y-auto custom-scrollbar -mx-2 px-2 space-y-6">
+                            {filteredCategories.map(cat => {
+                                const isExpanded = searchTerm ? true : expandedCategory === cat.name;
+                                return (
+                                    <div key={cat.name} className="space-y-3">
+                                        <button 
+                                            onClick={() => toggleCategory(cat.name)}
+                                            className="w-full flex items-center justify-between px-1 hover:opacity-80"
+                                        >
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-1 h-3 bg-emerald-500 rounded-full"></div>
+                                                <h4 className="text-xs font-black text-slate-500 uppercase tracking-widest">{cat.name}</h4>
+                                            </div>
+                                            {!searchTerm && (isExpanded ? <ChevronUp size={14} className="text-slate-300"/> : <ChevronDown size={14} className="text-slate-300"/>)}
+                                        </button>
+                                        
+                                        {isExpanded && (
+                                            <div className="grid grid-cols-2 gap-3 animate-in fade-in slide-in-from-top-1 duration-300">
+                                                {cat.items.map(item => (
+                                                    <button 
+                                                        key={item} 
+                                                        onClick={() => setRecord({...record, type: item})}
+                                                        className={`p-4 rounded-3xl text-[13px] font-bold text-left transition-all flex items-center justify-between border-2 ${record.type === item ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 shadow-md shadow-emerald-500/10' : 'border-transparent bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50'}`}
+                                                    >
+                                                        <span className="truncate pr-2">{item}</span>
+                                                        {record.type === item && <div className="w-4 h-4 bg-emerald-500 rounded-full flex items-center justify-center"><Check size={10} className="text-white" strokeWidth={4}/></div>}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
-                                    <div className="grid grid-cols-2 gap-3">
-                                        {cat.items.map(item => (
-                                            <button 
-                                                key={item} 
-                                                onClick={() => setRecord({...record, type: item})}
-                                                className={`p-4 rounded-3xl text-[13px] font-bold text-left transition-all flex items-center justify-between border-2 ${record.type === item ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 shadow-md shadow-emerald-500/10' : 'border-transparent bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-100'}`}
-                                            >
-                                                <span className="truncate pr-2">{item}</span>
-                                                {record.type === item && <div className="w-4 h-4 bg-emerald-500 rounded-full flex items-center justify-center"><Check size={10} className="text-white" strokeWidth={4}/></div>}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     </div>
                 )}
 
-                {/* 3. Feedback (Only in Settlement/Finish mode) */}
+                {/* 3. Feedback (Settle Mode) */}
                 {(isFinishMode || (!isStartMode && record.type)) && !isStepBased && (
                     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4">
-                        {/* Intensity */}
+                        {/* Intensity Section */}
                         <div className="space-y-4">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><TrendingUp size={12}/> 训练强度评估</label>
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><TrendingUp size={12}/> 训练强度评级</label>
                             <div className="flex gap-2">
-                                {INTENSITY_OPTS.map(opt => (
-                                    <button 
-                                        key={opt.value}
-                                        onClick={() => setRecord({...record, intensity: opt.value})}
-                                        className={`flex-1 py-4 px-2 rounded-2xl transition-all border-2 flex flex-col items-center justify-center gap-0.5 ${record.intensity === opt.value ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 shadow-lg shadow-emerald-500/10' : 'border-transparent bg-slate-50 dark:bg-slate-800 text-slate-400'}`}
-                                    >
-                                        <span className="text-sm font-black">{opt.label}</span>
-                                        <span className="text-[9px] font-bold opacity-60">{opt.desc}</span>
-                                    </button>
-                                ))}
+                                {INTENSITY_OPTS.map(opt => {
+                                    const isSel = record.intensity === opt.value;
+                                    return (
+                                        <button 
+                                            key={opt.value}
+                                            onClick={() => setRecord({...record, intensity: opt.value})}
+                                            className={`flex-1 py-4 px-2 rounded-2xl transition-all border-2 flex flex-col items-center justify-center gap-0.5 ${isSel ? 'border-brand-accent bg-blue-50 dark:bg-blue-900/20 text-brand-accent shadow-lg shadow-blue-500/10' : 'border-transparent bg-slate-50 dark:bg-slate-800 text-slate-400'}`}
+                                        >
+                                            <span className="text-sm font-black">{opt.label}</span>
+                                            <span className="text-[9px] font-bold opacity-60">{opt.desc}</span>
+                                        </button>
+                                    );
+                                })}
                             </div>
                         </div>
 
-                        {/* Feeling */}
+                        {/* Feeling Section */}
                         <div className="space-y-4">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><Sparkles size={12}/> 训练状态感官</label>
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><Sparkles size={12}/> 身心恢复感知</label>
                             <div className="grid grid-cols-4 gap-3">
-                                {FEELING_OPTS.map(opt => (
-                                    <button 
-                                        key={opt.value}
-                                        onClick={() => setRecord({...record, feeling: opt.value})}
-                                        className={`flex flex-col items-center justify-center py-5 rounded-3xl transition-all border-2 ${record.feeling === opt.value ? 'border-brand-accent bg-blue-50 dark:bg-blue-900/20 shadow-md' : 'border-transparent bg-slate-50 dark:bg-slate-800 opacity-60'}`}
-                                    >
-                                        <opt.icon size={28} className={record.feeling === opt.value ? opt.color : 'text-slate-400'} />
-                                        <span className={`text-[10px] font-black mt-2 ${record.feeling === opt.value ? 'text-brand-text dark:text-slate-100' : 'text-slate-500'}`}>{opt.label}</span>
-                                    </button>
-                                ))}
+                                {FEELING_OPTS.map(opt => {
+                                    const isSel = record.feeling === opt.value;
+                                    return (
+                                        <button 
+                                            key={opt.value}
+                                            onClick={() => setRecord({...record, feeling: opt.value})}
+                                            className={`flex flex-col items-center justify-center py-5 rounded-3xl transition-all border-2 ${isSel ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 shadow-md ring-4 ring-emerald-500/5' : 'border-transparent bg-slate-50 dark:bg-slate-800 opacity-60'}`}
+                                        >
+                                            <opt.icon size={28} className={isSel ? opt.color : 'text-slate-400'} />
+                                            <span className={`text-[10px] font-black mt-2 ${isSel ? 'text-brand-text dark:text-slate-100' : 'text-slate-500'}`}>{opt.label}</span>
+                                        </button>
+                                    );
+                                })}
                             </div>
                         </div>
 
-                        {/* Muscle Groups */}
+                        {/* Targeted Muscle Groups */}
                         <div className="space-y-4">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><Target size={12}/> 重点训练部位</label>
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><Target size={12}/> 重点训练部位 (多选)</label>
                             <div className="flex flex-wrap gap-2">
-                                {MUSCLE_GROUPS.map(part => (
-                                    <button 
-                                        key={part} 
-                                        onClick={() => setRecord(p => ({...p, bodyParts: p.bodyParts?.includes(part) ? p.bodyParts.filter(x => x!==part) : [...(p.bodyParts||[]), part]}))}
-                                        className={`px-4 py-2 rounded-xl text-xs font-bold border-2 transition-all ${record.bodyParts?.includes(part) ? 'border-emerald-500 bg-emerald-500 text-white shadow-md shadow-emerald-500/20' : 'border-transparent bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400'}`}
-                                    >
-                                        {part}
-                                    </button>
-                                ))}
+                                {MUSCLE_GROUPS.map(part => {
+                                    const isSel = record.bodyParts?.includes(part);
+                                    return (
+                                        <button 
+                                            key={part} 
+                                            onClick={() => setRecord(p => ({...p, bodyParts: p.bodyParts?.includes(part) ? p.bodyParts.filter(x => x!==part) : [...(p.bodyParts||[]), part]}))}
+                                            className={`px-4 py-2.5 rounded-xl text-xs font-bold border-2 transition-all ${isSel ? 'border-brand-accent bg-brand-accent text-white shadow-md' : 'border-transparent bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'}`}
+                                        >
+                                            {part}
+                                        </button>
+                                    );
+                                })}
                             </div>
                         </div>
                     </div>
                 )}
 
-                <div className="relative group pt-2">
-                    <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-brand-accent transition-colors">
+                {/* Training Notes */}
+                <div className="relative group pt-4">
+                    <div className="absolute left-5 top-8 text-slate-400 group-focus-within:text-brand-accent transition-colors">
                         <PenLine size={18} />
                     </div>
-                    <input 
-                        className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-800 rounded-3xl py-4 pl-14 pr-4 text-xs font-medium outline-none focus:border-brand-accent transition-all"
-                        placeholder="记录今天的训练感受..."
+                    <textarea 
+                        className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-800 rounded-[1.5rem] py-4 pl-14 pr-4 text-xs font-medium outline-none focus:border-brand-accent transition-all min-h-[100px]"
+                        placeholder="记录你的训练心得或感悟..."
                         value={record.notes || ''}
                         onChange={e => setRecord({...record, notes: e.target.value})}
                     />
