@@ -61,6 +61,7 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
 
     const [activeMidTab, setActiveMidTab] = useState<MidTabType>('life');
     const [modalState, setModalState] = useState({ bev: false, sex: false, mb: false, ex: false });
+    const [eventSearch, setEventSearch] = useState('');
 
     const markDirty = useCallback(() => onDirtyStateChange(true), [onDirtyStateChange]);
     const qualityScore = useMemo(() => calculateDataQuality(log), [log]);
@@ -88,6 +89,16 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
             setLog(prev => ({ ...prev, [field]: (log[field] as any[]).filter(i => i.id !== id) }));
         }
         markDirty();
+    };
+
+    const handleCreateEventTag = () => {
+        const tag = eventSearch.trim();
+        if (!tag) return;
+        const current = log.dailyEvents || [];
+        if (!current.includes(tag)) {
+            setField('dailyEvents', [...current, tag]);
+        }
+        setEventSearch('');
     };
 
     return (
@@ -391,12 +402,25 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
                     ))}
                 </div>
 
-                <div className="relative group mb-4">
-                    <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 dark:text-slate-600" size={16} />
-                    <input 
-                        className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-2xl py-4 pl-12 pr-4 text-xs font-bold text-slate-700 dark:text-slate-300 placeholder-slate-300 dark:placeholder-slate-600 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
-                        placeholder="搜索或创建事件标签..."
-                    />
+                <div className="relative group mb-4 flex gap-2">
+                    <div className="relative flex-1">
+                        <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 dark:text-slate-600" size={16} />
+                        <input 
+                            value={eventSearch}
+                            onChange={(e) => setEventSearch(e.target.value)}
+                            className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-2xl py-4 pl-12 pr-4 text-xs font-bold text-slate-700 dark:text-slate-300 placeholder-slate-300 dark:placeholder-slate-600 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+                            placeholder="搜索或创建事件标签..."
+                            onKeyDown={(e) => e.key === 'Enter' && handleCreateEventTag()}
+                        />
+                    </div>
+                    {eventSearch.trim() && (
+                        <button 
+                            onClick={handleCreateEventTag}
+                            className="px-6 bg-blue-50 dark:bg-blue-900/30 text-brand-accent rounded-2xl font-black text-xs flex items-center gap-2 border border-blue-100 dark:border-blue-900 animate-in fade-in slide-in-from-right-2 transition-all active:scale-95"
+                        >
+                            <Plus size={16} strokeWidth={3} /> 创建
+                        </button>
+                    )}
                 </div>
 
                 <textarea 
@@ -410,13 +434,13 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
             {/* 5. 底部操作栏 */}
             <div className="flex gap-4 pt-4 pb-12">
                 <button 
-                    onClick={() => { log.status = 'pending'; onSave(log); }}
+                    onClick={() => { onSave({ ...log, status: 'pending' }); }}
                     className="flex-1 py-5 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 font-black text-lg rounded-[2rem] shadow-soft border border-slate-100 dark:border-white/5 active:scale-95 transition-all"
                 >
                     保存草稿
                 </button>
                 <button 
-                    onClick={() => { log.status = 'completed'; onSave(log); }}
+                    onClick={() => { onSave({ ...log, status: 'completed' }); }}
                     className="flex-[2] py-5 bg-brand-accent text-white font-black text-lg rounded-[2rem] shadow-xl shadow-blue-500/30 active:scale-95 transition-all flex items-center justify-center gap-3"
                 >
                     <Check size={26} strokeWidth={3.5} />
