@@ -1,11 +1,10 @@
-
 import React, { useState, useCallback, useMemo } from 'react';
 import { 
     Plus, Heart, Hand, Dumbbell, 
     StickyNote, Check, Trash2, Clock, MapPin, 
     Zap, Activity, Sparkles, Sun, Cloud, CloudRain, 
     Snowflake, Wind, CloudFog, Home, Navigation, Hotel, Plane, 
-    Shirt, Droplets, ShieldAlert, Search, Coffee, Film, BrainCircuit
+    Shirt, Droplets, ShieldAlert, Search, Coffee, Film, BrainCircuit, Edit3
 } from 'lucide-react';
 import BeverageModal from './BeverageModal';
 import SexRecordModal from './SexRecordModal';
@@ -83,6 +82,10 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
     };
 
     const removeItem = (field: 'sex' | 'masturbation' | 'exercise' | 'caffeine' | 'alcohol', id: string) => {
+        // 增加删除确认
+        const confirmMsg = field === 'alcohol' ? '确定要删除这条饮酒记录吗？' : '确定要删除这项记录吗？';
+        if (!window.confirm(confirmMsg)) return;
+
         if (field === 'caffeine') {
             const newItems = (log.caffeineRecord?.items || []).filter(i => i.id !== id);
             setLog(prev => ({ ...prev, caffeineRecord: { totalCount: newItems.length, items: newItems } }));
@@ -109,7 +112,7 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
         setLog(prev => ({ 
             ...prev, 
             alcoholRecord: r, 
-            alcohol: r.totalGrams > 50 ? 'high' : r.totalGrams > 20 ? 'medium' : 'low' 
+            alcohol: r.totalGrams > 50 ? 'high' : r.totalGrams > 20 ? 'medium' : r.totalGrams > 0 ? 'low' : 'none' 
         }));
         markDirty();
     };
@@ -169,6 +172,12 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
                                             onClick={() => setModalState(s => ({ ...s, alc: true }))}
                                             className="relative aspect-square bg-amber-50 dark:bg-amber-900/20 border-2 border-amber-200 dark:border-amber-800 rounded-3xl flex flex-col items-center justify-center p-4 text-center cursor-pointer group hover:border-amber-400 transition-all shadow-sm"
                                         >
+                                            {/* 增加显眼的“编辑”引导 */}
+                                            <div className="absolute top-2 left-2 flex items-center gap-1 text-amber-500 opacity-60 group-hover:opacity-100 transition-opacity">
+                                                <Edit3 size={12}/>
+                                                <span className="text-[9px] font-black uppercase">修改</span>
+                                            </div>
+
                                             <div className="text-2xl mb-1">🍺</div>
                                             <div className="text-xl font-black text-amber-600 dark:text-amber-400 tabular-nums">
                                                 {log.alcoholRecord.totalGrams}<span className="text-[10px] ml-0.5">g</span>
@@ -178,9 +187,9 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
                                             </div>
                                             <button 
                                                 onClick={(e) => { e.stopPropagation(); removeItem('alcohol', ''); }}
-                                                className="absolute -top-1 -right-1 p-1.5 bg-white dark:bg-slate-800 rounded-full shadow-md text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all border border-slate-100 dark:border-slate-700"
+                                                className="absolute -top-1 -right-1 p-2 bg-white dark:bg-slate-800 rounded-full shadow-md text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all border border-slate-100 dark:border-slate-700 z-10"
                                             >
-                                                <Trash2 size={12}/>
+                                                <Trash2 size={14}/>
                                             </button>
                                         </div>
                                     ) : (

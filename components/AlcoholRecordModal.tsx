@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { Check, Minus, Plus, Moon, Clock, Trash2, Users, MapPin, Target, ChevronDown, ChevronUp, ChevronRight, Beer, Sparkles } from 'lucide-react';
 import Modal from './Modal';
@@ -157,11 +156,11 @@ const AlcoholRecordModal: React.FC<AlcoholRecordModalProps> = ({ isOpen, onClose
                                                             <div className="text-[10px] text-slate-400 dark:text-slate-500 font-bold">{item.vol}ml · {item.abv}% ABV</div>
                                                         </div>
                                                     </div>
-                                                    {/* 步进器背景自适应，解决黑白冲突 */}
-                                                    <div className="flex items-center gap-3 bg-slate-200/50 dark:bg-[#0a0f1d] p-1 rounded-xl border border-slate-300 dark:border-white/5">
-                                                        <button onClick={(e) => { e.stopPropagation(); updateItemValue(key, 'count', item.count - 1); }} className="p-2 text-slate-500 dark:text-slate-400 hover:text-red-500 transition-colors"><Minus size={16} strokeWidth={3}/></button>
-                                                        <span className="text-lg font-black text-slate-900 dark:text-white w-4 text-center tabular-nums">{item.count}</span>
-                                                        <button onClick={(e) => { e.stopPropagation(); updateItemValue(key, 'count', item.count + 1); }} className="p-2 text-amber-500 hover:text-amber-400 transition-colors"><Plus size={16} strokeWidth={3}/></button>
+                                                    {/* 修复黑色背景：改为自适应浅色/深色背景 */}
+                                                    <div className="flex items-center gap-3 bg-slate-100 dark:bg-[#0a0f1d] p-1.5 rounded-xl border border-slate-200 dark:border-white/5 shadow-inner">
+                                                        <button onClick={(e) => { e.stopPropagation(); updateItemValue(key, 'count', item.count - 1); }} className="p-1.5 text-slate-400 hover:text-red-500 transition-colors"><Minus size={16} strokeWidth={3}/></button>
+                                                        <span className="text-lg font-black text-slate-900 dark:text-white w-5 text-center tabular-nums">{item.count}</span>
+                                                        <button onClick={(e) => { e.stopPropagation(); updateItemValue(key, 'count', item.count + 1); }} className="p-1.5 text-amber-500 hover:text-amber-400 transition-colors"><Plus size={16} strokeWidth={3}/></button>
                                                     </div>
                                                 </div>
                                                 {isExp && (
