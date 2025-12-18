@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { X, Clock, Coffee, CupSoda, Leaf, Zap, Plus, Minus, Check, PencilLine } from 'lucide-react';
 import Modal from './Modal';
@@ -8,6 +7,7 @@ interface BeverageModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSave: (item: CaffeineItem) => void;
+    initialData?: CaffeineItem;
 }
 
 const CATEGORIES = [
@@ -72,7 +72,7 @@ const CUP_SIZES = [
     { label: '大杯', vol: 480 },
 ];
 
-const BeverageModal: React.FC<BeverageModalProps> = ({ isOpen, onClose, onSave }) => {
+const BeverageModal: React.FC<BeverageModalProps> = ({ isOpen, onClose, onSave, initialData }) => {
     const [activeCat, setActiveCat] = useState('coffee');
     const [selectedName, setSelectedName] = useState('拿铁');
     const [volume, setVolume] = useState(480);
@@ -81,10 +81,32 @@ const BeverageModal: React.FC<BeverageModalProps> = ({ isOpen, onClose, onSave }
 
     useEffect(() => {
         if (isOpen) {
-            const now = new Date();
-            setTime(now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }));
+            if (initialData) {
+                setSelectedName(initialData.name);
+                setVolume(initialData.volume);
+                setTime(initialData.time);
+                if (initialData.isCustom) {
+                    setActiveCat('custom');
+                    setCustomName(initialData.name);
+                } else {
+                    // Try to find category
+                    for (const catId of Object.keys(MENU_DATA)) {
+                        if (MENU_DATA[catId].some(i => i.name === initialData.name)) {
+                            setActiveCat(catId);
+                            break;
+                        }
+                    }
+                }
+            } else {
+                const now = new Date();
+                setTime(now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }));
+                setActiveCat('coffee');
+                setSelectedName('拿铁');
+                setVolume(480);
+                setCustomName('');
+            }
         }
-    }, [isOpen]);
+    }, [isOpen, initialData]);
 
     const handleItemClick = (item: any) => {
         if (item.type === 'divider') return;
@@ -95,7 +117,7 @@ const BeverageModal: React.FC<BeverageModalProps> = ({ isOpen, onClose, onSave }
     const handleConfirm = () => {
         const name = activeCat === 'custom' ? (customName || '自定义饮品') : selectedName;
         onSave({
-            id: Date.now().toString(),
+            id: initialData?.id || Date.now().toString(),
             name,
             volume,
             time,
@@ -108,17 +130,17 @@ const BeverageModal: React.FC<BeverageModalProps> = ({ isOpen, onClose, onSave }
     if (!isOpen) return null;
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title="记录提神饮品">
+        <Modal isOpen={isOpen} onClose={onClose} title={initialData ? "修改记录" : "记录提神饮品"}>
             <div className="flex flex-col h-[75vh] -mx-4 -mb-4">
                 {/* Top Summary Display */}
-                <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800">
-                    <div className="bg-orange-50/50 dark:bg-orange-900/10 border border-orange-100 dark:border-orange-900/30 rounded-2xl p-4 flex items-center justify-between">
+                <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 shrink-0">
+                    <div className="bg-orange-50/50 dark:bg-orange-900/10 border border-orange-100 dark:border-orange-900/30 rounded-2xl p-4 flex items-center justify-between shadow-sm">
                         <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 bg-white dark:bg-slate-800 rounded-xl flex items-center justify-center text-orange-500 shadow-sm">
+                            <div className="w-12 h-12 bg-white dark:bg-slate-800 rounded-xl flex items-center justify-center text-orange-500 shadow-sm border border-orange-100 dark:border-orange-900/20">
                                 <Coffee size={24} />
                             </div>
                             <div>
-                                <h3 className="font-black text-lg text-slate-800 dark:text-slate-100">
+                                <h3 className="font-black text-lg text-slate-800 dark:text-slate-100 truncate max-w-[180px]">
                                     {activeCat === 'custom' ? (customName || '请输入名称...') : selectedName}
                                 </h3>
                                 <div className="flex items-center gap-2 mt-0.5">
@@ -136,13 +158,13 @@ const BeverageModal: React.FC<BeverageModalProps> = ({ isOpen, onClose, onSave }
                 {/* Main Content Area: Sidebar + List */}
                 <div className="flex-1 flex overflow-hidden">
                     {/* Left Sidebar */}
-                    <div className="w-24 bg-slate-50/50 dark:bg-slate-900/50 border-r border-slate-100 dark:border-slate-800 flex flex-col pt-2">
+                    <div className="w-24 bg-slate-50/50 dark:bg-slate-900/50 border-r border-slate-100 dark:border-slate-800 flex flex-col pt-2 shrink-0">
                         {CATEGORIES.map(cat => (
                             <button
                                 key={cat.id}
                                 onClick={() => setActiveCat(cat.id)}
                                 className={`flex flex-col items-center justify-center py-4 px-1 gap-1 transition-all relative ${
-                                    activeCat === cat.id ? 'text-orange-600 font-black' : 'text-slate-400 font-bold'
+                                    activeCat === cat.id ? 'text-orange-600 dark:text-orange-400 font-black' : 'text-slate-400 font-bold'
                                 }`}
                             >
                                 {activeCat === cat.id && (
@@ -205,7 +227,7 @@ const BeverageModal: React.FC<BeverageModalProps> = ({ isOpen, onClose, onSave }
                 </div>
 
                 {/* Bottom Adjustment Area */}
-                <div className="px-6 py-6 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 space-y-6">
+                <div className="px-6 py-6 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 space-y-6 shrink-0">
                     {/* Precise ML Adjustment */}
                     <div className="flex items-center justify-between">
                         <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">单杯精确毫升 (ML)</span>
@@ -244,7 +266,7 @@ const BeverageModal: React.FC<BeverageModalProps> = ({ isOpen, onClose, onSave }
                         className="w-full py-4 bg-orange-500 hover:bg-orange-600 text-white font-black rounded-2xl shadow-xl shadow-orange-500/20 flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
                     >
                         <Check size={20} strokeWidth={3} />
-                        确认记录
+                        {initialData ? "确认修改" : "确认记录"}
                     </button>
                 </div>
             </div>

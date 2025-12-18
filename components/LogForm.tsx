@@ -1,11 +1,10 @@
-
 import React, { useState, useCallback, useMemo } from 'react';
 import { 
     Plus, Heart, Hand, Dumbbell, 
     StickyNote, Check, Trash2, Clock, MapPin, 
     Zap, Activity, Sparkles, Sun, Cloud, CloudRain, 
     Snowflake, Wind, CloudFog, Home, Navigation, Hotel, Plane, 
-    Shirt, Droplets, ShieldAlert, Search, Coffee, Film, BrainCircuit, Edit3
+    Shirt, Droplets, ShieldAlert, Search, Coffee, Film, BrainCircuit, Edit3, ChevronRight
 } from 'lucide-react';
 import BeverageModal from './BeverageModal';
 import SexRecordModal from './SexRecordModal';
@@ -14,7 +13,7 @@ import ExerciseRecordModal from './ExerciseSelectorModal';
 import AlcoholRecordModal from './AlcoholRecordModal';
 import NapRecordModal from './NapRecordModal';
 import { 
-    LogEntry, PartnerProfile, Weather, Location, SleepAttire, AlcoholRecord, ExerciseRecord, SexRecordDetails, MasturbationRecordDetails, NapRecord
+    LogEntry, PartnerProfile, Weather, Location, SleepAttire, AlcoholRecord, ExerciseRecord, SexRecordDetails, MasturbationRecordDetails, NapRecord, CaffeineItem
 } from '../types';
 import MorningSection from './MorningSection';
 import SleepSection from './SleepSection';
@@ -86,8 +85,22 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
         markDirty();
     };
 
+    const handleEdit = (type: 'bev' | 'ex' | 'sex' | 'mb' | 'nap', data: any) => {
+        setEditTarget({ type, data });
+        setModalState(s => ({ ...s, [type]: true }));
+    };
+
     const removeItem = (field: 'sex' | 'masturbation' | 'exercise' | 'caffeine' | 'alcohol' | 'nap', id: string) => {
-        if (!window.confirm('确定要删除这条记录吗？')) return;
+        const fieldNameMap = {
+            'sex': '性爱记录',
+            'masturbation': '自慰记录',
+            'exercise': '运动记录',
+            'caffeine': '咖啡因记录',
+            'alcohol': '饮酒记录',
+            'nap': '午休记录'
+        };
+        
+        if (!window.confirm(`确定要删除这条${fieldNameMap[field]}吗？`)) return;
 
         if (field === 'caffeine') {
             const newItems = (log.caffeineRecord?.items || []).filter(i => i.id !== id);
@@ -122,6 +135,14 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
         markDirty();
     };
 
+    const exerciseDurationTotal = useMemo(() => {
+        return (log.exercise || []).reduce((acc, cur) => acc + (cur.duration || 0), 0);
+    }, [log.exercise]);
+
+    const caffeineCountTotal = useMemo(() => {
+        return (log.caffeineRecord?.items || []).length;
+    }, [log.caffeineRecord]);
+
     return (
         <div className="space-y-6">
             <div className="bg-white dark:bg-slate-900 rounded-[2rem] p-6 shadow-soft border border-slate-100 dark:border-white/5 flex justify-between items-center">
@@ -139,7 +160,7 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
                 sleep={log.sleep!} 
                 onChange={handleSleepChange}
                 onAddNap={() => { setEditTarget(null); setModalState(s => ({ ...s, nap: true })); }}
-                onEditNap={(nap) => { setEditTarget({ type: 'nap', data: nap }); setModalState(s => ({ ...s, nap: true })); }}
+                onEditNap={(nap) => handleEdit('nap', nap)}
                 onDeleteNap={(id) => removeItem('nap', id)}
             />
 
@@ -164,9 +185,11 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
                 <div className="p-6 min-h-[340px]">
                     {activeMidTab === 'life' && (
                         <div className="space-y-6 animate-in fade-in duration-300">
+                            {/* 核心指标 2x2 格子矩阵 */}
                             <div className="grid grid-cols-2 gap-4">
+                                {/* 格子 1: 饮酒 */}
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest block">饮酒</label>
+                                    <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest block">饮酒 (ALCOHOL)</label>
                                     {log.alcoholRecord ? (
                                         <div 
                                             onClick={() => setModalState(s => ({ ...s, alc: true }))}
@@ -179,7 +202,6 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
                                             <div className="text-xl font-black text-amber-600 dark:text-amber-400 tabular-nums">
                                                 {log.alcoholRecord.totalGrams}<span className="text-[10px] ml-0.5">g</span>
                                             </div>
-                                            {/* 显示具体饮品，修复“显示太少”问题 */}
                                             <div className="text-[9px] font-bold text-amber-500/70 mt-1 line-clamp-2 px-1">
                                                 {log.alcoholRecord.items.map(i => i.name).join(', ')}
                                             </div>
@@ -196,13 +218,15 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
                                             className="aspect-square border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-3xl flex flex-col items-center justify-center text-slate-300 dark:text-slate-700 hover:border-brand-accent hover:text-brand-accent transition-all cursor-pointer bg-slate-50/30 dark:bg-slate-950/30"
                                         >
                                             <Plus size={24} strokeWidth={3} />
-                                            <span className="text-[10px] font-black mt-2">添加记录</span>
+                                            <span className="text-[10px] font-black mt-2">添加饮酒</span>
                                         </div>
                                     )}
                                 </div>
+
+                                {/* 格子 2: 看片 */}
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest block">看片</label>
-                                    <div className="grid grid-cols-2 gap-2 h-full content-start">
+                                    <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest block">看片 (PORN)</label>
+                                    <div className="aspect-square grid grid-cols-2 gap-2 h-full content-start">
                                         {[
                                             { id: 'none', label: '无' },
                                             { id: 'low', label: '少量' },
@@ -212,79 +236,139 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
                                             <button 
                                                 key={opt.id}
                                                 onClick={() => setField('pornConsumption', opt.id)}
-                                                className={`py-5 rounded-2xl text-xs font-black border transition-all ${log.pornConsumption === opt.id ? 'bg-blue-50 dark:bg-blue-900/30 text-brand-accent border-brand-accent shadow-sm' : 'bg-slate-50 dark:bg-slate-800 border-transparent text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'}`}
+                                                className={`flex items-center justify-center rounded-2xl text-xs font-black border transition-all ${log.pornConsumption === opt.id ? 'bg-blue-50 dark:bg-blue-900/30 text-brand-accent border-brand-accent shadow-sm' : 'bg-slate-50 dark:bg-slate-800 border-transparent text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'}`}
                                             >
                                                 {opt.label}
                                             </button>
                                         ))}
                                     </div>
                                 </div>
+
+                                {/* 格子 3: 咖啡因汇总 */}
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest block">咖啡因 (CAFF)</label>
+                                    <div 
+                                        onClick={() => { setEditTarget(null); setModalState(s => ({ ...s, bev: true })); }}
+                                        className={`aspect-square rounded-3xl border-2 flex flex-col items-center justify-center p-4 text-center cursor-pointer transition-all shadow-sm ${caffeineCountTotal > 0 ? 'bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800 hover:border-orange-400' : 'border-dashed border-slate-200 dark:border-slate-800 text-slate-300 bg-slate-50/30 hover:border-brand-accent'}`}
+                                    >
+                                        {caffeineCountTotal > 0 ? (
+                                            <>
+                                                <div className="text-2xl mb-1">☕</div>
+                                                <div className="text-xl font-black text-orange-600 dark:text-orange-400 tabular-nums">
+                                                    {caffeineCountTotal}<span className="text-[10px] ml-0.5">杯</span>
+                                                </div>
+                                                <div className="text-[9px] font-bold text-orange-500/70 mt-1 line-clamp-2 px-1">
+                                                    {log.caffeineRecord?.items.map(i => i.name).join(', ')}
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Plus size={24} strokeWidth={3} />
+                                                <span className="text-[10px] font-black mt-2">添加咖啡</span>
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* 格子 4: 运动汇总 */}
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest block">运动 (EXER)</label>
+                                    <div 
+                                        onClick={() => { setEditTarget(null); setModalState(s => ({ ...s, ex: true })); }}
+                                        className={`aspect-square rounded-3xl border-2 flex flex-col items-center justify-center p-4 text-center cursor-pointer transition-all shadow-sm ${exerciseDurationTotal > 0 ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800 hover:border-emerald-400' : 'border-dashed border-slate-200 dark:border-slate-800 text-slate-300 bg-slate-50/30 hover:border-brand-accent'}`}
+                                    >
+                                        {exerciseDurationTotal > 0 ? (
+                                            <>
+                                                <div className="text-2xl mb-1">🏃</div>
+                                                <div className="text-xl font-black text-emerald-600 dark:text-emerald-400 tabular-nums">
+                                                    {exerciseDurationTotal}<span className="text-[10px] ml-0.5">分</span>
+                                                </div>
+                                                <div className="text-[9px] font-bold text-emerald-500/70 mt-1 line-clamp-2 px-1">
+                                                    {log.exercise?.map(i => i.type).join(', ')}
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Plus size={24} strokeWidth={3} />
+                                                <span className="text-[10px] font-black mt-2">记录运动</span>
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
                             </div>
 
-                            <div>
-                                <div className="flex justify-between items-center mb-2">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">咖啡因</label>
-                                    <button onClick={() => { setEditTarget(null); setModalState(s => ({ ...s, bev: true })); }} className="text-[10px] text-brand-accent font-black">+ 添加</button>
-                                </div>
-                                <div className="space-y-2">
-                                    {log.caffeineRecord?.items.map(item => (
-                                        <div key={item.id} className="group flex justify-between items-center bg-slate-50 dark:bg-slate-800 p-3 rounded-2xl border border-slate-100 dark:border-white/5">
-                                            <div className="flex items-center gap-3">
-                                                <Coffee size={14} className="text-orange-400"/>
-                                                <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{item.name} <span className="opacity-40 text-[10px] ml-1">{item.time}</span></span>
+                            {/* 详细列表区 */}
+                            {caffeineCountTotal > 0 && (
+                                <div className="animate-in slide-in-from-top-2">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2 px-1">咖啡因详情</label>
+                                    <div className="space-y-2">
+                                        {log.caffeineRecord?.items.map(item => (
+                                            <div key={item.id} className="group flex justify-between items-center bg-white dark:bg-slate-800 p-3 rounded-2xl border border-slate-100 dark:border-white/5 shadow-sm">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-8 h-8 bg-orange-50 dark:bg-orange-900/30 rounded-lg flex items-center justify-center text-orange-500"><Coffee size={14}/></div>
+                                                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{item.name} <span className="opacity-40 text-[10px] ml-1">{item.time}</span></span>
+                                                </div>
+                                                <div className="flex gap-1">
+                                                    <button onClick={() => handleEdit('bev', item)} className="p-1.5 bg-slate-50 dark:bg-slate-700 rounded-lg text-slate-400 hover:text-brand-accent transition-colors"><Edit3 size={14}/></button>
+                                                    <button onClick={() => removeItem('caffeine', item.id)} className="p-1.5 bg-slate-50 dark:bg-slate-700 rounded-lg text-slate-400 hover:text-red-500 transition-colors"><Trash2 size={14}/></button>
+                                                </div>
                                             </div>
-                                            <button onClick={() => removeItem('caffeine', item.id)} className="p-1.5 bg-white dark:bg-slate-700 rounded-lg shadow-sm text-slate-300 opacity-0 group-hover:opacity-100 hover:text-red-500 transition-all"><Trash2 size={14}/></button>
-                                        </div>
-                                    ))}
-                                    {(!log.caffeineRecord || log.caffeineRecord.items.length === 0) && <p className="text-[11px] text-slate-300 italic pl-1">无咖啡因记录</p>}
+                                        ))}
+                                    </div>
                                 </div>
-                            </div>
+                            )}
 
-                            <div>
-                                <div className="flex justify-between items-center mb-2">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">运动</label>
-                                    <button onClick={() => { setEditTarget(null); setModalState(s => ({ ...s, ex: true })); }} className="text-[10px] text-emerald-500 font-black">+ 添加</button>
-                                </div>
-                                <div className="space-y-2">
-                                    {log.exercise?.map(item => (
-                                        <div key={item.id} onClick={() => { setEditTarget({type:'ex', data: item}); setModalState(s => ({ ...s, ex: true })); }} className="group flex justify-between items-center bg-slate-50 dark:bg-slate-800 p-3 rounded-2xl border border-slate-100 dark:border-white/5 cursor-pointer hover:border-emerald-500/50">
-                                            <div className="flex items-center gap-3">
-                                                <Dumbbell size={14} className="text-emerald-500"/>
-                                                <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{item.type} <span className="opacity-40 text-[10px] ml-1">{item.duration}分</span></span>
+                            {exerciseDurationTotal > 0 && (
+                                <div className="animate-in slide-in-from-top-2">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2 px-1">运动详情</label>
+                                    <div className="space-y-2">
+                                        {log.exercise?.map(item => (
+                                            <div key={item.id} className="group flex justify-between items-center bg-white dark:bg-slate-800 p-3 rounded-2xl border border-slate-100 dark:border-white/5 shadow-sm">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-8 h-8 bg-emerald-50 dark:bg-emerald-900/30 rounded-lg flex items-center justify-center text-emerald-500"><Dumbbell size={14}/></div>
+                                                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{item.type} <span className="opacity-40 text-[10px] ml-1">{item.duration}分</span></span>
+                                                </div>
+                                                <div className="flex gap-1">
+                                                    <button onClick={() => handleEdit('ex', item)} className="p-1.5 bg-slate-50 dark:bg-slate-700 rounded-lg text-slate-400 hover:text-brand-accent transition-colors"><Edit3 size={14}/></button>
+                                                    <button onClick={() => removeItem('exercise', item.id)} className="p-1.5 bg-slate-50 dark:bg-slate-700 rounded-lg text-slate-400 hover:text-red-500 transition-colors"><Trash2 size={14}/></button>
+                                                </div>
                                             </div>
-                                            <button onClick={(e) => { e.stopPropagation(); removeItem('exercise', item.id); }} className="p-1.5 bg-white dark:bg-slate-700 rounded-lg shadow-sm text-slate-300 opacity-0 group-hover:opacity-100 hover:text-red-500 transition-all"><Trash2 size={14}/></button>
-                                        </div>
-                                    ))}
-                                    {(!log.exercise || log.exercise.length === 0) && <p className="text-[11px] text-slate-300 italic pl-1">无运动记录</p>}
+                                        ))}
+                                    </div>
                                 </div>
-                            </div>
+                            )}
 
                             <div className="pt-4 border-t border-slate-100 dark:border-white/5">
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block">性活动</label>
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block px-1">性活动 (SEXUAL)</label>
                                 <div className="space-y-3 mb-4">
-                                    {/* 修复：自慰记录填写了却不显示的问题 */}
                                     {log.masturbation?.map(m => (
-                                        <div key={m.id} onClick={() => { setEditTarget({type:'mb', data: m}); setModalState(s => ({ ...s, mb: true })); }} className="group flex justify-between items-center bg-blue-50/50 dark:bg-blue-900/10 p-3 rounded-2xl border border-blue-100 dark:border-blue-900/30 cursor-pointer hover:border-blue-400">
+                                        <div key={m.id} className="group flex justify-between items-center bg-blue-50/50 dark:bg-blue-900/10 p-3 rounded-2xl border border-blue-100 dark:border-blue-900/30 shadow-sm">
                                             <div className="flex items-center gap-3">
-                                                <Hand size={14} className="text-blue-500"/>
+                                                <div className="w-10 h-10 bg-white dark:bg-slate-800 rounded-full flex items-center justify-center text-blue-500 shadow-sm"><Hand size={18}/></div>
                                                 <div>
                                                     <span className="text-xs font-black text-blue-700 dark:text-blue-400">自慰记录 <span className="font-mono opacity-50 text-[10px] ml-1">{m.startTime} · {m.duration}分</span></span>
                                                     <div className="text-[9px] text-blue-500/70 font-bold">{m.contentItems?.length ? m.contentItems.map(i => i.type).join(', ') : '无素材'}</div>
                                                 </div>
                                             </div>
-                                            <button onClick={(e) => { e.stopPropagation(); removeItem('masturbation', m.id); }} className="p-1.5 bg-white dark:bg-slate-700 rounded-lg shadow-sm text-slate-300 opacity-0 group-hover:opacity-100 hover:text-red-500 transition-all"><Trash2 size={14}/></button>
+                                            <div className="flex gap-1">
+                                                <button onClick={() => handleEdit('mb', m)} className="p-2 bg-white dark:bg-slate-700 rounded-xl text-slate-400 hover:text-brand-accent transition-colors shadow-sm"><Edit3 size={16}/></button>
+                                                <button onClick={() => removeItem('masturbation', m.id)} className="p-2 bg-white dark:bg-slate-700 rounded-xl text-slate-400 hover:text-red-500 transition-colors shadow-sm"><Trash2 size={16}/></button>
+                                            </div>
                                         </div>
                                     ))}
                                     {log.sex?.map(s => (
-                                        <div key={s.id} onClick={() => { setEditTarget({type:'sex', data: s}); setModalState(s => ({ ...s, sex: true })); }} className="group flex justify-between items-center bg-pink-50/50 dark:bg-pink-900/10 p-3 rounded-2xl border border-pink-100 dark:border-pink-900/30 cursor-pointer hover:border-pink-400">
+                                        <div key={s.id} className="group flex justify-between items-center bg-pink-50/50 dark:bg-pink-900/10 p-3 rounded-2xl border border-pink-100 dark:border-pink-900/30 shadow-sm">
                                             <div className="flex items-center gap-3">
-                                                <Heart size={14} className="text-pink-500"/>
+                                                <div className="w-10 h-10 bg-white dark:bg-slate-800 rounded-full flex items-center justify-center text-pink-500 shadow-sm"><Heart size={18} fill="currentColor" fillOpacity={0.2}/></div>
                                                 <div>
                                                     <span className="text-xs font-black text-pink-700 dark:text-pink-400">{s.interactions?.[0]?.partner || '性爱记录'} <span className="font-mono opacity-50 text-[10px] ml-1">{s.startTime} · {s.duration}分</span></span>
                                                     <div className="text-[9px] text-pink-500/70 font-bold">{s.interactions?.length || 1} 阶段</div>
                                                 </div>
                                             </div>
-                                            <button onClick={(e) => { e.stopPropagation(); removeItem('sex', s.id); }} className="p-1.5 bg-white dark:bg-slate-700 rounded-lg shadow-sm text-slate-300 opacity-0 group-hover:opacity-100 hover:text-red-500 transition-all"><Trash2 size={14}/></button>
+                                            <div className="flex gap-1">
+                                                <button onClick={() => handleEdit('sex', s)} className="p-2 bg-white dark:bg-slate-700 rounded-xl text-slate-400 hover:text-brand-accent transition-colors shadow-sm"><Edit3 size={16}/></button>
+                                                <button onClick={() => removeItem('sex', s.id)} className="p-2 bg-white dark:bg-slate-700 rounded-xl text-slate-400 hover:text-red-500 transition-colors shadow-sm"><Trash2 size={16}/></button>
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
@@ -520,8 +604,14 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
             {/* 弹窗集合 */}
             <BeverageModal 
                 isOpen={modalState.bev} 
-                onClose={() => setModalState(s => ({ ...s, bev: false }))} 
-                onSave={(i) => { const current = log.caffeineRecord || { totalCount: 0, items: [] }; setLog(prev => ({ ...prev, caffeineRecord: { totalCount: current.items.length + 1, items: [...current.items, i] } })); }} 
+                onClose={() => { setModalState(s => ({ ...s, bev: false })); setEditTarget(null); }} 
+                initialData={editTarget?.type === 'bev' ? editTarget.data : undefined}
+                onSave={(i) => { 
+                    const current = log.caffeineRecord || { totalCount: 0, items: [] }; 
+                    const exists = current.items.find(x => x.id === i.id);
+                    const newItems = exists ? current.items.map(x => x.id === i.id ? i : x) : [...current.items, i];
+                    setLog(prev => ({ ...prev, caffeineRecord: { totalCount: newItems.length, items: newItems } })); 
+                }} 
             />
             <SexRecordModal 
                 isOpen={modalState.sex} 
