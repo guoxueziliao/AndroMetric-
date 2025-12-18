@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { CloudSun, Clock, Play, Sparkles, Star, Zap, Trash2, Check, Minus, Plus, MapPin, Leaf, RotateCcw, Heart, Shirt, Thermometer, BrainCircuit } from 'lucide-react';
 import Modal from './Modal';
@@ -108,7 +107,7 @@ const NapRecordModal: React.FC<NapRecordModalProps> = ({ isOpen, onClose, onSave
 
     if (!isOpen) return null;
 
-    const isHardnessSelected = record.hardness !== null;
+    const hasErection = record.hardness !== null;
 
     return (
         <Modal
@@ -207,21 +206,27 @@ const NapRecordModal: React.FC<NapRecordModalProps> = ({ isOpen, onClose, onSave
                     </div>
                 </div>
 
-                {/* 6. Hardness Selector - Fixed UI Conflict */}
+                {/* 6. Hardness Selector - Fixed UI Conflict to Match Morning Wood logic */}
                 <div className="space-y-4">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><Zap size={12}/> 午起生理反馈 (勃起硬度)</label>
-                    <HardnessSelector value={record.hardness || 0} onChange={h => setRecord({...record, hardness: h as any})} />
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><Zap size={12}/> 午起生理反馈</label>
                     
-                    <button 
-                        onClick={() => setRecord({...record, hardness: isHardnessSelected ? null : 3})}
-                        className={`w-full py-3 rounded-xl text-xs font-bold transition-all border flex items-center justify-center gap-2 ${isHardnessSelected ? 'bg-slate-100 text-slate-500 border-slate-200 hover:bg-slate-200' : 'bg-orange-50 text-orange-600 border-orange-100 animate-pulse'}`}
-                    >
-                        {isHardnessSelected ? <RotateCcw size={14}/> : <Plus size={14}/>}
-                        {isHardnessSelected ? "重置生理记录" : "开启生理记录 (本次有勃起)"}
-                    </button>
-                    
-                    {!isHardnessSelected && (
-                        <p className="text-[10px] text-slate-400 text-center italic">若午起无明显生理反应，保持为空即可</p>
+                    <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-800 p-4 rounded-2xl">
+                        <label className="font-bold text-sm text-brand-text dark:text-slate-200">醒来有勃起吗？</label>
+                        <input 
+                            type="checkbox" 
+                            className="toggle-checkbox" 
+                            checked={hasErection} 
+                            onChange={(e) => setRecord({...record, hardness: e.target.checked ? 3 : null})} 
+                        />
+                    </div>
+
+                    {hasErection && (
+                        <div className="animate-in fade-in slide-in-from-top-2">
+                            <HardnessSelector 
+                                value={record.hardness || 3} 
+                                onChange={(v) => setRecord({...record, hardness: v as any})} 
+                            />
+                        </div>
                     )}
                 </div>
 
