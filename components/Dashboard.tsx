@@ -1,8 +1,9 @@
+
 import React, { useState, useMemo } from 'react';
 import { LogEntry, ExerciseRecord, SexRecordDetails, MasturbationRecordDetails, NapRecord, AlcoholRecord } from '../types';
 import CalendarHeatmap from './CalendarHeatmap';
-// Add AlertTriangle to imports
-import { Moon, Zap, Activity, Hand, HeartPulse, Clock, Dumbbell, Footprints, Timer, CloudSun, Beer, TrendingUp, ShieldAlert, Edit3, Trash2, FastForward, Coffee, Bed, ArrowRight, User, Heart, History, RotateCcw, MapPin, Sparkles, Shirt, Star, Thermometer, BrainCircuit, Tag, Film, Smile, AlertTriangle } from 'lucide-react';
+/* Added Check to lucide-react imports to fix line 270 error */
+import { Moon, Zap, Activity, Hand, HeartPulse, Clock, Dumbbell, Footprints, Timer, CloudSun, Beer, TrendingUp, ShieldAlert, Edit3, Trash2, FastForward, Coffee, Bed, ArrowRight, User, Heart, History, RotateCcw, MapPin, Sparkles, Shirt, Star, Thermometer, BrainCircuit, Tag, Film, Smile, AlertTriangle, ChevronRight, Calendar, Check } from 'lucide-react';
 import Modal from './Modal';
 import SafeDeleteModal from './SafeDeleteModal';
 import { formatTime, calculateSleepDuration, analyzeSleep, formatDateFriendly, LABELS } from '../utils/helpers';
@@ -49,6 +50,44 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
       if (hour < 18) return '下午好';
       return '晚上好';
   }, []);
+
+  // --- 近七日睡眠计算逻辑 ---
+  const lastSevenDaysSleep = useMemo(() => {
+    const dates = [];
+    const today = new Date();
+    for (let i = 0; i < 7; i++) {
+        const d = new Date(today);
+        d.setDate(today.getDate() - i);
+        dates.push(d.toISOString().split('T')[0]);
+    }
+
+    return dates.map(dateStr => {
+        const log = logs.find(l => l.date === dateStr);
+        if (!log || !log.sleep) return { date: dateStr, hasData: false };
+
+        const analysis = analyzeSleep(log.sleep.startTime || undefined, log.sleep.endTime || undefined);
+        const napTotalDuration = log.sleep.naps?.reduce((acc, n) => acc + (n.duration || 0), 0) || 0;
+
+        return {
+            date: dateStr,
+            hasData: true,
+            status: log.status,
+            nightSleep: {
+                startTime: log.sleep.startTime,
+                endTime: log.sleep.endTime,
+                duration: analysis?.durationHours || 0,
+                isLate: analysis?.isLate || false,
+                isInsufficient: analysis?.isInsufficient || false,
+                isExcessive: analysis?.isExcessive || false,
+                quality: log.sleep.quality
+            },
+            nap: {
+                count: log.sleep.naps?.length || 0,
+                duration: napTotalDuration
+            }
+        };
+    });
+  }, [logs]);
 
   const handleDateClickForSummary = (date: string) => {
     const log = logs.find(l => l.date === date);
@@ -98,7 +137,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
       return { main: `${month}月${date}日`, sub: weekday };
   }, [summaryLog]);
 
-  // 日记 Tab 内的结构化渲染子组件
   const SummarySection = ({ title, icon: Icon, children, colorClass = "text-slate-400" }: any) => (
       <div className="space-y-3">
           <div className="flex items-center gap-2 px-1">
@@ -137,7 +175,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                         <button onClick={() => onEdit(pendingLog.date)} className="px-5 py-2 bg-white text-emerald-600 rounded-full text-xs font-bold shadow-sm active:scale-95">醒了</button>
                     </div>
                 )}
-                {/* 其他进行中任务省略逻辑保持不变... */}
             </section>
         )}
 
@@ -170,9 +207,93 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                 </div>
             </div>
         </CalendarHeatmap>
+
+        {/* --- 新增：近七日睡眠轨迹 --- */}
+        <section className="space-y-4">
+            <div className="flex items-center justify-between px-2">
+                <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                    <History size={16}/> 近七日睡眠轨迹
+                </h3>
+                <span className="text-[10px] font-bold text-slate-300">Night & Nap</span>
+            </div>
+
+            <div className="space-y-3">
+                {lastSevenDaysSleep.map((item, idx) => (
+                    <div 
+                        key={item.date} 
+                        onClick={() => handleDateClickForSummary(item.date)}
+                        className={`bg-white dark:bg-slate-900/40 p-4 rounded-[2rem] border transition-all hover:scale-[1.01] active:scale-[0.98] cursor-pointer flex items-center justify-between shadow-soft ${idx === 0 ? 'border-brand-accent/30 ring-1 ring-brand-accent/5' : 'border-slate-100 dark:border-white/5'}`}
+                    >
+                        <div className="flex items-center gap-4">
+                            <div className="flex flex-col items-center">
+                                <span className="text-[10px] font-black text-slate-300 uppercase leading-none mb-1">{idx === 0 ? 'Today' : new Date(item.date).toLocaleDateString('zh-CN', { weekday: 'short' })}</span>
+                                <span className={`text-sm font-black ${item.hasData ? 'text-slate-700 dark:text-slate-200' : 'text-slate-300'}`}>{item.date.split('-')[2]}</span>
+                            </div>
+                            
+                            <div className="w-px h-8 bg-slate-100 dark:bg-slate-800"></div>
+
+                            <div className="space-y-1">
+                                {item.hasData && item.nightSleep?.duration ? (
+                                    <div className="flex items-center gap-2">
+                                        <div className="flex items-center gap-1 text-xs font-black text-slate-700 dark:text-slate-200">
+                                            <Moon size={12} className="text-blue-500"/>
+                                            {item.nightSleep.duration.toFixed(1)}h
+                                        </div>
+                                        {item.nap.duration > 0 && (
+                                            <div className="flex items-center gap-1 text-[10px] font-bold text-orange-500 bg-orange-50 dark:bg-orange-900/20 px-1.5 py-0.5 rounded-lg">
+                                                <CloudSun size={10}/>
+                                                午休 {item.nap.duration}m
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <span className="text-xs font-bold text-slate-300 italic">未记录睡眠</span>
+                                )}
+                                
+                                <div className="flex flex-wrap gap-1">
+                                    {item.hasData && item.nightSleep?.isLate && (
+                                        <span className="text-[9px] font-black text-red-500 border border-red-100 dark:border-red-900/30 px-1 rounded flex items-center gap-0.5">
+                                            <Clock size={8}/> 熬夜
+                                        </span>
+                                    )}
+                                    {item.hasData && item.nightSleep?.isInsufficient && (
+                                        <span className="text-[9px] font-black text-orange-500 border border-orange-100 dark:border-orange-900/30 px-1 rounded flex items-center gap-0.5">
+                                            <AlertTriangle size={8}/> 缺觉
+                                        </span>
+                                    )}
+                                    {item.hasData && item.nightSleep?.isExcessive && (
+                                        <span className="text-[9px] font-black text-blue-400 border border-blue-100 dark:border-blue-900/30 px-1 rounded flex items-center gap-0.5">
+                                            <Zap size={8}/> 睡太久
+                                        </span>
+                                    )}
+                                    {item.hasData && !item.nightSleep?.isLate && !item.nightSleep?.isInsufficient && item.nightSleep?.duration > 0 && (
+                                        <span className="text-[9px] font-black text-green-500 flex items-center gap-0.5">
+                                            <Check size={8}/> 规律
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-3">
+                            <div className="text-right">
+                                {item.hasData && item.nightSleep?.startTime && item.nightSleep?.endTime ? (
+                                    <span className="text-[10px] font-mono font-bold text-slate-400 block">
+                                        {formatTime(item.nightSleep.startTime)} - {formatTime(item.nightSleep.endTime)}
+                                    </span>
+                                ) : (
+                                    <span className="text-3xl font-black text-slate-100 dark:text-slate-800">未</span>
+                                )}
+                            </div>
+                            <ChevronRight size={16} className="text-slate-200"/>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </section>
       </div>
       
-      {/* 记录详情弹窗 (日记 Tab 全面升级) */}
+      {/* 记录详情弹窗 */}
       <Modal isOpen={isSummaryModalOpen} onClose={() => setIsSummaryModalOpen(false)} title="">
         {summaryLog && (
             <div className="space-y-6 animate-in fade-in duration-300 min-h-[500px] flex flex-col -mt-4">
@@ -193,8 +314,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                 <div className="flex-1 overflow-y-auto custom-scrollbar -mx-1 px-1">
                     {activeSummaryTab === 'diary' && (
                         <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-300 pb-10">
-                            
-                            {/* 1. 晨间反馈 */}
                             <SummarySection title="晨间生理反馈" icon={Zap} colorClass="text-amber-500">
                                 {summaryLog.morning?.wokeWithErection ? (
                                     <div className="space-y-4">
@@ -209,7 +328,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                                         </div>
                                         {summaryLog.morning.wokenByErection && (
                                             <div className="flex items-center gap-2 p-2 bg-orange-50 dark:bg-orange-900/20 rounded-xl text-[10px] font-bold text-orange-600">
-                                                {/* Fixed AlertTriangle missing name error */}
                                                 <AlertTriangle size={12}/> 被勃起弄醒 (雄激素水平较高)
                                             </div>
                                         )}
@@ -217,7 +335,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                                 ) : <div className="text-sm font-bold text-slate-400 italic py-2">今晨未察觉到晨勃</div>}
                             </SummarySection>
 
-                            {/* 2. 睡眠报告 */}
                             <SummarySection title="睡眠报告" icon={Moon} colorClass="text-blue-500">
                                 <div className="space-y-4">
                                     <div className="flex items-baseline gap-2">
@@ -256,10 +373,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                                 </div>
                             </SummarySection>
 
-                            {/* 3. 活力记录 */}
                             <SummarySection title="活力记录" icon={Activity} colorClass="text-emerald-500">
                                 <div className="space-y-4">
-                                    {/* 运动项 */}
                                     {summaryLog.exercise?.length ? summaryLog.exercise.map((ex, i) => (
                                         <div key={i} className="bg-white dark:bg-slate-800/50 p-3 rounded-2xl border border-slate-100 dark:border-white/5 flex items-center justify-between">
                                             <div className="flex items-center gap-3">
@@ -273,7 +388,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                                         </div>
                                     )) : null}
 
-                                    {/* 性生活项 */}
                                     {summaryLog.sex?.length ? summaryLog.sex.map((s, i) => (
                                         <div key={i} className="bg-white dark:bg-slate-800/50 p-3 rounded-2xl border border-slate-100 dark:border-white/5 flex items-center justify-between">
                                             <div className="flex items-center gap-3">
@@ -287,7 +401,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                                         </div>
                                     )) : null}
 
-                                    {/* 自慰项 */}
                                     {summaryLog.masturbation?.length ? summaryLog.masturbation.map((m, i) => (
                                         <div key={i} className="bg-white dark:bg-slate-800/50 p-3 rounded-2xl border border-slate-100 dark:border-white/5 flex items-center justify-between">
                                             <div className="flex items-center gap-3">
@@ -299,7 +412,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                                             </div>
                                             <div className="flex gap-1">
                                                 {m.volumeForceLevel && <span className="text-[9px] font-black text-blue-600 bg-blue-50 dark:bg-blue-900/20 px-1.5 py-0.5 rounded">Lv.{m.volumeForceLevel}</span>}
-                                                {m.contentItems?.length ? <span className="text-[9px] font-black text-slate-500 bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded">素材x{m.contentItems.length}</span> : null}
                                             </div>
                                         </div>
                                     )) : null}
@@ -310,10 +422,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                                 </div>
                             </SummarySection>
 
-                            {/* 4. 生活习惯与环境 */}
                             <SummarySection title="生活习惯与状态" icon={Sparkles} colorClass="text-purple-500">
                                 <div className="space-y-5">
-                                    {/* 摄入物徽章 */}
                                     <div className="flex flex-wrap gap-2">
                                         {summaryLog.alcoholRecords?.length ? (
                                             <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 dark:bg-amber-900/20 rounded-2xl border border-amber-100 dark:border-amber-900/50 text-amber-700 dark:text-amber-400">
@@ -333,7 +443,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                                         </div>
                                     </div>
 
-                                    {/* 环境细节 */}
                                     <div className="grid grid-cols-2 gap-4 pt-2 border-t border-slate-100 dark:border-white/5">
                                         <div className="flex flex-col gap-1">
                                             <span className="text-[10px] font-black text-slate-400 uppercase">身心环境</span>
@@ -349,17 +458,11 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                                         </div>
                                     </div>
 
-                                    {/* 备注与标签 */}
                                     {summaryLog.notes && (
                                         <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-100 dark:border-white/5 text-xs text-slate-600 dark:text-slate-400 italic leading-relaxed">
                                             "{summaryLog.notes}"
                                         </div>
                                     )}
-                                    {summaryLog.tags?.length ? (
-                                        <div className="flex flex-wrap gap-1.5 pt-1">
-                                            {summaryLog.tags.map(t => <span key={t} className="text-[9px] font-black text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded-full border border-slate-200 dark:border-slate-700">#{t}</span>)}
-                                        </div>
-                                    ) : null}
                                 </div>
                             </SummarySection>
                         </div>
@@ -398,10 +501,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
         message={`确定要删除 ${dateToDelete} 的所有记录吗？删除后将无法找回。`}
       />
 
-      {/* Fixed Modal missing required children prop */}
       <Modal isOpen={isMbActionModalOpen} onClose={() => setIsMbActionModalOpen(false)} title="施法结束">
           <div className="py-4 text-center text-slate-500">
-            {/* Logic to finalize masturbation action goes here */}
             正在完成自慰记录...
           </div>
       </Modal>
