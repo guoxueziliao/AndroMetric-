@@ -261,22 +261,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
         {/* Ongoing Tasks Section */}
         {(ongoingNap || ongoingExercise || ongoingMb || pendingLog) && (
             <section className="space-y-3">
-                {/* Sleep Banner */}
-                {pendingLog && (
-                    <div className="bg-gradient-to-r from-indigo-500 to-purple-600 p-4 rounded-3xl shadow-lg shadow-indigo-500/20 text-white flex justify-between items-center animate-in slide-in-from-top-2">
-                        <div className="flex items-center gap-3">
-                            <div className="p-2 bg-white/20 rounded-full backdrop-blur-sm animate-pulse"><Moon size={20}/></div>
-                            <div>
-                                <div className="font-bold text-sm">睡眠中...</div>
-                                <div className="text-xs opacity-90 font-mono">
-                                    {pendingLog.sleep?.startTime ? new Date(pendingLog.sleep.startTime).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : '--:--'} 开始
-                                </div>
-                            </div>
-                        </div>
-                        <button onClick={() => onEdit(pendingLog.date)} className="px-4 py-2 bg-white text-indigo-600 rounded-full text-xs font-bold shadow-sm active:scale-95 transition-transform">醒了</button>
-                    </div>
-                )}
-                
                 {/* Nap Banner */}
                 {ongoingNap && (
                     <div className="bg-gradient-to-r from-orange-400 to-amber-500 p-4 rounded-3xl shadow-lg shadow-orange-500/20 text-white flex justify-between items-center animate-in slide-in-from-top-2">
@@ -295,7 +279,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                 {ongoingExercise && onFinishExercise && (
                     <div className="bg-gradient-to-r from-emerald-500 to-teal-600 p-4 rounded-3xl shadow-lg shadow-emerald-500/20 text-white flex justify-between items-center animate-in slide-in-from-top-2">
                         <div className="flex items-center gap-3">
-                            <div className="p-2 bg-white/20 rounded-full backdrop-blur-sm animate-spin-slow"><Dumbbell size={20}/></div>
+                            <div className="p-2 bg-white/20 rounded-full backdrop-blur-sm animate-pulse"><Timer size={20}/></div>
                             <div>
                                 <div className="font-bold text-sm">{ongoingExercise.type}进行中...</div>
                                 <div className="text-xs opacity-90 font-mono">{ongoingExercise.startTime} 开始</div>
@@ -411,16 +395,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
               </button>
           </div>
       </Modal>
-
-      <style>{`
-        @keyframes spin-slow {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-        .animate-spin-slow {
-            animation: spin-slow 8s linear infinite;
-        }
-      `}</style>
     </>
   );
 };
