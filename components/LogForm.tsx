@@ -132,7 +132,6 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
         const exists = current.find(x => x.id === r.id);
         const next = exists ? current.map(x => x.id === r.id ? r : x) : [...current, r];
         
-        // 计算总量以同步旧版 alcohol 枚举字段
         const total = next.reduce((sum, item) => sum + item.totalGrams, 0);
         const level = total > 50 ? 'high' : total > 20 ? 'medium' : total > 0 ? 'low' : 'none';
 
@@ -199,9 +198,9 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
                                                 <div className="w-9 h-9 bg-amber-50 dark:bg-amber-900/30 rounded-xl flex items-center justify-center text-amber-500"><Beer size={18}/></div>
                                                 <div>
                                                     <div className="text-sm font-black text-slate-700 dark:text-slate-200">
-                                                        {record.totalGrams}g <span className="text-[10px] text-slate-400">{record.time}</span>
+                                                        {record.totalGrams}克 <span className="text-[10px] text-slate-400">纯酒精</span>
                                                     </div>
-                                                    <div className="text-[10px] text-slate-400 font-bold mt-0.5 line-clamp-1">{record.items.map(i => i.name).join(', ')}</div>
+                                                    <div className="text-[10px] text-slate-400 font-bold mt-0.5 line-clamp-1">{record.items.map(i => i.name).join(', ')} · {record.time}</div>
                                                 </div>
                                             </div>
                                             <div className="flex gap-1.5">
@@ -227,7 +226,7 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
                                                 <div className="w-9 h-9 bg-orange-50 dark:bg-orange-900/30 rounded-xl flex items-center justify-center text-orange-500"><Coffee size={18}/></div>
                                                 <div>
                                                     <div className="text-sm font-black text-slate-700 dark:text-slate-200">{item.name}</div>
-                                                    <div className="text-[10px] text-slate-400 font-bold mt-0.5">{item.time} · {item.volume}ml</div>
+                                                    <div className="text-[10px] text-slate-400 font-bold mt-0.5">{item.time} · {item.volume}毫升</div>
                                                 </div>
                                             </div>
                                             <div className="flex gap-1.5">

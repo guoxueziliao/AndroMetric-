@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { X, Clock, Coffee, CupSoda, Leaf, Zap, Plus, Minus, Check, PencilLine } from 'lucide-react';
 import Modal from './Modal';
@@ -23,20 +24,20 @@ const MENU_DATA: Record<string, any[]> = {
         { name: '美式咖啡', vol: 480, desc: '标准' },
         { name: '拿铁', vol: 480, desc: '标准' },
         { name: '卡布奇诺', vol: 360, desc: '标准' },
-        { name: '澳白 (Flat White)', vol: 300, desc: '标准' },
-        { name: 'Dirty (脏咖)', vol: 200, desc: '标准' },
+        { name: '澳白', vol: 300, desc: '标准' },
+        { name: '脏咖', vol: 200, desc: '标准' },
         { name: '摩卡', vol: 480, desc: '标准' },
-        { name: '浓缩 (Espresso)', vol: 30, desc: '标准' },
-        { name: '冷萃/冰滴', vol: 350, desc: '标准' },
+        { name: '浓缩', vol: 30, desc: '标准' },
+        { name: '冷萃', vol: 350, desc: '标准' },
     ],
     new_tea: [
         { name: '原叶鲜奶茶', vol: 500, desc: '标准' },
-        { name: '经典奶茶 (奶精/轻乳)', vol: 500, desc: '标准' },
-        { name: '水果茶 (大杯)', vol: 650, desc: '标准' },
-        { name: '柠檬水/果味饮', vol: 600, desc: '标准' },
-        { name: '芝士/奶盖茶', vol: 500, desc: '标准' },
-        { name: '纯茶 (现泡/冷萃)', vol: 500, desc: '标准' },
-        { name: '超级桶/吨吨桶', vol: 1000, desc: '标准' },
+        { name: '经典奶茶', vol: 500, desc: '标准' },
+        { name: '水果茶', vol: 650, desc: '标准' },
+        { name: '柠檬水', vol: 600, desc: '标准' },
+        { name: '奶盖茶', vol: 500, desc: '标准' },
+        { name: '纯茶', vol: 500, desc: '标准' },
+        { name: '吨吨桶', vol: 1000, desc: '标准' },
     ],
     chinese_tea: [
         { type: 'divider', label: '—— 经典名茶 ——' },
@@ -48,19 +49,20 @@ const MENU_DATA: Record<string, any[]> = {
         { name: '洞庭碧螺春', vol: 300, desc: '标准' },
         { name: '茉莉花茶', vol: 300, desc: '标准' },
         { type: 'divider', label: '—— 六大茶系 ——' },
-        { name: '绿茶 (炒青/烘青)', vol: 300, desc: '标准' },
-        { name: '红茶 (滇红/祁红)', vol: 300, desc: '标准' },
-        { name: '乌龙茶 (青茶)', vol: 300, desc: '标准' },
-        { name: '白茶 (白毫银针/寿眉)', vol: 300, desc: '标准' },
-        { name: '黑茶 (六堡/安化)', vol: 300, desc: '标准' },
-        { name: '黄茶 (君山银针)', vol: 300, desc: '标准' },
+        { name: '绿茶', vol: 300, desc: '标准' },
+        { name: '红茶', vol: 300, desc: '标准' },
+        { name: '乌龙茶', vol: 300, desc: '标准' },
+        { name: '白茶', vol: 300, desc: '标准' },
+        { name: '黑茶', vol: 300, desc: '标准' },
+        { name: '黄茶', vol: 300, desc: '标准' },
     ],
     functional: [
-        { name: '红牛/战马', vol: 250, desc: '标准' },
-        { name: '魔爪 (Monster)', vol: 500, desc: '标准' },
+        { name: '红牛', vol: 250, desc: '标准' },
+        { name: '魔爪', vol: 500, desc: '标准' },
         { name: '东鹏特饮', vol: 250, desc: '标准' },
-        { name: '可乐/雪碧', vol: 330, desc: '标准' },
-        { name: '力保健/提神液', vol: 100, desc: '标准' },
+        { name: '可乐', vol: 330, desc: '标准' },
+        { name: '雪碧', vol: 330, desc: '标准' },
+        { name: '提神液', vol: 100, desc: '标准' },
         { name: '电解质水', vol: 500, desc: '标准' },
     ]
 };
@@ -89,7 +91,6 @@ const BeverageModal: React.FC<BeverageModalProps> = ({ isOpen, onClose, onSave, 
                     setActiveCat('custom');
                     setCustomName(initialData.name);
                 } else {
-                    // Try to find category
                     for (const catId of Object.keys(MENU_DATA)) {
                         if (MENU_DATA[catId].some(i => i.name === initialData.name)) {
                             setActiveCat(catId);
@@ -132,7 +133,6 @@ const BeverageModal: React.FC<BeverageModalProps> = ({ isOpen, onClose, onSave, 
     return (
         <Modal isOpen={isOpen} onClose={onClose} title={initialData ? "修改记录" : "记录提神饮品"}>
             <div className="flex flex-col h-[75vh] -mx-4 -mb-4">
-                {/* Top Summary Display */}
                 <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 shrink-0">
                     <div className="bg-orange-50/50 dark:bg-orange-900/10 border border-orange-100 dark:border-orange-900/30 rounded-2xl p-4 flex items-center justify-between shadow-sm">
                         <div className="flex items-center gap-4">
@@ -145,7 +145,7 @@ const BeverageModal: React.FC<BeverageModalProps> = ({ isOpen, onClose, onSave, 
                                 </h3>
                                 <div className="flex items-center gap-2 mt-0.5">
                                     <span className="bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded text-[10px] font-bold text-slate-500 tabular-nums">
-                                        {volume} ml
+                                        {volume} 毫升
                                     </span>
                                     <span className="text-[10px] text-slate-400 font-bold tabular-nums">{time}</span>
                                 </div>
@@ -155,9 +155,7 @@ const BeverageModal: React.FC<BeverageModalProps> = ({ isOpen, onClose, onSave, 
                     </div>
                 </div>
 
-                {/* Main Content Area: Sidebar + List */}
                 <div className="flex-1 flex overflow-hidden">
-                    {/* Left Sidebar */}
                     <div className="w-24 bg-slate-50/50 dark:bg-slate-900/50 border-r border-slate-100 dark:border-slate-800 flex flex-col pt-2 shrink-0">
                         {CATEGORIES.map(cat => (
                             <button
@@ -176,7 +174,6 @@ const BeverageModal: React.FC<BeverageModalProps> = ({ isOpen, onClose, onSave, 
                         ))}
                     </div>
 
-                    {/* Right Item List */}
                     <div className="flex-1 overflow-y-auto custom-scrollbar p-4">
                         {activeCat === 'custom' ? (
                             <div className="space-y-4 animate-in fade-in slide-in-from-right-4">
@@ -211,7 +208,7 @@ const BeverageModal: React.FC<BeverageModalProps> = ({ isOpen, onClose, onSave, 
                                         >
                                             <div className="text-left">
                                                 <div className="text-sm font-black text-slate-700 dark:text-slate-200">{item.name}</div>
-                                                <div className="text-[10px] text-slate-400 font-bold mt-0.5">{item.vol}ml {item.desc}</div>
+                                                <div className="text-[10px] text-slate-400 font-bold mt-0.5">{item.vol}毫升 {item.desc}</div>
                                             </div>
                                             {selectedName === item.name && activeCat !== 'custom' && (
                                                 <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center text-white">
@@ -226,11 +223,9 @@ const BeverageModal: React.FC<BeverageModalProps> = ({ isOpen, onClose, onSave, 
                     </div>
                 </div>
 
-                {/* Bottom Adjustment Area */}
                 <div className="px-6 py-6 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 space-y-6 shrink-0">
-                    {/* Precise ML Adjustment */}
                     <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">单杯精确毫升 (ML)</span>
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">单杯精确毫升</span>
                         <div className="flex items-center gap-4 bg-slate-100 dark:bg-slate-800 p-1.5 rounded-2xl border border-slate-200 dark:border-slate-700">
                             <button onClick={() => setVolume(v => Math.max(10, v - 10))} className="p-2 bg-white dark:bg-slate-700 rounded-xl shadow-sm text-slate-400 active:scale-90 transition-transform">
                                 <Minus size={16} strokeWidth={3} />
@@ -242,7 +237,6 @@ const BeverageModal: React.FC<BeverageModalProps> = ({ isOpen, onClose, onSave, 
                         </div>
                     </div>
 
-                    {/* Quick Cup Sizes */}
                     <div className="grid grid-cols-4 gap-3">
                         {CUP_SIZES.map(size => (
                             <button
@@ -260,7 +254,6 @@ const BeverageModal: React.FC<BeverageModalProps> = ({ isOpen, onClose, onSave, 
                         ))}
                     </div>
 
-                    {/* Confirm Button */}
                     <button
                         onClick={handleConfirm}
                         className="w-full py-4 bg-orange-500 hover:bg-orange-600 text-white font-black rounded-2xl shadow-xl shadow-orange-500/20 flex items-center justify-center gap-2 active:scale-[0.98] transition-all"

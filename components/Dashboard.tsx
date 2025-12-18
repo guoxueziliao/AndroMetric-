@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { LogEntry, ExerciseRecord, SexRecordDetails, MasturbationRecordDetails, NapRecord, AlcoholRecord } from '../types';
 import CalendarHeatmap from './CalendarHeatmap';
@@ -244,7 +243,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
 
         <CalendarHeatmap logs={logs} onDateClick={handleDateClickForSummary}>
             <div className="grid grid-cols-2 gap-4 mt-2">
-                <div className="bg-white dark:bg-slate-900/40 dark:backdrop-blur-md rounded-3xl p-5 shadow-soft dark:shadow-2xl border border-slate-100 dark:border-white/5 flex flex-col justify-between h-40 transition-colors">
+                <div className="bg-white dark:bg-slate-900/40 dark:backdrop-blur-md rounded-3xl p-5 shadow-soft dark:shadow-2xl border border-slate-100 dark:border-white/5 flex flex-col justify-between h-44 transition-colors">
                     <div className="flex justify-between items-start">
                         <div className="flex items-center gap-2">
                             <div className="p-2 bg-blue-50 dark:bg-blue-500/10 rounded-full text-blue-500 dark:text-blue-400"><Moon size={18} fill="currentColor" fillOpacity={0.2}/></div>
@@ -276,14 +275,14 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                     </div>
                 </div>
 
-                <div className="bg-white dark:bg-slate-900/40 dark:backdrop-blur-md rounded-3xl p-5 shadow-soft dark:shadow-2xl border border-slate-100 dark:border-white/5 flex flex-col justify-between h-40 transition-colors">
+                <div className="bg-white dark:bg-slate-900/40 dark:backdrop-blur-md rounded-3xl p-5 shadow-soft dark:shadow-2xl border border-slate-100 dark:border-white/5 flex flex-col justify-between h-44 transition-colors">
                     <div className="flex items-center gap-2 mb-3">
                         <div className="p-2 bg-orange-50 dark:bg-orange-500/10 rounded-full text-orange-500 dark:text-orange-400"><Activity size={18}/></div>
                         <span className="text-sm font-bold text-slate-800 dark:text-slate-300">活力</span>
                     </div>
 
                     <div className="space-y-2">
-                        <div className="bg-slate-50 dark:bg-white/5 p-2.5 rounded-2xl flex items-center justify-between border border-transparent hover:border-slate-100 dark:hover:border-white/10 transition-all">
+                        <div className="bg-slate-50 dark:bg-white/5 p-2 rounded-2xl flex items-center justify-between border border-transparent hover:border-slate-100 dark:hover:border-white/10 transition-all">
                             <div className="flex items-center gap-2">
                                 <div className="p-1.5 bg-white dark:bg-slate-800 rounded-full shadow-sm text-orange-500 dark:text-orange-400"><Dumbbell size={14}/></div>
                                 <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">运动</span>
@@ -293,7 +292,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                             </span>
                         </div>
 
-                        <div className="bg-slate-50 dark:bg-white/5 p-2.5 rounded-2xl flex items-center justify-between border border-transparent hover:border-slate-100 dark:hover:border-white/10 transition-all">
+                        <div className="bg-slate-50 dark:bg-white/5 p-2 rounded-2xl flex items-center justify-between border border-transparent hover:border-slate-100 dark:hover:border-white/10 transition-all">
                             <div className="flex items-center gap-2">
                                 <div className="p-1.5 bg-white dark:bg-slate-800 rounded-full shadow-sm text-pink-500 dark:text-pink-400"><Heart size={14} fill="currentColor" fillOpacity={0.2}/></div>
                                 <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">释放</span>

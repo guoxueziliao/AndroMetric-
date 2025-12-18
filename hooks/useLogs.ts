@@ -1,3 +1,4 @@
+
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { StorageService } from '../services/StorageService';
@@ -84,7 +85,6 @@ export function useLogs() {
         const existingLog = await StorageService.logs.get(targetDateStr);
         try {
             if (existingLog) {
-                // Fix: Added missing category property to ChangeDetail
                 const historyEntry: ChangeRecord = { 
                     timestamp: Date.now(), 
                     summary: '快速记录: 性生活',
@@ -97,7 +97,6 @@ export function useLogs() {
                     changeHistory: [...(existingLog.changeHistory || []), historyEntry]
                 });
             } else {
-                // Fix: Added missing category property to ChangeDetail
                 const historyEntry: ChangeRecord = { 
                     timestamp: Date.now(), 
                     summary: '快速记录: 性生活',
@@ -122,7 +121,6 @@ export function useLogs() {
         const actionType = record.status === 'inProgress' ? '开始自慰' : '快速记录: 自慰';
         try {
             if (existingLog) {
-                // Fix: Added missing category property to ChangeDetail
                 const historyEntry: ChangeRecord = { 
                     timestamp: Date.now(), 
                     summary: actionType,
@@ -139,7 +137,6 @@ export function useLogs() {
                     changeHistory: [...(existingLog.changeHistory || []), historyEntry]
                 });
             } else {
-                // Fix: Added missing category property to ChangeDetail
                 const historyEntry: ChangeRecord = { 
                     timestamp: Date.now(), 
                     summary: actionType,
@@ -169,11 +166,9 @@ export function useLogs() {
                 let details = [];
                 if (exIdx > -1) {
                      newExercises[exIdx] = record;
-                     // Fix: Added missing category property to ChangeDetail
                      details.push({ field: '运动更新', oldValue: '...', newValue: `${record.type} (${record.duration}m)`, category: 'exercise' as const });
                 } else {
                      newExercises.push(record);
-                     // Fix: Added missing category property to ChangeDetail
                      details.push({ field: '运动次数', oldValue: String(existingLog.exercise?.length || 0), newValue: String((existingLog.exercise?.length || 0) + 1), category: 'exercise' as const });
                 }
                 const historyEntry: ChangeRecord = { timestamp: Date.now(), summary: actionType + ': ' + record.type, details, type: 'quick' };
@@ -183,7 +178,6 @@ export function useLogs() {
                     changeHistory: [...(existingLog.changeHistory || []), historyEntry]
                 });
             } else {
-                // Fix: Added missing category property to ChangeDetail
                 const historyEntry: ChangeRecord = { timestamp: Date.now(), summary: actionType + ': ' + record.type, details: [{ field: '运动次数', oldValue: '0', newValue: '1', category: 'exercise' }], type: 'quick' };
                 const skeleton = hydrateLog({ date: targetDateStr });
                 const newLog: LogEntry = {
@@ -230,30 +224,36 @@ export function useLogs() {
         const targetDateStr = getActivityTargetDate();
         const existingLog = await StorageService.logs.get(targetDateStr);
         const summaryText = record.ongoing ? '酒局计时中' : `饮酒记录: ${record.totalGrams}g纯酒精`;
-        const alcoholLevel = record.totalGrams > 50 ? 'high' : record.totalGrams > 20 ? 'medium' : record.totalGrams > 0 ? 'low' : 'none';
         try {
             if (existingLog) {
-                // Fix: Added missing category property to ChangeDetail
+                const currentRecords = existingLog.alcoholRecords || [];
+                const exists = currentRecords.find(r => r.id === record.id);
+                const nextRecords = exists ? currentRecords.map(r => r.id === record.id ? record : r) : [...currentRecords, record];
+                
+                const totalGrams = nextRecords.reduce((s, r) => s + r.totalGrams, 0);
+                const alcoholLevel = totalGrams > 50 ? 'high' : totalGrams > 20 ? 'medium' : totalGrams > 0 ? 'low' : 'none';
+
                 const historyEntry: ChangeRecord = { 
                     timestamp: Date.now(), 
                     summary: summaryText,
-                    details: [{ field: '酒精摄入', oldValue: existingLog.alcoholRecord ? `${existingLog.alcoholRecord.totalGrams}g` : '0g', newValue: `${record.totalGrams}g`, category: 'lifestyle' }],
+                    details: [{ field: '总酒精摄入', oldValue: `${existingLog.alcoholRecords?.reduce((s,r) => s+r.totalGrams, 0) || 0}g`, newValue: `${totalGrams}g`, category: 'lifestyle' }],
                     type: 'quick'
                 };
                 await addOrUpdateLog({
                     ...existingLog,
                     alcohol: alcoholLevel,
-                    alcoholRecord: record,
+                    alcoholRecords: nextRecords,
                     changeHistory: [...(existingLog.changeHistory || []), historyEntry]
                 });
             } else {
+                const alcoholLevel = record.totalGrams > 50 ? 'high' : record.totalGrams > 20 ? 'medium' : record.totalGrams > 0 ? 'low' : 'none';
                 const historyEntry: ChangeRecord = { timestamp: Date.now(), summary: summaryText, details: [], type: 'quick' };
                 const skeleton = hydrateLog({ date: targetDateStr });
                 const newLog: LogEntry = {
                     ...skeleton,
                     status: 'completed',
                     alcohol: alcoholLevel,
-                    alcoholRecord: record,
+                    alcoholRecords: [record],
                     changeHistory: [historyEntry]
                 };
                 await addOrUpdateLog(newLog);
@@ -263,14 +263,12 @@ export function useLogs() {
 
     const toggleAlcohol = useCallback(async () => {
         const allLogs = await StorageService.logs.getAll();
-        const ongoingLog = allLogs.find(l => l.alcoholRecord?.ongoing);
+        const ongoingLog = allLogs.find(l => l.alcoholRecords?.some(r => r.ongoing));
         
         if (ongoingLog) {
-            return ongoingLog.alcoholRecord;
+            return ongoingLog.alcoholRecords.find(r => r.ongoing);
         } else {
-            const targetDateStr = getActivityTargetDate();
             const nowStr = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-            // Fix: Added missing id property to AlcoholRecord creation.
             const newRecord: AlcoholRecord = {
                 id: Date.now().toString(),
                 totalGrams: 0,
@@ -284,17 +282,18 @@ export function useLogs() {
             await saveAlcoholRecord(newRecord);
             return null;
         }
-    }, [getActivityTargetDate, saveAlcoholRecord]);
+    }, [saveAlcoholRecord]);
 
     const cancelAlcoholRecord = useCallback(async () => {
         const allLogs = await StorageService.logs.getAll();
-        const ongoingLog = allLogs.find(l => l.alcoholRecord?.ongoing);
+        const ongoingLog = allLogs.find(l => l.alcoholRecords?.some(r => r.ongoing));
         if (ongoingLog) {
-            const hydrated = hydrateLog(ongoingLog);
+            const nextRecords = ongoingLog.alcoholRecords.filter(r => !r.ongoing);
+            const total = nextRecords.reduce((s,r) => s+r.totalGrams, 0);
             await addOrUpdateLog({
-                ...hydrated,
-                alcohol: 'none',
-                alcoholRecord: null
+                ...ongoingLog,
+                alcohol: total > 0 ? (total > 50 ? 'high' : 'medium') : 'none',
+                alcoholRecords: nextRecords
             });
         }
     }, [addOrUpdateLog]);
