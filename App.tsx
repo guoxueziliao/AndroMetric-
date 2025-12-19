@@ -29,7 +29,7 @@ const SexLifeView = lazy(() => import('./components/SexLifeView'));
 type View = 'dashboard' | 'form';
 type MainView = 'calendar' | 'stats' | 'sexlife' | 'my';
 
-const APP_VERSION = '0.0.7'; // Bumped version
+const APP_VERSION = '0.0.6'; // Aligned with documentation
 
 const defaultSettings: AppSettings = {
   version: APP_VERSION,
@@ -167,7 +167,6 @@ const AppContent: React.FC<{ data: any }> = ({ data }) => {
   const handleStartAlcohol = async () => {
       const ongoing = await toggleAlcohol();
       if (ongoing) {
-          // If already ongoing, open modal to finish
           setAlcToFinish(ongoing);
           setIsAlcoholModalOpen(true);
       } else {
@@ -183,7 +182,6 @@ const AppContent: React.FC<{ data: any }> = ({ data }) => {
   const handleNapAction = async () => {
       const ongoing = await toggleNap();
       if (ongoing) {
-          // If already ongoing, open modal to finish
           setNapToFinish(ongoing);
           setIsNapModalOpen(true);
       } else {
@@ -191,7 +189,6 @@ const AppContent: React.FC<{ data: any }> = ({ data }) => {
       }
   };
 
-  // Exercise Logic
   const handleStartExercise = () => { setExerciseToFinish(null); setIsExerciseModalOpen(true); };
   const handleFinishExercise = (record: ExerciseRecord) => { setExerciseToFinish(record); setIsExerciseModalOpen(true); };
 
