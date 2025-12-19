@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { X, Check, Clock, Film, PenLine, Plus, Minus, BatteryCharging, Sparkles, Zap, Banana, Droplets, Edit2, Trash2, MonitorPlay, Shield, Heart, Smile, ChevronDown, LayoutGrid, Hand, Activity, Circle } from 'lucide-react';
+/* Added Droplets and User to fix 'Cannot find name' errors at lines 202, 245 and 425 */
+import { X, Check, Clock, Film, PenLine, Plus, Minus, Zap, Edit2, Trash2, MonitorPlay, ChevronDown, LayoutGrid, Activity, ChevronLeft, AlertTriangle, Info, Search, Settings, Droplets, User } from 'lucide-react';
 import { MasturbationRecordDetails, LogEntry, PartnerProfile, ContentItem } from '../types';
 import Modal from './Modal';
 import { calculateInventory } from '../utils/helpers';
+import { XP_GROUPS } from '../utils/constants';
 
 interface MasturbationRecordModalProps {
   isOpen: boolean;
@@ -39,6 +41,8 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
     });
 
     const [editingItem, setEditingItem] = useState<ContentItem | null>(null);
+    const [activeTagTab, setActiveTagTab] = useState<string>('常用');
+    const [tagSearch, setTagSearch] = useState('');
 
     const inventory = useMemo(() => calculateInventory(logs), [logs, isOpen]);
 
@@ -75,6 +79,13 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
     const handleSave = () => {
         onSave({ ...data, status: 'completed' });
         onClose();
+    };
+
+    const toggleXpTag = (tag: string) => {
+        if (!editingItem) return;
+        const current = editingItem.xpTags || [];
+        const next = current.includes(tag) ? current.filter(t => t !== tag) : [...current, tag];
+        setEditingItem({ ...editingItem, xpTags: next });
     };
 
     if (!isOpen) return null;
@@ -148,7 +159,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                         ))}
                         
                         <button 
-                            onClick={() => setEditingItem({ id: Math.random().toString(36).substr(2, 9), actors: [], xpTags: [], type: '视频', platform: 'Pornhub' })}
+                            onClick={() => setEditingItem({ id: Math.random().toString(36).substr(2, 9), actors: [], xpTags: [], type: '', platform: '', title: '' })}
                             className="w-full py-8 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl flex flex-col items-center justify-center gap-2 group hover:border-brand-accent/50 transition-all bg-white dark:bg-slate-900/40"
                         >
                             <MonitorPlay size={32} className="text-slate-300 group-hover:text-brand-accent transition-colors" />
@@ -253,7 +264,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                     <div className="space-y-4 pt-2 border-t border-slate-100 dark:border-slate-800 pt-4">
                         <div className="flex justify-between text-[10px] font-black text-slate-400 uppercase px-1">
                             <span>愉悦感 ({data.orgasmIntensity})</span>
-                            <span className="text-amber-500 flex items-center gap-1"><Smile size={12}/> 舒服</span>
+                            <span className="text-amber-500 flex items-center gap-1">舒服</span>
                         </div>
                         <input 
                             type="range" min="1" max="5" step="1" 
@@ -267,7 +278,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                 {/* 6. Sage Mode Section */}
                 <div className="bg-slate-50 dark:bg-slate-900 p-5 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 space-y-6">
                     <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500">
-                        <Sparkles size={16} />
+                        <Zap size={16} />
                         <span className="text-[10px] font-black uppercase tracking-widest">贤者时间 (SAGE MODE)</span>
                     </div>
 
@@ -306,38 +317,187 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                 </div>
             </div>
 
-            {/* 素材编辑子弹窗 */}
+            {/* 素材编辑子弹窗 (恢复原样) */}
             <Modal isOpen={!!editingItem} onClose={() => setEditingItem(null)} title="编辑素材详情">
                  {editingItem && (
-                     <div className="space-y-6 pb-4">
-                         <div className="grid grid-cols-2 gap-4">
+                     <div className="flex flex-col h-[75vh] -mx-4 -mt-4 bg-white dark:bg-slate-950 overflow-hidden">
+                         {/* Header: Back Button & Notices */}
+                         <div className="flex-none p-4 border-b border-slate-100 dark:border-slate-800">
+                             <button 
+                                onClick={() => setEditingItem(null)}
+                                className="flex items-center gap-1 text-slate-400 hover:text-brand-accent text-sm font-bold mb-4"
+                             >
+                                <ChevronLeft size={18} /> 返回
+                             </button>
+
                              <div className="space-y-2">
-                                 <label className="text-[10px] font-black text-slate-400 uppercase">内容形式</label>
-                                 <select value={editingItem.type} onChange={e => setEditingItem({...editingItem, type: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-xs font-bold outline-none appearance-none">
-                                     {CONTENT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-                                 </select>
-                             </div>
-                             <div className="space-y-2">
-                                 <label className="text-[10px] font-black text-slate-400 uppercase">平台来源</label>
-                                 <select value={editingItem.platform} onChange={e => setEditingItem({...editingItem, platform: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-xs font-bold outline-none appearance-none">
-                                     {PLATFORMS.map(p => <option key={p} value={p}>{p}</option>)}
-                                 </select>
+                                 {!editingItem.type && (
+                                     <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-900/30 rounded-lg p-3 flex items-center justify-between">
+                                         <div className="flex items-start gap-2">
+                                             <AlertTriangle size={16} className="text-amber-500 mt-0.5" />
+                                             <div>
+                                                 <div className="text-xs font-black text-amber-700 dark:text-amber-400">未选择素材类型</div>
+                                                 <div className="text-[10px] text-amber-600/70 dark:text-amber-400/50">分类统计失效</div>
+                                             </div>
+                                         </div>
+                                         <button className="text-[10px] font-black text-amber-700 border border-amber-200 px-2 py-1 rounded bg-white">去选择</button>
+                                     </div>
+                                 )}
+                                 {!editingItem.platform && !['回忆', '幻想'].includes(editingItem.type || '') && (
+                                     <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-900/30 rounded-lg p-3 flex items-center justify-between">
+                                         <div className="flex items-start gap-2">
+                                             <AlertTriangle size={16} className="text-amber-500 mt-0.5" />
+                                             <div>
+                                                 <div className="text-xs font-black text-amber-700 dark:text-amber-400">未选择来源平台</div>
+                                                 <div className="text-[10px] text-amber-600/70 dark:text-amber-400/50">平台统计失效</div>
+                                             </div>
+                                         </div>
+                                         <button className="text-[10px] font-black text-amber-700 border border-amber-200 px-2 py-1 rounded bg-white">去选择</button>
+                                     </div>
+                                 )}
+                                 {!editingItem.title && (
+                                     <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-lg p-3 flex items-center justify-between">
+                                         <div className="flex items-start gap-2">
+                                             <Info size={16} className="text-slate-400 mt-0.5" />
+                                             <div>
+                                                 <div className="text-xs font-black text-slate-600 dark:text-slate-300">未填写素材备注</div>
+                                                 <div className="text-[10px] text-slate-400">回顾困难</div>
+                                             </div>
+                                         </div>
+                                         <button className="text-[10px] font-black text-slate-500 border border-slate-200 px-2 py-1 rounded bg-white">去补充</button>
+                                     </div>
+                                 )}
                              </div>
                          </div>
-                         <div className="space-y-2">
-                             <label className="text-[10px] font-black text-slate-400 uppercase">标题/别名</label>
-                             <input value={editingItem.title || ''} onChange={e => setEditingItem({...editingItem, title: e.target.value})} placeholder="识别此素材的名称..." className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-xs font-bold outline-none"/>
+
+                         {/* Body: Form Fields */}
+                         <div className="flex-1 overflow-y-auto custom-scrollbar p-5 space-y-6">
+                             {/* 1. Content Type Grid */}
+                             <div className="space-y-3">
+                                 <label className="text-xs font-black text-slate-400 uppercase tracking-widest">素材类型 (必选)</label>
+                                 <div className="grid grid-cols-4 gap-2">
+                                     {CONTENT_TYPES.map(t => (
+                                         <button 
+                                            key={t}
+                                            onClick={() => setEditingItem({...editingItem, type: t})}
+                                            className={`py-2.5 rounded-xl text-xs font-bold transition-all border ${editingItem.type === t ? 'bg-brand-accent text-white border-brand-accent shadow-sm' : 'bg-slate-50 dark:bg-slate-900 text-slate-500 border-slate-200 dark:border-slate-800'}`}
+                                         >
+                                             {t}
+                                         </button>
+                                     ))}
+                                 </div>
+                             </div>
+
+                             {/* 2. Platform Selector (Conditional) */}
+                             {!['回忆', '幻想'].includes(editingItem.type || '') && (
+                                 <div className="space-y-3">
+                                     <label className="text-xs font-black text-slate-400 uppercase tracking-widest">来源平台</label>
+                                     <div className="grid grid-cols-3 gap-2">
+                                         {PLATFORMS.map(p => (
+                                             <button 
+                                                key={p}
+                                                onClick={() => setEditingItem({...editingItem, platform: p})}
+                                                className={`py-2 rounded-xl text-[11px] font-bold transition-all border ${editingItem.platform === p ? 'bg-slate-800 text-white dark:bg-white dark:text-slate-900 border-slate-800' : 'bg-slate-50 dark:bg-slate-900 text-slate-500 border-slate-200 dark:border-slate-800'}`}
+                                             >
+                                                 {p}
+                                             </button>
+                                         ))}
+                                     </div>
+                                 </div>
+                             )}
+
+                             {/* 3. Title & Actors */}
+                             <div className="space-y-4">
+                                 <div className="space-y-2">
+                                     <label className="text-xs font-black text-slate-400 uppercase tracking-widest">标题 / 编号</label>
+                                     <div className="relative group">
+                                         <div className="absolute left-3 top-3.5 text-slate-300 font-bold">#</div>
+                                         <input 
+                                            value={editingItem.title || ''} 
+                                            onChange={e => setEditingItem({...editingItem, title: e.target.value})} 
+                                            placeholder="输入标题、编号或链接..." 
+                                            className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl py-3 pl-8 pr-4 text-sm font-bold outline-none focus:ring-2 focus:ring-brand-accent/20 transition-all"
+                                         />
+                                     </div>
+                                 </div>
+                                 <div className="space-y-2">
+                                     <label className="text-xs font-black text-slate-400 uppercase tracking-widest">主演 / 角色</label>
+                                     <div className="relative group">
+                                         <User size={16} className="absolute left-3 top-3.5 text-slate-300" />
+                                         <input 
+                                            value={editingItem.actors?.join(' ') || ''} 
+                                            onChange={e => setEditingItem({...editingItem, actors: e.target.value.split(/\s+/)})} 
+                                            placeholder="多个演员用空格分隔..." 
+                                            className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl py-3 pl-9 pr-4 text-sm font-bold outline-none focus:ring-2 focus:ring-brand-accent/20 transition-all"
+                                         />
+                                     </div>
+                                 </div>
+                             </div>
+
+                             {/* 4. XP Tags Selection */}
+                             <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
+                                 <div className="flex justify-between items-center mb-4">
+                                     <div className="flex items-center gap-2">
+                                         <label className="text-xs font-black text-slate-400 uppercase tracking-widest">XP 标签 ({editingItem.xpTags?.length || 0})</label>
+                                     </div>
+                                     <button className="p-1.5 bg-blue-50 dark:bg-blue-900/30 text-brand-accent rounded-lg flex items-center gap-1 text-[10px] font-black"><Settings size={12}/> 管理</button>
+                                 </div>
+
+                                 <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-1 mb-4 border-b border-slate-100 dark:border-slate-800">
+                                     {['常用', ...Object.keys(XP_GROUPS)].map(tab => (
+                                         <button 
+                                            key={tab} 
+                                            onClick={() => setActiveTagTab(tab)}
+                                            className={`pb-2 px-1 text-xs font-black transition-all relative ${activeTagTab === tab ? 'text-brand-accent' : 'text-slate-400'}`}
+                                         >
+                                             {tab}
+                                             {activeTagTab === tab && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-brand-accent rounded-full"></div>}
+                                         </button>
+                                     ))}
+                                 </div>
+
+                                 <div className="relative mb-4">
+                                     <Search size={14} className="absolute left-3 top-3 text-slate-300" />
+                                     <input 
+                                        value={tagSearch}
+                                        onChange={e => setTagSearch(e.target.value)}
+                                        placeholder="搜索标签..."
+                                        className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2.5 pl-9 pr-4 text-xs font-bold outline-none"
+                                     />
+                                 </div>
+
+                                 <div className="flex flex-wrap gap-2 max-h-[250px] overflow-y-auto custom-scrollbar">
+                                     {(activeTagTab === '常用' ? XP_GROUPS['角色'].slice(0, 30) : XP_GROUPS[activeTagTab])
+                                        .filter(tag => tag.includes(tagSearch))
+                                        .map(tag => {
+                                            const isSel = editingItem.xpTags?.includes(tag);
+                                            return (
+                                                <button 
+                                                    key={tag}
+                                                    onClick={() => toggleXpTag(tag)}
+                                                    className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${isSel ? 'bg-blue-500 text-white border-blue-600 shadow-sm' : 'bg-white dark:bg-slate-900 text-slate-500 border-slate-200 dark:border-slate-700'}`}
+                                                >
+                                                    {tag}
+                                                </button>
+                                            );
+                                     })}
+                                 </div>
+                             </div>
                          </div>
-                         <button 
-                             onClick={() => {
-                                 const nextItems = data.contentItems.find(i => i.id === editingItem.id) 
-                                     ? data.contentItems.map(i => i.id === editingItem.id ? editingItem : i)
-                                     : [...data.contentItems, editingItem];
-                                 updateData({contentItems: nextItems});
-                                 setEditingItem(null);
-                             }}
-                             className="w-full py-4 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-2xl font-black text-sm shadow-xl"
-                         >保存素材信息</button>
+
+                         {/* Bottom: Save Button */}
+                         <div className="flex-none p-5 bg-white dark:bg-slate-950 border-t border-slate-100 dark:border-slate-800">
+                             <button 
+                                onClick={() => {
+                                    const nextItems = data.contentItems.find(i => i.id === editingItem.id) 
+                                        ? data.contentItems.map(i => i.id === editingItem.id ? editingItem : i)
+                                        : [...data.contentItems, editingItem];
+                                    updateData({contentItems: nextItems});
+                                    setEditingItem(null);
+                                }}
+                                className="w-full py-4 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-[1.5rem] font-black text-sm shadow-xl active:scale-[0.98] transition-all"
+                             >保存素材信息</button>
+                         </div>
                      </div>
                  )}
             </Modal>
