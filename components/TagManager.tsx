@@ -87,12 +87,14 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
             uniqueSymptoms.forEach(s => symptoms[s] = (symptoms[s] || 0) + 1);
         });
 
-        return { xp, event: events, symptom: symptoms };
+        /* Explicitly type the returned object to ensure safe indexing in useMemo hooks below */
+        return { xp, event: events, symptom: symptoms } as Record<Exclude<TagType, 'health_check'>, Record<string, number>>;
     }, [logs, customXpTags, customEventTags, customSymptomTags]);
 
     const currentTags = useMemo(() => {
         if (activeTab === 'health_check') return [];
-        const map = tagsMap[activeTab];
+        /* Fix index access by casting to correct Record key type */
+        const map = tagsMap[activeTab as Exclude<TagType, 'health_check'>];
         return Object.entries(map)
             .filter(([name]) => name.toLowerCase().includes(searchTerm.toLowerCase()))
             // Sort: High frequency first, then unused (0)
@@ -104,7 +106,8 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
         if (!tag) return;
 
         // 1. Check if exists
-        if (tagsMap[activeTab][tag] !== undefined) {
+        /* Explicitly cast activeTab for index safety */
+        if (tagsMap[activeTab as Exclude<TagType, 'health_check'>][tag] !== undefined) {
             if (onSelectTag) {
                 onSelectTag(tag);
                 onClose();
@@ -175,7 +178,8 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
         }
         
         // Check merge
-        const existingTags = Object.keys(tagsMap[activeTab]);
+        /* Explicitly cast activeTab for index safety */
+        const existingTags = Object.keys(tagsMap[activeTab as Exclude<TagType, 'health_check'>]);
         const targetExists = existingTags.some(t => t.toLowerCase() === newName.toLowerCase());
         
         if (targetExists) {
@@ -232,7 +236,8 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
     };
 
     const handleDelete = async (tag: string) => {
-        const usageCount = tagsMap[activeTab][tag] || 0;
+        /* Explicitly cast activeTab for index safety */
+        const usageCount = tagsMap[activeTab as Exclude<TagType, 'health_check'>][tag] || 0;
         const targetType = activeTab;
         
         if (usageCount > 0) {

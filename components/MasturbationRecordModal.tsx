@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
-/* Added Droplets and User to fix 'Cannot find name' errors at lines 202, 245 and 425 */
+/* Added Droplets and User to fix 'Cannot find name' errors */
 import { X, Check, Clock, Film, PenLine, Plus, Minus, Zap, Edit2, Trash2, MonitorPlay, ChevronDown, LayoutGrid, Activity, ChevronLeft, AlertTriangle, Info, Search, Settings, Droplets, User } from 'lucide-react';
 import { MasturbationRecordDetails, LogEntry, PartnerProfile, ContentItem } from '../types';
 import Modal from './Modal';
