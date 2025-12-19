@@ -1,68 +1,168 @@
-# 🛠️ 开发者技术手册 (Developer Manual)
+
+# 🛠️ 开发者技术文档 (Developer Documentation)
 
 **版本**: 0.0.6
 **最后更新**: 2025-12-12
-**核心架构**: Local-First / IndexedDB / React
+
+## 1. 技术栈
+*   **Framework**: React 18 + TypeScript
+*   **Build Tool**: Vite
+*   **Styling**: Tailwind CSS
+*   **State/Storage**: Dexie.js (IndexedDB wrapper) - **Local First Architecture**
+*   **Visualization**: Chart.js / React-Chartjs-2
+*   **Icons**: Lucide React
+*   **PWA**: Vite PWA Plugin
+
+## 2. 项目结构 (Project Structure)
+
+```
+.
+├── components/          # UI 组件 (页面与通用组件)
+│   ├── Dashboard.tsx    # 首页仪表盘
+│   ├── LogForm.tsx      # 日记记录表单
+│   ├── CalendarHeatmap.tsx # 日历热力图
+│   ├── StatsView.tsx    # 统计分析视图
+│   ├── SexLifeView.tsx  # 性生活与伴侣管理
+│   ├── MyView.tsx       # 设置与数据管理
+│   └── ... (Modals, Sections, Controls)
+├── contexts/            # 全局状态 (React Context)
+│   ├── DataContext.tsx  # 核心数据访问层
+│   └── ToastContext.tsx # 消息提示
+├── hooks/               # 自定义 Hooks
+│   ├── useLogs.ts       # 封装数据 CRUD 操作
+│   └── useLocalStorage.ts
+├── services/            # 核心服务层
+│   ├── StorageService.ts # IndexedDB 数据库操作封装 (核心)
+│   ├── LoggerService.ts  # 内部日志/遥测
+│   └── PluginManager.ts  # 插件系统管理器
+├── utils/               # 工具函数库
+│   ├── migration.ts     # 数据库版本迁移脚本 (Critical)
+│   ├── StatsEngine.ts   # 数据统计分析引擎
+│   ├── dataHealthCheck.ts # 数据健康检查
+│   ├── hydrateLog.ts    # 数据模型 Hydration
+│   └── validators.ts    # 输入校验
+├── plugins/             # 扩展插件
+│   └── CoreAnalysis.ts  # 核心分析插件
+├── types.ts             # TypeScript 类型定义 (Data Schema)
+├── db.ts                # Dexie 数据库实例配置
+├── App.tsx              # 应用根组件 (路由与布局)
+└── index.tsx            # 入口文件
+```
+
+## 3. 核心数据模型
+
+### 3.1 LogEntry (核心日志)
+应用以“生理日”为单位，每天一条 `LogEntry`。
+*   **Date Logic**: 凌晨 03:00 前的活动（性爱/饮酒）归档至前一天；中午 12:00 后的睡眠归档至次日（Wake-up Day）。
+*   **Structure**: 详见 `types.ts` 中的 `LogEntry` 接口。
+
+### 3.2 数据库迁移 (Migrations)
+文件：`utils/migration.ts`
+由于是本地存储应用，数据结构更新必须严格编写迁移脚本。
+*   `LATEST_VERSION`: 当前数据库版本号。
+*   `runMigrations()`: 在 `StorageService.init()` 时调用，自动将旧版本数据转换为新结构。
+
+## 4. 关键服务
+
+### 4.1 StorageService
+所有对 IndexedDB 的读写操作入口。
+*   **Health Check**: `runHealthCheck()` 扫描数据完整性。
+*   **Repair**: `repairData()` 尝试通过 `changeHistory` 恢复损坏的数据字段。
+*   **Snapshot**: 创建全量数据的 JSON 快照用于备份。
+
+### 4.2 StatsEngine
+文件：`utils/StatsEngine.ts`
+*   将碎片化的 `LogEntry` 扁平化为 `UnifiedEvent` 流。
+*   计算 SMA（简单移动平均线）。
+*   执行相关性分析（例如：高压力组 vs 低压力组的晨勃硬度差异）。
+
+## 5. 开发指南
+
+### 启动项目
+```bash
+npm install
+npm run dev
+```
+
+### 添加新功能流程
+1.  在 `types.ts` 中修改 `LogEntry` 接口。
+2.  在 `utils/migration.ts` 中增加 `LATEST_VERSION` 并编写迁移函数（如 `migrateV35toV36`）。
+3.  更新 `StorageService.ts` 中的 hydration 逻辑。
+4.  更新 UI 组件 (`LogForm.tsx`, etc.)。
 
 ---
 
-## 1. 核心技术选型
+# 6. 数据稳定化 & 长期抗熵规范 (Data Constitution)
 
-*   **存储**: `Dexie.js` (IndexedDB 封装)，确保大数据量下的查询性能与事务安全。
-*   **可视化**: `Chart.js` + `react-chartjs-2`，通过 `StatsEngine` 进行数据降噪处理。
-*   **数据流**: 基于 React Context 的 `DataContext` 统一调度 `StorageService`。
-*   **插件系统**: `PluginManager` 支持在数据变动时触发异步分析任务（如酒精模型计算）。
+**适用版本**: v0.0.6 → v0.1.x+  
+**状态**: Final (P0)
+
+## 6.1 核心目标
+本规范旨在建立系统的长期边界，确保用户事实数据的绝对可信，降低维护负担。
+
+## 6.2 数据分级模型
+
+### 用户事实数据 (User Fact)
+*   **定义**: 用户主动输入、选择、确认的数据（即使主观、错误或矛盾）。
+*   **权限**: 
+    *   ❌ 系统**不得**自动修改、推断补全或在迁移时“合理化”。
+    *   ✅ 系统仅允许展示、分析、冲突提示、用户主动编辑。
+
+### 系统派生数据 (System Derived)
+*   **定义**: 由系统根据用户事实计算得出的结果（如摘要、评分、缓存）。
+*   **权限**: 
+    *   ✅ 可删、可重算。
+    *   ❌ 不得回写为用户事实。
+
+## 6.3 迁移与数据演化规范
+
+### 允许的行为
+*   新增字段 (optional) 或结构层级。
+*   字段重命名 (保持值不变)。
+*   默认值补齐 (仅限字段不存在)。
+*   派生数据重算。
+
+### 明确禁止的行为
+*   改变旧字段语义。
+*   将“缺失”解释为“否”。
+*   根据常识或统计推断历史行为。
+*   自动纠正“明显填错”的用户输入 (如 `start > end`)。
+
+### 冲突处理
+*   若发现逻辑矛盾 (如时间重叠)，系统只能**标记**、**提示**或**记录问题**，❌ **不得修改原始数据**。
+
+## 6.4 Tag Manager 长期约束
+*   **重命名**: 允许 (不改变语义)。
+*   **合并**: 必须需用户确认 (Explicit Confirmation)。
+*   **禁止**: 静默合并、物理删除被引用的 Tag、自动语义纠正。
+
+## 6.5 数据修复工具边界
+*   数据修复是外科手术，不是日常维护。
+*   ❌ 禁止后台自动修复 (无感知修复)。
+*   ✅ 真实修改必须：用户确认、可追溯、可回滚。
+
+## 6.6 结语
+**数据主权在用户。系统必须诚实、克制、可解释。**
+当功能需求与数据可信性发生冲突时，**数据可信性永远优先**。
 
 ---
 
-## 2. 关键业务逻辑 (Critical Logic)
+# 7. ContentItem 迁移与结构重构说明 (Migration V37)
 
-### 2.1 生理日判定 (Physiological Day)
-**重要**: 系统的“日期”不等同于日历日期。
+**最高原则**: 系统永远不猜内容语义，只做结构性拆分。
 
-*   **活动归档 (Activity Cutoff)**: **03:00 AM**。凌晨 3 点前的性爱/饮酒归属于前一天的 LogEntry。
-*   **睡眠归档 (Sleep Cutoff)**: **12:00 PM**。中午 12 点前的醒来判定为该日期的起床，12点后的睡眠计入次日。
+### 1. 旧结构 → 新结构
+旧：`assets` (Object with arrays)
+新：`contentItems: ContentItem[]`
 
-### 2.2 数据质量算法 (Quality Score)
-位于 `utils/helpers.ts -> calculateDataQuality`。
-*   权重：晨勃 (20%) + 睡眠 (30%) + 生活环境 (20%) + 活动细节 (30%)。
-*   目的：通过 UI 反馈引导用户完成高价值的数据补全。
+### 2. 迁移策略 (No Guessing)
+*   **Rule A**: 若存在 `materialsList` (v0.0.5 structured data)，直接使用。
+*   **Rule B**: 若 `types.length > 1` 或 `platforms.length > 1`，必须拆分。
+*   **Rule C**: 拆分时执行笛卡尔最大值匹配 (`max(types.length, platforms.length)`)。
+    *   不做语义猜测。
+    *   按索引匹配 (Type[0] -> Platform[0])。
+    *   若单一维度长度为 1，则重复使用。
+*   **Rule D**: XP Tags (`categories`) 和 Actors 复制到所有拆分后的 Item。
+*   **Rule E**: 凡是发生拆分的 Item，自动写入 Note 提示用户检查。
 
----
-
-## 3. 标签系统规范 (Tag Governance)
-
-v0.0.6 引入了严谨的标签反熵机制，详见 `docs/tag-system-rules.md`。
-
-*   **六维 XP 结构**: 角色、身体、装扮、玩法、剧情、风格。
-*   **即时校验**: 新建标签时通过 `tagValidators.ts` 拦截复合语义（如 `人妻出轨`）和非法格式。
-*   **体检机制**: `TagHealthCheck.tsx` 动态扫描数据库，识别同义词、低频词及维度漂移。
-
----
-
-## 4. 数据库演进与迁移 (Migrations)
-
-### 4.1 数据版本 (LATEST_VERSION = 37)
-由于是本地存储，每次 Schema 修改必须在 `utils/migration.ts` 编写迁移函数。
-
-### 4.2 ContentItem 结构重构 (V37)
-这是 v0.0.6 最重要的结构变动。将扁平的 `assets` 拆分为 `ContentItem[]` 数组。
-*   **原则**: 系统不猜语义。
-*   **策略**: 若旧数据中平台和类型都是多选，则执行“笛卡尔匹配”拆分，并标记 `notes` 由用户后续纠正。
-
----
-
-## 5. 数据宪章 (Data Constitution)
-
-**核心约束**: 
-1.  **用户事实 (User Fact) 不可侵犯**: 系统绝对禁止自动修改、纠正用户填写的时间、数值或标签，即使它们逻辑上矛盾（如开始时间晚于结束时间）。
-2.  **系统派生 (System Derived) 随时重算**: 评分、趋势线、分析报告均由 facts 即时计算，不回写原始记录。
-3.  **修复可回滚**: 所有通过 `repairData` 执行的修复必须先创建 snapshot。
-
----
-
-## 6. 开发建议
-
-*   **新增字段**: 必须同时更新 `types.ts`、`hydrateLog.ts` 以及新增一个 `migrate` 版本。
-*   **UI 开发**: 遵循 `docs/ui-copy-rules.md`，避免使用情绪化或模糊的文案污染数据语境。
-*   **性能**: 重度计算任务（如回归分析）应放在 `useEffect` 或 `StatsEngine` 内部进行 Memoize。
+此策略确保了数据**一分不少**，且**结构清晰**，将语义纠正的责任交给用户在未来逐步完成。
