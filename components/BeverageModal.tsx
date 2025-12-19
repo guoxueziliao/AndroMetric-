@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { X, Clock, Coffee, CupSoda, Leaf, Zap, Plus, Minus, Check, PencilLine } from 'lucide-react';
 import Modal from './Modal';
@@ -67,11 +66,12 @@ const MENU_DATA: Record<string, any[]> = {
     ]
 };
 
+// 预设容量更新：参考国内 Luckin (500ml/iced), Starbucks (Tall 355/Grande 473), 喜茶 (500/650)
 const CUP_SIZES = [
-    { label: '浓缩', vol: 30 },
-    { label: '小杯', vol: 200 },
-    { label: '中杯', vol: 360 },
-    { label: '大杯', vol: 480 },
+    { label: '迷你', vol: 240 },   // 对应 Short 或 精致热饮
+    { label: '中杯', vol: 360 },   // 对应 Tall 或 标准热拿铁
+    { label: '大杯', vol: 500 },   // 对应 Grande 或 瑞幸标准杯/喜茶标准杯
+    { label: '超大杯', vol: 650 }, // 对应 Venti 或 奶茶大杯
 ];
 
 const BeverageModal: React.FC<BeverageModalProps> = ({ isOpen, onClose, onSave, initialData }) => {
@@ -156,12 +156,13 @@ const BeverageModal: React.FC<BeverageModalProps> = ({ isOpen, onClose, onSave, 
                 </div>
 
                 <div className="flex-1 flex overflow-hidden">
-                    <div className="w-24 bg-slate-50/50 dark:bg-slate-900/50 border-r border-slate-100 dark:border-slate-800 flex flex-col pt-2 shrink-0">
+                    {/* 左侧分类：增加 overflow-y-auto 以解决手机端高度不足时无法选择下方分类的问题 */}
+                    <div className="w-24 bg-slate-50/50 dark:bg-slate-900/50 border-r border-slate-100 dark:border-slate-800 flex flex-col pt-2 shrink-0 overflow-y-auto custom-scrollbar">
                         {CATEGORIES.map(cat => (
                             <button
                                 key={cat.id}
                                 onClick={() => setActiveCat(cat.id)}
-                                className={`flex flex-col items-center justify-center py-4 px-1 gap-1 transition-all relative ${
+                                className={`flex flex-col items-center justify-center py-4 px-1 gap-1 transition-all relative shrink-0 ${
                                     activeCat === cat.id ? 'text-orange-600 dark:text-orange-400 font-black' : 'text-slate-400 font-bold'
                                 }`}
                             >
