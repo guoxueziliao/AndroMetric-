@@ -318,9 +318,23 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
       </div>
       
       {/* 记录详情弹窗 */}
-      <Modal isOpen={isSummaryModalOpen} onClose={() => setIsSummaryModalOpen(false)} title="">
+      <Modal 
+        isOpen={isSummaryModalOpen} 
+        onClose={() => setIsSummaryModalOpen(false)} 
+        title=""
+        footer={summaryLog && (
+            <div className="w-full px-2 pb-2">
+                <button 
+                    onClick={() => { setIsSummaryModalOpen(false); onEdit(summaryLog.date); }} 
+                    className="w-full py-4 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-[2rem] font-black shadow-xl active:scale-[0.98] transition-all flex items-center justify-center gap-3"
+                >
+                    <Edit3 size={20}/> 编辑详情
+                </button>
+            </div>
+        )}
+      >
         {summaryLog && (
-            <div className="space-y-6 animate-in fade-in duration-300 min-h-[500px] flex flex-col -mt-4">
+            <div className="space-y-6 animate-in fade-in duration-300 min-h-[450px] flex flex-col -mt-4">
                 <div className="flex justify-between items-start pb-2">
                     <div className="flex flex-col">
                         <h2 className="text-3xl font-black text-brand-text dark:text-slate-100 leading-tight">{diaryDateInfo.main}</h2>
@@ -503,15 +517,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                             <LogHistory log={summaryLog} />
                         </div>
                     )}
-                </div>
-
-                <div className="mt-auto pt-6 bg-gradient-to-t from-white dark:from-slate-900 via-white dark:via-slate-900 to-transparent">
-                    <button 
-                        onClick={() => { setIsSummaryModalOpen(false); onEdit(summaryLog.date); }} 
-                        className="w-full py-4.5 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-[2rem] font-black shadow-xl active:scale-[0.98] transition-all flex items-center justify-center gap-3"
-                    >
-                        <Edit3 size={20}/> 编辑详情
-                    </button>
                 </div>
             </div>
         )}
