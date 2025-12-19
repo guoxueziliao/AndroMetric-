@@ -63,8 +63,7 @@ export const calculateXpStats = (logs: LogEntry[]): XpAnalysisResult => {
 
         log.masturbation.forEach(record => {
             // Get tags from assets.categories
-            /* Explicitly cast to string[] to resolve 'unknown' type errors from schema inference */
-            const rawTags = (record.assets?.categories || []) as string[];
+            const rawTags = record.assets?.categories || [];
             if (rawTags.length === 0) return;
 
             totalXpRecords++;
@@ -97,11 +96,9 @@ export const calculateXpStats = (logs: LogEntry[]): XpAnalysisResult => {
                 // 5. Update Dimension Stats (Only if NOT noise)
                 if (!isNoise) {
                     const dim = statsMap[tag].dimension;
-                    /* Ensure dimension key is strictly typed as string for Record access */
-                    const dimKey = dim as string;
-                    if (dimensionRecordSets[dimKey]) {
-                        dimensionRecordSets[dimKey].add(record.id);
-                        dimensionUniqueTags[dimKey].add(tag);
+                    if (dimensionRecordSets[dim]) {
+                        dimensionRecordSets[dim].add(record.id);
+                        dimensionUniqueTags[dim].add(tag);
                     } else {
                         // Handle custom tags that fall into Unknown
                         dimensionRecordSets['Unknown'].add(record.id);
@@ -137,10 +134,8 @@ export const calculateXpStats = (logs: LogEntry[]): XpAnalysisResult => {
 
     // Recalculate total tag count per dimension properly
     topTags.forEach(t => {
-        /* Fix typing for Record index access */
-        const dimKey = t.dimension as string;
-        if (dimensionStats[dimKey]) {
-            dimensionStats[dimKey].tagCount += t.count;
+        if (dimensionStats[t.dimension]) {
+            dimensionStats[t.dimension].tagCount += t.count;
         }
     });
 
