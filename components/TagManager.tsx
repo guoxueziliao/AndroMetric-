@@ -1,7 +1,6 @@
-
-import React, { useState, useMemo, Suspense, useEffect } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { LogEntry } from '../types';
-import { Tag, Edit2, Trash2, X, Check, Activity, ShieldAlert, Stethoscope, Plus, Search } from 'lucide-react';
+import { Tag, Edit2, Trash2, X, Check, Activity, ShieldAlert, Stethoscope, Plus, Search, ChevronRight, ChevronDown, LayoutGrid, User, Zap, Sparkles, Shirt, Heart } from 'lucide-react';
 import Modal from './Modal';
 import { useData } from '../contexts/DataContext';
 import { useToast } from '../contexts/ToastContext';
@@ -10,19 +9,27 @@ import TagHealthCheck from './TagHealthCheck';
 import { XP_GROUPS } from '../utils/constants';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 
-export type { TagType }; // Re-export for compatibility
+export type { TagType };
+
+const XP_DIMENSIONS = [
+    { id: '角色', icon: User, color: 'text-pink-500', bg: 'bg-pink-50 dark:bg-pink-900/20' },
+    { id: '身体', icon: Activity, color: 'text-emerald-500', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
+    { id: '装扮', icon: Shirt, color: 'text-indigo-500', bg: 'bg-indigo-50 dark:bg-indigo-900/20' },
+    { id: '玩法', icon: Zap, color: 'text-orange-500', bg: 'bg-orange-50 dark:bg-orange-900/20' },
+    { id: '剧情', icon: Heart, color: 'text-rose-500', bg: 'bg-rose-50 dark:bg-rose-900/20' },
+    { id: '风格', icon: Sparkles, color: 'text-purple-500', bg: 'bg-purple-50 dark:bg-purple-900/20' },
+];
+
+const SYSTEM_EVENTS = ['加班', '吵架', '出差', '聚会', '家庭烦心事', '生病'];
+const SYSTEM_SYMPTOMS = ['头痛', '喉咙痛', '胃不适', '肌肉酸痛', '腹泻', '发烧', '鼻塞', '乏力', '咳嗽'];
 
 interface TagManagerProps {
     isOpen: boolean;
     onClose: () => void;
-    onSelectTag?: (tag: string) => void; // If present, runs in "Selection/Creation Mode"
+    onSelectTag?: (tag: string) => void;
     initialSearch?: string;
     defaultTab?: TagType;
 }
-
-// System Presets (Sync with LogForm/HealthSection)
-const SYSTEM_EVENTS = ['加班', '吵架', '出差', '聚会', '家庭烦心事', '生病'];
-const SYSTEM_SYMPTOMS = ['头痛', '喉咙痛', '胃不适', '肌肉酸痛', '腹泻', '发烧', '鼻塞', '乏力', '咳嗽'];
 
 const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, initialSearch = '', defaultTab = 'xp' }) => {
     const { logs, addOrUpdateLog } = useData();
@@ -32,126 +39,72 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
     const [editingTag, setEditingTag] = useState<string | null>(null);
     const [newTagName, setNewTagName] = useState('');
     
-    // Persistent Custom Tags
-    const [customXpTags, setCustomXpTags] = useLocalStorage<string[]>('custom_xp_tags', []);
+    const [customXpTags, setCustomXpTags] = useLocalStorage<Record<string, string[]>>('custom_xp_tags_v2', {
+        '角色': [], '身体': [], '装扮': [], '玩法': [], '剧情': [], '风格': []
+    });
     const [customEventTags, setCustomEventTags] = useLocalStorage<string[]>('custom_event_tags', []);
     const [customSymptomTags, setCustomSymptomTags] = useLocalStorage<string[]>('custom_symptom_tags', []);
     
-    // Creation State
     const [isCreating, setIsCreating] = useState(false);
     const [createInput, setCreateInput] = useState(initialSearch);
+    const [selectedXpDim, setSelectedXpDim] = useState<string | null>(null);
 
-    // Sync tab when prop changes
     useEffect(() => {
         if (isOpen) {
             setActiveTab(defaultTab);
             setSearchTerm(initialSearch);
             setCreateInput(initialSearch);
             setIsCreating(false);
+            setSelectedXpDim(null);
         }
     }, [isOpen, defaultTab, initialSearch]);
 
-    const tagsMap = useMemo(() => {
-        const xp: Record<string, number> = {};
-        const events: Record<string, number> = {};
-        const symptoms: Record<string, number> = {};
-
-        // 1. Initialize XP map with all system presets (count 0)
-        Object.values(XP_GROUPS).forEach(group => {
-            group.forEach(tag => xp[tag] = 0);
-        });
-        
-        // 2. Initialize Events/Symptoms with System Presets (count 0)
-        SYSTEM_EVENTS.forEach(tag => events[tag] = 0);
-        SYSTEM_SYMPTOMS.forEach(tag => symptoms[tag] = 0);
-        
-        // 3. Add Custom User Tags (count 0)
-        customXpTags.forEach(tag => { if (xp[tag] === undefined) xp[tag] = 0; });
-        customEventTags.forEach(tag => { if (events[tag] === undefined) events[tag] = 0; });
-        customSymptomTags.forEach(tag => { if (symptoms[tag] === undefined) symptoms[tag] = 0; });
-
-        // 4. Count usage from logs
+    const tagsUsageMap = useMemo(() => {
+        const usage: Record<string, number> = {};
         logs.forEach(log => {
-            // XP (Masturbation Categories)
             log.masturbation?.forEach(m => {
-                const uniqueCategories = new Set(m.assets?.categories || []);
-                uniqueCategories.forEach(c => xp[c] = (xp[c] || 0) + 1);
+                (m.assets?.categories || []).forEach(c => usage[c] = (usage[c] || 0) + 1);
             });
-            
-            // Events (Daily Events)
-            const uniqueEvents = new Set(log.dailyEvents || []);
-            uniqueEvents.forEach(e => events[e] = (events[e] || 0) + 1);
-            
-            // Symptoms (Health)
-            const uniqueSymptoms = new Set(log.health?.symptoms || []);
-            uniqueSymptoms.forEach(s => symptoms[s] = (symptoms[s] || 0) + 1);
+            (log.dailyEvents || []).forEach(e => usage[e] = (usage[e] || 0) + 1);
+            (log.health?.symptoms || []).forEach(s => usage[s] = (usage[s] || 0) + 1);
         });
-
-        return { xp, event: events, symptom: symptoms };
-    }, [logs, customXpTags, customEventTags, customSymptomTags]);
-
-    const currentTags = useMemo(() => {
-        if (activeTab === 'health_check') return [];
-        const map = tagsMap[activeTab];
-        return Object.entries(map)
-            .filter(([name]) => name.toLowerCase().includes(searchTerm.toLowerCase()))
-            // Sort: High frequency first, then unused (0)
-            .sort((a: [string, number], b: [string, number]) => b[1] - a[1]);
-    }, [tagsMap, activeTab, searchTerm]);
+        return usage;
+    }, [logs]);
 
     const handleCreate = () => {
         const tag = createInput.trim();
         if (!tag) return;
 
-        // 1. Check if exists
-        if (tagsMap[activeTab][tag] !== undefined) {
-            if (onSelectTag) {
-                onSelectTag(tag);
-                onClose();
-            } else {
-                showToast('标签已存在', 'info');
-                setSearchTerm(tag);
-                setIsCreating(false);
-            }
+        if (activeTab === 'xp' && !selectedXpDim) {
+            showToast('请先选择一个维度类别', 'error');
             return;
         }
 
-        // 2. Validate with Type Context
         const res = validateTag(tag, activeTab === 'health_check' ? 'xp' : activeTab);
         if (res.level === 'P0') {
             showToast(`禁止创建: ${res.message}`, 'error');
             return;
         }
-        if (res.level === 'P1') {
-            if (!confirm(`⚠️ 警告: ${res.message}\n\n确定要创建这个标签吗？`)) return;
-        }
-        if (res.level === 'P2') {
-            showToast(`提示: ${res.message}`, 'info');
+
+        if (activeTab === 'xp' && selectedXpDim) {
+            setCustomXpTags(prev => ({
+                ...prev,
+                [selectedXpDim]: [...(prev[selectedXpDim] || []), tag]
+            }));
+        } else if (activeTab === 'event') {
+            setCustomEventTags(prev => [...prev, tag]);
+        } else if (activeTab === 'symptom') {
+            setCustomSymptomTags(prev => [...prev, tag]);
         }
 
-        // 3. Action
         if (onSelectTag) {
-            // Selection Mode
-            // Automatically add to custom list first to persist it
-            if (activeTab === 'xp') setCustomXpTags(prev => [...prev, tag]);
-            else if (activeTab === 'event') setCustomEventTags(prev => [...prev, tag]);
-            else if (activeTab === 'symptom') setCustomSymptomTags(prev => [...prev, tag]);
-
             onSelectTag(tag);
             onClose();
         } else {
-            // Management Mode: Persist to respective custom list
-            if (activeTab === 'xp') {
-                setCustomXpTags(prev => [...prev, tag]);
-            } else if (activeTab === 'event') {
-                setCustomEventTags(prev => [...prev, tag]);
-            } else if (activeTab === 'symptom') {
-                setCustomSymptomTags(prev => [...prev, tag]);
-            }
-            
             showToast(`已添加标签 "${tag}"`, 'success');
             setSearchTerm(tag);
             setIsCreating(false);
+            setSelectedXpDim(null);
         }
     };
 
@@ -163,266 +116,177 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
 
         const oldName = editingTag;
         const newName = newTagName.trim();
-
-        // 1. Run Validation
-        const res = validateTag(newName, activeTab === 'health_check' ? 'xp' : activeTab);
-        if (res.level === 'P0') {
-            showToast(`无效名称: ${res.message}`, 'error');
-            return;
-        }
-        if (res.level === 'P1') {
-            if (!confirm(`⚠️ 警告: ${res.message}\n\n确定要使用这个名称吗？`)) return;
-        }
-        
-        // Check merge
-        const existingTags = Object.keys(tagsMap[activeTab]);
-        const targetExists = existingTags.some(t => t.toLowerCase() === newName.toLowerCase());
-        
-        if (targetExists) {
-            if (!confirm(`标签 "${newName}" 已存在。\n确定要将 "${oldName}" 合并到 "${newName}" 吗？\n此操作不可撤销。`)) return;
-        }
-
         let updateCount = 0;
-        const targetType = activeTab;
 
-        // Update Custom Tags List if applicable
-        const updateCustomList = (list: string[], setter: (v: string[]) => void) => {
-            if (list.includes(oldName)) {
-                setter(list.map(t => t === oldName ? newName : t));
-            }
-        };
-        if (targetType === 'xp') updateCustomList(customXpTags, setCustomXpTags);
-        else if (targetType === 'event') updateCustomList(customEventTags, setCustomEventTags);
-        else if (targetType === 'symptom') updateCustomList(customSymptomTags, setCustomSymptomTags);
+        // 更新持久化列表
+        if (activeTab === 'xp') {
+            setCustomXpTags(prev => {
+                const next = { ...prev };
+                Object.keys(next).forEach(dim => {
+                    next[dim] = next[dim].map(t => t === oldName ? newName : t);
+                });
+                return next;
+            });
+        }
 
-        // Perform Bulk Update on Logs
         for (const log of logs) {
             let modified = false;
             let newLog = { ...log };
-
-            if (targetType === 'xp' && newLog.masturbation) {
+            if (activeTab === 'xp' && newLog.masturbation) {
                 newLog.masturbation = newLog.masturbation.map(m => {
                     if (m.assets?.categories?.includes(oldName)) {
-                        const newCats = m.assets.categories.map(c => c === oldName ? newName : c);
-                        const uniqueCats = Array.from(new Set(newCats));
+                        m.assets.categories = Array.from(new Set(m.assets.categories.map(c => c === oldName ? newName : c)));
                         modified = true;
-                        return { ...m, assets: { ...m.assets, categories: uniqueCats } };
                     }
                     return m;
                 });
-            } else if (targetType === 'event' && newLog.dailyEvents?.includes(oldName)) {
-                const newEvts = newLog.dailyEvents.map(e => e === oldName ? newName : e);
-                newLog.dailyEvents = Array.from(new Set(newEvts));
-                modified = true;
-            } else if (targetType === 'symptom' && newLog.health?.symptoms?.includes(oldName)) {
-                const newSyms = newLog.health.symptoms.map(s => s === oldName ? newName : s);
-                newLog.health.symptoms = Array.from(new Set(newSyms));
-                modified = true;
             }
-
             if (modified) {
                 await addOrUpdateLog(newLog);
                 updateCount++;
             }
         }
 
-        showToast(updateCount > 0 ? `已更新 ${updateCount} 条记录` : '标签已重命名', 'success');
+        showToast('标签已重命名', 'success');
         setEditingTag(null);
-        setNewTagName('');
     };
 
     const handleDelete = async (tag: string) => {
-        const usageCount = tagsMap[activeTab][tag] || 0;
-        const targetType = activeTab;
+        if (!confirm(`确定删除 "${tag}" 吗？此操作会从所有记录中移除它。`)) return;
         
-        if (usageCount > 0) {
-            if (!confirm(`确定要删除标签 "${tag}" 吗？这会从 ${usageCount} 条历史记录中移除它。`)) return;
+        if (activeTab === 'xp') {
+            setCustomXpTags(prev => {
+                const next = { ...prev };
+                Object.keys(next).forEach(dim => next[dim] = next[dim].filter(t => t !== tag));
+                return next;
+            });
         }
 
-        // Remove from Custom Tags
-        if (targetType === 'xp' && customXpTags.includes(tag)) {
-            setCustomXpTags(prev => prev.filter(t => t !== tag));
-        } else if (targetType === 'event' && customEventTags.includes(tag)) {
-            setCustomEventTags(prev => prev.filter(t => t !== tag));
-        } else if (targetType === 'symptom' && customSymptomTags.includes(tag)) {
-            setCustomSymptomTags(prev => prev.filter(t => t !== tag));
-        }
-
-        // Remove from Logs
-        if (usageCount > 0) {
-            let updateCount = 0;
-
-            for (const log of logs) {
-                let modified = false;
-                let newLog = { ...log };
-
-                if (targetType === 'xp' && newLog.masturbation) {
-                    newLog.masturbation = newLog.masturbation.map(m => {
-                        if (m.assets?.categories?.includes(tag)) {
-                            modified = true;
-                            return { ...m, assets: { ...m.assets, categories: m.assets.categories.filter(c => c !== tag) } };
-                        }
-                        return m;
-                    });
-                } else if (targetType === 'event' && newLog.dailyEvents?.includes(tag)) {
-                    newLog.dailyEvents = newLog.dailyEvents.filter(e => e !== tag);
-                    modified = true;
-                } else if (targetType === 'symptom' && newLog.health?.symptoms?.includes(tag)) {
-                    newLog.health.symptoms = newLog.health.symptoms.filter(s => s !== tag);
-                    modified = true;
-                }
-
-                if (modified) {
-                    await addOrUpdateLog(newLog);
-                    updateCount++;
-                }
+        for (const log of logs) {
+            let modified = false;
+            let newLog = { ...log };
+            if (activeTab === 'xp' && newLog.masturbation) {
+                newLog.masturbation = newLog.masturbation.map(m => {
+                    if (m.assets?.categories?.includes(tag)) {
+                        m.assets.categories = m.assets.categories.filter(c => c !== tag);
+                        modified = true;
+                    }
+                    return m;
+                });
             }
-            showToast(`已从 ${updateCount} 条记录中移除`, 'success');
-        } else {
-            showToast('标签已删除', 'success');
+            if (modified) await addOrUpdateLog(newLog);
         }
+        showToast('标签已移除', 'success');
     };
 
-    const handleNavigateToTag = (tag: string, type: TagType) => {
-        setActiveTab(type);
-        setSearchTerm(tag);
-        setEditingTag(tag);
-        setNewTagName(tag);
-    };
-
-    if (!isOpen) return null;
+    const renderTagItem = (tag: string, count: number) => (
+        <div key={tag} className="flex items-center justify-between p-3 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl group hover:border-brand-accent/50 transition-colors">
+            {editingTag === tag ? (
+                <div className="flex-1 flex items-center gap-2">
+                    <input autoFocus className="flex-1 bg-slate-50 dark:bg-slate-800 border border-brand-accent rounded px-2 py-1 text-sm outline-none" value={newTagName} onChange={e => setNewTagName(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleRename()}/>
+                    <button onClick={handleRename} className="p-1.5 bg-green-500 text-white rounded"><Check size={14}/></button>
+                    <button onClick={() => setEditingTag(null)} className="p-1.5 bg-slate-200 dark:bg-slate-700 text-slate-500 rounded"><X size={14}/></button>
+                </div>
+            ) : (
+                <>
+                    <div className="flex items-center gap-3 flex-1 cursor-pointer" onClick={() => onSelectTag?.(tag)}>
+                        <span className={`font-bold text-sm ${count === 0 ? 'text-slate-400' : 'text-brand-text dark:text-slate-200'}`}>{tag}</span>
+                        {count > 0 && <span className="text-[10px] bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded-full text-slate-500">{count}次</span>}
+                    </div>
+                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onClick={() => { setEditingTag(tag); setNewTagName(tag); }} className="p-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-slate-400 hover:text-blue-500 rounded-lg"><Edit2 size={14}/></button>
+                        <button onClick={() => handleDelete(tag)} className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-400 hover:text-red-500 rounded-lg"><Trash2 size={14}/></button>
+                    </div>
+                </>
+            )}
+        </div>
+    );
 
     return (
-        <Modal
-            isOpen={isOpen}
-            onClose={onClose}
-            title={onSelectTag ? "选择或创建标签" : "标签管理"}
-            footer={
-                <button onClick={onClose} className="w-full py-3 bg-slate-100 dark:bg-slate-800 text-slate-500 font-bold rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700">关闭</button>
-            }
-        >
-            <div className="h-[65vh] flex flex-col">
-                {/* Tabs */}
-                <div className="flex bg-slate-50 dark:bg-slate-800/50 p-1 rounded-xl mb-4 border border-slate-200 dark:border-slate-800 shrink-0">
-                    <button onClick={() => setActiveTab('xp')} className={`flex-1 py-2 text-xs font-bold rounded-lg flex items-center justify-center gap-2 ${activeTab === 'xp' ? 'bg-white dark:bg-slate-700 shadow-sm text-brand-accent' : 'text-slate-400 hover:text-slate-600'}`}>
-                        <Tag size={14} /> 题材/XP
-                    </button>
-                    <button onClick={() => setActiveTab('event')} className={`flex-1 py-2 text-xs font-bold rounded-lg flex items-center justify-center gap-2 ${activeTab === 'event' ? 'bg-white dark:bg-slate-700 shadow-sm text-brand-accent' : 'text-slate-400 hover:text-slate-600'}`}>
-                        <Activity size={14} /> 事件
-                    </button>
-                    <button onClick={() => setActiveTab('symptom')} className={`flex-1 py-2 text-xs font-bold rounded-lg flex items-center justify-center gap-2 ${activeTab === 'symptom' ? 'bg-white dark:bg-slate-700 shadow-sm text-brand-accent' : 'text-slate-400 hover:text-slate-600'}`}>
-                        <ShieldAlert size={14} /> 症状
-                    </button>
-                    <button onClick={() => setActiveTab('health_check')} className={`flex-1 py-2 text-xs font-bold rounded-lg flex items-center justify-center gap-2 ${activeTab === 'health_check' ? 'bg-white dark:bg-slate-700 shadow-sm text-brand-accent' : 'text-slate-400 hover:text-slate-600'}`}>
-                        <Stethoscope size={14} /> 体检
-                    </button>
+        <Modal isOpen={isOpen} onClose={onClose} title={onSelectTag ? "选择或创建标签" : "标签管理"}>
+            <div className="h-[70vh] flex flex-col -mt-2">
+                <div className="flex bg-slate-100 dark:bg-slate-800/50 p-1 rounded-xl mb-4 border border-slate-200 dark:border-slate-800 shrink-0">
+                    <button onClick={() => setActiveTab('xp')} className={`flex-1 py-2 text-xs font-bold rounded-lg flex items-center justify-center gap-2 ${activeTab === 'xp' ? 'bg-white dark:bg-slate-700 shadow-sm text-brand-accent' : 'text-slate-400'}`}><Tag size={14} /> 题材/XP</button>
+                    <button onClick={() => setActiveTab('event')} className={`flex-1 py-2 text-xs font-bold rounded-lg flex items-center justify-center gap-2 ${activeTab === 'event' ? 'bg-white dark:bg-slate-700 shadow-sm text-brand-accent' : 'text-slate-400'}`}><Activity size={14} /> 事件</button>
+                    <button onClick={() => setActiveTab('symptom')} className={`flex-1 py-2 text-xs font-bold rounded-lg flex items-center justify-center gap-2 ${activeTab === 'symptom' ? 'bg-white dark:bg-slate-700 shadow-sm text-brand-accent' : 'text-slate-400'}`}><ShieldAlert size={14} /> 症状</button>
+                    <button onClick={() => setActiveTab('health_check')} className={`flex-1 py-2 text-xs font-bold rounded-lg flex items-center justify-center gap-2 ${activeTab === 'health_check' ? 'bg-white dark:bg-slate-700 shadow-sm text-brand-accent' : 'text-slate-400'}`}><Stethoscope size={14} /> 体检</button>
                 </div>
 
-                {activeTab === 'health_check' ? (
-                    <div className="flex-1 overflow-y-auto custom-scrollbar">
-                        <TagHealthCheck logs={logs} onNavigateToTag={handleNavigateToTag} />
-                    </div>
-                ) : (
-                    <>
-                        {/* Creation / Search Area */}
-                        <div className="mb-4 shrink-0">
-                            {isCreating ? (
-                                <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-xl border border-blue-100 dark:border-blue-800 animate-in fade-in">
-                                    <label className="text-xs font-bold text-blue-600 dark:text-blue-400 mb-1 block">新标签名称</label>
-                                    <div className="flex gap-2">
-                                        <input 
-                                            autoFocus
-                                            className="flex-1 bg-white dark:bg-slate-900 border border-blue-300 dark:border-blue-700 rounded-lg px-3 py-2 text-sm outline-none"
-                                            value={createInput}
-                                            onChange={e => setCreateInput(e.target.value)}
-                                            placeholder="输入标签名..."
-                                            onKeyDown={e => e.key === 'Enter' && handleCreate()}
-                                        />
-                                        <button onClick={handleCreate} className="px-4 bg-brand-accent text-white rounded-lg font-bold text-xs">确认</button>
-                                        <button onClick={() => setIsCreating(false)} className="px-3 bg-slate-200 dark:bg-slate-700 text-slate-500 rounded-lg"><X size={16}/></button>
+                <div className="mb-4 shrink-0">
+                    {isCreating ? (
+                        <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-2xl border border-blue-100 dark:border-blue-800/50 animate-in fade-in">
+                            {activeTab === 'xp' && (
+                                <div className="mb-4">
+                                    <label className="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-2 block">1. 选择归属维度</label>
+                                    <div className="grid grid-cols-3 gap-2">
+                                        {XP_DIMENSIONS.map(dim => (
+                                            <button 
+                                                key={dim.id} 
+                                                onClick={() => setSelectedXpDim(dim.id)}
+                                                className={`flex items-center gap-1.5 p-2 rounded-xl border-2 transition-all ${selectedXpDim === dim.id ? 'border-blue-500 bg-white dark:bg-slate-800 shadow-sm' : 'border-transparent bg-slate-100/50 dark:bg-slate-900/50 opacity-60'}`}
+                                            >
+                                                <dim.icon size={12} className={dim.color}/>
+                                                <span className="text-[10px] font-black text-slate-700 dark:text-slate-200">{dim.id}</span>
+                                            </button>
+                                        ))}
                                     </div>
-                                    <p className="text-[10px] text-blue-400 mt-2">请避免使用平台名、纯动词或过度复杂的描述。</p>
-                                </div>
-                            ) : (
-                                <div className="relative flex gap-2">
-                                    <div className="relative flex-1">
-                                        <Search className="absolute left-3 top-2.5 text-slate-400" size={16} />
-                                        <input 
-                                            className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2 pl-9 pr-4 text-sm outline-none focus:border-brand-accent"
-                                            placeholder={`搜索${activeTab === 'event' ? '事件' : activeTab === 'symptom' ? '症状' : 'XP'}...`}
-                                            value={searchTerm}
-                                            onChange={e => setSearchTerm(e.target.value)}
-                                        />
-                                    </div>
-                                    <button 
-                                        onClick={() => { setIsCreating(true); setCreateInput(searchTerm); }} 
-                                        className="px-3 bg-slate-100 dark:bg-slate-800 text-brand-muted dark:text-slate-400 hover:text-brand-accent hover:bg-blue-50 dark:hover:bg-slate-700 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700"
-                                        title="新建标签"
-                                    >
-                                        <Plus size={20}/>
-                                    </button>
                                 </div>
                             )}
+                            <label className="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-2 block">{activeTab === 'xp' ? '2. 输入标签名称' : '输入标签名称'}</label>
+                            <div className="flex gap-2">
+                                <input autoFocus className="flex-1 bg-white dark:bg-slate-900 border border-blue-200 dark:border-blue-800 rounded-xl px-4 py-2.5 text-sm font-bold outline-none focus:border-blue-500" value={createInput} onChange={e => setCreateInput(e.target.value)} placeholder="名称..." onKeyDown={e => e.key === 'Enter' && handleCreate()}/>
+                                <button onClick={handleCreate} className="px-5 bg-blue-500 text-white rounded-xl font-black text-xs shadow-lg shadow-blue-500/20">确认</button>
+                            </div>
                         </div>
+                    ) : (
+                        <div className="flex gap-2">
+                            <div className="relative flex-1">
+                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                                <input className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl py-3 pl-11 pr-4 text-sm font-bold outline-none focus:ring-2 focus:ring-brand-accent/10" placeholder="搜索现有标签..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)}/>
+                            </div>
+                            <button onClick={() => setIsCreating(true)} className="px-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-brand-accent rounded-2xl shadow-sm active:scale-95 transition-all"><Plus size={24}/></button>
+                        </div>
+                    )}
+                </div>
 
-                        {/* List */}
-                        <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2">
-                            {currentTags.length === 0 && !isCreating ? (
-                                <div className="text-center py-10 text-slate-400 text-sm">
-                                    {searchTerm ? '未找到相关标签' : '暂无数据'}
-                                    <div className="mt-2">
-                                        <button onClick={() => { setIsCreating(true); setCreateInput(searchTerm); }} className="text-brand-accent font-bold hover:underline">
-                                            创建 "{searchTerm || '新标签'}"
-                                        </button>
-                                    </div>
-                                </div>
-                            ) : (
-                                currentTags.map(([tag, count]) => (
-                                    <div key={tag} className="flex items-center justify-between p-3 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl group hover:border-brand-accent/50 transition-colors">
-                                        {editingTag === tag ? (
-                                            <div className="flex-1 flex items-center gap-2">
-                                                <input 
-                                                    autoFocus
-                                                    className="flex-1 bg-slate-50 dark:bg-slate-800 border border-brand-accent rounded px-2 py-1 text-sm outline-none"
-                                                    value={newTagName}
-                                                    onChange={e => setNewTagName(e.target.value)}
-                                                    onKeyDown={e => e.key === 'Enter' && handleRename()}
-                                                />
-                                                <button onClick={handleRename} className="p-1.5 bg-green-500 text-white rounded hover:bg-green-600"><Check size={14}/></button>
-                                                <button onClick={() => setEditingTag(null)} className="p-1.5 bg-slate-200 dark:bg-slate-700 text-slate-500 rounded hover:bg-slate-300"><X size={14}/></button>
+                <div className="flex-1 overflow-y-auto custom-scrollbar pr-1">
+                    {activeTab === 'health_check' ? (
+                        <TagHealthCheck logs={logs} onNavigateToTag={(t, ty) => { setActiveTab(ty); setSearchTerm(t); }} />
+                    ) : activeTab === 'xp' ? (
+                        <div className="space-y-6 pb-6">
+                            {XP_DIMENSIONS.map(dim => {
+                                const systemTags = XP_GROUPS[dim.id] || [];
+                                const userTags = customXpTags[dim.id] || [];
+                                const allInDim = Array.from(new Set([...systemTags, ...userTags]))
+                                    .filter(t => t.toLowerCase().includes(searchTerm.toLowerCase()))
+                                    .sort((a,b) => (tagsUsageMap[b]||0) - (tagsUsageMap[a]||0));
+
+                                if (allInDim.length === 0 && searchTerm) return null;
+
+                                return (
+                                    <div key={dim.id} className="space-y-3">
+                                        <div className="flex items-center justify-between sticky top-0 bg-brand-bg dark:bg-slate-950 z-10 py-1">
+                                            <div className="flex items-center gap-2">
+                                                <div className={`p-1.5 rounded-lg ${dim.bg} ${dim.color}`}><dim.icon size={14}/></div>
+                                                <h4 className="text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest">{dim.id}</h4>
                                             </div>
-                                        ) : (
-                                            <>
-                                                <div 
-                                                    className="flex items-center gap-3 flex-1 cursor-pointer"
-                                                    onClick={() => {
-                                                        if (onSelectTag) {
-                                                            onSelectTag(tag);
-                                                        }
-                                                    }}
-                                                >
-                                                    <span className={`font-bold text-sm ${count === 0 ? 'text-slate-400 dark:text-slate-500' : 'text-brand-text dark:text-slate-200'}`}>
-                                                        {tag}
-                                                    </span>
-                                                    {count > 0 ? (
-                                                        <span className="text-[10px] bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded-full text-slate-500">{count}次</span>
-                                                    ) : (
-                                                        <span className="text-[10px] bg-slate-50 dark:bg-slate-800/50 px-1.5 py-0.5 rounded-full text-slate-300 border border-slate-100 dark:border-slate-800">预设/自定义</span>
-                                                    )}
-                                                </div>
-                                                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    {/* Rename allowed on all tags, Delete only on used tags */}
-                                                    <button onClick={() => { setEditingTag(tag); setNewTagName(tag); }} className="p-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-slate-400 hover:text-blue-500 rounded-lg"><Edit2 size={14}/></button>
-                                                    <button onClick={() => handleDelete(tag)} className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-400 hover:text-red-500 rounded-lg"><Trash2 size={14}/></button>
-                                                </div>
-                                            </>
-                                        )}
+                                            <span className="text-[10px] font-bold text-slate-400">{allInDim.length}个</span>
+                                        </div>
+                                        <div className="grid gap-2">
+                                            {allInDim.map(tag => renderTagItem(tag, tagsUsageMap[tag] || 0))}
+                                        </div>
                                     </div>
-                                ))
-                            )}
+                                );
+                            })}
                         </div>
-                    </>
-                )}
+                    ) : (
+                        <div className="grid gap-2 pb-6">
+                            {(activeTab === 'event' ? [...SYSTEM_EVENTS, ...customEventTags] : [...SYSTEM_SYMPTOMS, ...customSymptomTags])
+                                .filter(t => t.toLowerCase().includes(searchTerm.toLowerCase()))
+                                .map(tag => renderTagItem(tag, tagsUsageMap[tag] || 0))}
+                        </div>
+                    )}
+                </div>
             </div>
         </Modal>
     );
