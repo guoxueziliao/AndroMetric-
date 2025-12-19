@@ -29,7 +29,7 @@ const SexLifeView = lazy(() => import('./components/SexLifeView'));
 type View = 'dashboard' | 'form';
 type MainView = 'calendar' | 'stats' | 'sexlife' | 'my';
 
-const APP_VERSION = '0.0.7'; // Bumped version
+const APP_VERSION = '0.0.6'; // Unified version to 0.0.6
 
 const defaultSettings: AppSettings = {
   version: APP_VERSION,
