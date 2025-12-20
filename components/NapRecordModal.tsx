@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { CloudSun, Clock, Play, Sparkles, Star, Zap, Trash2, Check, Minus, Plus, MapPin, Leaf, RotateCcw, Heart, Shirt, Thermometer, BrainCircuit } from 'lucide-react';
 import Modal from './Modal';
@@ -46,8 +45,11 @@ const NapRecordModal: React.FC<NapRecordModalProps> = ({ isOpen, onClose, onSave
 
     useEffect(() => {
         if (isOpen) {
+            const now = new Date();
+            const nowStr = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+
             if (initialData) {
-                setRecord({
+                const updatedRecord = {
                     ...initialData,
                     quality: initialData.quality || 3,
                     hardness: initialData.hardness || null,
@@ -59,21 +61,35 @@ const NapRecordModal: React.FC<NapRecordModalProps> = ({ isOpen, onClose, onSave
                     attire: initialData.attire || 'light',
                     withPartner: initialData.withPartner || false,
                     preSleepState: initialData.preSleepState || 'calm'
-                });
-                
-                if (initialData.startTime && initialData.duration) {
+                };
+
+                let initialEndTime = '';
+                let initialDuration = initialData.duration || 0;
+
+                if (initialData.ongoing) {
+                    // 如果是进行中的任务，结束时间默认为现在
+                    initialEndTime = nowStr;
+                    // 重新计算时长
+                    if (initialData.startTime) {
+                        const [h1, m1] = initialData.startTime.split(':').map(Number);
+                        const [h2, m2] = nowStr.split(':').map(Number);
+                        let diff = (h2 * 60 + m2) - (h1 * 60 + m1);
+                        if (diff < 0) diff += 24 * 60;
+                        initialDuration = diff;
+                    }
+                } else if (initialData.endTime) {
+                    initialEndTime = initialData.endTime;
+                } else if (initialData.startTime && initialData.duration) {
                     const [h, m] = initialData.startTime.split(':').map(Number);
                     const d = new Date(); d.setHours(h); d.setMinutes(m + initialData.duration);
-                    setEndTime(d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }));
-                } else if (initialData.endTime) {
-                    setEndTime(initialData.endTime);
+                    initialEndTime = d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
                 } else {
-                    const now = new Date();
-                    setEndTime(now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }));
+                    initialEndTime = nowStr;
                 }
+
+                setRecord({ ...updatedRecord, duration: initialDuration });
+                setEndTime(initialEndTime);
             } else {
-                const now = new Date();
-                const nowStr = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
                 const endD = new Date(now); endD.setMinutes(now.getMinutes() + 30);
                 setRecord({
                     id: Date.now().toString(), startTime: nowStr, ongoing: false, duration: 30, quality: 3, hardness: null, hasDream: false, dreamTypes: [], notes: '',
