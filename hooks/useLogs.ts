@@ -1,13 +1,16 @@
+
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { StorageService } from '../services/StorageService';
-import { LogEntry, SexRecordDetails, MasturbationRecordDetails, PartnerProfile, ExerciseRecord, NapRecord, ChangeRecord, AlcoholRecord } from '../types';
+import { LogEntry, SexRecordDetails, MasturbationRecordDetails, PartnerProfile, ExerciseRecord, NapRecord, ChangeRecord, AlcoholRecord, TagEntry, TagType } from '../types';
 import { hydrateLog } from '../utils/hydrateLog';
+import { db } from '../db';
 
 export function useLogs() {
     const rawLogs = useLiveQuery(StorageService.logs.queries.allDesc) || [];
     const logs = useMemo(() => rawLogs.map(hydrateLog), [rawLogs]);
     const partners = useLiveQuery(StorageService.partners.queries.all) || [];
+    const userTags = useLiveQuery(() => db.tags.toArray()) || [];
     const [isInitializing, setIsInitializing] = useState(true);
 
     useEffect(() => {
@@ -16,6 +19,14 @@ export function useLogs() {
             setIsInitializing(false);
         };
         init();
+    }, []);
+
+    const addOrUpdateTag = useCallback(async (tag: TagEntry) => {
+        await StorageService.tags.add(tag);
+    }, []);
+
+    const deleteTag = useCallback(async (name: string, category: TagType) => {
+        await StorageService.tags.delete(name, category);
     }, []);
 
     const addOrUpdatePartner = useCallback(async (partner: PartnerProfile) => {
@@ -238,7 +249,6 @@ export function useLogs() {
     const toggleNap = useCallback(async () => {
         const allLogs = await StorageService.logs.getAll();
         const ongoingNapLog = allLogs.find(l => l.sleep?.naps?.some(n => n.ongoing));
-        
         if (ongoingNapLog) {
             const nap = ongoingNapLog.sleep!.naps.find(n => n.ongoing);
             return nap;
@@ -278,10 +288,8 @@ export function useLogs() {
                 const currentRecords = existingLog.alcoholRecords || [];
                 const exists = currentRecords.find(r => r.id === record.id);
                 const nextRecords = exists ? currentRecords.map(r => r.id === record.id ? record : r) : [...currentRecords, record];
-                
                 const totalGrams = nextRecords.reduce((s, r) => s + r.totalGrams, 0);
                 const alcoholLevel = totalGrams > 50 ? 'high' : totalGrams > 20 ? 'medium' : totalGrams > 0 ? 'low' : 'none';
-
                 const historyEntry: ChangeRecord = { 
                     timestamp: Date.now(), 
                     summary: summaryText,
@@ -313,7 +321,6 @@ export function useLogs() {
     const toggleAlcohol = useCallback(async () => {
         const allLogs = await StorageService.logs.getAll();
         const ongoingLog = allLogs.find(l => l.alcoholRecords?.some(r => r.ongoing));
-        
         if (ongoingLog) {
             return ongoingLog.alcoholRecords.find(r => r.ongoing);
         } else {
@@ -349,19 +356,14 @@ export function useLogs() {
 
     const toggleSleepLog = useCallback(async (pendingLog?: LogEntry) => {
         if (pendingLog) {
-            // Cancel/Delete pending sleep log
             await deleteLog(pendingLog.date);
         } else {
-            // Start new sleep timer
             const targetDateStr = getSleepTargetDate();
             const skeleton = hydrateLog({ date: targetDateStr });
             const newLog: LogEntry = {
                 ...skeleton,
                 status: 'pending',
-                sleep: {
-                    ...skeleton.sleep!,
-                    startTime: new Date().toISOString()
-                },
+                sleep: { ...skeleton.sleep!, startTime: new Date().toISOString() },
                 updatedAt: Date.now(),
                 changeHistory: [{ timestamp: Date.now(), summary: '开始睡觉', type: 'quick' }]
             };
@@ -375,9 +377,10 @@ export function useLogs() {
     }, []);
 
     return {
-        logs, partners, isInitializing,
+        logs, partners, userTags, isInitializing,
         addOrUpdateLog, deleteLog,
         addOrUpdatePartner, deletePartner,
+        addOrUpdateTag, deleteTag,
         quickAddSex, quickAddMasturbation, cancelOngoingMasturbation,
         saveExercise, cancelOngoingExercise,
         saveNap, toggleNap, cancelOngoingNap,

@@ -1,16 +1,12 @@
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { LogEntry } from '../types';
-import { Tag, Edit2, Trash2, X, Check, Activity, ShieldAlert, Stethoscope, Plus, Search, ChevronRight, ChevronDown, LayoutGrid, User, Zap, Sparkles, Shirt, Heart, MousePointer2 } from 'lucide-react';
+import { LogEntry, TagType, TagEntry } from '../types';
+import { Tag as TagIcon, Edit2, Trash2, X, Check, Activity, ShieldAlert, Stethoscope, Plus, Search, ChevronRight, ChevronDown, LayoutGrid, User, Zap, Sparkles, Shirt, Heart, MousePointer2 } from 'lucide-react';
 import Modal from './Modal';
 import { useData } from '../contexts/DataContext';
 import { useToast } from '../contexts/ToastContext';
-import { validateTag, TagType } from '../utils/tagValidators';
+import { validateTag } from '../utils/tagValidators';
 import TagHealthCheck from './TagHealthCheck';
-import { XP_GROUPS } from '../utils/constants';
-import { useLocalStorage } from '../hooks/useLocalStorage';
-
-export type { TagType };
 
 const XP_DIMENSIONS = [
     { id: '角色', icon: User, color: 'text-pink-500', bg: 'bg-pink-50 dark:bg-pink-900/20' },
@@ -29,22 +25,16 @@ interface TagManagerProps {
     onClose: () => void;
     onSelectTag?: (tag: string) => void;
     initialSearch?: string;
-    defaultTab?: TagType;
+    defaultTab?: TagType | 'health_check';
 }
 
 const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, initialSearch = '', defaultTab = 'xp' }) => {
-    const { logs, addOrUpdateLog } = useData();
+    const { logs, addOrUpdateLog, userTags, addOrUpdateTag, deleteTag } = useData();
     const { showToast } = useToast();
-    const [activeTab, setActiveTab] = useState<TagType>(defaultTab);
+    const [activeTab, setActiveTab] = useState<TagType | 'health_check'>(defaultTab as any);
     const [searchTerm, setSearchTerm] = useState(initialSearch);
     const [editingTag, setEditingTag] = useState<string | null>(null);
     const [newTagName, setNewTagName] = useState('');
-    
-    const [customXpTags, setCustomXpTags] = useLocalStorage<Record<string, string[]>>('custom_xp_tags_v2', {
-        '角色': [], '身体': [], '装扮': [], '玩法': [], '剧情': [], '风格': []
-    });
-    const [customEventTags, setCustomEventTags] = useLocalStorage<string[]>('custom_event_tags', []);
-    const [customSymptomTags, setCustomSymptomTags] = useLocalStorage<string[]>('custom_symptom_tags', []);
     
     const [isCreating, setIsCreating] = useState(false);
     const [createInput, setCreateInput] = useState(initialSearch);
@@ -54,7 +44,7 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
 
     useEffect(() => {
         if (isOpen) {
-            setActiveTab(defaultTab);
+            setActiveTab(defaultTab as any);
             setSearchTerm(initialSearch);
             setCreateInput(initialSearch);
             setIsCreating(false);
@@ -66,8 +56,11 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
         const usage: Record<string, number> = {};
         logs.forEach(log => {
             log.masturbation?.forEach(m => {
-                const tags = Array.from(new Set(m.assets?.categories || []));
+                const tags = Array.from(new Set(m.contentItems?.flatMap(ci => ci.xpTags || []) || []));
                 tags.forEach(c => usage[c] = (usage[c] || 0) + 1);
+                // Legacy support
+                const legacyTags = Array.from(new Set(m.assets?.categories || []));
+                legacyTags.forEach(c => usage[c] = (usage[c] || 0) + 1);
             });
             (log.dailyEvents || []).forEach(e => usage[e] = (usage[e] || 0) + 1);
             (log.health?.symptoms || []).forEach(s => usage[s] = (usage[s] || 0) + 1);
@@ -75,38 +68,38 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
         return usage;
     }, [logs]);
 
-    const handleCreate = () => {
-        const tag = createInput.trim();
-        if (!tag) return;
+    const handleCreate = async () => {
+        const tagStr = createInput.trim();
+        if (!tagStr) return;
 
         if (activeTab === 'xp' && !selectedXpDim) {
             showToast('请先选择一个维度类别', 'error');
             return;
         }
 
-        const res = validateTag(tag, activeTab === 'health_check' ? 'xp' : activeTab);
+        const res = validateTag(tagStr, activeTab === 'health_check' ? 'xp' : (activeTab as TagType));
         if (res.level === 'P0') {
             showToast(`禁止创建: ${res.message}`, 'error');
             return;
         }
 
         if (activeTab === 'xp' && selectedXpDim) {
-            setCustomXpTags(prev => ({
-                ...prev,
-                [selectedXpDim]: [...(prev[selectedXpDim] || []), tag]
-            }));
-        } else if (activeTab === 'event') {
-            setCustomEventTags(prev => [...prev, tag]);
-        } else if (activeTab === 'symptom') {
-            setCustomSymptomTags(prev => [...prev, tag]);
+            await addOrUpdateTag({
+                name: tagStr,
+                category: 'xp',
+                dimension: selectedXpDim,
+                createdAt: Date.now()
+            });
         }
+        // 对于 Event 和 Symptom，目前逻辑是直接允许选择系统预设或在 LogForm 中动态生成
+        // 如果需要统一管理，也可以在此处 addOrUpdateTag
 
         if (onSelectTag) {
-            onSelectTag(tag);
+            onSelectTag(tagStr);
             onClose();
         } else {
-            showToast(`已添加标签 "${tag}"`, 'success');
-            setSearchTerm(tag);
+            showToast(`已添加标签 "${tagStr}"`, 'success');
+            setSearchTerm(tagStr);
             setIsCreating(false);
             setSelectedXpDim(null);
         }
@@ -121,26 +114,36 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
         const oldName = editingTag;
         const newName = newTagName.trim();
         
-        // 更新持久化列表
-        if (activeTab === 'xp') {
-            setCustomXpTags(prev => {
-                const next = { ...prev };
-                Object.keys(next).forEach(dim => {
-                    next[dim] = next[dim].map(t => t === oldName ? newName : t);
-                });
-                return next;
-            });
+        // 查找旧标签以获取维度
+        const oldTag = userTags.find(t => t.name === oldName && t.category === activeTab);
+        if (oldTag) {
+            await deleteTag(oldName, activeTab as TagType);
+            await addOrUpdateTag({ ...oldTag, name: newName });
         }
 
+        // 全量更新 Log 中的引用
         for (const log of logs) {
             let modified = false;
             let newLog = { ...log };
             if (activeTab === 'xp' && newLog.masturbation) {
                 newLog.masturbation = newLog.masturbation.map(m => {
+                    let mMod = false;
+                    // 更新素材标签
+                    if (m.contentItems) {
+                        m.contentItems = m.contentItems.map(ci => {
+                            if (ci.xpTags?.includes(oldName)) {
+                                ci.xpTags = Array.from(new Set(ci.xpTags.map(t => t === oldName ? newName : t)));
+                                mMod = true;
+                            }
+                            return ci;
+                        });
+                    }
+                    // 更新旧版素材分类
                     if (m.assets?.categories?.includes(oldName)) {
                         m.assets.categories = Array.from(new Set(m.assets.categories.map(c => c === oldName ? newName : c)));
-                        modified = true;
+                        mMod = true;
                     }
+                    if (mMod) modified = true;
                     return m;
                 });
             }
@@ -156,23 +159,28 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
     const handleDelete = async (tag: string) => {
         if (!confirm(`确定删除 "${tag}" 吗？此操作会从所有记录中移除它。`)) return;
         
-        if (activeTab === 'xp') {
-            setCustomXpTags(prev => {
-                const next = { ...prev };
-                Object.keys(next).forEach(dim => next[dim] = next[dim].filter(t => t !== tag));
-                return next;
-            });
-        }
+        await deleteTag(tag, activeTab as TagType);
 
         for (const log of logs) {
             let modified = false;
             let newLog = { ...log };
             if (activeTab === 'xp' && newLog.masturbation) {
                 newLog.masturbation = newLog.masturbation.map(m => {
+                    let mMod = false;
+                    if (m.contentItems) {
+                        m.contentItems = m.contentItems.map(ci => {
+                            if (ci.xpTags?.includes(tag)) {
+                                ci.xpTags = ci.xpTags.filter(t => t !== tag);
+                                mMod = true;
+                            }
+                            return ci;
+                        });
+                    }
                     if (m.assets?.categories?.includes(tag)) {
                         m.assets.categories = m.assets.categories.filter(c => c !== tag);
-                        modified = true;
+                        mMod = true;
                     }
+                    if (mMod) modified = true;
                     return m;
                 });
             }
@@ -216,7 +224,7 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
             <div className="h-[75vh] flex flex-col -mt-2">
                 {/* Tab Switcher */}
                 <div className="flex bg-slate-100 dark:bg-slate-800/50 p-1 rounded-xl mb-3 border border-slate-200 dark:border-slate-800 shrink-0">
-                    <button onClick={() => {setActiveTab('xp'); setSearchTerm('');}} className={`flex-1 py-2 text-xs font-bold rounded-lg flex items-center justify-center gap-2 ${activeTab === 'xp' ? 'bg-white dark:bg-slate-700 shadow-sm text-brand-accent' : 'text-slate-400'}`}><Tag size={14} /> 题材/XP</button>
+                    <button onClick={() => {setActiveTab('xp'); setSearchTerm('');}} className={`flex-1 py-2 text-xs font-bold rounded-lg flex items-center justify-center gap-2 ${activeTab === 'xp' ? 'bg-white dark:bg-slate-700 shadow-sm text-brand-accent' : 'text-slate-400'}`}><TagIcon size={14} /> 题材/XP</button>
                     <button onClick={() => {setActiveTab('event'); setSearchTerm('');}} className={`flex-1 py-2 text-xs font-bold rounded-lg flex items-center justify-center gap-2 ${activeTab === 'event' ? 'bg-white dark:bg-slate-700 shadow-sm text-brand-accent' : 'text-slate-400'}`}><Activity size={14} /> 事件</button>
                     <button onClick={() => {setActiveTab('symptom'); setSearchTerm('');}} className={`flex-1 py-2 text-xs font-bold rounded-lg flex items-center justify-center gap-2 ${activeTab === 'symptom' ? 'bg-white dark:bg-slate-700 shadow-sm text-brand-accent' : 'text-slate-400'}`}><ShieldAlert size={14} /> 症状</button>
                     <button onClick={() => {setActiveTab('health_check'); setSearchTerm('');}} className={`flex-1 py-2 text-xs font-bold rounded-lg flex items-center justify-center gap-2 ${activeTab === 'health_check' ? 'bg-white dark:bg-slate-700 shadow-sm text-brand-accent' : 'text-slate-400'}`}><Stethoscope size={14} /> 体检</button>
@@ -287,13 +295,20 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
                     ) : activeTab === 'xp' ? (
                         <div className="space-y-8 pb-10">
                             {XP_DIMENSIONS.map(dim => {
-                                const systemTags = XP_GROUPS[dim.id] || [];
-                                const userTags = customXpTags[dim.id] || [];
-                                const allInDim = Array.from(new Set([...systemTags, ...userTags]))
+                                // 核心修改：仅显示数据库中存在的且被使用过的标签
+                                const dbInDim = userTags.filter(t => t.dimension === dim.id).map(t => t.name);
+                                const allInDim = Array.from(new Set(dbInDim))
                                     .filter(t => t.toLowerCase().includes(searchTerm.toLowerCase()))
-                                    .sort((a,b) => (tagsUsageMap[b]||0) - (tagsUsageMap[a]||0));
+                                    .sort((a,b) => (tagsUsageMap[b as string]||0) - (tagsUsageMap[a as string]||0));
 
-                                if (allInDim.length === 0 && searchTerm) return null;
+                                if (allInDim.length === 0) {
+                                    if (searchTerm) return null;
+                                    return (
+                                        <div key={dim.id} id={`dim-section-${dim.id}`} className="py-4 text-center border border-dashed border-slate-100 dark:border-slate-800 rounded-2xl">
+                                            <span className="text-[10px] text-slate-300 font-bold uppercase tracking-widest">{dim.id} 维度暂无标签</span>
+                                        </div>
+                                    );
+                                }
 
                                 return (
                                     <div key={dim.id} className="space-y-3" id={`dim-section-${dim.id}`}>
@@ -305,7 +320,7 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
                                             <span className="text-[10px] font-black text-slate-400 bg-slate-50 dark:bg-slate-800 px-2 py-0.5 rounded-full">{allInDim.length}</span>
                                         </div>
                                         <div className="grid gap-2">
-                                            {allInDim.map(tag => renderTagItem(tag, tagsUsageMap[tag] || 0))}
+                                            {allInDim.map(tag => renderTagItem(tag, tagsUsageMap[tag as string] || 0))}
                                         </div>
                                     </div>
                                 );
@@ -313,9 +328,9 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
                         </div>
                     ) : (
                         <div className="grid gap-2 pb-10">
-                            {(activeTab === 'event' ? [...SYSTEM_EVENTS, ...customEventTags] : [...SYSTEM_SYMPTOMS, ...customSymptomTags])
+                            {(activeTab === 'event' ? [...SYSTEM_EVENTS] : [...SYSTEM_SYMPTOMS])
                                 .filter(t => t.toLowerCase().includes(searchTerm.toLowerCase()))
-                                .map(tag => renderTagItem(tag, tagsUsageMap[tag] || 0))}
+                                .map(tag => renderTagItem(tag, tagsUsageMap[tag as string] || 0))}
                         </div>
                     )}
                 </div>

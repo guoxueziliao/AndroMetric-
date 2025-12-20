@@ -1,39 +1,16 @@
 
+export type TagType = 'xp' | 'event' | 'symptom';
+
+export interface TagEntry {
+    name: string;
+    category: TagType;
+    dimension?: string; // 仅对 XP 标签有效，如 "角色"、"玩法"
+    createdAt: number;
+}
+
 export type HardnessLevel = 1 | 2 | 3 | 4 | 5;
+
 export type MorningWoodRetention = 'instant' | 'brief' | 'normal' | 'extended';
-export type StressLevel = 1 | 2 | 3 | 4 | 5;
-export type AlcoholConsumption = 'none' | 'low' | 'medium' | 'high';
-export type PornConsumption = 'none' | 'low' | 'medium' | 'high';
-export type ExerciseIntensity = 'low' | 'medium' | 'high';
-export type SexQuality = 1 | 2 | 3 | 4 | 5;
-export type IllnessType = 'cold' | 'fever' | 'headache' | 'other' | string;
-export type PreSleepState = 'tired' | 'energetic' | 'stressed' | 'calm' | 'other' | string;
-export type Weather = 'sunny' | 'cloudy' | 'rainy' | 'snowy' | 'windy' | 'foggy';
-export type Location = 'home' | 'partner' | 'hotel' | 'travel' | 'other' | string;
-export type Mood = 'happy' | 'excited' | 'neutral' | 'anxious' | 'sad' | 'angry';
-export type SleepAttire = 'naked' | 'light' | 'pajamas' | 'other';
-export type DrunkLevel = 'none' | 'tipsy' | 'drunk' | 'wasted';
-export type ExerciseFeeling = 'great' | 'ok' | 'tired' | 'bad';
-export type PartnerType = 'stable' | 'dating' | 'casual' | 'service';
-export type HistoryCategory = 'sex' | 'masturbation' | 'exercise' | 'sleep' | 'morning' | 'lifestyle' | 'health' | 'nap' | 'system' | 'meta';
-export type HistoryEventType = 'manual' | 'quick' | 'auto';
-export type EventType = 'morning_wood' | 'sleep' | 'alcohol' | 'exercise' | 'sex' | 'masturbation' | 'stress' | 'health';
-export type SleepLocation = 'home' | 'office' | 'transport' | 'hotel' | 'other' | string;
-export type SleepTemperature = 'cold' | 'comfortable' | 'hot';
-
-export interface ChangeDetail {
-    field: string;
-    oldValue: any;
-    newValue: any;
-    category: HistoryCategory;
-}
-
-export interface ChangeRecord {
-    timestamp: number;
-    summary: string;
-    details?: ChangeDetail[];
-    type: HistoryEventType;
-}
 
 export interface MorningRecord {
     id: string;
@@ -45,13 +22,18 @@ export interface MorningRecord {
     durationImpression?: string | null;
 }
 
+export type SleepLocation = 'home' | 'hotel' | 'others_home' | 'dorm' | 'office' | 'transport' | 'other';
+export type SleepTemperature = 'cold' | 'comfortable' | 'hot';
+export type SleepAttire = 'naked' | 'light' | 'pajamas' | 'other';
+export type PreSleepState = 'tired' | 'energetic' | 'stressed' | 'calm' | 'other';
+
 export interface NapRecord {
     id: string;
     startTime: string;
     endTime?: string;
     ongoing: boolean;
     duration: number;
-    quality?: number;
+    quality: number;
     hardness?: HardnessLevel | null;
     hasDream?: boolean;
     dreamTypes?: string[];
@@ -83,13 +65,16 @@ export interface SleepRecord {
     };
 }
 
+export type IllnessType = 'cold' | 'fever' | 'headache' | 'other';
+export type DiscomfortLevel = 'mild' | 'moderate' | 'severe';
+
 export interface Health {
     isSick: boolean;
-    illnessType?: IllnessType | null;
+    illnessType?: string | null;
     medicationTaken?: boolean | null;
     medicationName?: string | null;
-    feeling?: 'normal' | 'bad' | 'minor_discomfort';
-    discomfortLevel?: 'mild' | 'moderate' | 'severe' | null;
+    feeling?: 'normal' | 'minor_discomfort' | 'bad' | null;
+    discomfortLevel?: DiscomfortLevel | null;
     symptoms: string[];
     medications: string[];
 }
@@ -99,21 +84,22 @@ export interface AlcoholItem {
     name: string;
     volume: number;
     abv: number;
-    pureAlcohol: number;
     count: number;
+    pureAlcohol: number;
 }
+
+export type DrunkLevel = 'none' | 'tipsy' | 'drunk' | 'wasted';
 
 export interface AlcoholRecord {
     id: string;
     totalGrams: number;
     durationMinutes: number;
-    items: AlcoholItem[];
     isLate: boolean;
+    items: AlcoholItem[];
     drunkLevel?: DrunkLevel;
     alcoholScene?: string;
     time: string;
     startTime?: string;
-    endTime?: string;
     ongoing: boolean;
 }
 
@@ -122,48 +108,48 @@ export interface ExerciseRecord {
     type: string;
     startTime: string;
     duration: number;
-    intensity: ExerciseIntensity;
+    intensity: 'low' | 'medium' | 'high';
     bodyParts?: string[];
     steps?: number;
     notes?: string;
-    feeling?: ExerciseFeeling;
+    feeling?: 'great' | 'ok' | 'tired' | 'bad';
     ongoing?: boolean;
 }
 
 export interface ContentItem {
     id: string;
-    type?: string;
+    type: string;
     platform?: string;
     title?: string;
-    actors: string[];
-    xpTags: string[];
+    actors?: string[];
+    xpTags?: string[];
     notes?: string;
 }
 
 export interface MasturbationRecordDetails {
     id: string;
-    startTime?: string;
+    startTime: string;
     duration: number;
-    status: 'inProgress' | 'completed';
+    status: 'completed' | 'inProgress';
     tools: string[];
     contentItems: ContentItem[];
     materials?: string[]; // Legacy
     props?: string[]; // Legacy
     assets?: {
-        sources: string[];
-        platforms: string[];
-        categories: string[];
-        target: string;
-        actors: string[];
+        sources?: string[];
+        platforms?: string[];
+        categories?: string[];
+        target?: string;
+        actors?: string[];
     };
     materialsList?: any[]; // Legacy
-    edging: 'none' | 'once' | 'multiple';
+    edging: 'none' | 'single' | 'multiple';
     edgingCount: number;
-    lubricant?: string;
+    lubricant: string;
     useCondom: boolean;
     ejaculation: boolean;
-    orgasmIntensity?: number;
-    mood: Mood | string;
+    orgasmIntensity: number;
+    mood: 'happy' | 'neutral' | 'sad' | 'excited' | 'anxious' | 'angry';
     stressLevel: number;
     energyLevel: number;
     interrupted: boolean;
@@ -172,17 +158,17 @@ export interface MasturbationRecordDetails {
     volumeForceLevel?: number;
     postMood?: string;
     fatigue?: string;
-    quickLog?: boolean;
+    postFatigue?: string;
     location?: string;
 }
 
+export type SexActionType = 'act' | 'position';
+
 export interface SexAction {
     id: string;
-    type: 'act' | 'position';
+    type: SexActionType;
     name: string;
 }
-
-export type SexActionType = 'act' | 'position';
 
 export interface SexInteraction {
     id: string;
@@ -196,15 +182,12 @@ export interface SexInteraction {
 
 export interface SexRecordDetails {
     id: string;
-    startTime?: string;
-    interactions: SexInteraction[];
-    partner?: string; // Legacy
-    location?: string; // Legacy
-    acts?: string[]; // Legacy
-    positions?: string[]; // Legacy
+    startTime: string;
     duration: number;
+    partner?: string;
+    location?: string;
     protection: string;
-    state: string;
+    state?: string;
     indicators: {
         lingerie: boolean;
         orgasm: boolean;
@@ -214,62 +197,95 @@ export interface SexRecordDetails {
     };
     ejaculation: boolean;
     ejaculationLocation?: string;
-    semenSwallowed: boolean;
-    postSexActivity: string[];
+    semenSwallowed?: boolean;
+    postSexActivity?: string[];
     partnerScore?: number;
-    mood: Mood | string;
-    notes: string;
+    mood: 'happy' | 'neutral' | 'sad' | 'excited' | 'anxious' | 'angry';
+    notes?: string;
+    interactions: SexInteraction[];
+    acts?: string[]; // Legacy
+    positions?: string[]; // Legacy
 }
+
+export interface ChangeDetail {
+    field: string;
+    oldValue: string | null | undefined;
+    newValue: string | null | undefined;
+    category: HistoryCategory | 'meta';
+}
+
+export type HistoryEventType = 'manual' | 'quick' | 'auto';
+
+export interface ChangeRecord {
+    timestamp: number;
+    summary: string;
+    details?: ChangeDetail[];
+    type: HistoryEventType;
+}
+
+export type Weather = 'sunny' | 'cloudy' | 'rainy' | 'snowy' | 'windy' | 'foggy';
+export type Location = 'home' | 'partner' | 'hotel' | 'travel' | 'other';
+export type Mood = 'happy' | 'excited' | 'neutral' | 'anxious' | 'sad' | 'angry';
+export type StressLevel = 1 | 2 | 3 | 4 | 5;
+export type AlcoholConsumption = 'none' | 'low' | 'medium' | 'high';
+export type PornConsumption = 'none' | 'low' | 'medium' | 'high';
+export type ExerciseIntensity = 'low' | 'medium' | 'high';
+export type SexQuality = 1 | 2 | 3 | 4 | 5;
+export type HistoryCategory = 'sex' | 'masturbation' | 'exercise' | 'sleep' | 'morning' | 'lifestyle' | 'health' | 'nap' | 'system';
 
 export interface CaffeineItem {
     id: string;
     name: string;
+    volume: number;
     time: string;
     count: number;
-    volume: number;
-    category?: string;
     isCustom?: boolean;
-    mg?: number; // Legacy migration
-}
-
-export interface CaffeineRecord {
-    totalCount: number;
-    items: CaffeineItem[];
-    totalMg?: number; // Legacy migration
 }
 
 export interface LogEntry {
     date: string;
-    status: 'pending' | 'completed';
+    status: 'completed' | 'pending';
     updatedAt: number;
     morning?: MorningRecord;
     sleep?: SleepRecord;
-    weather?: Weather | null;
     location?: Location | null;
+    weather?: Weather | null;
     mood?: Mood | null;
     stressLevel?: StressLevel | null;
     alcohol?: AlcoholConsumption | null;
+    alcoholRecords: AlcoholRecord[];
     pornConsumption?: PornConsumption | null;
-    caffeineIntake?: 'none' | 'low' | 'medium' | 'high' | null;
-    dailyEvents: string[];
+    caffeineIntake?: string | null;
+    caffeineRecord?: {
+        totalCount: number;
+        items: CaffeineItem[];
+    };
+    dailyEvents?: string[];
     tags: string[];
-    notes: string | null;
+    notes?: string | null;
     exercise: ExerciseRecord[];
     sex: SexRecordDetails[];
     masturbation: MasturbationRecordDetails[];
-    caffeineRecord?: CaffeineRecord;
-    alcoholRecords: AlcoholRecord[];
     health?: Health;
     changeHistory: ChangeRecord[];
-    alcoholRecord?: AlcoholRecord | null; // Legacy field for migration
+}
+
+export interface AppSettings {
+    version: string;
+    theme: 'system' | 'light' | 'dark';
+    privacyMode: boolean;
+    enableNotifications: boolean;
+    notificationTime: { morning: string; evening: string };
+    hiddenFields: string[];
+    lastExportAt?: number;
 }
 
 export interface PartnerProfile {
     id: string;
     name: string;
     avatarColor?: string;
-    type: PartnerType;
-    isMarried: boolean;
+    type?: PartnerType;
+    isMarried?: boolean;
     age?: number;
     height?: number;
     weight?: number;
@@ -283,9 +299,8 @@ export interface PartnerProfile {
     likedPositions: string[];
     dislikedActs: string[];
     socialTags: string[];
-    smoking: 'none' | 'occasional' | 'frequent';
-    alcohol: 'none' | 'occasional' | 'frequent';
-    milestones: Record<string, string>;
+    smoking?: 'none' | 'occasional' | 'frequent';
+    alcohol?: 'none' | 'occasional' | 'frequent';
     deepThroatLevel?: 0 | 1 | 2 | 3;
     orgasmDifficulty?: 'easy' | 'medium' | 'hard';
     analDeveloped?: boolean;
@@ -293,8 +308,10 @@ export interface PartnerProfile {
     primaryValues?: string;
     petPeeves?: string;
     notes?: string;
-    occupation?: string;
+    milestones: Record<string, string>;
 }
+
+export type PartnerType = 'stable' | 'dating' | 'casual' | 'service';
 
 export interface Snapshot {
     id?: number;
@@ -305,6 +322,7 @@ export interface Snapshot {
     data: {
         logs: LogEntry[];
         partners: PartnerProfile[];
+        tags?: TagEntry[];
     };
 }
 
@@ -313,15 +331,12 @@ export interface StoredData {
     logs: LogEntry[];
 }
 
-export interface AppSettings {
-    version: string;
-    theme: 'system' | 'light' | 'dark';
-    privacyMode: boolean;
-    enableNotifications: boolean;
-    notificationTime: { morning: string; evening: string };
-    hiddenFields: string[];
-    lastExportAt?: number;
+export interface BackupState {
+    lastBackupAt?: number;
+    isAutoBackupEnabled: boolean;
 }
+
+export type EventType = 'morning_wood' | 'sleep' | 'alcohol' | 'exercise' | 'sex' | 'masturbation' | 'stress' | 'health';
 
 export interface UnifiedEvent {
     schemaVersion: number;
@@ -334,7 +349,6 @@ export interface UnifiedEvent {
         intensity?: number;
         duration?: number;
         amount?: number;
-        [key: string]: any;
     };
     flags: {
         isGood?: boolean;
@@ -342,13 +356,14 @@ export interface UnifiedEvent {
         withPartner?: boolean;
         orgasm?: boolean;
         ejaculation?: boolean;
-        [key: string]: any;
     };
     tags: string[];
     refId?: string;
 }
 
-export interface BackupState {
-    lastBackup?: number;
-    isAutoBackupEnabled: boolean;
+export interface ExerciseFeeling {
+    value: 'great' | 'ok' | 'tired' | 'bad';
+    label: string;
+    icon: any;
+    color: string;
 }
