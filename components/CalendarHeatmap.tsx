@@ -141,7 +141,8 @@ const CalendarHeatmap: React.FC<ActivityCalendarProps> = ({ logs, onDateClick, c
                 sex: !!(log?.sex && log.sex.length > 0),
                 masturbation: !!(log?.masturbation && log.masturbation.length > 0),
                 sick: !!log?.health?.isSick,
-                alcohol: !!(log?.alcohol && log.alcohol !== 'none') || !!(log?.alcoholRecord && log.alcoholRecord.totalGrams > 0),
+                /* Fix: Check alcoholRecords array for filtering instead of using non-existent alcoholRecord property */
+                alcohol: !!(log?.alcohol && log.alcohol !== 'none') || !!(log?.alcoholRecords && log.alcoholRecords.length > 0),
                 porn: !!(log?.pornConsumption && log.pornConsumption !== 'none'),
                 exercise: !!(log?.exercise && log.exercise.length > 0),
                 stress: (log?.stressLevel || 0) >= 4,

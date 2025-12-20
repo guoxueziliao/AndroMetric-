@@ -101,7 +101,9 @@ const detectAnomalies = (logs: LogEntry[]): Insight[] => {
             (prev.morning.hardness - curr.morning.hardness) >= 2) {
             
             const causes = [];
-            if (prev.alcoholRecord && prev.alcoholRecord.totalGrams > 40) causes.push(`饮酒 ${prev.alcoholRecord.totalGrams}g`);
+            /* Fix: Sum up grams from alcoholRecords instead of using non-existent alcoholRecord property */
+            const totalAlc = prev.alcoholRecords?.reduce((acc, r) => acc + r.totalGrams, 0) || 0;
+            if (totalAlc > 40) causes.push(`饮酒 ${totalAlc}g`);
             if (prev.stressLevel && prev.stressLevel >= 4) causes.push(`高压状态`);
             
             const sleepAnalysis = analyzeSleep(curr.sleep?.startTime, curr.sleep?.endTime);

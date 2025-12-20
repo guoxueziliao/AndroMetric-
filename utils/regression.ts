@@ -144,7 +144,8 @@ export const performRegression = (logs: LogEntry[], daysWindow: number | 'all'):
         const sleepHours = sleepAnalysis ? sleepAnalysis.durationHours : 7; // Impute avg if missing? Better to skip? Let's skip if critical data missing.
         
         // Predictors from Day T (Lifestyle)
-        const alcoholGrams = predLog.alcoholRecord?.totalGrams || 0;
+        /* Fix: Access total alcohol consumption from alcoholRecords array */
+        const alcoholGrams = predLog.alcoholRecords?.reduce((acc, r) => acc + r.totalGrams, 0) || 0;
         const exerciseMins = predLog.exercise ? predLog.exercise.reduce((acc, e) => acc + (e.duration || 0), 0) : 0;
         const mbCount = predLog.masturbation ? predLog.masturbation.length : 0;
         const stress = predLog.stressLevel || 2; // Default to low stress

@@ -211,7 +211,7 @@ export interface ChangeDetail {
     field: string;
     oldValue: string | null | undefined;
     newValue: string | null | undefined;
-    category: HistoryCategory | 'meta';
+    category: HistoryCategory;
 }
 
 export type HistoryEventType = 'manual' | 'quick' | 'auto';
@@ -231,7 +231,8 @@ export type AlcoholConsumption = 'none' | 'low' | 'medium' | 'high';
 export type PornConsumption = 'none' | 'low' | 'medium' | 'high';
 export type ExerciseIntensity = 'low' | 'medium' | 'high';
 export type SexQuality = 1 | 2 | 3 | 4 | 5;
-export type HistoryCategory = 'sex' | 'masturbation' | 'exercise' | 'sleep' | 'morning' | 'lifestyle' | 'health' | 'nap' | 'system';
+// Added 'meta' to HistoryCategory
+export type HistoryCategory = 'sex' | 'masturbation' | 'exercise' | 'sleep' | 'morning' | 'lifestyle' | 'health' | 'nap' | 'system' | 'meta';
 
 export interface CaffeineItem {
     id: string;
@@ -291,6 +292,8 @@ export interface PartnerProfile {
     weight?: number;
     cupSize?: string;
     origin?: string;
+    // Added occupation field
+    occupation?: string;
     firstEncounterDate?: string;
     contrastDaily?: string;
     contrastBedroom?: string;

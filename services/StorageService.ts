@@ -121,7 +121,8 @@ export const StorageService = {
      * Clears all data from IndexedDB.
      */
     async clearAllData(): Promise<void> {
-        await db.transaction('rw', db.logs, db.partners, db.meta, db.system_logs, db.snapshots, db.tags, async () => {
+        /* Fix: Group tables into an array to stay within the transaction argument limit */
+        await db.transaction('rw', [db.logs, db.partners, db.meta, db.system_logs, db.snapshots, db.tags], async () => {
             await Promise.all([
                 db.logs.clear(),
                 db.partners.clear(),

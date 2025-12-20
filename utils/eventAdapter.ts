@@ -61,14 +61,19 @@ export const flattenLogsToEvents = (logs: LogEntry[]): UnifiedEvent[] => {
         }
 
         // 3. Alcohol Event
-        if (log.alcoholRecord && log.alcoholRecord.totalGrams > 0) {
+        /* Fix: Aggregate metrics from alcoholRecords array instead of using non-existent single record property */
+        if (log.alcoholRecords && log.alcoholRecords.length > 0) {
+            const totalGrams = log.alcoholRecords.reduce((acc, r) => acc + r.totalGrams, 0);
+            const totalDuration = log.alcoholRecords.reduce((acc, r) => acc + r.durationMinutes, 0);
+            const isAnyLate = log.alcoholRecords.some(r => r.isLate);
+            
             events.push(createEvent(
                 'alcohol',
                 log.date,
                 dateBase,
-                { amount: log.alcoholRecord.totalGrams, duration: log.alcoholRecord.durationMinutes },
-                { isLate: log.alcoholRecord.isLate },
-                log.alcoholRecord.items.map(i => i.name)
+                { amount: totalGrams, duration: totalDuration },
+                { isLate: isAnyLate },
+                log.alcoholRecords.flatMap(r => r.items.map(i => i.name))
             ));
         } else if (log.alcohol && log.alcohol !== 'none') {
             const approxGrams = log.alcohol === 'high' ? 60 : log.alcohol === 'medium' ? 30 : 10;

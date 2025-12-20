@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useMemo, useEffect, Suspense, lazy } from 'react';
 import { LogEntry, AppSettings, ExerciseRecord, MasturbationRecordDetails, NapRecord, AlcoholRecord } from './types';
 import Dashboard from './components/Dashboard';
@@ -88,7 +89,8 @@ const AppContent: React.FC<{ data: any }> = ({ data }) => {
   const ongoingExercise = useMemo(() => safeLogs.flatMap((l: LogEntry) => l.exercise || []).find((e: ExerciseRecord) => e.ongoing), [safeLogs]);
   const ongoingNap = useMemo(() => safeLogs.flatMap((l: LogEntry) => l.sleep?.naps || []).find((n: any) => n.ongoing), [safeLogs]);
   const ongoingMb = useMemo(() => safeLogs.flatMap((l: LogEntry) => l.masturbation || []).find((m: MasturbationRecordDetails) => m.status === 'inProgress'), [safeLogs]);
-  const ongoingAlcohol = useMemo(() => safeLogs.find((l: LogEntry) => l.alcoholRecord?.ongoing)?.alcoholRecord, [safeLogs]);
+  /* Fix: Use alcoholRecords array to check for ongoing sessions instead of the non-existent alcoholRecord property */
+  const ongoingAlcohol = useMemo(() => safeLogs.find((l: LogEntry) => l.alcoholRecords?.some(r => r.ongoing))?.alcoholRecords?.find((r: AlcoholRecord) => r.ongoing), [safeLogs]);
 
   const editingLog = useMemo(() => editingLogDate ? safeLogs.find((log: LogEntry) => log.date === editingLogDate) || null : null, [safeLogs, editingLogDate]);
 
@@ -213,7 +215,7 @@ const AppContent: React.FC<{ data: any }> = ({ data }) => {
           startTime: new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
           duration: 0, status: 'inProgress', tools: ['手'], contentItems: [],
           materials: [], props: [], assets: { sources: [], platforms: [], categories: [], target: '', actors: [] },
-          materialsList: [], edging: 'none', edgingCount: 0, lubricant: '', useCondom: false,
+          materialsList: [], edging: 'none', edgingCount: 0, lubricant: '无润滑', useCondom: false,
           ejaculation: true, orgasmIntensity: 3, mood: 'neutral', stressLevel: 3, energyLevel: 3, interrupted: false, interruptionReasons: [], notes: ''
       };
       wrapAction(async () => { await quickAddMasturbation(newRecord); }, '开始施法 (已记录开始时间)');

@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { X, Search, ChevronDown, ChevronUp, Check, Dumbbell, Clock, Activity, PenLine, Play, Flag, Footprints, Smile, Frown, Meh, Zap, Timer, TrendingUp, Sparkles, Target, Flame, HeartPulse } from 'lucide-react';
 import Modal from './Modal';
@@ -22,7 +23,8 @@ const INTENSITY_OPTS: { value: ExerciseIntensity, label: string, desc: string }[
     {value: 'medium', label: '中度', desc: '微微出汗'}, 
     {value: 'high', label: '高强', desc: '竭尽全力'}
 ];
-const FEELING_OPTS: { value: ExerciseFeeling, label: string, icon: React.ElementType, color: string }[] = [
+/* Fix: Explicitly type value as the string literal union to satisfy ExerciseRecord['feeling'] type requirement */
+const FEELING_OPTS: { value: 'great' | 'ok' | 'tired' | 'bad', label: string, icon: React.ElementType, color: string }[] = [
     { value: 'great', label: '状态极佳', icon: Zap, color: 'text-yellow-500' },
     { value: 'ok', label: '还算不错', icon: Smile, color: 'text-green-500' },
     { value: 'tired', label: '有点累了', icon: Meh, color: 'text-orange-500' },

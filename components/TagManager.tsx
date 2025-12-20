@@ -37,20 +37,21 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
     const [newTagName, setNewTagName] = useState('');
     
     const [isCreating, setIsCreating] = useState(false);
-    const [createInput, setCreateInput] = useState(initialSearch);
+    const [createInput, setCreateInput] = useState('');
     const [selectedXpDim, setSelectedXpDim] = useState<string | null>(null);
 
     const scrollContainerRef = useRef<HTMLDivElement>(null);
 
+    // 当打开或 Tab 切换时处理初始化逻辑
     useEffect(() => {
         if (isOpen) {
-            setActiveTab(defaultTab as any);
             setSearchTerm(initialSearch);
-            setCreateInput(initialSearch);
             setIsCreating(false);
+            setCreateInput('');
             setSelectedXpDim(null);
+            setEditingTag(null);
         }
-    }, [isOpen, defaultTab, initialSearch]);
+    }, [isOpen, activeTab]);
 
     const tagsUsageMap = useMemo(() => {
         const usage: Record<string, number> = {};
@@ -58,7 +59,6 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
             log.masturbation?.forEach(m => {
                 const tags = Array.from(new Set(m.contentItems?.flatMap(ci => ci.xpTags || []) || []));
                 tags.forEach(c => usage[c] = (usage[c] || 0) + 1);
-                // Legacy support
                 const legacyTags = Array.from(new Set(m.assets?.categories || []));
                 legacyTags.forEach(c => usage[c] = (usage[c] || 0) + 1);
             });
@@ -72,35 +72,34 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
         const tagStr = createInput.trim();
         if (!tagStr) return;
 
+        const currentType = activeTab === 'health_check' ? 'xp' : (activeTab as TagType);
+
         if (activeTab === 'xp' && !selectedXpDim) {
             showToast('请先选择一个维度类别', 'error');
             return;
         }
 
-        const res = validateTag(tagStr, activeTab === 'health_check' ? 'xp' : (activeTab as TagType));
+        const res = validateTag(tagStr, currentType);
         if (res.level === 'P0') {
             showToast(`禁止创建: ${res.message}`, 'error');
             return;
         }
 
-        if (activeTab === 'xp' && selectedXpDim) {
-            await addOrUpdateTag({
-                name: tagStr,
-                category: 'xp',
-                dimension: selectedXpDim,
-                createdAt: Date.now()
-            });
-        }
-        // 对于 Event 和 Symptom，目前逻辑是直接允许选择系统预设或在 LogForm 中动态生成
-        // 如果需要统一管理，也可以在此处 addOrUpdateTag
+        await addOrUpdateTag({
+            name: tagStr,
+            category: currentType,
+            dimension: activeTab === 'xp' ? selectedXpDim! : undefined,
+            createdAt: Date.now()
+        });
 
         if (onSelectTag) {
             onSelectTag(tagStr);
             onClose();
         } else {
-            showToast(`已添加标签 "${tagStr}"`, 'success');
+            showToast(`已添加${activeTab === 'xp' ? '题材' : activeTab === 'event' ? '事件' : '症状'}标签 "${tagStr}"`, 'success');
             setSearchTerm(tagStr);
             setIsCreating(false);
+            setCreateInput('');
             setSelectedXpDim(null);
         }
     };
@@ -110,25 +109,19 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
             setEditingTag(null);
             return;
         }
-
         const oldName = editingTag;
         const newName = newTagName.trim();
-        
-        // 查找旧标签以获取维度
         const oldTag = userTags.find(t => t.name === oldName && t.category === activeTab);
         if (oldTag) {
             await deleteTag(oldName, activeTab as TagType);
             await addOrUpdateTag({ ...oldTag, name: newName });
         }
-
-        // 全量更新 Log 中的引用
         for (const log of logs) {
             let modified = false;
             let newLog = { ...log };
             if (activeTab === 'xp' && newLog.masturbation) {
                 newLog.masturbation = newLog.masturbation.map(m => {
                     let mMod = false;
-                    // 更新素材标签
                     if (m.contentItems) {
                         m.contentItems = m.contentItems.map(ci => {
                             if (ci.xpTags?.includes(oldName)) {
@@ -138,7 +131,6 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
                             return ci;
                         });
                     }
-                    // 更新旧版素材分类
                     if (m.assets?.categories?.includes(oldName)) {
                         m.assets.categories = Array.from(new Set(m.assets.categories.map(c => c === oldName ? newName : c)));
                         mMod = true;
@@ -147,20 +139,15 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
                     return m;
                 });
             }
-            if (modified) {
-                await addOrUpdateLog(newLog);
-            }
+            if (modified) await addOrUpdateLog(newLog);
         }
-
         showToast('标签已重命名', 'success');
         setEditingTag(null);
     };
 
     const handleDelete = async (tag: string) => {
         if (!confirm(`确定删除 "${tag}" 吗？此操作会从所有记录中移除它。`)) return;
-        
         await deleteTag(tag, activeTab as TagType);
-
         for (const log of logs) {
             let modified = false;
             let newLog = { ...log };
@@ -191,9 +178,7 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
 
     const scrollToDimension = (dimId: string) => {
         const element = document.getElementById(`dim-header-${dimId}`);
-        if (element) {
-            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
+        if (element) element.scrollIntoView({ behavior: 'smooth', block: 'start' });
     };
 
     const renderTagItem = (tag: string, count: number) => (
@@ -219,56 +204,70 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
         </div>
     );
 
+    const getSearchPlaceholder = () => {
+        switch(activeTab) {
+            case 'xp': return '搜索题材 / XP 标签...';
+            case 'event': return '搜索日常事件标签...';
+            case 'symptom': return '搜索不适症状标签...';
+            default: return '搜索...';
+        }
+    };
+
     return (
         <Modal isOpen={isOpen} onClose={onClose} title={onSelectTag ? "选择或创建标签" : "标签管理"}>
             <div className="h-[75vh] flex flex-col -mt-2">
                 {/* Tab Switcher */}
                 <div className="flex bg-slate-100 dark:bg-slate-800/50 p-1 rounded-xl mb-3 border border-slate-200 dark:border-slate-800 shrink-0">
-                    <button onClick={() => {setActiveTab('xp'); setSearchTerm('');}} className={`flex-1 py-2 text-xs font-bold rounded-lg flex items-center justify-center gap-2 ${activeTab === 'xp' ? 'bg-white dark:bg-slate-700 shadow-sm text-brand-accent' : 'text-slate-400'}`}><TagIcon size={14} /> 题材/XP</button>
-                    <button onClick={() => {setActiveTab('event'); setSearchTerm('');}} className={`flex-1 py-2 text-xs font-bold rounded-lg flex items-center justify-center gap-2 ${activeTab === 'event' ? 'bg-white dark:bg-slate-700 shadow-sm text-brand-accent' : 'text-slate-400'}`}><Activity size={14} /> 事件</button>
-                    <button onClick={() => {setActiveTab('symptom'); setSearchTerm('');}} className={`flex-1 py-2 text-xs font-bold rounded-lg flex items-center justify-center gap-2 ${activeTab === 'symptom' ? 'bg-white dark:bg-slate-700 shadow-sm text-brand-accent' : 'text-slate-400'}`}><ShieldAlert size={14} /> 症状</button>
-                    <button onClick={() => {setActiveTab('health_check'); setSearchTerm('');}} className={`flex-1 py-2 text-xs font-bold rounded-lg flex items-center justify-center gap-2 ${activeTab === 'health_check' ? 'bg-white dark:bg-slate-700 shadow-sm text-brand-accent' : 'text-slate-400'}`}><Stethoscope size={14} /> 体检</button>
+                    <button onClick={() => setActiveTab('xp')} className={`flex-1 py-2 text-xs font-bold rounded-lg flex items-center justify-center gap-2 transition-all ${activeTab === 'xp' ? 'bg-white dark:bg-slate-700 shadow-sm text-brand-accent' : 'text-slate-400'}`}><TagIcon size={14} /> 题材/XP</button>
+                    <button onClick={() => setActiveTab('event')} className={`flex-1 py-2 text-xs font-bold rounded-lg flex items-center justify-center gap-2 transition-all ${activeTab === 'event' ? 'bg-white dark:bg-slate-700 shadow-sm text-brand-accent' : 'text-slate-400'}`}><Activity size={14} /> 事件</button>
+                    <button onClick={() => setActiveTab('symptom')} className={`flex-1 py-2 text-xs font-bold rounded-lg flex items-center justify-center gap-2 transition-all ${activeTab === 'symptom' ? 'bg-white dark:bg-slate-700 shadow-sm text-brand-accent' : 'text-slate-400'}`}><ShieldAlert size={14} /> 症状</button>
+                    <button onClick={() => setActiveTab('health_check')} className={`flex-1 py-2 text-xs font-bold rounded-lg flex items-center justify-center gap-2 transition-all ${activeTab === 'health_check' ? 'bg-white dark:bg-slate-700 shadow-sm text-brand-accent' : 'text-slate-400'}`}><Stethoscope size={14} /> 体检</button>
                 </div>
 
-                {/* Search & Create Area */}
-                <div className="mb-3 shrink-0">
-                    {isCreating ? (
-                        <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-2xl border border-blue-100 dark:border-blue-800/50 animate-in fade-in">
-                            {activeTab === 'xp' && (
-                                <div className="mb-4">
-                                    <label className="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-2 block">1. 选择归属维度</label>
-                                    <div className="grid grid-cols-3 gap-2">
-                                        {XP_DIMENSIONS.map(dim => (
-                                            <button 
-                                                key={dim.id} 
-                                                onClick={() => setSelectedXpDim(dim.id)}
-                                                className={`flex items-center gap-1.5 p-2 rounded-xl border-2 transition-all ${selectedXpDim === dim.id ? 'border-blue-500 bg-white dark:bg-slate-800 shadow-sm' : 'border-transparent bg-slate-100/50 dark:bg-slate-900/50 opacity-60'}`}
-                                            >
-                                                <dim.icon size={12} className={dim.color}/>
-                                                <span className="text-[10px] font-black text-slate-700 dark:text-slate-200">{dim.id}</span>
-                                            </button>
-                                        ))}
+                {/* Search & Create Area - Hidden in Health Check */}
+                {activeTab !== 'health_check' && (
+                    <div className="mb-3 shrink-0">
+                        {isCreating ? (
+                            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-2xl border border-blue-100 dark:border-blue-800/50 animate-in fade-in">
+                                {activeTab === 'xp' && (
+                                    <div className="mb-4">
+                                        <label className="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-2 block">1. 选择归属维度</label>
+                                        <div className="grid grid-cols-3 gap-2">
+                                            {XP_DIMENSIONS.map(dim => (
+                                                <button 
+                                                    key={dim.id} 
+                                                    onClick={() => setSelectedXpDim(dim.id)}
+                                                    className={`flex items-center gap-1.5 p-2 rounded-xl border-2 transition-all ${selectedXpDim === dim.id ? 'border-blue-500 bg-white dark:bg-slate-800 shadow-sm' : 'border-transparent bg-slate-100/50 dark:bg-slate-900/50 opacity-60'}`}
+                                                >
+                                                    <dim.icon size={12} className={dim.color}/>
+                                                    <span className="text-[10px] font-black text-slate-700 dark:text-slate-200">{dim.id}</span>
+                                                </button>
+                                            ))}
+                                        </div>
                                     </div>
+                                )}
+                                <div className="flex items-center justify-between mb-2">
+                                    <label className="text-[10px] font-black text-blue-500 uppercase tracking-widest block">{activeTab === 'xp' ? '2. 输入标签名称' : '输入标签名称'}</label>
+                                    <button onClick={() => setIsCreating(false)} className="text-[10px] text-slate-400 hover:text-slate-600">取消</button>
                                 </div>
-                            )}
-                            <label className="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-2 block">{activeTab === 'xp' ? '2. 输入标签名称' : '输入标签名称'}</label>
-                            <div className="flex gap-2">
-                                <input autoFocus className="flex-1 bg-white dark:bg-slate-900 border border-blue-200 dark:border-blue-800 rounded-xl px-4 py-2.5 text-sm font-bold outline-none focus:border-blue-500" value={createInput} onChange={e => setCreateInput(e.target.value)} placeholder="名称..." onKeyDown={e => e.key === 'Enter' && handleCreate()}/>
-                                <button onClick={handleCreate} className="px-5 bg-blue-500 text-white rounded-xl font-black text-xs shadow-lg shadow-blue-500/20">确认</button>
+                                <div className="flex gap-2">
+                                    <input autoFocus className="flex-1 bg-white dark:bg-slate-900 border border-blue-200 dark:border-blue-800 rounded-xl px-4 py-2.5 text-sm font-bold outline-none focus:border-blue-500" value={createInput} onChange={e => setCreateInput(e.target.value)} placeholder="标签名..." onKeyDown={e => e.key === 'Enter' && handleCreate()}/>
+                                    <button onClick={handleCreate} className="px-5 bg-blue-500 text-white rounded-xl font-black text-xs shadow-lg shadow-blue-500/20">确认</button>
+                                </div>
                             </div>
-                        </div>
-                    ) : (
-                        <div className="flex gap-2">
-                            <div className="relative flex-1">
-                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                                <input className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl py-3 pl-11 pr-4 text-sm font-bold outline-none focus:ring-2 focus:ring-brand-accent/10" placeholder="搜索现有标签..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)}/>
+                        ) : (
+                            <div className="flex gap-2 animate-in slide-in-from-top-1">
+                                <div className="relative flex-1">
+                                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                                    <input className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl py-3 pl-11 pr-4 text-sm font-bold outline-none focus:ring-2 focus:ring-brand-accent/10" placeholder={getSearchPlaceholder()} value={searchTerm} onChange={e => setSearchTerm(e.target.value)}/>
+                                </div>
+                                <button onClick={() => setIsCreating(true)} className="px-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-brand-accent rounded-2xl shadow-sm active:scale-95 transition-all"><Plus size={24}/></button>
                             </div>
-                            <button onClick={() => setIsCreating(true)} className="px-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-brand-accent rounded-2xl shadow-sm active:scale-95 transition-all"><Plus size={24}/></button>
-                        </div>
-                    )}
-                </div>
+                        )}
+                    </div>
+                )}
 
-                {/* Dimension Navigation Bar (Active in XP tab) */}
+                {/* Dimension Navigation Bar - Specific to XP tab */}
                 {activeTab === 'xp' && !searchTerm && !isCreating && (
                     <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-3 mb-1 shrink-0 sticky top-0 bg-white dark:bg-[#0f172a] z-20">
                         {XP_DIMENSIONS.map(dim => (
@@ -295,8 +294,7 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
                     ) : activeTab === 'xp' ? (
                         <div className="space-y-8 pb-10">
                             {XP_DIMENSIONS.map(dim => {
-                                // 核心修改：仅显示数据库中存在的且被使用过的标签
-                                const dbInDim = userTags.filter(t => t.dimension === dim.id).map(t => t.name);
+                                const dbInDim = userTags.filter(t => t.dimension === dim.id && t.category === 'xp').map(t => t.name);
                                 const allInDim = Array.from(new Set(dbInDim))
                                     .filter(t => t.toLowerCase().includes(searchTerm.toLowerCase()))
                                     .sort((a,b) => (tagsUsageMap[b as string]||0) - (tagsUsageMap[a as string]||0));
@@ -304,7 +302,7 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
                                 if (allInDim.length === 0) {
                                     if (searchTerm) return null;
                                     return (
-                                        <div key={dim.id} id={`dim-section-${dim.id}`} className="py-4 text-center border border-dashed border-slate-100 dark:border-slate-800 rounded-2xl">
+                                        <div key={dim.id} id={`dim-section-${dim.id}`} className="py-4 text-center border border-dashed border-slate-100 dark:border-slate-800 rounded-2xl opacity-60">
                                             <span className="text-[10px] text-slate-300 font-bold uppercase tracking-widest">{dim.id} 维度暂无标签</span>
                                         </div>
                                     );
@@ -328,9 +326,17 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
                         </div>
                     ) : (
                         <div className="grid gap-2 pb-10">
-                            {(activeTab === 'event' ? [...SYSTEM_EVENTS] : [...SYSTEM_SYMPTOMS])
+                            {/* 系统内置 + 用户自定义 的 列表 */}
+                            {(activeTab === 'event' ? [...SYSTEM_EVENTS, ...userTags.filter(t => t.category === 'event').map(t => t.name)] : [...SYSTEM_SYMPTOMS, ...userTags.filter(t => t.category === 'symptom').map(t => t.name)])
+                                .filter((val, index, self) => self.indexOf(val) === index) // 去重
                                 .filter(t => t.toLowerCase().includes(searchTerm.toLowerCase()))
                                 .map(tag => renderTagItem(tag, tagsUsageMap[tag as string] || 0))}
+                            {/* 如果搜索结果为空且不在创建模式，提示点击加号 */}
+                            {searchTerm && !isCreating && (
+                                <div className="text-center py-8 text-slate-400 text-xs italic">
+                                    未找到匹配标签，点击右侧 "+" 创建
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>
