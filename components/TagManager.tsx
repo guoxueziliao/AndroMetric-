@@ -1,6 +1,7 @@
-import React, { useState, useMemo, useEffect } from 'react';
+
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { LogEntry } from '../types';
-import { Tag, Edit2, Trash2, X, Check, Activity, ShieldAlert, Stethoscope, Plus, Search, ChevronRight, ChevronDown, LayoutGrid, User, Zap, Sparkles, Shirt, Heart } from 'lucide-react';
+import { Tag, Edit2, Trash2, X, Check, Activity, ShieldAlert, Stethoscope, Plus, Search, ChevronRight, ChevronDown, LayoutGrid, User, Zap, Sparkles, Shirt, Heart, MousePointer2 } from 'lucide-react';
 import Modal from './Modal';
 import { useData } from '../contexts/DataContext';
 import { useToast } from '../contexts/ToastContext';
@@ -49,6 +50,8 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
     const [createInput, setCreateInput] = useState(initialSearch);
     const [selectedXpDim, setSelectedXpDim] = useState<string | null>(null);
 
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
+
     useEffect(() => {
         if (isOpen) {
             setActiveTab(defaultTab);
@@ -63,7 +66,8 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
         const usage: Record<string, number> = {};
         logs.forEach(log => {
             log.masturbation?.forEach(m => {
-                (m.assets?.categories || []).forEach(c => usage[c] = (usage[c] || 0) + 1);
+                const tags = Array.from(new Set(m.assets?.categories || []));
+                tags.forEach(c => usage[c] = (usage[c] || 0) + 1);
             });
             (log.dailyEvents || []).forEach(e => usage[e] = (usage[e] || 0) + 1);
             (log.health?.symptoms || []).forEach(s => usage[s] = (usage[s] || 0) + 1);
@@ -116,8 +120,7 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
 
         const oldName = editingTag;
         const newName = newTagName.trim();
-        let updateCount = 0;
-
+        
         // 更新持久化列表
         if (activeTab === 'xp') {
             setCustomXpTags(prev => {
@@ -143,7 +146,6 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
             }
             if (modified) {
                 await addOrUpdateLog(newLog);
-                updateCount++;
             }
         }
 
@@ -179,6 +181,13 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
         showToast('标签已移除', 'success');
     };
 
+    const scrollToDimension = (dimId: string) => {
+        const element = document.getElementById(`dim-header-${dimId}`);
+        if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    };
+
     const renderTagItem = (tag: string, count: number) => (
         <div key={tag} className="flex items-center justify-between p-3 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl group hover:border-brand-accent/50 transition-colors">
             {editingTag === tag ? (
@@ -204,15 +213,17 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} title={onSelectTag ? "选择或创建标签" : "标签管理"}>
-            <div className="h-[70vh] flex flex-col -mt-2">
-                <div className="flex bg-slate-100 dark:bg-slate-800/50 p-1 rounded-xl mb-4 border border-slate-200 dark:border-slate-800 shrink-0">
-                    <button onClick={() => setActiveTab('xp')} className={`flex-1 py-2 text-xs font-bold rounded-lg flex items-center justify-center gap-2 ${activeTab === 'xp' ? 'bg-white dark:bg-slate-700 shadow-sm text-brand-accent' : 'text-slate-400'}`}><Tag size={14} /> 题材/XP</button>
-                    <button onClick={() => setActiveTab('event')} className={`flex-1 py-2 text-xs font-bold rounded-lg flex items-center justify-center gap-2 ${activeTab === 'event' ? 'bg-white dark:bg-slate-700 shadow-sm text-brand-accent' : 'text-slate-400'}`}><Activity size={14} /> 事件</button>
-                    <button onClick={() => setActiveTab('symptom')} className={`flex-1 py-2 text-xs font-bold rounded-lg flex items-center justify-center gap-2 ${activeTab === 'symptom' ? 'bg-white dark:bg-slate-700 shadow-sm text-brand-accent' : 'text-slate-400'}`}><ShieldAlert size={14} /> 症状</button>
-                    <button onClick={() => setActiveTab('health_check')} className={`flex-1 py-2 text-xs font-bold rounded-lg flex items-center justify-center gap-2 ${activeTab === 'health_check' ? 'bg-white dark:bg-slate-700 shadow-sm text-brand-accent' : 'text-slate-400'}`}><Stethoscope size={14} /> 体检</button>
+            <div className="h-[75vh] flex flex-col -mt-2">
+                {/* Tab Switcher */}
+                <div className="flex bg-slate-100 dark:bg-slate-800/50 p-1 rounded-xl mb-3 border border-slate-200 dark:border-slate-800 shrink-0">
+                    <button onClick={() => {setActiveTab('xp'); setSearchTerm('');}} className={`flex-1 py-2 text-xs font-bold rounded-lg flex items-center justify-center gap-2 ${activeTab === 'xp' ? 'bg-white dark:bg-slate-700 shadow-sm text-brand-accent' : 'text-slate-400'}`}><Tag size={14} /> 题材/XP</button>
+                    <button onClick={() => {setActiveTab('event'); setSearchTerm('');}} className={`flex-1 py-2 text-xs font-bold rounded-lg flex items-center justify-center gap-2 ${activeTab === 'event' ? 'bg-white dark:bg-slate-700 shadow-sm text-brand-accent' : 'text-slate-400'}`}><Activity size={14} /> 事件</button>
+                    <button onClick={() => {setActiveTab('symptom'); setSearchTerm('');}} className={`flex-1 py-2 text-xs font-bold rounded-lg flex items-center justify-center gap-2 ${activeTab === 'symptom' ? 'bg-white dark:bg-slate-700 shadow-sm text-brand-accent' : 'text-slate-400'}`}><ShieldAlert size={14} /> 症状</button>
+                    <button onClick={() => {setActiveTab('health_check'); setSearchTerm('');}} className={`flex-1 py-2 text-xs font-bold rounded-lg flex items-center justify-center gap-2 ${activeTab === 'health_check' ? 'bg-white dark:bg-slate-700 shadow-sm text-brand-accent' : 'text-slate-400'}`}><Stethoscope size={14} /> 体检</button>
                 </div>
 
-                <div className="mb-4 shrink-0">
+                {/* Search & Create Area */}
+                <div className="mb-3 shrink-0">
                     {isCreating ? (
                         <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-2xl border border-blue-100 dark:border-blue-800/50 animate-in fade-in">
                             {activeTab === 'xp' && (
@@ -249,11 +260,32 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
                     )}
                 </div>
 
-                <div className="flex-1 overflow-y-auto custom-scrollbar pr-1">
+                {/* Dimension Navigation Bar (Active in XP tab) */}
+                {activeTab === 'xp' && !searchTerm && !isCreating && (
+                    <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-3 mb-1 shrink-0 sticky top-0 bg-white dark:bg-[#0f172a] z-20">
+                        {XP_DIMENSIONS.map(dim => (
+                            <button 
+                                key={dim.id} 
+                                onClick={() => scrollToDimension(dim.id)}
+                                className={`flex items-center gap-1.5 px-3 py-2 rounded-full border border-slate-100 dark:border-slate-800 shadow-sm transition-all active:scale-95 whitespace-nowrap bg-white dark:bg-slate-800`}
+                            >
+                                <div className={`p-1 rounded-md ${dim.bg} ${dim.color}`}><dim.icon size={12}/></div>
+                                <span className="text-[10px] font-black text-slate-600 dark:text-slate-300">{dim.id}</span>
+                            </button>
+                        ))}
+                    </div>
+                )}
+
+                {/* Content Area */}
+                <div 
+                    className="flex-1 overflow-y-auto custom-scrollbar pr-1 pb-10" 
+                    ref={scrollContainerRef}
+                    style={{ scrollPaddingTop: '50px' }}
+                >
                     {activeTab === 'health_check' ? (
                         <TagHealthCheck logs={logs} onNavigateToTag={(t, ty) => { setActiveTab(ty); setSearchTerm(t); }} />
                     ) : activeTab === 'xp' ? (
-                        <div className="space-y-6 pb-6">
+                        <div className="space-y-8 pb-10">
                             {XP_DIMENSIONS.map(dim => {
                                 const systemTags = XP_GROUPS[dim.id] || [];
                                 const userTags = customXpTags[dim.id] || [];
@@ -264,13 +296,13 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
                                 if (allInDim.length === 0 && searchTerm) return null;
 
                                 return (
-                                    <div key={dim.id} className="space-y-3">
-                                        <div className="flex items-center justify-between sticky top-0 bg-brand-bg dark:bg-slate-950 z-10 py-1">
+                                    <div key={dim.id} className="space-y-3" id={`dim-section-${dim.id}`}>
+                                        <div className="flex items-center justify-between sticky top-0 bg-white/80 dark:bg-[#0f172a]/80 backdrop-blur-md z-10 py-2 border-b border-slate-50 dark:border-slate-800/50" id={`dim-header-${dim.id}`}>
                                             <div className="flex items-center gap-2">
                                                 <div className={`p-1.5 rounded-lg ${dim.bg} ${dim.color}`}><dim.icon size={14}/></div>
-                                                <h4 className="text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest">{dim.id}</h4>
+                                                <h4 className="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-widest">{dim.id}</h4>
                                             </div>
-                                            <span className="text-[10px] font-bold text-slate-400">{allInDim.length}个</span>
+                                            <span className="text-[10px] font-black text-slate-400 bg-slate-50 dark:bg-slate-800 px-2 py-0.5 rounded-full">{allInDim.length}</span>
                                         </div>
                                         <div className="grid gap-2">
                                             {allInDim.map(tag => renderTagItem(tag, tagsUsageMap[tag] || 0))}
@@ -280,7 +312,7 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
                             })}
                         </div>
                     ) : (
-                        <div className="grid gap-2 pb-6">
+                        <div className="grid gap-2 pb-10">
                             {(activeTab === 'event' ? [...SYSTEM_EVENTS, ...customEventTags] : [...SYSTEM_SYMPTOMS, ...customSymptomTags])
                                 .filter(t => t.toLowerCase().includes(searchTerm.toLowerCase()))
                                 .map(tag => renderTagItem(tag, tagsUsageMap[tag] || 0))}
