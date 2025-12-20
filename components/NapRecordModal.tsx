@@ -67,9 +67,7 @@ const NapRecordModal: React.FC<NapRecordModalProps> = ({ isOpen, onClose, onSave
                 let initialDuration = initialData.duration || 0;
 
                 if (initialData.ongoing) {
-                    // 如果是进行中的任务，结束时间默认为现在
                     initialEndTime = nowStr;
-                    // 重新计算时长
                     if (initialData.startTime) {
                         const [h1, m1] = initialData.startTime.split(':').map(Number);
                         const [h2, m2] = nowStr.split(':').map(Number);
@@ -100,14 +98,24 @@ const NapRecordModal: React.FC<NapRecordModalProps> = ({ isOpen, onClose, onSave
         }
     }, [isOpen, initialData]);
 
+    const calculateDuration = (start: string, end: string) => {
+        if (!start || !end) return 0;
+        const [h1, m1] = start.split(':').map(Number);
+        const [h2, m2] = end.split(':').map(Number);
+        let diff = (h2 * 60 + m2) - (h1 * 60 + m1);
+        if (diff < 0) diff += 24 * 60; // 跨零点处理
+        return diff;
+    };
+
+    const handleStartTimeChange = (newStartTime: string) => {
+        const newDuration = calculateDuration(newStartTime, endTime);
+        setRecord(prev => ({ ...prev, startTime: newStartTime, duration: newDuration }));
+    };
+
     const handleEndTimeChange = (newEndTime: string) => {
         setEndTime(newEndTime);
-        if (!record.startTime || !newEndTime) return;
-        const [h1, m1] = record.startTime.split(':').map(Number);
-        const [h2, m2] = newEndTime.split(':').map(Number);
-        let diff = (h2 * 60 + m2) - (h1 * 60 + m1);
-        if (diff < 0) diff += 24 * 60;
-        setRecord(prev => ({ ...prev, duration: diff }));
+        const newDuration = calculateDuration(record.startTime, newEndTime);
+        setRecord(prev => ({ ...prev, duration: newDuration }));
     };
 
     const toggleDreamType = (t: string) => {
@@ -153,7 +161,7 @@ const NapRecordModal: React.FC<NapRecordModalProps> = ({ isOpen, onClose, onSave
                         <div className="mt-6 flex gap-3 w-full">
                             <div className="flex-1 bg-white dark:bg-white/5 backdrop-blur-md rounded-2xl p-3 flex flex-col items-center border border-orange-200 dark:border-white/10">
                                 <span className="text-[9px] font-bold opacity-50 uppercase text-orange-900 dark:text-orange-200">开始</span>
-                                <input type="time" value={record.startTime} onChange={e => setRecord({...record, startTime: e.target.value})} className="bg-transparent text-sm font-mono font-bold outline-none text-center w-full text-orange-950 dark:text-white"/>
+                                <input type="time" value={record.startTime} onChange={e => handleStartTimeChange(e.target.value)} className="bg-transparent text-sm font-mono font-bold outline-none text-center w-full text-orange-950 dark:text-white"/>
                             </div>
                             <div className="flex-1 bg-white dark:bg-white/5 backdrop-blur-md rounded-2xl p-3 flex flex-col items-center border border-orange-200 dark:border-white/10">
                                 <span className="text-[9px] font-bold opacity-50 uppercase text-orange-900 dark:text-orange-200">醒来</span>
