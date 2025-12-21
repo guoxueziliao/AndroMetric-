@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { LogEntry, TagType, TagEntry } from '../types';
-import { Tag as TagIcon, Edit2, Trash2, X, Check, Activity, ShieldAlert, Stethoscope, Plus, Search, ChevronRight, ChevronDown, LayoutGrid, User, Zap, Sparkles, Shirt, Heart, MousePointer2 } from 'lucide-react';
+import { Tag as TagIcon, Edit2, Trash2, X, Check, Activity, ShieldAlert, Stethoscope, Plus, Search, ChevronRight, ChevronDown, LayoutGrid, User, Zap, Sparkles, Shirt, Heart, MousePointer2, AlertCircle } from 'lucide-react';
 import Modal from './Modal';
 import { useData } from '../contexts/DataContext';
 import { useToast } from '../contexts/ToastContext';
@@ -68,6 +68,24 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
         return usage;
     }, [logs]);
 
+    // 计算输入联想建议
+    const suggestions = useMemo(() => {
+        if (!createInput.trim()) return [];
+        const currentType = activeTab === 'health_check' ? 'xp' : (activeTab as TagType);
+        
+        let pool: string[] = [];
+        if (currentType === 'xp') {
+            pool = userTags.filter(t => t.category === 'xp' && t.dimension === selectedXpDim).map(t => t.name);
+        } else if (currentType === 'event') {
+            pool = Array.from(new Set([...SYSTEM_EVENTS, ...userTags.filter(t => t.category === 'event').map(t => t.name)]));
+        } else if (currentType === 'symptom') {
+            pool = Array.from(new Set([...SYSTEM_SYMPTOMS, ...userTags.filter(t => t.category === 'symptom').map(t => t.name)]));
+        }
+
+        const input = createInput.toLowerCase();
+        return pool.filter(t => t.toLowerCase().includes(input)).slice(0, 5);
+    }, [createInput, userTags, activeTab, selectedXpDim]);
+
     const handleCreate = async () => {
         const tagStr = createInput.trim();
         if (!tagStr) return;
@@ -76,6 +94,20 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
 
         if (activeTab === 'xp' && !selectedXpDim) {
             showToast('请先选择一个维度类别', 'error');
+            return;
+        }
+
+        // 检查是否完全一致已存在
+        const exists = userTags.find(t => t.name.toLowerCase() === tagStr.toLowerCase() && t.category === currentType);
+        if (exists) {
+            if (onSelectTag) {
+                onSelectTag(exists.name);
+                onClose();
+            } else {
+                showToast(`标签 "${exists.name}" 已存在`, 'info');
+                setIsCreating(false);
+                setCreateInput('');
+            }
             return;
         }
 
@@ -224,20 +256,23 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
                     <button onClick={() => setActiveTab('health_check')} className={`flex-1 py-2 text-xs font-bold rounded-lg flex items-center justify-center gap-2 transition-all ${activeTab === 'health_check' ? 'bg-white dark:bg-slate-700 shadow-sm text-brand-accent' : 'text-slate-400'}`}><Stethoscope size={14} /> 体检</button>
                 </div>
 
-                {/* Search & Create Area - Hidden in Health Check */}
+                {/* Search & Create Area */}
                 {activeTab !== 'health_check' && (
                     <div className="mb-3 shrink-0">
                         {isCreating ? (
-                            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-2xl border border-blue-100 dark:border-blue-800/50 animate-in fade-in">
+                            <div className="bg-blue-50 dark:bg-blue-950/40 p-5 rounded-3xl border border-blue-200 dark:border-blue-900/50 animate-in fade-in shadow-lg">
                                 {activeTab === 'xp' && (
-                                    <div className="mb-4">
-                                        <label className="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-2 block">1. 选择归属维度</label>
+                                    <div className="mb-5">
+                                        <label className="text-[11px] font-black text-blue-500 dark:text-blue-400 uppercase tracking-widest mb-3 block flex items-center gap-2">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></div>
+                                            1. 选择归属维度
+                                        </label>
                                         <div className="grid grid-cols-3 gap-2">
                                             {XP_DIMENSIONS.map(dim => (
                                                 <button 
                                                     key={dim.id} 
                                                     onClick={() => setSelectedXpDim(dim.id)}
-                                                    className={`flex items-center gap-1.5 p-2 rounded-xl border-2 transition-all ${selectedXpDim === dim.id ? 'border-blue-500 bg-white dark:bg-slate-800 shadow-sm' : 'border-transparent bg-slate-100/50 dark:bg-slate-900/50 opacity-60'}`}
+                                                    className={`flex items-center gap-1.5 p-2.5 rounded-xl border-2 transition-all ${selectedXpDim === dim.id ? 'border-blue-500 bg-white dark:bg-slate-800 shadow-sm scale-105' : 'border-transparent bg-slate-100/50 dark:bg-slate-900/50 opacity-60'}`}
                                                 >
                                                     <dim.icon size={12} className={dim.color}/>
                                                     <span className="text-[10px] font-black text-slate-700 dark:text-slate-200">{dim.id}</span>
@@ -246,13 +281,60 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
                                         </div>
                                     </div>
                                 )}
-                                <div className="flex items-center justify-between mb-2">
-                                    <label className="text-[10px] font-black text-blue-500 uppercase tracking-widest block">{activeTab === 'xp' ? '2. 输入标签名称' : '输入标签名称'}</label>
-                                    <button onClick={() => setIsCreating(false)} className="text-[10px] text-slate-400 hover:text-slate-600">取消</button>
+                                <div className="mb-3">
+                                    <label className="text-[11px] font-black text-blue-500 dark:text-blue-400 uppercase tracking-widest block flex items-center gap-2 mb-2">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></div>
+                                        {activeTab === 'xp' ? '2. 输入标签名称' : '输入标签名称'}
+                                    </label>
+                                    <div className="relative">
+                                        <input 
+                                            autoFocus 
+                                            className="w-full bg-white dark:bg-slate-900 border-2 border-blue-100 dark:border-blue-900 rounded-2xl px-4 py-3 text-sm font-bold outline-none focus:border-blue-500 transition-all shadow-inner" 
+                                            value={createInput} 
+                                            onChange={e => setCreateInput(e.target.value)} 
+                                            placeholder="在此输入标签..." 
+                                            onKeyDown={e => e.key === 'Enter' && handleCreate()}
+                                        />
+                                        
+                                        {/* 输入联想建议列表 */}
+                                        {suggestions.length > 0 && (
+                                            <div className="mt-3 space-y-2 animate-in slide-in-from-top-1">
+                                                <p className="text-[10px] text-slate-400 font-bold flex items-center gap-1 pl-1">
+                                                    <AlertCircle size={10}/> 发现已有相似标签：
+                                                </p>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {suggestions.map(s => (
+                                                        <button
+                                                            key={s}
+                                                            onClick={() => {
+                                                                if (onSelectTag) { onSelectTag(s); onClose(); }
+                                                                else { setCreateInput(s); setIsCreating(false); setSearchTerm(s); }
+                                                            }}
+                                                            className="px-3 py-1.5 bg-white dark:bg-slate-800 border border-blue-200 dark:border-blue-900 rounded-lg text-xs font-black text-blue-600 dark:text-blue-400 hover:bg-blue-50 transition-all flex items-center gap-1 shadow-sm"
+                                                        >
+                                                            {s} <span className="text-[8px] opacity-60 font-medium">({tagsUsageMap[s] || 0}次)</span>
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
-                                <div className="flex gap-2">
-                                    <input autoFocus className="flex-1 bg-white dark:bg-slate-900 border border-blue-200 dark:border-blue-800 rounded-xl px-4 py-2.5 text-sm font-bold outline-none focus:border-blue-500" value={createInput} onChange={e => setCreateInput(e.target.value)} placeholder="标签名..." onKeyDown={e => e.key === 'Enter' && handleCreate()}/>
-                                    <button onClick={handleCreate} className="px-5 bg-blue-500 text-white rounded-xl font-black text-xs shadow-lg shadow-blue-500/20">确认</button>
+                                
+                                <div className="flex gap-3 pt-2">
+                                    <button 
+                                        onClick={() => setIsCreating(false)} 
+                                        className="flex-1 py-3 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-black text-xs rounded-xl border border-slate-200 dark:border-slate-700 active:scale-95 transition-all"
+                                    >
+                                        取消创建
+                                    </button>
+                                    <button 
+                                        onClick={handleCreate} 
+                                        disabled={!createInput.trim() || (activeTab === 'xp' && !selectedXpDim)}
+                                        className="flex-[2] py-3 bg-blue-500 disabled:opacity-50 text-white rounded-xl font-black text-xs shadow-lg shadow-blue-500/20 active:scale-95 transition-all"
+                                    >
+                                        确认创建并添加
+                                    </button>
                                 </div>
                             </div>
                         ) : (
