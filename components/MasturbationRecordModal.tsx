@@ -1,10 +1,12 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 /* Added Droplets and User to fix 'Cannot find name' errors at lines 202, 245 and 425 */
 import { X, Check, Clock, Film, PenLine, Plus, Minus, Zap, Edit2, Trash2, MonitorPlay, ChevronDown, LayoutGrid, Activity, ChevronLeft, AlertTriangle, Info, Search, Settings, Droplets, User } from 'lucide-react';
 import { MasturbationRecordDetails, LogEntry, PartnerProfile, ContentItem } from '../types';
 import Modal from './Modal';
 import { calculateInventory } from '../utils/helpers';
-import { XP_GROUPS } from '../utils/constants';
+import { XP_DIMENSIONS_LIST } from '../utils/constants';
+import { useData } from '../contexts/DataContext';
 
 interface MasturbationRecordModalProps {
   isOpen: boolean;
@@ -33,6 +35,7 @@ const POST_MOOD_OPTIONS = ['满足/愉悦', '平静/贤者', '空虚/后悔', '�
 const FATIGUE_OPTIONS = ['精神焕发', '无明显疲劳', '轻微困倦', '身体沉重', '秒睡'];
 
 const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpen, onClose, onSave, initialData, logs = [] }) => {
+    const { userTags } = useData();
     const [data, setData] = useState<MasturbationRecordDetails>({
         id: '', startTime: '', duration: 15, status: 'completed', tools: ['手'], contentItems: [],
         edging: 'none', edgingCount: 0, lubricant: '无润滑', useCondom: false, ejaculation: true, orgasmIntensity: 3,
@@ -87,6 +90,25 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
         const next = current.includes(tag) ? current.filter(t => t !== tag) : [...current, tag];
         setEditingItem({ ...editingItem, xpTags: next });
     };
+
+    // 动态标签计算逻辑
+    const displayTags = useMemo(() => {
+        const xpTagsOnly = userTags.filter(t => t.category === 'xp');
+        
+        let filtered = [];
+        if (activeTagTab === '常用') {
+            // 简单逻辑：按创建时间倒序排前20个（后期可以改成按使用频率）
+            filtered = [...xpTagsOnly].sort((a,b) => b.createdAt - a.createdAt).slice(0, 30).map(t => t.name);
+        } else {
+            // 按维度过滤
+            filtered = xpTagsOnly.filter(t => t.dimension === activeTagTab).map(t => t.name);
+        }
+
+        if (tagSearch) {
+            filtered = filtered.filter(t => t.toLowerCase().includes(tagSearch.toLowerCase()));
+        }
+        return filtered;
+    }, [userTags, activeTagTab, tagSearch]);
 
     if (!isOpen) return null;
 
@@ -444,7 +466,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                                  </div>
 
                                  <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-1 mb-4 border-b border-slate-100 dark:border-slate-800">
-                                     {['常用', ...Object.keys(XP_GROUPS)].map(tab => (
+                                     {['常用', ...XP_DIMENSIONS_LIST].map(tab => (
                                          <button 
                                             key={tab} 
                                             onClick={() => setActiveTagTab(tab)}
@@ -467,9 +489,8 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                                  </div>
 
                                  <div className="flex flex-wrap gap-2 max-h-[250px] overflow-y-auto custom-scrollbar">
-                                     {(activeTagTab === '常用' ? XP_GROUPS['角色'].slice(0, 30) : XP_GROUPS[activeTagTab])
-                                        .filter(tag => tag.includes(tagSearch))
-                                        .map(tag => {
+                                     {displayTags.length > 0 ? (
+                                         displayTags.map(tag => {
                                             const isSel = editingItem.xpTags?.includes(tag);
                                             return (
                                                 <button 
@@ -480,7 +501,14 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                                                     {tag}
                                                 </button>
                                             );
-                                     })}
+                                         })
+                                     ) : (
+                                         <div className="w-full py-10 text-center border border-dashed border-slate-100 dark:border-slate-800 rounded-2xl">
+                                             <span className="text-[10px] text-slate-300 font-bold uppercase tracking-widest italic">
+                                                 {activeTagTab} 分类下暂无标签
+                                             </span>
+                                         </div>
+                                     )}
                                  </div>
                              </div>
                          </div>
