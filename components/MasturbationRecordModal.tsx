@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-/* Added Droplets and User to fix 'Cannot find name' errors at lines 202, 245 and 425 */
+/* Added Droplets and User to fix 'Cannot find name' errors */
 import { X, Check, Clock, Film, PenLine, Plus, Minus, Zap, Edit2, Trash2, MonitorPlay, ChevronDown, LayoutGrid, Activity, ChevronLeft, AlertTriangle, Info, Search, Settings, Droplets, User } from 'lucide-react';
 import { MasturbationRecordDetails, LogEntry, PartnerProfile, ContentItem } from '../types';
 import Modal from './Modal';
@@ -49,6 +49,22 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
 
     const inventory = useMemo(() => calculateInventory(logs), [logs, isOpen]);
 
+    // 计算标签使用频次
+    const tagUsageMap = useMemo(() => {
+        const counts: Record<string, number> = {};
+        logs.forEach(log => {
+            log.masturbation?.forEach(m => {
+                // 从现代素材列表中提取
+                m.contentItems?.forEach(ci => {
+                    ci.xpTags?.forEach(tag => counts[tag] = (counts[tag] || 0) + 1);
+                });
+                // 兼容旧版素材分类
+                m.assets?.categories?.forEach(tag => counts[tag] = (counts[tag] || 0) + 1);
+            });
+        });
+        return counts;
+    }, [logs]);
+
     useEffect(() => {
         if (isOpen) {
             if (initialData) {
@@ -91,24 +107,30 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
         setEditingItem({ ...editingItem, xpTags: next });
     };
 
-    // 动态标签计算逻辑
     const displayTags = useMemo(() => {
         const xpTagsOnly = userTags.filter(t => t.category === 'xp');
         
         let filtered = [];
         if (activeTagTab === '常用') {
-            // 简单逻辑：按创建时间倒序排前20个（后期可以改成按使用频率）
-            filtered = [...xpTagsOnly].sort((a,b) => b.createdAt - a.createdAt).slice(0, 30).map(t => t.name);
+            // “常用”仅显示在记录中出现过的标签，按频次降序
+            filtered = xpTagsOnly
+                .filter(t => (tagUsageMap[t.name] || 0) > 0)
+                .sort((a, b) => tagUsageMap[b.name] - tagUsageMap[a.name])
+                .slice(0, 20)
+                .map(t => t.name);
         } else {
-            // 按维度过滤
-            filtered = xpTagsOnly.filter(t => t.dimension === activeTagTab).map(t => t.name);
+            // 其他维度显示库中该维度的所有标签，按使用频次辅助排序
+            filtered = xpTagsOnly
+                .filter(t => t.dimension === activeTagTab)
+                .sort((a,b) => (tagUsageMap[b.name]||0) - (tagUsageMap[a.name]||0))
+                .map(t => t.name);
         }
 
         if (tagSearch) {
             filtered = filtered.filter(t => t.toLowerCase().includes(tagSearch.toLowerCase()));
         }
         return filtered;
-    }, [userTags, activeTagTab, tagSearch]);
+    }, [userTags, activeTagTab, tagSearch, tagUsageMap]);
 
     if (!isOpen) return null;
 
@@ -339,7 +361,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                 </div>
             </div>
 
-            {/* 素材编辑子弹窗 (恢复原样) */}
+            {/* 素材编辑子弹窗 */}
             <Modal isOpen={!!editingItem} onClose={() => setEditingItem(null)} title="编辑素材详情">
                  {editingItem && (
                      <div className="flex flex-col h-[75vh] -mx-4 -mt-4 bg-white dark:bg-slate-950 overflow-hidden">
