@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, Suspense, lazy } from 'react';
 /* Added Droplets and User to fix 'Cannot find name' errors */
 import { X, Check, Clock, Film, PenLine, Plus, Minus, Zap, Edit2, Trash2, MonitorPlay, ChevronDown, LayoutGrid, Activity, ChevronLeft, AlertTriangle, Info, Search, Settings, Droplets, User } from 'lucide-react';
 import { MasturbationRecordDetails, LogEntry, PartnerProfile, ContentItem } from '../types';
@@ -7,6 +7,8 @@ import Modal from './Modal';
 import { calculateInventory } from '../utils/helpers';
 import { XP_DIMENSIONS_LIST } from '../utils/constants';
 import { useData } from '../contexts/DataContext';
+
+const TagManager = lazy(() => import('./TagManager'));
 
 interface MasturbationRecordModalProps {
   isOpen: boolean;
@@ -46,6 +48,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
     const [editingItem, setEditingItem] = useState<ContentItem | null>(null);
     const [activeTagTab, setActiveTagTab] = useState<string>('常用');
     const [tagSearch, setTagSearch] = useState('');
+    const [isTagManagerOpen, setIsTagManagerOpen] = useState(false);
 
     const inventory = useMemo(() => calculateInventory(logs), [logs, isOpen]);
 
@@ -484,7 +487,12 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                                      <div className="flex items-center gap-2">
                                          <label className="text-xs font-black text-slate-400 uppercase tracking-widest">XP 标签 ({editingItem.xpTags?.length || 0})</label>
                                      </div>
-                                     <button className="p-1.5 bg-blue-50 dark:bg-blue-900/30 text-brand-accent rounded-lg flex items-center gap-1 text-[10px] font-black"><Settings size={12}/> 管理</button>
+                                     <button 
+                                        onClick={() => setIsTagManagerOpen(true)}
+                                        className="p-1.5 bg-blue-50 dark:bg-blue-900/30 text-brand-accent rounded-lg flex items-center gap-1 text-[10px] font-black"
+                                     >
+                                        <Settings size={12}/> 管理
+                                     </button>
                                  </div>
 
                                  <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-1 mb-4 border-b border-slate-100 dark:border-slate-800">
@@ -551,6 +559,11 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                      </div>
                  )}
             </Modal>
+            
+            {/* 标签管理器弹窗 */}
+            <Suspense fallback={null}>
+                <TagManager isOpen={isTagManagerOpen} onClose={() => setIsTagManagerOpen(false)} />
+            </Suspense>
         </Modal>
     );
 };
