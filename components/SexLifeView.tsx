@@ -1,7 +1,7 @@
 
 import React, { useMemo, useState } from 'react';
 import { SexRecordDetails, MasturbationRecordDetails } from '../types';
-import { HeartHandshake, Calendar, Clock, MapPin, User, Droplets, Hand, Users, ArrowRight, ShieldCheck, Layers, ChevronDown, AlertTriangle } from 'lucide-react';
+import { HeartHandshake, Calendar, Clock, MapPin, User, Droplets, Hand, Users, ArrowRight, ShieldCheck, Layers, ChevronDown, AlertTriangle, Film, Zap, PenLine } from 'lucide-react';
 import ErrorBoundary from './ErrorBoundary';
 import PartnerManager from './PartnerManager';
 import SexRecordModal from './SexRecordModal';
@@ -162,20 +162,67 @@ const SexLifeView: React.FC = () => {
                                                 <div className={`${record.type === 'sex' ? 'bg-pink-100 dark:bg-pink-900/40' : 'bg-blue-100 dark:bg-blue-900/40'} p-1.5 rounded-full`}>{record.type === 'sex' ? <User size={16} className="text-pink-600 dark:text-pink-400"/> : <Hand size={16} className="text-blue-600 dark:text-blue-400"/>}</div>
                                                 <span className="font-semibold text-brand-text dark:text-slate-200">{record.type === 'sex' ? (record.partner || '多人/未知') : '自慰'}</span>
                                             </div>
-                                            <div className="flex space-x-1">{record.ejaculation ? <span className={`text-[10px] px-2 py-0.5 rounded-full flex items-center ${record.type === 'sex' ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'}`}><Droplets size={10} className="mr-1"/> 射精</span> : <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700">Edging</span>}</div>
+                                            <div className="flex space-x-1">
+                                                {record.ejaculation ? (
+                                                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold flex items-center ${record.type === 'sex' ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300' : 'bg-blue-600 text-white shadow-sm'}`}>
+                                                        <Droplets size={10} className="mr-1"/> 
+                                                        {record.type === 'masturbation' && record.mbDetails?.volumeForceLevel ? `射精 Lv.${record.mbDetails.volumeForceLevel}` : '射精'}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700 font-bold">Edging</span>
+                                                )}
+                                            </div>
                                         </div>
-                                        {record.type === 'sex' && record.sexDetails ? (
-                                            <div className="text-sm text-brand-muted"><Clock size={14} className="inline mr-1 opacity-70"/> {record.duration} 分钟</div>
-                                        ) : record.mbDetails && (
-                                            <div className="flex flex-col gap-1">
-                                                <div className="text-sm text-brand-muted"><Clock size={14} className="inline mr-1 opacity-70"/> {record.duration} 分钟</div>
-                                                {record.location && <div className="text-xs text-brand-muted"><MapPin size={12} className="inline mr-1 opacity-70"/> {record.location}</div>}
-                                                {record.mbDetails.interrupted && (
-                                                    <div className="text-xs font-bold text-orange-500 flex items-center mt-1">
-                                                        <AlertTriangle size={12} className="mr-1"/>
-                                                        被打断: {record.mbDetails.interruptionReasons?.join(', ') || '未知'}
+                                        
+                                        {/* 公共部分：时长和地点 */}
+                                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mb-2">
+                                            <div className="text-xs text-brand-muted flex items-center"><Clock size={12} className="mr-1 opacity-70"/> {record.duration} 分钟</div>
+                                            {record.location && <div className="text-xs text-brand-muted flex items-center"><MapPin size={12} className="mr-1 opacity-70"/> {record.location}</div>}
+                                        </div>
+
+                                        {/* 自慰记录特有显示：工具与素材 */}
+                                        {record.type === 'masturbation' && record.mbDetails && (
+                                            <div className="space-y-2 mt-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+                                                {/* 工具列表 */}
+                                                {(record.mbDetails.tools?.length || 0) > 0 && (
+                                                    <div className="flex flex-wrap gap-1.5">
+                                                        {record.mbDetails.tools.map(tool => (
+                                                            <span key={tool} className="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded text-[9px] font-black uppercase tracking-wider">{tool}</span>
+                                                        ))}
                                                     </div>
                                                 )}
+                                                
+                                                {/* 素材详情 */}
+                                                {(record.mbDetails.contentItems?.length || 0) > 0 ? (
+                                                    <div className="space-y-1.5">
+                                                        {record.mbDetails.contentItems.map(item => (
+                                                            <div key={item.id} className="flex items-center gap-2 text-[10px] text-slate-500 dark:text-slate-400">
+                                                                <Film size={10} className="shrink-0 text-blue-400" />
+                                                                <span className="font-bold whitespace-nowrap bg-blue-50 dark:bg-blue-900/20 px-1 rounded text-blue-600 dark:text-blue-400">{item.type}</span>
+                                                                <span className="truncate max-w-[200px] opacity-80">{item.title || item.platform || '未命名素材'}</span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <div className="text-[10px] text-slate-300 italic flex items-center gap-1.5">
+                                                        <Zap size={10}/> 纯爱施法 / 暂无素材记录
+                                                    </div>
+                                                )}
+
+                                                {/* 打断记录 */}
+                                                {record.mbDetails.interrupted && (
+                                                    <div className="text-[10px] font-bold text-orange-500 flex items-center bg-orange-50 dark:bg-orange-900/20 px-2 py-1 rounded-lg">
+                                                        <AlertTriangle size={10} className="mr-1.5"/>
+                                                        被打断: {record.mbDetails.interruptionReasons?.join(', ') || '未知原因'}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+
+                                        {/* 备注简预览 */}
+                                        {record.notes && (
+                                            <div className="mt-2 text-[10px] text-slate-400 italic line-clamp-1 border-l-2 border-slate-100 dark:border-slate-800 pl-2">
+                                                "{record.notes}"
                                             </div>
                                         )}
                                     </div>
