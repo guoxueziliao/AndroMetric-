@@ -171,9 +171,11 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                     <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 flex flex-col gap-2">
                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">持续时长 (分)</label>
                         <div className="flex items-center justify-between">
-                            <button onClick={() => updateData({duration: Math.max(0, data.duration - 5)})} className="text-slate-400 hover:text-brand-accent p-1"><Minus size={18}/></button>
+                            {/* 改为 1 分钟步进 */}
+                            <button onClick={() => updateData({duration: Math.max(0, data.duration - 1)})} className="text-slate-400 hover:text-brand-accent p-1"><Minus size={18}/></button>
                             <span className="text-xl font-black text-slate-800 dark:text-slate-100 tabular-nums">{data.duration}</span>
-                            <button onClick={() => updateData({duration: data.duration + 5})} className="text-slate-400 hover:text-brand-accent p-1"><Plus size={18}/></button>
+                            {/* 改为 1 分钟步进 */}
+                            <button onClick={() => updateData({duration: data.duration + 1})} className="text-slate-400 hover:text-brand-accent p-1"><Plus size={18}/></button>
                         </div>
                     </div>
                 </div>
