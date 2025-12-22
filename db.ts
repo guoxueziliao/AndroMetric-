@@ -1,7 +1,6 @@
 
 import Dexie, { Table } from 'dexie';
-import { LogEntry, PartnerProfile, Snapshot, TagEntry } from './types';
-import { runMigrations } from './utils/migration';
+import { LogEntry, PartnerProfile, Snapshot, TagEntry, Supplement } from './types';
 
 export interface MetaEntry {
   key: string;
@@ -22,12 +21,23 @@ export type HardnessDiaryDatabase = Dexie & {
   meta: Table<MetaEntry, string>;
   system_logs: Table<SystemLog, number>;
   snapshots: Table<Snapshot, number>;
-  tags: Table<TagEntry, [string, string]>; // 复合主键 [name, category]
+  tags: Table<TagEntry, [string, string]>;
+  supplements: Table<Supplement, string>; // 新增表
 };
 
 const dbInstance = new Dexie('HardnessDiaryDB') as HardnessDiaryDatabase;
 
-// Version 5: Add tags table for user-defined tags
+// 版本 6：新增补剂表
+dbInstance.version(6).stores({
+  logs: '&date, status',
+  partners: '&id',
+  meta: 'key',
+  system_logs: '++id, timestamp, level, action',
+  snapshots: '++id, timestamp',
+  tags: '[name+category], category, dimension',
+  supplements: '&id, isActive'
+});
+
 dbInstance.version(5).stores({
   logs: '&date, status',
   partners: '&id',
@@ -37,16 +47,7 @@ dbInstance.version(5).stores({
   tags: '[name+category], category, dimension'
 });
 
-dbInstance.version(4).stores({
-  logs: '&date, status',
-  partners: '&id',
-  meta: 'key',
-  system_logs: '++id, timestamp, level, action',
-  snapshots: '++id, timestamp'
-});
-
 export const db = dbInstance;
 
 db.on('populate', async () => {
-  // 以前的 LocalStorage 迁移逻辑保持不变
 });

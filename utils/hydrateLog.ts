@@ -37,17 +37,18 @@ export const hydrateLog = (raw: any): LogEntry => {
         masturbation: Array.isArray(raw.masturbation) ? raw.masturbation.map((m: any) => ({
             ...m, 
             status: m.status || 'completed',
-            satisfactionLevel: m.satisfactionLevel ?? (m.ejaculation ? 3 : 1), // Default based on ejaculation
+            satisfactionLevel: m.satisfactionLevel ?? (m.ejaculation ? 3 : 1),
             contentItems: Array.isArray(m.contentItems) ? m.contentItems : [] 
         })) : [],
         
-        // New Alcohol Array Support
+        // New Array Support
+        supplementIntake: Array.isArray(raw.supplementIntake) ? raw.supplementIntake : [], // 新增
         alcoholRecords: Array.isArray(raw.alcoholRecords) ? raw.alcoholRecords : [],
         
         changeHistory: Array.isArray(raw.changeHistory) ? raw.changeHistory : [],
     };
 
-    // v0.0.6 Caffeine Record (Cups)
+    // v0.0.6 Caffeine Record
     if (!raw.caffeineRecord) {
         log.caffeineRecord = { totalCount: 0, items: [] };
     } else {
@@ -70,7 +71,7 @@ export const hydrateLog = (raw: any): LogEntry => {
         wokeWithErection: raw.morning?.wokeWithErection ?? raw.wokeWithErection ?? true,
         hardness: raw.morning?.hardness ?? raw.hardness ?? null,
         retention: raw.morning?.retention ?? raw.retention ?? null,
-        wokenByErection: raw.morning?.wokenByErection ?? raw.wokenByErection ?? false,
+        wokenByErection: raw.morning?.wokenByErection ?? raw.wokeWithErection ?? false,
         durationImpression: raw.morning?.durationImpression ?? raw.durationImpression ?? null
     };
     log.morning = { ...defaultMorning, ...(raw.morning || {}) };
@@ -116,7 +117,7 @@ export const hydrateLog = (raw: any): LogEntry => {
     };
     log.health = { ...defaultHealth, ...(raw.health || {}) };
 
-    // 5. Alcohol Record Migration (Legacy -> Array)
+    // 5. Alcohol Record Migration
     if (raw.alcoholRecord && log.alcoholRecords.length === 0) {
         log.alcoholRecords.push({
             ...raw.alcoholRecord,
