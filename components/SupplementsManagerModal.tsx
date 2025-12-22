@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
-import { X, Plus, Check, Trash2, Pill, Palette, Calendar, RefreshCcw, Power } from 'lucide-react';
+import { X, Plus, Check, Trash2, Pill, Palette, Calendar, RefreshCcw, Power, Edit2 } from 'lucide-react';
 import Modal from './Modal';
 import { Supplement } from '../types';
 import { useData } from '../contexts/DataContext';

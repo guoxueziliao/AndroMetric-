@@ -86,10 +86,8 @@ const StatsView: React.FC<StatsViewProps> = ({ isDarkMode }) => {
     const statsEngine = useMemo(() => new StatsEngine(displayLogs), [displayLogs]);
     const insights = useMemo(() => generateInsights(displayLogs), [displayLogs]);
     
-    // New XP Stats Calculation
     const xpStats = useMemo(() => calculateXpStats(displayLogs), [displayLogs]);
 
-    // Enhanced Theme for Dark Mode
     const theme = useMemo(() => ({
         grid: isDarkMode ? '#1e293b' : '#f1f5f9', 
         text: isDarkMode ? '#94a3b8' : '#64748b', 
@@ -135,7 +133,6 @@ const StatsView: React.FC<StatsViewProps> = ({ isDarkMode }) => {
         }
     };
 
-    // --- Statistics Computation ---
     const stats = useMemo(() => {
         const hardnessSeries = statsEngine.getSeries('hardness');
         const labels = hardnessSeries.map(d => `${new Date(d.date).getMonth() + 1}/${new Date(d.date).getDate()}`);
@@ -145,7 +142,6 @@ const StatsView: React.FC<StatsViewProps> = ({ isDarkMode }) => {
         
         const avgH = hardnessRaw.reduce((a,b)=>a+b,0) / (hardnessRaw.length || 1);
 
-        // Hardness Distribution
         const hardnessDist = [0,0,0,0,0];
         displayLogs.forEach(l => {
             if(l.morning?.wokeWithErection && l.morning.hardness) {
@@ -165,7 +161,7 @@ const StatsView: React.FC<StatsViewProps> = ({ isDarkMode }) => {
         const color = trendComparison === 'sleep' ? theme.primary : trendComparison === 'alcohol' ? theme.tertiary : theme.secondary;
         return { 
             label: `${conf.label} (${conf.unit})`, 
-            color: isDarkMode ? `${color}80` : `${color}90`, // Add transparency
+            color: isDarkMode ? `${color}80` : `${color}90`,
             yMax: trendComparison === 'sleep' ? 12 : trendComparison === 'alcohol' ? 100 : 6 
         };
     }, [trendComparison, theme, isDarkMode]);
@@ -189,12 +185,10 @@ const StatsView: React.FC<StatsViewProps> = ({ isDarkMode }) => {
         const actCounts: Record<string, number> = {};
         
         displayLogs.forEach(l => l.sex?.forEach(s => {
-            // Fix: Traverse interactions chain to count acts and positions
             s.interactions?.forEach(i => i.chain.forEach(a => {
                 if(a.type === 'act') actCounts[a.name] = (actCounts[a.name] || 0) + 1;
                 else if(a.type === 'position') posCounts[a.name] = (posCounts[a.name] || 0) + 1;
             }));
-            // Legacy fallback support for acts/positions if they exist in raw data
             (s as any).acts?.forEach((a: string) => actCounts[a] = (actCounts[a] || 0) + 1);
             (s as any).positions?.forEach((p: string) => posCounts[p] = (posCounts[p] || 0) + 1);
         }));
@@ -260,13 +254,11 @@ const StatsView: React.FC<StatsViewProps> = ({ isDarkMode }) => {
 
                 {activeTab === 'overview' && (
                     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
-                        {/* Responsive Grid for KPIs */}
                         <div className="grid grid-cols-2 gap-3">
                             <KPICard label="硬度评分" value={stats.kpis.avgHardness} icon={Zap} colorClass="text-brand-accent dark:text-blue-400"/>
                             <KPICard label="近期活跃" value={stats.kpis.totalActivity} unit="次" icon={Activity} colorClass="text-pink-500 dark:text-pink-400"/>
                         </div>
                         
-                        {/* Hardness Distribution Chart */}
                         <ChartCard title="硬度分布 (1-5级)" icon={BarChart3} className="min-h-[250px]">
                             <div className="w-full h-[180px]">
                                 <Bar 
@@ -276,11 +268,11 @@ const StatsView: React.FC<StatsViewProps> = ({ isDarkMode }) => {
                                             label: '天数',
                                             data: stats.hardnessDist,
                                             backgroundColor: [
-                                                'rgba(239, 68, 68, 0.7)', // Red
-                                                'rgba(249, 115, 22, 0.7)', // Orange
-                                                'rgba(59, 130, 246, 0.7)', // Blue
-                                                'rgba(16, 185, 129, 0.7)', // Emerald
-                                                'rgba(14, 165, 233, 0.7)', // Sky
+                                                'rgba(239, 68, 68, 0.7)',
+                                                'rgba(249, 115, 22, 0.7)',
+                                                'rgba(59, 130, 246, 0.7)',
+                                                'rgba(16, 185, 129, 0.7)',
+                                                'rgba(14, 165, 233, 0.7)',
                                             ],
                                             borderRadius: 6
                                         }]
@@ -310,7 +302,7 @@ const StatsView: React.FC<StatsViewProps> = ({ isDarkMode }) => {
                                             { 
                                                 label: '硬度均线', 
                                                 data: stats.trends.hardnessSMA, 
-                                                borderColor: '#8b5cf6', // Violet
+                                                borderColor: '#8b5cf6',
                                                 borderWidth: 3, 
                                                 pointRadius: 0,
                                                 pointHoverRadius: 6,
@@ -341,7 +333,6 @@ const StatsView: React.FC<StatsViewProps> = ({ isDarkMode }) => {
                             </div>
                         </ChartCard>
                         
-                        {/* Smart Insights Section */}
                         <div className="space-y-3">
                             <div className="flex justify-between items-center pl-1">
                                 <h3 className="text-sm font-bold text-brand-muted uppercase tracking-wider flex items-center"><BrainCircuit size={16} className="mr-2"/> 智能分析</h3>
@@ -366,7 +357,6 @@ const StatsView: React.FC<StatsViewProps> = ({ isDarkMode }) => {
 
                 {activeTab === 'behavior' && (
                     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
-                        {/* New XP Analysis Section */}
                         <ChartCard title="偏好雷达 (6维度)" icon={Radar} subtext="基于自慰记录的 XP 维度分布">
                             <div className="w-full h-[300px] flex items-center justify-center">
                                 {Object.values(xpStats.dimensionStats).some(d => d.recordCount > 0) ? (
@@ -383,7 +373,7 @@ const StatsView: React.FC<StatsViewProps> = ({ isDarkMode }) => {
                                                     xpStats.dimensionStats['剧情'].recordCount,
                                                     xpStats.dimensionStats['风格'].recordCount
                                                 ],
-                                                backgroundColor: 'rgba(236, 72, 153, 0.2)', // Pink
+                                                backgroundColor: 'rgba(236, 72, 153, 0.2)',
                                                 borderColor: '#ec4899',
                                                 pointBackgroundColor: '#ec4899',
                                                 pointBorderColor: '#fff',
@@ -410,7 +400,6 @@ const StatsView: React.FC<StatsViewProps> = ({ isDarkMode }) => {
                             </div>
                         </ChartCard>
 
-                        {/* Top Tags Bar Chart */}
                         <ChartCard title="高频偏好 Top 10" icon={Tag} subtext="统计口径：按记录去重 (Record-level)">
                             <div className="w-full h-[300px]">
                                 {xpStats.topTags.length > 0 ? (
@@ -420,7 +409,7 @@ const StatsView: React.FC<StatsViewProps> = ({ isDarkMode }) => {
                                             datasets: [{
                                                 label: '出现频次',
                                                 data: xpStats.topTags.slice(0, 10).map(t => t.count),
-                                                backgroundColor: 'rgba(139, 92, 246, 0.7)', // Violet
+                                                backgroundColor: 'rgba(139, 92, 246, 0.7)',
                                                 borderRadius: 4,
                                                 barThickness: 16
                                             }]
@@ -440,7 +429,6 @@ const StatsView: React.FC<StatsViewProps> = ({ isDarkMode }) => {
                             </div>
                         </ChartCard>
 
-                        {/* Diversity & Noise Note */}
                         <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 flex justify-between items-center text-xs text-slate-500">
                             <div className="flex items-center gap-2">
                                 <span className="font-bold text-brand-text dark:text-slate-300">丰富度: {xpStats.diversityScore}</span>
@@ -460,10 +448,10 @@ const StatsView: React.FC<StatsViewProps> = ({ isDarkMode }) => {
                                         label: '活动次数',
                                         data: activeHoursData,
                                         backgroundColor: [
-                                            'rgba(251, 191, 36, 0.7)', // Amber (Morning)
-                                            'rgba(59, 130, 246, 0.7)', // Blue (Afternoon)
-                                            'rgba(168, 85, 247, 0.7)', // Purple (Evening)
-                                            'rgba(30, 41, 59, 0.7)'    // Slate (Night)
+                                            'rgba(251, 191, 36, 0.7)',
+                                            'rgba(59, 130, 246, 0.7)',
+                                            'rgba(168, 85, 247, 0.7)',
+                                            'rgba(30, 41, 59, 0.7)'
                                         ],
                                         borderRadius: 6
                                     }]
@@ -481,4 +469,65 @@ const StatsView: React.FC<StatsViewProps> = ({ isDarkMode }) => {
                                 <div className="h-[250px] flex items-center justify-center">
                                     <Doughnut 
                                         data={{
-                                            labels: privacyMode ? positionData.labels.map((_, i) => `Pos ${i+1
+                                            labels: privacyMode ? positionData.labels.map((_, i) => `Pos ${i+1}`) : positionData.labels,
+                                            datasets: [{
+                                                data: positionData.data,
+                                                backgroundColor: [
+                                                    'rgba(59, 130, 246, 0.7)',
+                                                    'rgba(236, 72, 153, 0.7)',
+                                                    'rgba(168, 85, 247, 0.7)',
+                                                    'rgba(16, 185, 129, 0.7)',
+                                                    'rgba(249, 115, 22, 0.7)',
+                                                ],
+                                                borderWidth: 0,
+                                                hoverOffset: 10
+                                            }]
+                                        }}
+                                        options={{
+                                            ...commonOptions,
+                                            cutout: '65%'
+                                        }}
+                                    />
+                                </div>
+                            ) : (
+                                <div className="text-center text-slate-400 italic text-xs">暂无体位记录</div>
+                            )}
+                        </ChartCard>
+
+                        <ChartCard title="核心行为 Top 5" icon={Flame} subtext="动作链中的行为频次">
+                            {actsData.data.length > 0 ? (
+                                <div className="h-[250px] flex items-center justify-center">
+                                    <Doughnut 
+                                        data={{
+                                            labels: privacyMode ? actsData.labels.map((_, i) => `Act ${i+1}`) : actsData.labels,
+                                            datasets: [{
+                                                data: actsData.data,
+                                                backgroundColor: [
+                                                    'rgba(239, 68, 68, 0.7)',
+                                                    'rgba(139, 92, 246, 0.7)',
+                                                    'rgba(20, 184, 166, 0.7)',
+                                                    'rgba(245, 158, 11, 0.7)',
+                                                    'rgba(99, 102, 241, 0.7)',
+                                                ],
+                                                borderWidth: 0,
+                                                hoverOffset: 10
+                                            }]
+                                        }}
+                                        options={{
+                                            ...commonOptions,
+                                            cutout: '65%'
+                                        }}
+                                    />
+                                </div>
+                            ) : (
+                                <div className="text-center text-slate-400 italic text-xs">暂无行为记录</div>
+                            )}
+                        </ChartCard>
+                    </div>
+                )}
+            </div>
+        </ErrorBoundary>
+    );
+};
+
+export default StatsView;
