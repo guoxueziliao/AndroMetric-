@@ -112,29 +112,30 @@ const ExerciseRecordModal: React.FC<ExerciseRecordModalProps> = ({ isOpen, onClo
         >
             <div className="space-y-6 pb-6">
                 {isFinishMode ? (
-                    <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-950 border border-white/10 rounded-[2.5rem] p-8 text-white relative overflow-hidden shadow-2xl ring-1 ring-white/5">
-                        {/* 动态背景修饰：使用更高的模糊度与更明亮的颜色，解决死沉的黑白冲突 */}
-                        <div className="absolute top-0 right-0 w-40 h-40 bg-emerald-400/20 rounded-full blur-[60px] -translate-y-1/2 translate-x-1/2"></div>
-                        <div className="absolute bottom-0 left-0 w-32 h-32 bg-blue-400/20 rounded-full blur-[50px] translate-y-1/2 -translate-x-1/2"></div>
+                    /* 重构后的浅色模式友好卡片 */
+                    <div className="bg-gradient-to-br from-emerald-50/80 via-white to-blue-50/80 dark:from-slate-900 dark:via-slate-800 dark:to-slate-950 border border-slate-100 dark:border-white/10 rounded-[2.5rem] p-8 relative overflow-hidden shadow-soft dark:shadow-2xl">
+                        {/* 氛围光：浅色模式下更加淡雅 */}
+                        <div className="absolute top-0 right-0 w-40 h-40 bg-emerald-400/10 dark:bg-emerald-400/20 rounded-full blur-[60px] -translate-y-1/2 translate-x-1/2"></div>
+                        <div className="absolute bottom-0 left-0 w-32 h-32 bg-blue-400/10 dark:bg-blue-400/20 rounded-full blur-[50px] translate-y-1/2 -translate-x-1/2"></div>
                         
                         <div className="relative z-10 flex flex-col items-center">
-                            <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.25em] text-emerald-400 mb-4 opacity-100">
+                            <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.25em] text-emerald-600 dark:text-emerald-400 mb-4">
                                 <Flame size={14} className="animate-pulse"/> WORKOUT ACCOMPLISHED
                             </div>
                             
                             <div className="flex items-baseline gap-2 mb-2">
-                                <span className="text-7xl font-black tabular-nums tracking-tighter drop-shadow-glow-white">{record.duration}</span>
-                                <span className="text-lg font-black text-white/40">分钟</span>
+                                <span className="text-7xl font-black tabular-nums tracking-tighter text-slate-800 dark:text-white drop-shadow-sm">{record.duration}</span>
+                                <span className="text-lg font-black text-slate-400 dark:text-white/40">分钟</span>
                             </div>
 
                             <div className="mt-8 flex gap-4 w-full">
-                                <div className="flex-1 bg-white/[0.03] backdrop-blur-2xl rounded-3xl p-5 text-center border border-white/[0.08] shadow-inner">
-                                    <div className="text-[10px] font-black text-white/30 uppercase mb-2 tracking-widest">START</div>
-                                    <div className="text-xl font-mono font-bold text-white/90">{record.startTime}</div>
+                                <div className="flex-1 bg-white dark:bg-white/[0.03] backdrop-blur-xl rounded-3xl p-5 text-center border border-slate-100 dark:border-white/[0.08] shadow-sm dark:shadow-inner">
+                                    <div className="text-[10px] font-black text-slate-400 dark:text-white/30 uppercase mb-2 tracking-widest">START</div>
+                                    <div className="text-xl font-mono font-bold text-slate-700 dark:text-white/90">{record.startTime}</div>
                                 </div>
-                                <div className="flex-1 bg-white/[0.03] backdrop-blur-2xl rounded-3xl p-5 text-center border border-white/[0.08] shadow-inner">
-                                    <div className="text-[10px] font-black text-white/30 uppercase mb-2 tracking-widest">END</div>
-                                    <div className="text-xl font-mono font-bold text-white/90">{endTime}</div>
+                                <div className="flex-1 bg-white dark:bg-white/[0.03] backdrop-blur-xl rounded-3xl p-5 text-center border border-slate-100 dark:border-white/[0.08] shadow-sm dark:shadow-inner">
+                                    <div className="text-[10px] font-black text-slate-400 dark:text-white/30 uppercase mb-2 tracking-widest">END</div>
+                                    <div className="text-xl font-mono font-bold text-slate-700 dark:text-white/90">{endTime}</div>
                                 </div>
                             </div>
                         </div>
