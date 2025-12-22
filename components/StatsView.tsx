@@ -189,13 +189,14 @@ const StatsView: React.FC<StatsViewProps> = ({ isDarkMode }) => {
         const actCounts: Record<string, number> = {};
         
         displayLogs.forEach(l => l.sex?.forEach(s => {
-            // Count positions
-            (s.positions || []).forEach(p => posCounts[p] = (posCounts[p] || 0) + 1);
-            // Count acts from interactions
+            // Fix: Traverse interactions chain to count acts and positions
             s.interactions?.forEach(i => i.chain.forEach(a => {
                 if(a.type === 'act') actCounts[a.name] = (actCounts[a.name] || 0) + 1;
                 else if(a.type === 'position') posCounts[a.name] = (posCounts[a.name] || 0) + 1;
             }));
+            // Legacy fallback support for acts/positions if they exist in raw data
+            (s as any).acts?.forEach((a: string) => actCounts[a] = (actCounts[a] || 0) + 1);
+            (s as any).positions?.forEach((p: string) => posCounts[p] = (posCounts[p] || 0) + 1);
         }));
 
         const sortedPos = Object.entries(posCounts).sort((a,b) => b[1] - a[1]).slice(0, 5);
@@ -480,71 +481,4 @@ const StatsView: React.FC<StatsViewProps> = ({ isDarkMode }) => {
                                 <div className="h-[250px] flex items-center justify-center">
                                     <Doughnut 
                                         data={{
-                                            labels: privacyMode ? positionData.labels.map((_, i) => `Pos ${i+1}`) : positionData.labels,
-                                            datasets: [{
-                                                data: positionData.data,
-                                                backgroundColor: [
-                                                    'rgba(236, 72, 153, 0.8)', // Pink
-                                                    'rgba(168, 85, 247, 0.8)', // Purple
-                                                    'rgba(59, 130, 246, 0.8)', // Blue
-                                                    'rgba(16, 185, 129, 0.8)', // Emerald
-                                                    'rgba(245, 158, 11, 0.8)', // Amber
-                                                ],
-                                                borderWidth: 0
-                                            }]
-                                        }}
-                                        options={{
-                                            ...commonOptions,
-                                            cutout: '70%',
-                                            plugins: {
-                                                ...commonOptions.plugins,
-                                                legend: { position: 'right', labels: { usePointStyle: true, color: theme.text } }
-                                            }
-                                        }}
-                                    />
-                                </div>
-                            ) : (
-                                <div className="flex flex-col items-center justify-center h-full text-slate-400">
-                                    <Info size={32} className="mb-2 opacity-50"/>
-                                    <p className="text-xs">暂无体位数据</p>
-                                </div>
-                            )}
-                        </ChartCard>
-
-                        {/* Top Acts Chart */}
-                        <ChartCard title="高频行为 Top 5" icon={Activity} subtext="性爱互动中的行为偏好">
-                            {actsData.data.length > 0 ? (
-                                <div className="w-full h-[200px]">
-                                    <Bar 
-                                        data={{
-                                            labels: privacyMode ? actsData.labels.map((_, i) => `Act ${i+1}`) : actsData.labels,
-                                            datasets: [{
-                                                label: '次数',
-                                                data: actsData.data,
-                                                backgroundColor: 'rgba(139, 92, 246, 0.6)', // Violet
-                                                borderRadius: 4,
-                                                barThickness: 20
-                                            }]
-                                        }}
-                                        options={{
-                                            ...commonOptions,
-                                            indexAxis: 'y' as const,
-                                            plugins: { legend: { display: false } }
-                                        }}
-                                    />
-                                </div>
-                            ) : (
-                                <div className="flex flex-col items-center justify-center h-full text-slate-400">
-                                    <Info size={32} className="mb-2 opacity-50"/>
-                                    <p className="text-xs">暂无行为数据</p>
-                                </div>
-                            )}
-                        </ChartCard>
-                    </div>
-                )}
-            </div>
-        </ErrorBoundary>
-    );
-};
-
-export default React.memo(StatsView);
+                                            labels: privacyMode ? positionData.labels.map((_, i) => `Pos ${i+1

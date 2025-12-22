@@ -70,8 +70,8 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                 m.contentItems?.forEach(ci => {
                     ci.xpTags?.forEach(tag => counts[tag] = (counts[tag] || 0) + 1);
                 });
-                // 兼容旧版素材分类
-                m.assets?.categories?.forEach(tag => counts[tag] = (counts[tag] || 0) + 1);
+                // Fix: Access tags via casting to any since legacy assets property is no longer in type
+                (m as any).assets?.categories?.forEach((tag: string) => counts[tag] = (counts[tag] || 0) + 1);
             });
         });
         return counts;

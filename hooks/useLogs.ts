@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { StorageService } from '../services/StorageService';
-import { LogEntry, SexRecordDetails, MasturbationRecordDetails, PartnerProfile, ExerciseRecord, NapRecord, ChangeRecord, AlcoholRecord, TagEntry, TagType } from '../types';
+import { LogEntry, SexRecordDetails, MasturbationRecordDetails, PartnerProfile, ExerciseRecord, NapRecord, ChangeRecord, AlcoholRecord, TagEntry, TagType, Supplement } from '../types';
 import { hydrateLog } from '../utils/hydrateLog';
 import { db } from '../db';
 
@@ -11,6 +11,7 @@ export function useLogs() {
     const logs = useMemo(() => rawLogs.map(hydrateLog), [rawLogs]);
     const partners = useLiveQuery(StorageService.partners.queries.all) || [];
     const userTags = useLiveQuery(() => db.tags.toArray()) || [];
+    const supplements = useLiveQuery(() => db.supplements.toArray()) || [];
     const [isInitializing, setIsInitializing] = useState(true);
 
     useEffect(() => {
@@ -27,6 +28,14 @@ export function useLogs() {
 
     const deleteTag = useCallback(async (name: string, category: TagType) => {
         await StorageService.tags.delete(name, category);
+    }, []);
+
+    const addOrUpdateSupplement = useCallback(async (sup: Supplement) => {
+        await db.supplements.put(sup);
+    }, []);
+
+    const deleteSupplement = useCallback(async (id: string) => {
+        await db.supplements.delete(id);
     }, []);
 
     const addOrUpdatePartner = useCallback(async (partner: PartnerProfile) => {
@@ -377,10 +386,11 @@ export function useLogs() {
     }, []);
 
     return {
-        logs, partners, userTags, isInitializing,
+        logs, partners, userTags, supplements, isInitializing,
         addOrUpdateLog, deleteLog,
         addOrUpdatePartner, deletePartner,
         addOrUpdateTag, deleteTag,
+        addOrUpdateSupplement, deleteSupplement,
         quickAddSex, quickAddMasturbation, cancelOngoingMasturbation,
         saveExercise, cancelOngoingExercise,
         saveNap, toggleNap, cancelOngoingNap,

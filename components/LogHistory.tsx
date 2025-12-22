@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo } from 'react';
-import { History, PenTool, Zap, Wrench, HeartPulse, Hand, Dumbbell, BedDouble, SunMedium, Beer, ShieldAlert, CloudSun, FileText } from 'lucide-react';
+import { History, PenTool, Zap, Wrench, HeartPulse, Hand, Dumbbell, BedDouble, SunMedium, Beer, ShieldAlert, CloudSun, FileText, Pill } from 'lucide-react';
 import { LogEntry, HistoryCategory, HistoryEventType } from '../types';
 import { inferHistoryEventType } from '../utils/helpers';
 import { DiffRow } from './DiffRow';
@@ -19,7 +19,8 @@ const CATEGORY_ICONS: Record<HistoryCategory | 'meta', React.ElementType> = {
     health: ShieldAlert,
     nap: CloudSun,
     meta: FileText,
-    system: Wrench
+    system: Wrench,
+    supplement: Pill
 };
 
 const CATEGORY_LABELS: Record<HistoryCategory | 'meta', string> = {
@@ -32,7 +33,8 @@ const CATEGORY_LABELS: Record<HistoryCategory | 'meta', string> = {
     health: '健康',
     nap: '午休',
     meta: '信息',
-    system: '系统'
+    system: '系统',
+    supplement: '补剂'
 };
 
 const EVENT_TYPE_CONFIG: Record<HistoryEventType, { label: string, color: string, icon: React.ElementType }> = {

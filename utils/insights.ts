@@ -177,10 +177,11 @@ const analyzeXPChange = (logs: LogEntry[]): Insight[] => {
     const countTags = (ls: LogEntry[]) => {
         const counts: Record<string, number> = {};
         let total = 0;
-        ls.forEach(l => l.masturbation?.forEach(m => m.assets?.categories?.forEach(c => {
+        // Fix: Access tags from contentItems instead of assets
+        ls.forEach(l => l.masturbation?.forEach(m => m.contentItems?.forEach(ci => ci.xpTags?.forEach(c => {
             counts[c] = (counts[c] || 0) + 1;
             total++;
-        })));
+        }))));
         return { counts, total };
     };
     
