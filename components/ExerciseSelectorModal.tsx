@@ -23,7 +23,6 @@ const INTENSITY_OPTS: { value: ExerciseIntensity, label: string, desc: string }[
     {value: 'medium', label: '中度', desc: '微微出汗'}, 
     {value: 'high', label: '高强', desc: '竭尽全力'}
 ];
-/* Fix: Explicitly type value as the string literal union to satisfy ExerciseRecord['feeling'] type requirement */
 const FEELING_OPTS: { value: 'great' | 'ok' | 'tired' | 'bad', label: string, icon: React.ElementType, color: string }[] = [
     { value: 'great', label: '状态极佳', icon: Zap, color: 'text-yellow-500' },
     { value: 'ok', label: '还算不错', icon: Smile, color: 'text-green-500' },
@@ -113,27 +112,29 @@ const ExerciseRecordModal: React.FC<ExerciseRecordModalProps> = ({ isOpen, onClo
         >
             <div className="space-y-6 pb-6">
                 {isFinishMode ? (
-                    <div className="bg-slate-900 dark:bg-slate-900 border border-white/5 rounded-[2.5rem] p-8 text-white relative overflow-hidden shadow-2xl">
-                        {/* 动态背景修饰：解决纯黑白冲击，增加色彩深度 */}
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-[40px] -translate-y-1/2 translate-x-1/2"></div>
-                        <div className="absolute bottom-0 left-0 w-24 h-24 bg-blue-500/10 rounded-full blur-[30px] translate-y-1/2 -translate-x-1/2"></div>
+                    <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-950 border border-white/10 rounded-[2.5rem] p-8 text-white relative overflow-hidden shadow-2xl ring-1 ring-white/5">
+                        {/* 动态背景修饰：使用更高的模糊度与更明亮的颜色，解决死沉的黑白冲突 */}
+                        <div className="absolute top-0 right-0 w-40 h-40 bg-emerald-400/20 rounded-full blur-[60px] -translate-y-1/2 translate-x-1/2"></div>
+                        <div className="absolute bottom-0 left-0 w-32 h-32 bg-blue-400/20 rounded-full blur-[50px] translate-y-1/2 -translate-x-1/2"></div>
                         
                         <div className="relative z-10 flex flex-col items-center">
-                            <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-emerald-400 mb-3 opacity-90">
-                                <Flame size={14}/> Workout Accomplished
+                            <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.25em] text-emerald-400 mb-4 opacity-100">
+                                <Flame size={14} className="animate-pulse"/> WORKOUT ACCOMPLISHED
                             </div>
-                            <div className="flex items-baseline gap-1">
-                                <span className="text-6xl font-black tabular-nums">{record.duration}</span>
-                                <span className="text-sm font-bold opacity-50">分钟</span>
+                            
+                            <div className="flex items-baseline gap-2 mb-2">
+                                <span className="text-7xl font-black tabular-nums tracking-tighter drop-shadow-glow-white">{record.duration}</span>
+                                <span className="text-lg font-black text-white/40">分钟</span>
                             </div>
-                            <div className="mt-8 flex gap-3 w-full">
-                                <div className="flex-1 bg-white/5 backdrop-blur-md rounded-2xl p-4 text-center border border-white/10">
-                                    <div className="text-[9px] font-black opacity-40 uppercase mb-1">Start</div>
-                                    <div className="text-base font-mono font-bold">{record.startTime}</div>
+
+                            <div className="mt-8 flex gap-4 w-full">
+                                <div className="flex-1 bg-white/[0.03] backdrop-blur-2xl rounded-3xl p-5 text-center border border-white/[0.08] shadow-inner">
+                                    <div className="text-[10px] font-black text-white/30 uppercase mb-2 tracking-widest">START</div>
+                                    <div className="text-xl font-mono font-bold text-white/90">{record.startTime}</div>
                                 </div>
-                                <div className="flex-1 bg-white/5 backdrop-blur-md rounded-2xl p-4 text-center border border-white/10">
-                                    <div className="text-[9px] font-black opacity-40 uppercase mb-1">End</div>
-                                    <div className="text-base font-mono font-bold">{endTime}</div>
+                                <div className="flex-1 bg-white/[0.03] backdrop-blur-2xl rounded-3xl p-5 text-center border border-white/[0.08] shadow-inner">
+                                    <div className="text-[10px] font-black text-white/30 uppercase mb-2 tracking-widest">END</div>
+                                    <div className="text-xl font-mono font-bold text-white/90">{endTime}</div>
                                 </div>
                             </div>
                         </div>
