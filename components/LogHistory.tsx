@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo } from 'react';
-import { History, PenTool, Zap, Wrench, HeartPulse, Hand, Dumbbell, BedDouble, SunMedium, Beer, ShieldAlert, CloudSun, FileText, Pill } from 'lucide-react';
+import { History, PenTool, Zap, Wrench, HeartPulse, Hand, Dumbbell, BedDouble, SunMedium, Beer, ShieldAlert, CloudSun, FileText } from 'lucide-react';
 import { LogEntry, HistoryCategory, HistoryEventType } from '../types';
 import { inferHistoryEventType } from '../utils/helpers';
 import { DiffRow } from './DiffRow';
@@ -9,8 +9,7 @@ interface LogHistoryProps {
     log: LogEntry;
 }
 
-// Fix: Added missing supplement icon to match HistoryCategory type
-const CATEGORY_ICONS: Record<HistoryCategory, React.ElementType> = {
+const CATEGORY_ICONS: Record<HistoryCategory | 'meta', React.ElementType> = {
     sex: HeartPulse,
     masturbation: Hand,
     exercise: Dumbbell,
@@ -20,12 +19,10 @@ const CATEGORY_ICONS: Record<HistoryCategory, React.ElementType> = {
     health: ShieldAlert,
     nap: CloudSun,
     meta: FileText,
-    system: Wrench,
-    supplement: Pill
+    system: Wrench
 };
 
-// Fix: Added missing supplement label to match HistoryCategory type
-const CATEGORY_LABELS: Record<HistoryCategory, string> = {
+const CATEGORY_LABELS: Record<HistoryCategory | 'meta', string> = {
     sex: '性爱',
     masturbation: '自慰',
     exercise: '运动',
@@ -35,8 +32,7 @@ const CATEGORY_LABELS: Record<HistoryCategory, string> = {
     health: '健康',
     nap: '午休',
     meta: '信息',
-    system: '系统',
-    supplement: '补剂'
+    system: '系统'
 };
 
 const EVENT_TYPE_CONFIG: Record<HistoryEventType, { label: string, color: string, icon: React.ElementType }> = {

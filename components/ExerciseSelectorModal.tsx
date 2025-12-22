@@ -2,7 +2,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { X, Search, ChevronDown, ChevronUp, Check, Dumbbell, Clock, Activity, PenLine, Play, Flag, Footprints, Smile, Frown, Meh, Zap, Timer, TrendingUp, Sparkles, Target, Flame, HeartPulse } from 'lucide-react';
 import Modal from './Modal';
-import { ExerciseRecord, ExerciseIntensity } from '../types';
+import { ExerciseRecord, ExerciseIntensity, ExerciseFeeling } from '../types';
 
 const EXERCISE_CATEGORIES = [
   { name: "步行", items: ["日常步行", "户外步行", "室内步行", "徒步", "遛狗", "城市散步", "负重步行"] },
@@ -205,7 +205,7 @@ const ExerciseRecordModal: React.FC<ExerciseRecordModalProps> = ({ isOpen, onClo
                                 {INTENSITY_OPTS.map(opt => {
                                     const isSel = record.intensity === opt.value;
                                     return (
-                                        <button key={opt.value} onClick={() => setRecord({...record, intensity: opt.value})} className={`flex-1 py-4 px-2 rounded-2xl transition-all border-2 flex flex-col items-center justify-center gap-0.5 ${isSel ? 'border-brand-accent bg-blue-50 dark:bg-blue-900/30 text-brand-accent shadow-lg shadow-blue-500/10' : 'border-transparent bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-500'}`}>
+                                        <button key={opt.value} onClick={() => setRecord({...record, intensity: opt.value})} className={`flex-1 py-4 px-2 rounded-2xl transition-all border-2 flex flex-col items-center justify-center gap-0.5 ${isSel ? 'border-brand-accent bg-blue-50 dark:bg-blue-900/20 text-brand-accent shadow-lg shadow-blue-500/10' : 'border-transparent bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-500'}`}>
                                             <span className="text-sm font-black">{opt.label}</span>
                                             <span className="text-[9px] font-bold opacity-60">{opt.desc}</span>
                                         </button>
