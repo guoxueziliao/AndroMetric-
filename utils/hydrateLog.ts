@@ -37,9 +37,12 @@ export const hydrateLog = (raw: any): LogEntry => {
         masturbation: Array.isArray(raw.masturbation) ? raw.masturbation.map((m: any) => ({
             ...m, 
             status: m.status || 'completed',
-            satisfactionLevel: m.satisfactionLevel ?? (m.ejaculation ? 3 : 1), // Default based on ejaculation
+            satisfactionLevel: m.satisfactionLevel ?? (m.ejaculation ? 3 : 1),
             contentItems: Array.isArray(m.contentItems) ? m.contentItems : [] 
         })) : [],
+        
+        // New Intake Array
+        supplementIntake: Array.isArray(raw.supplementIntake) ? raw.supplementIntake : [],
         
         // New Alcohol Array Support
         alcoholRecords: Array.isArray(raw.alcoholRecords) ? raw.alcoholRecords : [],
@@ -47,7 +50,7 @@ export const hydrateLog = (raw: any): LogEntry => {
         changeHistory: Array.isArray(raw.changeHistory) ? raw.changeHistory : [],
     };
 
-    // v0.0.6 Caffeine Record (Cups)
+    // v0.0.6 Caffeine Record
     if (!raw.caffeineRecord) {
         log.caffeineRecord = { totalCount: 0, items: [] };
     } else {
@@ -63,19 +66,19 @@ export const hydrateLog = (raw: any): LogEntry => {
         };
     }
 
-    // 2. Domain Object: MorningRecord
+    // 2. MorningRecord
     const defaultMorning: MorningRecord = {
         id: raw.morning?.id || `mr_${log.date}_${Date.now()}`,
         timestamp: raw.morning?.timestamp || Date.now(),
         wokeWithErection: raw.morning?.wokeWithErection ?? raw.wokeWithErection ?? true,
         hardness: raw.morning?.hardness ?? raw.hardness ?? null,
         retention: raw.morning?.retention ?? raw.retention ?? null,
-        wokenByErection: raw.morning?.wokenByErection ?? raw.wokenByErection ?? false,
+        wokenByErection: raw.morning?.wokenByErection ?? raw.wokeWithErection ?? false,
         durationImpression: raw.morning?.durationImpression ?? raw.durationImpression ?? null
     };
     log.morning = { ...defaultMorning, ...(raw.morning || {}) };
 
-    // 3. Domain Object: SleepRecord
+    // 3. SleepRecord
     let naps = [];
     if (raw.sleep && Array.isArray(raw.sleep.naps)) naps = raw.sleep.naps;
     else if (Array.isArray(raw.naps)) naps = raw.naps;
@@ -103,7 +106,7 @@ export const hydrateLog = (raw: any): LogEntry => {
     };
     log.sleep = { ...defaultSleep, ...(raw.sleep || {}) };
 
-    // 4. Domain Object: Health
+    // 4. Health
     const defaultHealth: Health = {
         isSick: false,
         illnessType: null,
@@ -116,7 +119,7 @@ export const hydrateLog = (raw: any): LogEntry => {
     };
     log.health = { ...defaultHealth, ...(raw.health || {}) };
 
-    // 5. Alcohol Record Migration (Legacy -> Array)
+    // 5. Alcohol Record Migration
     if (raw.alcoholRecord && log.alcoholRecords.length === 0) {
         log.alcoholRecords.push({
             ...raw.alcoholRecord,

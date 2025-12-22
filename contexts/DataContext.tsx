@@ -1,18 +1,21 @@
 
 import React, { createContext, useContext } from 'react';
-import { LogEntry, PartnerProfile, SexRecordDetails, MasturbationRecordDetails, ExerciseRecord, NapRecord, AlcoholRecord, TagEntry, TagType } from '../types';
+import { LogEntry, PartnerProfile, SexRecordDetails, MasturbationRecordDetails, ExerciseRecord, NapRecord, AlcoholRecord, TagEntry, TagType, Supplement } from '../types';
 
 interface DataContextType {
     logs: LogEntry[];
     partners: PartnerProfile[];
-    userTags: TagEntry[]; // 新增：用户自定义标签
+    userTags: TagEntry[]; 
+    supplements: Supplement[]; // 新增补剂列表
     isInitializing: boolean;
     addOrUpdateLog: (log: LogEntry) => Promise<void>;
     deleteLog: (date: string) => Promise<void>;
     addOrUpdatePartner: (partner: PartnerProfile) => Promise<void>;
     deletePartner: (id: string) => Promise<void>;
-    addOrUpdateTag: (tag: TagEntry) => Promise<void>; // 新增
-    deleteTag: (name: string, category: TagType) => Promise<void>; // 新增
+    addOrUpdateTag: (tag: TagEntry) => Promise<void>; 
+    deleteTag: (name: string, category: TagType) => Promise<void>; 
+    addOrUpdateSupplement: (sup: Supplement) => Promise<void>; // 新增补剂修改
+    deleteSupplement: (id: string) => Promise<void>; // 新增补剂删除
     quickAddSex: (record: SexRecordDetails) => Promise<void>;
     quickAddMasturbation: (record: MasturbationRecordDetails) => Promise<void>;
     saveExercise: (record: ExerciseRecord) => Promise<void>;

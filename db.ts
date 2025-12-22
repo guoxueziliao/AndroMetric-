@@ -1,6 +1,6 @@
 
 import Dexie, { Table } from 'dexie';
-import { LogEntry, PartnerProfile, Snapshot, TagEntry } from './types';
+import { LogEntry, PartnerProfile, Snapshot, TagEntry, Supplement } from './types';
 import { runMigrations } from './utils/migration';
 
 export interface MetaEntry {
@@ -22,12 +22,23 @@ export type HardnessDiaryDatabase = Dexie & {
   meta: Table<MetaEntry, string>;
   system_logs: Table<SystemLog, number>;
   snapshots: Table<Snapshot, number>;
-  tags: Table<TagEntry, [string, string]>; // 复合主键 [name, category]
+  tags: Table<TagEntry, [string, string]>; 
+  supplements: Table<Supplement, string>; // New in v7
 };
 
 const dbInstance = new Dexie('HardnessDiaryDB') as HardnessDiaryDatabase;
 
-// Version 5: Add tags table for user-defined tags
+// Version 7: Add supplements table
+dbInstance.version(7).stores({
+  logs: '&date, status',
+  partners: '&id',
+  meta: 'key',
+  system_logs: '++id, timestamp, level, action',
+  snapshots: '++id, timestamp',
+  tags: '[name+category], category, dimension',
+  supplements: '&id, isActive'
+});
+
 dbInstance.version(5).stores({
   logs: '&date, status',
   partners: '&id',
@@ -48,5 +59,4 @@ dbInstance.version(4).stores({
 export const db = dbInstance;
 
 db.on('populate', async () => {
-  // 以前的 LocalStorage 迁移逻辑保持不变
 });
