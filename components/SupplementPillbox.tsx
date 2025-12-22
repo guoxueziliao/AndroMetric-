@@ -22,8 +22,11 @@ const SupplementPillbox: React.FC<SupplementPillboxProps> = ({ activeSupplements
     };
 
     return (
-        <div className="space-y-4">
-            <label className="text-xs font-black text-slate-400 uppercase tracking-widest block px-1">今日补剂打卡 (PILLBOX)</label>
+        <div className="space-y-4 mb-8">
+            <div className="flex items-center gap-2 px-1">
+                <Pill size={14} className="text-slate-400" />
+                <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">今日补剂打卡 (PILLBOX)</label>
+            </div>
             <div className="grid grid-cols-3 gap-3">
                 {activeSupplements.map(sup => {
                     const isTaken = intakes.some(i => i.supplementId === sup.id);

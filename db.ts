@@ -22,13 +22,13 @@ export type HardnessDiaryDatabase = Dexie & {
   system_logs: Table<SystemLog, number>;
   snapshots: Table<Snapshot, number>;
   tags: Table<TagEntry, [string, string]>;
-  supplements: Table<Supplement, string>; // 新增表
+  supplements: Table<Supplement, string>;
 };
 
 const dbInstance = new Dexie('HardnessDiaryDB') as HardnessDiaryDatabase;
 
-// 版本 6：新增补剂表
-dbInstance.version(6).stores({
+// 版本 7：确保 supplements 表完全可用
+dbInstance.version(7).stores({
   logs: '&date, status',
   partners: '&id',
   meta: 'key',
@@ -38,16 +38,4 @@ dbInstance.version(6).stores({
   supplements: '&id, isActive'
 });
 
-dbInstance.version(5).stores({
-  logs: '&date, status',
-  partners: '&id',
-  meta: 'key',
-  system_logs: '++id, timestamp, level, action',
-  snapshots: '++id, timestamp',
-  tags: '[name+category], category, dimension'
-});
-
 export const db = dbInstance;
-
-db.on('populate', async () => {
-});

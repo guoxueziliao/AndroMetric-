@@ -10,16 +10,14 @@ interface SupplementCycleBarProps {
 
 const SupplementCycleBar: React.FC<SupplementCycleBarProps> = ({ supplements, currentDate }) => {
     const activeCycles = supplements.filter(s => s.isActive && s.cycleEnabled);
-
     if (activeCycles.length === 0) return null;
 
     return (
-        <div className="space-y-4 px-1 mb-4">
+        <div className="space-y-4 px-1 mb-6">
             {activeCycles.map(sup => {
                 const start = new Date(sup.startDate + 'T00:00:00').getTime();
                 const now = new Date(currentDate + 'T00:00:00').getTime();
                 const diffDays = Math.floor((now - start) / (1000 * 60 * 60 * 24));
-                
                 if (diffDays < 0) return null;
 
                 const cycleTotal = sup.daysOn + sup.daysOff;
@@ -39,28 +37,18 @@ const SupplementCycleBar: React.FC<SupplementCycleBarProps> = ({ supplements, cu
                                 {isOnDay ? '服用中' : '休赛期'}
                             </span>
                         </div>
-
                         <div className="flex gap-1 h-1.5 mb-2">
                             {Array.from({ length: cycleTotal }).map((_, i) => {
                                 const idx = i + 1;
                                 const isSupDay = idx <= sup.daysOn;
                                 const isCurrent = idx === dayInCycle;
                                 return (
-                                    <div 
-                                        key={i} 
-                                        className={`flex-1 rounded-full transition-all ${
-                                            isCurrent ? 'ring-2 ring-offset-1 ring-slate-400' : ''
-                                        } ${
-                                            isSupDay ? (idx <= dayInCycle ? 'opacity-100' : 'opacity-20') : 'bg-slate-200 dark:bg-slate-800'
-                                        }`}
-                                        style={{ backgroundColor: isSupDay ? sup.color : undefined }}
-                                    />
+                                    <div key={i} className={`flex-1 rounded-full transition-all ${isCurrent ? 'ring-2 ring-offset-1 ring-slate-400' : ''} ${isSupDay ? (idx <= dayInCycle ? 'opacity-100' : 'opacity-20') : 'bg-slate-200 dark:bg-slate-800'}`} style={{ backgroundColor: isSupDay ? sup.color : undefined }} />
                                 );
                             })}
                         </div>
-                        
                         <div className="flex justify-between text-[9px] font-bold text-slate-400 uppercase">
-                            <span>起始: {sup.startDate}</span>
+                            <span>起始日期: {sup.startDate}</span>
                             {!isOnDay && <span className="flex items-center gap-1"><AlertCircle size={8}/> 今日无需服用</span>}
                         </div>
                     </div>
