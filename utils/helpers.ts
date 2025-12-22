@@ -34,7 +34,7 @@ export const formatHistoryValue = (field: string, val: string | null | undefined
     if (val === 'false') return '否';
     if (val === '是' || val === '否') return val;
     if (['时间', '开始', '结束'].some(k => f.includes(k))) return formatTime(val);
-    if (['质量', '评分', '爽度'].some(k => f.includes(k))) {
+    if (['质量', '评分', '爽度', '满足'].some(k => f.includes(k))) {
         const num = parseInt(val.replace(/[^\d]/g, '')); 
         if (!isNaN(num)) return '★'.repeat(num) + '☆'.repeat(5 - num);
     }
@@ -91,6 +91,7 @@ export const LABELS = {
     discomfortLevel: { mild: '轻微不适', moderate: '明显不适', severe: '很难受' } as Record<string, string>,
     exFeeling: { great: '很爽', ok: '正常', tired: '累爆', bad: '不适' } as Record<string, string>,
     caffeine: { none: '无', low: '少', medium: '中', high: '多' } as Record<string, string>,
+    satisfaction: { 1: '毫无感觉', 2: '解压一般', 3: '基本达标', 4: '非常舒爽', 5: '灵魂升华' } as Record<number, string>
 };
 
 export const inferHistoryEventType = (summary: string): HistoryEventType => {
@@ -217,6 +218,7 @@ export const generateLogSummary = (log: Partial<LogEntry>): Array<{ label: strin
             const tools = r.tools?.join(',') || '手';
             let extra = '';
             if (r.volumeForceLevel) extra += ` [射精Lv.${r.volumeForceLevel}]`;
+            if (r.satisfactionLevel) extra += ` [满足:${LABELS.satisfaction[r.satisfactionLevel]}]`;
             if (r.contentItems && r.contentItems.length > 0) extra += ` [素材:${r.contentItems.length}]`;
             
             return `${i + 1}. ${r.startTime} ${tools} (${r.duration}分)${extra} ${r.status === 'inProgress' ? '[进行中]' : ''}`;

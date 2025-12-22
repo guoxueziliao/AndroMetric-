@@ -149,6 +149,7 @@ export interface MasturbationRecordDetails {
     useCondom: boolean;
     ejaculation: boolean;
     orgasmIntensity: number;
+    satisfactionLevel?: number; // 1-5: 生理满足感/泄压程度
     mood: 'happy' | 'neutral' | 'sad' | 'excited' | 'anxious' | 'angry';
     stressLevel: number;
     energyLevel: number;

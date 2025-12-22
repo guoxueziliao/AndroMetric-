@@ -37,6 +37,7 @@ export const hydrateLog = (raw: any): LogEntry => {
         masturbation: Array.isArray(raw.masturbation) ? raw.masturbation.map((m: any) => ({
             ...m, 
             status: m.status || 'completed',
+            satisfactionLevel: m.satisfactionLevel ?? (m.ejaculation ? 3 : 1), // Default based on ejaculation
             contentItems: Array.isArray(m.contentItems) ? m.contentItems : [] 
         })) : [],
         

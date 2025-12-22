@@ -1,10 +1,10 @@
 
 import React, { useState, useEffect, useMemo, Suspense, lazy } from 'react';
 /* Added Droplets and User to fix 'Cannot find name' errors */
-import { X, Check, Clock, Film, PenLine, Plus, Minus, Zap, Edit2, Trash2, MonitorPlay, ChevronDown, LayoutGrid, Activity, ChevronLeft, AlertTriangle, Info, Search, Settings, Droplets, User } from 'lucide-react';
+import { X, Check, Clock, Film, PenLine, Plus, Minus, Zap, Edit2, Trash2, MonitorPlay, ChevronDown, LayoutGrid, Activity, ChevronLeft, AlertTriangle, Info, Search, Settings, Droplets, User, Battery, BatteryMedium, BatteryFull } from 'lucide-react';
 import { MasturbationRecordDetails, LogEntry, PartnerProfile, ContentItem } from '../types';
 import Modal from './Modal';
-import { calculateInventory } from '../utils/helpers';
+import { calculateInventory, LABELS } from '../utils/helpers';
 import { XP_DIMENSIONS_LIST } from '../utils/constants';
 import { useData } from '../contexts/DataContext';
 
@@ -33,6 +33,14 @@ const FORCE_LEVELS = [
     { lvl: 5, label: '爆发', desc: '极强冲力，射穿或喷射极远' },
 ];
 
+const SATISFACTION_LEVELS = [
+    { lvl: 1, label: '毫无感觉', desc: '还是憋得慌', color: 'bg-slate-400' },
+    { lvl: 2, label: '解压一般', desc: '完成了任务', color: 'bg-blue-300' },
+    { lvl: 3, label: '基本达标', desc: '不怎么想了', color: 'bg-blue-400' },
+    { lvl: 4, label: '非常舒爽', desc: '完全放松', color: 'bg-blue-500' },
+    { lvl: 5, label: '灵魂升华', desc: '彻底清空，大贤者模式', color: 'bg-indigo-600' },
+];
+
 const POST_MOOD_OPTIONS = ['满足/愉悦', '平静/贤者', '空虚/后悔', '焦虑/负罪', '恶心/厌恶'];
 const FATIGUE_OPTIONS = ['精神焕发', '无明显疲劳', '轻微困倦', '身体沉重', '秒睡'];
 
@@ -41,6 +49,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
     const [data, setData] = useState<MasturbationRecordDetails>({
         id: '', startTime: '', duration: 15, status: 'completed', tools: ['手'], contentItems: [],
         edging: 'none', edgingCount: 0, lubricant: '无润滑', useCondom: false, ejaculation: true, orgasmIntensity: 3,
+        satisfactionLevel: 3,
         mood: 'neutral', stressLevel: 3, energyLevel: 3, interrupted: false, interruptionReasons: [], notes: '',
         volumeForceLevel: 3, postMood: '平静/贤者', fatigue: '无明显疲劳'
     });
@@ -75,6 +84,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                     ...initialData,
                     contentItems: initialData.contentItems || [],
                     volumeForceLevel: initialData.volumeForceLevel || (initialData.ejaculation ? 3 : undefined),
+                    satisfactionLevel: initialData.satisfactionLevel || (initialData.ejaculation ? 3 : 1),
                     postMood: initialData.postMood || '平静/贤者',
                     fatigue: initialData.fatigue || '无明显疲劳',
                     orgasmIntensity: initialData.orgasmIntensity ?? 3,
@@ -89,6 +99,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                     startTime: now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
                     duration: 0, status: 'completed', tools: ['手'], contentItems: [],
                     edging: 'none', edgingCount: 0, lubricant: '无润滑', useCondom: false, ejaculation: true, orgasmIntensity: 3,
+                    satisfactionLevel: 3,
                     mood: 'neutral', stressLevel: 3, energyLevel: 3, interrupted: false, interruptionReasons: [], notes: '',
                     volumeForceLevel: 3, postMood: '平静/贤者', fatigue: '无明显疲劳'
                 });
@@ -171,10 +182,8 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                     <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 flex flex-col gap-2">
                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">持续时长 (分)</label>
                         <div className="flex items-center justify-between">
-                            {/* 改为 1 分钟步进 */}
                             <button onClick={() => updateData({duration: Math.max(0, data.duration - 1)})} className="text-slate-400 hover:text-brand-accent p-1"><Minus size={18}/></button>
                             <span className="text-xl font-black text-slate-800 dark:text-slate-100 tabular-nums">{data.duration}</span>
-                            {/* 改为 1 分钟步进 */}
                             <button onClick={() => updateData({duration: data.duration + 1})} className="text-slate-400 hover:text-brand-accent p-1"><Plus size={18}/></button>
                         </div>
                     </div>
@@ -277,6 +286,43 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                     </div>
                 </div>
 
+                {/* New: Satisfaction Energy Tank (Plan A) */}
+                <div className="bg-slate-50 dark:bg-slate-900 p-5 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 space-y-6">
+                    <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500">
+                        <BatteryMedium size={16} />
+                        <span className="text-[10px] font-black uppercase tracking-widest">生理需求满足感 (SATISFACTION)</span>
+                    </div>
+                    
+                    <div className="space-y-4">
+                        <div className="relative h-12 w-full bg-slate-200 dark:bg-slate-800 rounded-2xl overflow-hidden flex border border-slate-300 dark:border-slate-700">
+                            {/* Filling Effect */}
+                            <div 
+                                className="absolute left-0 top-0 h-full bg-gradient-to-r from-blue-400 to-indigo-600 transition-all duration-500 ease-out opacity-80"
+                                style={{ width: `${(data.satisfactionLevel || 0) * 20}%` }}
+                            />
+                            
+                            {/* Tap Targets */}
+                            {SATISFACTION_LEVELS.map((lvl) => (
+                                <button
+                                    key={lvl.lvl}
+                                    onClick={() => updateData({ satisfactionLevel: lvl.lvl })}
+                                    className="flex-1 relative z-10 h-full border-r last:border-0 border-white/10"
+                                    aria-label={lvl.label}
+                                />
+                            ))}
+                        </div>
+
+                        <div className="flex flex-col items-center animate-in fade-in duration-300">
+                            <span className={`text-sm font-black ${SATISFACTION_LEVELS[(data.satisfactionLevel || 1) - 1].color.replace('bg-', 'text-')}`}>
+                                {SATISFACTION_LEVELS[(data.satisfactionLevel || 1) - 1].label}
+                            </span>
+                            <span className="text-[10px] font-bold text-slate-400 mt-0.5">
+                                {SATISFACTION_LEVELS[(data.satisfactionLevel || 1) - 1].desc}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
                 {/* 5. End Result Card */}
                 <div className="bg-slate-50 dark:bg-slate-900 p-5 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 space-y-6">
                     <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-4">
@@ -312,7 +358,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
 
                     <div className="space-y-4 pt-2 border-t border-slate-100 dark:border-slate-800 pt-4">
                         <div className="flex justify-between text-[10px] font-black text-slate-400 uppercase px-1">
-                            <span>愉悦感 ({data.orgasmIntensity})</span>
+                            <span>爽度评分 ({data.orgasmIntensity})</span>
                             <span className="text-amber-500 flex items-center gap-1">舒服</span>
                         </div>
                         <input 
