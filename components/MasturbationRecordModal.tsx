@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo, Suspense, lazy } from 'react';
-/* Added Droplets and User to fix 'Cannot find name' errors */
-import { X, Check, Clock, Film, PenLine, Plus, Minus, Zap, Edit2, Trash2, MonitorPlay, ChevronDown, LayoutGrid, Activity, ChevronLeft, AlertTriangle, Info, Search, Settings, Droplets, User, Battery, BatteryMedium, BatteryFull } from 'lucide-react';
+import { X, Check, Clock, Film, PenLine, Plus, Minus, Zap, Edit2, Trash2, MonitorPlay, ChevronDown, LayoutGrid, Activity, ChevronLeft, AlertTriangle, Info, Search, Settings, Droplets, User, Battery, BatteryMedium, BatteryFull, PhoneOff, UserX, HeartOff } from 'lucide-react';
 import { MasturbationRecordDetails, LogEntry, PartnerProfile, ContentItem } from '../types';
 import Modal from './Modal';
 import { calculateInventory, LABELS } from '../utils/helpers';
@@ -42,6 +41,7 @@ const SATISFACTION_LEVELS = [
 
 const POST_MOOD_OPTIONS = ['满足/愉悦', '平静/贤者', '空虚/后悔', '焦虑/负罪', '恶心/厌恶'];
 const FATIGUE_OPTIONS = ['精神焕发', '无明显疲劳', '轻微困倦', '身体沉重', '秒睡'];
+const INTERRUPTION_REASONS = ['电话/消息', '有人敲门/进入', '突然没兴致', '身体不适', '环境干扰', '被迫中止'];
 
 const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpen, onClose, onSave, initialData, logs = [] }) => {
     const { userTags } = useData();
@@ -65,11 +65,9 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
         const counts: Record<string, number> = {};
         logs.forEach(log => {
             log.masturbation?.forEach(m => {
-                // 从现代素材列表中提取
                 m.contentItems?.forEach(ci => {
                     ci.xpTags?.forEach(tag => counts[tag] = (counts[tag] || 0) + 1);
                 });
-                // 兼容旧版素材分类
                 m.assets?.categories?.forEach(tag => counts[tag] = (counts[tag] || 0) + 1);
             });
         });
@@ -89,7 +87,9 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                     orgasmIntensity: initialData.orgasmIntensity ?? 3,
                     edgingCount: initialData.edgingCount ?? 0,
                     lubricant: initialData.lubricant || '无润滑',
-                    useCondom: initialData.useCondom || false
+                    useCondom: initialData.useCondom || false,
+                    interrupted: initialData.interrupted || false,
+                    interruptionReasons: initialData.interruptionReasons || []
                 });
             } else {
                 const now = new Date();
@@ -113,6 +113,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
         onClose();
     };
 
+    /* Fix: Added missing toggleXpTag function to manage tag selections in content items */
     const toggleXpTag = (tag: string) => {
         if (!editingItem) return;
         const current = editingItem.xpTags || [];
@@ -120,25 +121,27 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
         setEditingItem({ ...editingItem, xpTags: next });
     };
 
+    const toggleInterruptionReason = (reason: string) => {
+        const current = data.interruptionReasons || [];
+        const next = current.includes(reason) ? current.filter(r => r !== reason) : [...current, reason];
+        updateData({ interruptionReasons: next });
+    };
+
     const displayTags = useMemo(() => {
         const xpTagsOnly = userTags.filter(t => t.category === 'xp');
-        
         let filtered = [];
         if (activeTagTab === '常用') {
-            // “常用”仅显示在记录中出现过的标签，按频次降序
             filtered = xpTagsOnly
                 .filter(t => (tagUsageMap[t.name] || 0) > 0)
                 .sort((a, b) => tagUsageMap[b.name] - tagUsageMap[a.name])
                 .slice(0, 20)
                 .map(t => t.name);
         } else {
-            // 其他维度显示库中该维度的所有标签，按使用频次辅助排序
             filtered = xpTagsOnly
                 .filter(t => t.dimension === activeTagTab)
                 .sort((a,b) => (tagUsageMap[b.name]||0) - (tagUsageMap[a.name]||0))
                 .map(t => t.name);
         }
-
         if (tagSearch) {
             filtered = filtered.filter(t => t.toLowerCase().includes(tagSearch.toLowerCase()));
         }
@@ -173,9 +176,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                 <div className="grid grid-cols-2 gap-3">
                     <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 flex flex-col gap-2">
                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">开始时间</label>
-                        <div className="flex items-center justify-between">
-                            <input type="time" value={data.startTime} onChange={e => updateData({startTime: e.target.value})} className="bg-transparent text-xl font-mono font-bold text-slate-800 dark:text-slate-100 outline-none w-full"/>
-                        </div>
+                        <input type="time" value={data.startTime} onChange={e => updateData({startTime: e.target.value})} className="bg-transparent text-xl font-mono font-bold text-slate-800 dark:text-slate-100 outline-none w-full"/>
                     </div>
                     <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 flex flex-col gap-2">
                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">持续时长 (分)</label>
@@ -213,7 +214,6 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                                 </div>
                             </div>
                         ))}
-                        
                         <button 
                             onClick={() => setEditingItem({ id: Math.random().toString(36).substr(2, 9), actors: [], xpTags: [], type: '', platform: '', title: '' })}
                             className="w-full py-8 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl flex flex-col items-center justify-center gap-2 group hover:border-brand-accent/50 transition-all bg-white dark:bg-slate-900/40"
@@ -237,11 +237,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                         {TOOL_OPTIONS.map(tool => {
                             const isSel = data.tools.includes(tool);
                             return (
-                                <button 
-                                    key={tool}
-                                    onClick={() => updateData({tools: isSel ? data.tools.filter(t => t !== tool) : [...data.tools, tool]})}
-                                    className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border ${isSel ? 'bg-blue-900/20 text-brand-accent border-brand-accent' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 border-transparent'}`}
-                                >
+                                <button key={tool} onClick={() => updateData({tools: isSel ? data.tools.filter(t => t !== tool) : [...data.tools, tool]})} className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border ${isSel ? 'bg-blue-900/20 text-brand-accent border-brand-accent' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 border-transparent'}`}>
                                     {tool}
                                 </button>
                             );
@@ -249,20 +245,13 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                     </div>
                     <div className="flex gap-2">
                         <div className="flex-1 relative">
-                            <select 
-                                value={data.lubricant} 
-                                onChange={e => updateData({lubricant: e.target.value})}
-                                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 pl-8 text-xs font-bold appearance-none outline-none focus:border-brand-accent"
-                            >
+                            <select value={data.lubricant} onChange={e => updateData({lubricant: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 pl-8 text-xs font-bold appearance-none outline-none focus:border-brand-accent">
                                 {LUBRICANT_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
                             </select>
                             <Droplets size={14} className="absolute left-3 top-3.5 text-blue-500" />
                             <ChevronDown size={14} className="absolute right-3 top-3.5 text-slate-400 pointer-events-none" />
                         </div>
-                        <button 
-                            onClick={() => updateData({useCondom: !data.useCondom})}
-                            className={`px-5 rounded-xl text-xs font-black flex items-center gap-2 border transition-all ${data.useCondom ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 border-slate-900' : 'bg-slate-50 dark:bg-slate-900 text-slate-400 border-slate-200 dark:border-slate-800'}`}
-                        >
+                        <button onClick={() => updateData({useCondom: !data.useCondom})} className={`px-5 rounded-xl text-xs font-black flex items-center gap-2 border transition-all ${data.useCondom ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 border-slate-900' : 'bg-slate-50 dark:bg-slate-900 text-slate-400 border-slate-200 dark:border-slate-800'}`}>
                             <div className={`w-2 h-2 rounded-full border border-current ${data.useCondom ? 'bg-current' : 'bg-transparent'}`}></div> 戴套
                         </button>
                     </div>
@@ -284,44 +273,47 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                     </div>
                 </div>
 
-                {/* New: Satisfaction Energy Tank (Plan A) */}
-                <div className="bg-slate-50 dark:bg-slate-900 p-5 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 space-y-6">
-                    <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500">
-                        <BatteryMedium size={16} />
-                        <span className="text-[10px] font-black uppercase tracking-widest">生理需求满足感 (SATISFACTION)</span>
-                    </div>
-                    
-                    <div className="space-y-4">
-                        <div className="relative h-12 w-full bg-slate-200 dark:bg-slate-800 rounded-2xl overflow-hidden flex border border-slate-300 dark:border-slate-700">
-                            {/* Filling Effect */}
-                            <div 
-                                className="absolute left-0 top-0 h-full bg-gradient-to-r from-blue-400 to-indigo-600 transition-all duration-500 ease-out opacity-80"
-                                style={{ width: `${(data.satisfactionLevel || 0) * 20}%` }}
-                            />
-                            
-                            {/* Tap Targets */}
-                            {SATISFACTION_LEVELS.map((lvl) => (
-                                <button
-                                    key={lvl.lvl}
-                                    onClick={() => updateData({ satisfactionLevel: lvl.lvl })}
-                                    className="flex-1 relative z-10 h-full border-r last:border-0 border-white/10"
-                                    aria-label={lvl.label}
-                                />
-                            ))}
+                {/* 5. Interruption Section (NEW) */}
+                <div className={`bg-slate-50 dark:bg-slate-900 p-5 rounded-[2.5rem] border transition-all ${data.interrupted ? 'border-orange-200 dark:border-orange-900/30' : 'border-slate-200 dark:border-slate-800'}`}>
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                            <div className={`p-2 rounded-xl ${data.interrupted ? 'bg-orange-100 dark:bg-orange-900/40 text-orange-600' : 'bg-slate-200 dark:bg-slate-800 text-slate-400'}`}>
+                                <PhoneOff size={18}/>
+                            </div>
+                            <div>
+                                <div className="text-xs font-black text-slate-700 dark:text-slate-200">中途被打断</div>
+                                <div className="text-[10px] text-slate-400 font-bold">意外状况或心不在焉</div>
+                            </div>
                         </div>
-
-                        <div className="flex flex-col items-center animate-in fade-in duration-300">
-                            <span className={`text-sm font-black ${SATISFACTION_LEVELS[(data.satisfactionLevel || 1) - 1].color.replace('bg-', 'text-')}`}>
-                                {SATISFACTION_LEVELS[(data.satisfactionLevel || 1) - 1].label}
-                            </span>
-                            <span className="text-[10px] font-bold text-slate-400 mt-0.5">
-                                {SATISFACTION_LEVELS[(data.satisfactionLevel || 1) - 1].desc}
-                            </span>
-                        </div>
+                        <input 
+                            type="checkbox" 
+                            className="toggle-checkbox" 
+                            checked={data.interrupted} 
+                            onChange={e => updateData({interrupted: e.target.checked, interruptionReasons: e.target.checked ? data.interruptionReasons : []})} 
+                        />
                     </div>
+                    {data.interrupted && (
+                        <div className="space-y-4 animate-in slide-in-from-top-2">
+                            <label className="text-[10px] font-black text-orange-600 dark:text-orange-400 uppercase tracking-widest px-1">打断原因 (多选)</label>
+                            <div className="flex flex-wrap gap-2">
+                                {INTERRUPTION_REASONS.map(reason => {
+                                    const isSel = data.interruptionReasons?.includes(reason);
+                                    return (
+                                        <button 
+                                            key={reason} 
+                                            onClick={() => toggleInterruptionReason(reason)}
+                                            className={`px-3 py-1.5 rounded-xl text-[10px] font-bold border transition-all ${isSel ? 'bg-orange-500 text-white border-orange-600' : 'bg-white dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700'}`}
+                                        >
+                                            {reason}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
                 </div>
 
-                {/* 5. End Result Card */}
+                {/* 6. End Result Card */}
                 <div className="bg-slate-50 dark:bg-slate-900 p-5 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 space-y-6">
                     <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-4">
                         <span className="text-sm font-black text-slate-700 dark:text-slate-200">最终结局</span>
@@ -332,7 +324,6 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                             {data.ejaculation ? '已射精' : 'Edging'}
                         </button>
                     </div>
-
                     {data.ejaculation && (
                         <div className="space-y-4 animate-in slide-in-from-top-2">
                             <div className="flex justify-between items-center px-1">
@@ -353,28 +344,21 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                             <p className="text-[10px] text-slate-400 text-center italic mt-2">"{FORCE_LEVELS.find(f => f.lvl === data.volumeForceLevel)?.desc}"</p>
                         </div>
                     )}
-
                     <div className="space-y-4 pt-2 border-t border-slate-100 dark:border-slate-800 pt-4">
                         <div className="flex justify-between text-[10px] font-black text-slate-400 uppercase px-1">
                             <span>爽度评分 ({data.orgasmIntensity})</span>
                             <span className="text-amber-500 flex items-center gap-1">舒服</span>
                         </div>
-                        <input 
-                            type="range" min="1" max="5" step="1" 
-                            value={data.orgasmIntensity} 
-                            onChange={e => updateData({orgasmIntensity: parseInt(e.target.value)})}
-                            className="w-full h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full appearance-none accent-pink-500"
-                        />
+                        <input type="range" min="1" max="5" step="1" value={data.orgasmIntensity} onChange={e => updateData({orgasmIntensity: parseInt(e.target.value)})} className="w-full h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full appearance-none accent-pink-500" />
                     </div>
                 </div>
 
-                {/* 6. Sage Mode Section */}
+                {/* 7. Sage Mode Section */}
                 <div className="bg-slate-50 dark:bg-slate-900 p-5 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 space-y-6">
                     <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500">
                         <Zap size={16} />
                         <span className="text-[10px] font-black uppercase tracking-widest">贤者时间 (SAGE MODE)</span>
                     </div>
-
                     <div className="space-y-3">
                         <label className="text-[10px] font-black text-slate-400 uppercase px-1">心理状态</label>
                         <div className="flex flex-wrap gap-2">
@@ -385,7 +369,6 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                             ))}
                         </div>
                     </div>
-
                     <div className="space-y-3 pt-2">
                         <label className="text-[10px] font-black text-slate-400 uppercase px-1">身体疲劳度</label>
                         <div className="flex flex-wrap gap-2">
@@ -398,15 +381,34 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                     </div>
                 </div>
 
-                {/* 7. Notes */}
+                {/* 8. Satisfaction Energy Tank (Moved to End) */}
+                <div className="bg-slate-50 dark:bg-slate-900 p-5 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 space-y-6">
+                    <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500">
+                        <BatteryFull size={16} className="text-brand-accent"/>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-brand-accent">生理需求满足感 (SATISFACTION)</span>
+                    </div>
+                    <div className="space-y-4">
+                        <div className="relative h-12 w-full bg-slate-200 dark:bg-slate-800 rounded-2xl overflow-hidden flex border border-slate-300 dark:border-slate-700 shadow-inner">
+                            <div className="absolute left-0 top-0 h-full bg-gradient-to-r from-blue-400 to-indigo-600 transition-all duration-500 ease-out opacity-80" style={{ width: `${(data.satisfactionLevel || 0) * 20}%` }} />
+                            {SATISFACTION_LEVELS.map((lvl) => (
+                                <button key={lvl.lvl} onClick={() => updateData({ satisfactionLevel: lvl.lvl })} className="flex-1 relative z-10 h-full border-r last:border-0 border-white/10" aria-label={lvl.label} />
+                            ))}
+                        </div>
+                        <div className="flex flex-col items-center animate-in fade-in duration-300">
+                            <span className={`text-sm font-black ${SATISFACTION_LEVELS[(data.satisfactionLevel || 1) - 1].color.replace('bg-', 'text-')}`}>
+                                {SATISFACTION_LEVELS[(data.satisfactionLevel || 1) - 1].label}
+                            </span>
+                            <span className="text-[10px] font-bold text-slate-400 mt-0.5">
+                                {SATISFACTION_LEVELS[(data.satisfactionLevel || 1) - 1].desc}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* 9. Notes */}
                 <div className="relative group">
                     <div className="absolute left-4 top-4 text-slate-400 group-focus-within:text-brand-accent transition-colors"><PenLine size={18} /></div>
-                    <textarea 
-                        className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[1.5rem] p-5 pl-12 text-xs font-medium outline-none focus:border-brand-accent min-h-[140px] shadow-inner" 
-                        placeholder="更多备注 / 链接 / 特殊感受..." 
-                        value={data.notes} 
-                        onChange={e => updateData({notes: e.target.value})}
-                    />
+                    <textarea className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[1.5rem] p-5 pl-12 text-xs font-medium outline-none focus:border-brand-accent min-h-[140px] shadow-inner" placeholder="更多备注 / 链接 / 特殊感受..." value={data.notes} onChange={e => updateData({notes: e.target.value})} />
                 </div>
             </div>
 
@@ -414,15 +416,10 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
             <Modal isOpen={!!editingItem} onClose={() => setEditingItem(null)} title="编辑素材详情">
                  {editingItem && (
                      <div className="flex flex-col h-[75vh] -mx-4 -mt-4 bg-white dark:bg-slate-950 overflow-hidden">
-                         {/* Header: Back Button & Notices */}
                          <div className="flex-none p-4 border-b border-slate-100 dark:border-slate-800">
-                             <button 
-                                onClick={() => setEditingItem(null)}
-                                className="flex items-center gap-1 text-slate-400 hover:text-brand-accent text-sm font-bold mb-4"
-                             >
+                             <button onClick={() => setEditingItem(null)} className="flex items-center gap-1 text-slate-400 hover:text-brand-accent text-sm font-bold mb-4">
                                 <ChevronLeft size={18} /> 返回
                              </button>
-
                              <div className="space-y-2">
                                  {!editingItem.type && (
                                      <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-900/30 rounded-lg p-3 flex items-center justify-between">
@@ -448,165 +445,85 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                                          <button className="text-[10px] font-black text-amber-700 border border-amber-200 px-2 py-1 rounded bg-white">去选择</button>
                                      </div>
                                  )}
-                                 {!editingItem.title && (
-                                     <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-lg p-3 flex items-center justify-between">
-                                         <div className="flex items-start gap-2">
-                                             <Info size={16} className="text-slate-400 mt-0.5" />
-                                             <div>
-                                                 <div className="text-xs font-black text-slate-600 dark:text-slate-300">未填写素材备注</div>
-                                                 <div className="text-[10px] text-slate-400">回顾困难</div>
-                                             </div>
-                                         </div>
-                                         <button className="text-[10px] font-black text-slate-500 border border-slate-200 px-2 py-1 rounded bg-white">去补充</button>
-                                     </div>
-                                 )}
                              </div>
                          </div>
-
-                         {/* Body: Form Fields */}
                          <div className="flex-1 overflow-y-auto custom-scrollbar p-5 space-y-6">
-                             {/* 1. Content Type Grid */}
                              <div className="space-y-3">
                                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest">素材类型 (必选)</label>
                                  <div className="grid grid-cols-4 gap-2">
                                      {CONTENT_TYPES.map(t => (
-                                         <button 
-                                            key={t}
-                                            onClick={() => setEditingItem({...editingItem, type: t})}
-                                            className={`py-2.5 rounded-xl text-xs font-bold transition-all border ${editingItem.type === t ? 'bg-brand-accent text-white border-brand-accent shadow-sm' : 'bg-slate-50 dark:bg-slate-900 text-slate-500 border-slate-200 dark:border-slate-800'}`}
-                                         >
+                                         <button key={t} onClick={() => setEditingItem({...editingItem, type: t})} className={`py-2.5 rounded-xl text-xs font-bold transition-all border ${editingItem.type === t ? 'bg-brand-accent text-white border-brand-accent shadow-sm' : 'bg-slate-50 dark:bg-slate-900 text-slate-500 border-slate-200 dark:border-slate-800'}`}>
                                              {t}
                                          </button>
                                      ))}
                                  </div>
                              </div>
-
-                             {/* 2. Platform Selector (Conditional) */}
                              {!['回忆', '幻想'].includes(editingItem.type || '') && (
                                  <div className="space-y-3">
                                      <label className="text-xs font-black text-slate-400 uppercase tracking-widest">来源平台</label>
                                      <div className="grid grid-cols-3 gap-2">
                                          {PLATFORMS.map(p => (
-                                             <button 
-                                                key={p}
-                                                onClick={() => setEditingItem({...editingItem, platform: p})}
-                                                className={`py-2 rounded-xl text-[11px] font-bold transition-all border ${editingItem.platform === p ? 'bg-slate-800 text-white dark:bg-white dark:text-slate-900 border-slate-800' : 'bg-slate-50 dark:bg-slate-900 text-slate-500 border-slate-200 dark:border-slate-800'}`}
-                                             >
+                                             <button key={p} onClick={() => setEditingItem({...editingItem, platform: p})} className={`py-2 rounded-xl text-[11px] font-bold transition-all border ${editingItem.platform === p ? 'bg-slate-800 text-white dark:bg-white dark:text-slate-900 border-slate-800' : 'bg-slate-50 dark:bg-slate-900 text-slate-500 border-slate-200 dark:border-slate-800'}`}>
                                                  {p}
                                              </button>
                                          ))}
                                      </div>
                                  </div>
                              )}
-
-                             {/* 3. Title & Actors */}
                              <div className="space-y-4">
                                  <div className="space-y-2">
                                      <label className="text-xs font-black text-slate-400 uppercase tracking-widest">标题 / 编号</label>
                                      <div className="relative group">
                                          <div className="absolute left-3 top-3.5 text-slate-300 font-bold">#</div>
-                                         <input 
-                                            value={editingItem.title || ''} 
-                                            onChange={e => setEditingItem({...editingItem, title: e.target.value})} 
-                                            placeholder="输入标题、编号或链接..." 
-                                            className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl py-3 pl-8 pr-4 text-sm font-bold outline-none focus:ring-2 focus:ring-brand-accent/20 transition-all"
-                                         />
+                                         <input value={editingItem.title || ''} onChange={e => setEditingItem({...editingItem, title: e.target.value})} placeholder="输入标题、编号或链接..." className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl py-3 pl-8 pr-4 text-sm font-bold outline-none focus:ring-2 focus:ring-brand-accent/20 transition-all" />
                                      </div>
                                  </div>
                                  <div className="space-y-2">
                                      <label className="text-xs font-black text-slate-400 uppercase tracking-widest">主演 / 角色</label>
                                      <div className="relative group">
                                          <User size={16} className="absolute left-3 top-3.5 text-slate-300" />
-                                         <input 
-                                            value={editingItem.actors?.join(' ') || ''} 
-                                            onChange={e => setEditingItem({...editingItem, actors: e.target.value.split(/\s+/)})} 
-                                            placeholder="多个演员用空格分隔..." 
-                                            className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl py-3 pl-9 pr-4 text-sm font-bold outline-none focus:ring-2 focus:ring-brand-accent/20 transition-all"
-                                         />
+                                         <input value={editingItem.actors?.join(' ') || ''} onChange={e => setEditingItem({...editingItem, actors: e.target.value.split(/\s+/)})} placeholder="多个演员用空格分隔..." className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl py-3 pl-9 pr-4 text-sm font-bold outline-none focus:ring-2 focus:ring-brand-accent/20 transition-all" />
                                      </div>
                                  </div>
                              </div>
-
-                             {/* 4. XP Tags Selection */}
                              <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
                                  <div className="flex justify-between items-center mb-4">
-                                     <div className="flex items-center gap-2">
-                                         <label className="text-xs font-black text-slate-400 uppercase tracking-widest">XP 标签 ({editingItem.xpTags?.length || 0})</label>
-                                     </div>
-                                     <button 
-                                        onClick={() => setIsTagManagerOpen(true)}
-                                        className="p-1.5 bg-blue-50 dark:bg-blue-900/30 text-brand-accent rounded-lg flex items-center gap-1 text-[10px] font-black"
-                                     >
-                                        <Settings size={12}/> 管理
-                                     </button>
+                                     <label className="text-xs font-black text-slate-400 uppercase tracking-widest">XP 标签 ({editingItem.xpTags?.length || 0})</label>
+                                     <button onClick={() => setIsTagManagerOpen(true)} className="p-1.5 bg-blue-50 dark:bg-blue-900/30 text-brand-accent rounded-lg flex items-center gap-1 text-[10px] font-black"><Settings size={12}/> 管理</button>
                                  </div>
-
                                  <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-1 mb-4 border-b border-slate-100 dark:border-slate-800">
                                      {['常用', ...XP_DIMENSIONS_LIST].map(tab => (
-                                         <button 
-                                            key={tab} 
-                                            onClick={() => setActiveTagTab(tab)}
-                                            className={`pb-2 px-1 text-xs font-black transition-all relative ${activeTagTab === tab ? 'text-brand-accent' : 'text-slate-400'}`}
-                                         >
+                                         <button key={tab} onClick={() => setActiveTagTab(tab)} className={`pb-2 px-1 text-xs font-black transition-all relative ${activeTagTab === tab ? 'text-brand-accent' : 'text-slate-400'}`}>
                                              {tab}
                                              {activeTagTab === tab && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-brand-accent rounded-full"></div>}
                                          </button>
                                      ))}
                                  </div>
-
-                                 <div className="relative mb-4">
-                                     <Search size={14} className="absolute left-3 top-3 text-slate-300" />
-                                     <input 
-                                        value={tagSearch}
-                                        onChange={e => setTagSearch(e.target.value)}
-                                        placeholder="搜索标签..."
-                                        className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2.5 pl-9 pr-4 text-xs font-bold outline-none"
-                                     />
-                                 </div>
-
                                  <div className="flex flex-wrap gap-2 max-h-[250px] overflow-y-auto custom-scrollbar">
-                                     {displayTags.length > 0 ? (
-                                         displayTags.map(tag => {
-                                            const isSel = editingItem.xpTags?.includes(tag);
-                                            return (
-                                                <button 
-                                                    key={tag}
-                                                    onClick={() => toggleXpTag(tag)}
-                                                    className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${isSel ? 'bg-blue-500 text-white border-blue-600 shadow-sm' : 'bg-white dark:bg-slate-900 text-slate-500 border-slate-200 dark:border-slate-700'}`}
-                                                >
-                                                    {tag}
-                                                </button>
-                                            );
-                                         })
-                                     ) : (
-                                         <div className="w-full py-10 text-center border border-dashed border-slate-100 dark:border-slate-800 rounded-2xl">
-                                             <span className="text-[10px] text-slate-300 font-bold uppercase tracking-widest italic">
-                                                 {activeTagTab} 分类下暂无标签
-                                             </span>
-                                         </div>
-                                     )}
+                                     {displayTags.map(tag => {
+                                        const isSel = editingItem.xpTags?.includes(tag);
+                                        return (
+                                            <button key={tag} onClick={() => toggleXpTag(tag)} className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${isSel ? 'bg-blue-500 text-white border-blue-600 shadow-sm' : 'bg-white dark:bg-slate-900 text-slate-500 border-slate-200 dark:border-slate-700'}`}>
+                                                {tag}
+                                            </button>
+                                        );
+                                     })}
                                  </div>
                              </div>
                          </div>
-
-                         {/* Bottom: Save Button */}
                          <div className="flex-none p-5 bg-white dark:bg-slate-950 border-t border-slate-100 dark:border-slate-800">
-                             <button 
-                                onClick={() => {
+                             <button onClick={() => {
                                     const nextItems = data.contentItems.find(i => i.id === editingItem.id) 
                                         ? data.contentItems.map(i => i.id === editingItem.id ? editingItem : i)
                                         : [...data.contentItems, editingItem];
                                     updateData({contentItems: nextItems});
                                     setEditingItem(null);
-                                }}
-                                className="w-full py-4 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-[1.5rem] font-black text-sm shadow-xl active:scale-[0.98] transition-all"
-                             >保存素材信息</button>
+                                }} className="w-full py-4 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-[1.5rem] font-black text-sm shadow-xl active:scale-[0.98] transition-all">保存素材信息</button>
                          </div>
                      </div>
                  )}
             </Modal>
             
-            {/* 标签管理器弹窗 */}
             <Suspense fallback={null}>
                 <TagManager isOpen={isTagManagerOpen} onClose={() => setIsTagManagerOpen(false)} />
             </Suspense>
