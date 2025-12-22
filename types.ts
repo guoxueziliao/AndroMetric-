@@ -4,7 +4,7 @@ export type TagType = 'xp' | 'event' | 'symptom';
 export interface TagEntry {
     name: string;
     category: TagType;
-    dimension?: string; // 仅对 XP 标签有效，如 "角色"、"玩法"
+    dimension?: string;
     createdAt: number;
 }
 
@@ -149,7 +149,7 @@ export interface MasturbationRecordDetails {
     useCondom: boolean;
     ejaculation: boolean;
     orgasmIntensity: number;
-    satisfactionLevel?: number; // 1-5: 生理满足感/泄压程度
+    satisfactionLevel?: number;
     mood: 'happy' | 'neutral' | 'sad' | 'excited' | 'anxious' | 'angry';
     stressLevel: number;
     energyLevel: number;
@@ -208,6 +208,27 @@ export interface SexRecordDetails {
     positions?: string[]; // Legacy
 }
 
+// --- SUPPLEMENTS V1 ---
+
+export interface Supplement {
+    id: string;
+    name: string;
+    dosage: string;
+    color: string;
+    startDate: string; // YYYY-MM-DD
+    cycleEnabled: boolean;
+    daysOn: number;
+    daysOff: number;
+    totalCycleDays: number; // 0 为不限制
+    isActive: boolean;
+}
+
+export interface SupplementIntake {
+    supplementId: string;
+    taken: boolean;
+    dosage?: string;
+}
+
 export interface ChangeDetail {
     field: string;
     oldValue: string | null | undefined;
@@ -232,8 +253,7 @@ export type AlcoholConsumption = 'none' | 'low' | 'medium' | 'high';
 export type PornConsumption = 'none' | 'low' | 'medium' | 'high';
 export type ExerciseIntensity = 'low' | 'medium' | 'high';
 export type SexQuality = 1 | 2 | 3 | 4 | 5;
-// Added 'meta' to HistoryCategory
-export type HistoryCategory = 'sex' | 'masturbation' | 'exercise' | 'sleep' | 'morning' | 'lifestyle' | 'health' | 'nap' | 'system' | 'meta';
+export type HistoryCategory = 'sex' | 'masturbation' | 'exercise' | 'sleep' | 'morning' | 'lifestyle' | 'health' | 'nap' | 'system' | 'meta' | 'supplement';
 
 export interface CaffeineItem {
     id: string;
@@ -262,6 +282,7 @@ export interface LogEntry {
         totalCount: number;
         items: CaffeineItem[];
     };
+    supplementIntake: SupplementIntake[]; // New
     dailyEvents?: string[];
     tags: string[];
     notes?: string | null;
@@ -293,7 +314,6 @@ export interface PartnerProfile {
     weight?: number;
     cupSize?: string;
     origin?: string;
-    // Added occupation field
     occupation?: string;
     firstEncounterDate?: string;
     contrastDaily?: string;
@@ -327,6 +347,7 @@ export interface Snapshot {
         logs: LogEntry[];
         partners: PartnerProfile[];
         tags?: TagEntry[];
+        supplements?: Supplement[];
     };
 }
 
@@ -340,7 +361,7 @@ export interface BackupState {
     isAutoBackupEnabled: boolean;
 }
 
-export type EventType = 'morning_wood' | 'sleep' | 'alcohol' | 'exercise' | 'sex' | 'masturbation' | 'stress' | 'health';
+export type EventType = 'morning_wood' | 'sleep' | 'alcohol' | 'exercise' | 'sex' | 'masturbation' | 'stress' | 'health' | 'supplement';
 
 export interface UnifiedEvent {
     schemaVersion: number;
