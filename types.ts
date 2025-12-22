@@ -208,27 +208,6 @@ export interface SexRecordDetails {
     positions?: string[]; // Legacy
 }
 
-// --- SUPPLEMENTS V1 ---
-
-export interface Supplement {
-    id: string;
-    name: string;
-    dosage: string;
-    color: string;
-    startDate: string; // YYYY-MM-DD
-    cycleEnabled: boolean;
-    daysOn: number;
-    daysOff: number;
-    totalCycleDays: number; // 0 为不限制
-    isActive: boolean;
-}
-
-export interface SupplementIntake {
-    supplementId: string;
-    taken: boolean;
-    dosage?: string;
-}
-
 export interface ChangeDetail {
     field: string;
     oldValue: string | null | undefined;
@@ -253,7 +232,8 @@ export type AlcoholConsumption = 'none' | 'low' | 'medium' | 'high';
 export type PornConsumption = 'none' | 'low' | 'medium' | 'high';
 export type ExerciseIntensity = 'low' | 'medium' | 'high';
 export type SexQuality = 1 | 2 | 3 | 4 | 5;
-export type HistoryCategory = 'sex' | 'masturbation' | 'exercise' | 'sleep' | 'morning' | 'lifestyle' | 'health' | 'nap' | 'system' | 'meta' | 'supplement';
+// Added 'meta' to HistoryCategory
+export type HistoryCategory = 'sex' | 'masturbation' | 'exercise' | 'sleep' | 'morning' | 'lifestyle' | 'health' | 'nap' | 'system' | 'meta';
 
 export interface CaffeineItem {
     id: string;
@@ -282,7 +262,6 @@ export interface LogEntry {
         totalCount: number;
         items: CaffeineItem[];
     };
-    supplementIntake: SupplementIntake[]; // New in v0.0.7
     dailyEvents?: string[];
     tags: string[];
     notes?: string | null;
@@ -314,6 +293,7 @@ export interface PartnerProfile {
     weight?: number;
     cupSize?: string;
     origin?: string;
+    // Added occupation field
     occupation?: string;
     firstEncounterDate?: string;
     contrastDaily?: string;
@@ -347,7 +327,6 @@ export interface Snapshot {
         logs: LogEntry[];
         partners: PartnerProfile[];
         tags?: TagEntry[];
-        supplements?: Supplement[];
     };
 }
 
@@ -361,7 +340,7 @@ export interface BackupState {
     isAutoBackupEnabled: boolean;
 }
 
-export type EventType = 'morning_wood' | 'sleep' | 'alcohol' | 'exercise' | 'sex' | 'masturbation' | 'stress' | 'health' | 'supplement';
+export type EventType = 'morning_wood' | 'sleep' | 'alcohol' | 'exercise' | 'sex' | 'masturbation' | 'stress' | 'health';
 
 export interface UnifiedEvent {
     schemaVersion: number;
