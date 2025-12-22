@@ -4,7 +4,7 @@ export type TagType = 'xp' | 'event' | 'symptom';
 export interface TagEntry {
     name: string;
     category: TagType;
-    dimension?: string;
+    dimension?: string; // 仅对 XP 标签有效，如 "角色"、"玩法"
     createdAt: number;
 }
 
@@ -108,11 +108,11 @@ export interface ExerciseRecord {
     type: string;
     startTime: string;
     duration: number;
-    intensity: ExerciseIntensity;
+    intensity: 'low' | 'medium' | 'high';
     bodyParts?: string[];
     steps?: number;
     notes?: string;
-    feeling?: ExerciseFeeling;
+    feeling?: 'great' | 'ok' | 'tired' | 'bad';
     ongoing?: boolean;
 }
 
@@ -133,13 +133,23 @@ export interface MasturbationRecordDetails {
     status: 'completed' | 'inProgress';
     tools: string[];
     contentItems: ContentItem[];
+    materials?: string[]; // Legacy
+    props?: string[]; // Legacy
+    assets?: {
+        sources?: string[];
+        platforms?: string[];
+        categories?: string[];
+        target?: string;
+        actors?: string[];
+    };
+    materialsList?: any[]; // Legacy
     edging: 'none' | 'single' | 'multiple';
     edgingCount: number;
     lubricant: string;
     useCondom: boolean;
     ejaculation: boolean;
     orgasmIntensity: number;
-    satisfactionLevel?: number;
+    satisfactionLevel?: number; // 1-5: 生理满足感/泄压程度
     mood: 'happy' | 'neutral' | 'sad' | 'excited' | 'anxious' | 'angry';
     stressLevel: number;
     energyLevel: number;
@@ -194,27 +204,8 @@ export interface SexRecordDetails {
     mood: 'happy' | 'neutral' | 'sad' | 'excited' | 'anxious' | 'angry';
     notes?: string;
     interactions: SexInteraction[];
-}
-
-// --- SUPPLEMENTS ---
-
-export interface Supplement {
-    id: string;
-    name: string;
-    dosage: string; // e.g., "500mg", "2 capsules"
-    color: string; // Hex color for the pill
-    startDate: string; // YYYY-MM-DD
-    cycleEnabled: boolean;
-    daysOn: number; // e.g., 5
-    daysOff: number; // e.g., 2
-    totalCycleDays: number; // e.g., 21 (optional, 0 for infinite)
-    isActive: boolean;
-}
-
-export interface SupplementIntake {
-    supplementId: string;
-    taken: boolean;
-    dosage?: string;
+    acts?: string[]; // Legacy
+    positions?: string[]; // Legacy
 }
 
 export interface ChangeDetail {
@@ -239,7 +230,10 @@ export type Mood = 'happy' | 'excited' | 'neutral' | 'anxious' | 'sad' | 'angry'
 export type StressLevel = 1 | 2 | 3 | 4 | 5;
 export type AlcoholConsumption = 'none' | 'low' | 'medium' | 'high';
 export type PornConsumption = 'none' | 'low' | 'medium' | 'high';
-export type HistoryCategory = 'sex' | 'masturbation' | 'exercise' | 'sleep' | 'morning' | 'lifestyle' | 'health' | 'nap' | 'system' | 'meta' | 'supplement';
+export type ExerciseIntensity = 'low' | 'medium' | 'high';
+export type SexQuality = 1 | 2 | 3 | 4 | 5;
+// Added 'meta' to HistoryCategory
+export type HistoryCategory = 'sex' | 'masturbation' | 'exercise' | 'sleep' | 'morning' | 'lifestyle' | 'health' | 'nap' | 'system' | 'meta';
 
 export interface CaffeineItem {
     id: string;
@@ -268,7 +262,6 @@ export interface LogEntry {
         totalCount: number;
         items: CaffeineItem[];
     };
-    supplementIntake: SupplementIntake[]; // New
     dailyEvents?: string[];
     tags: string[];
     notes?: string | null;
@@ -289,8 +282,6 @@ export interface AppSettings {
     lastExportAt?: number;
 }
 
-export type PartnerType = 'stable' | 'dating' | 'casual' | 'service';
-
 export interface PartnerProfile {
     id: string;
     name: string;
@@ -302,6 +293,7 @@ export interface PartnerProfile {
     weight?: number;
     cupSize?: string;
     origin?: string;
+    // Added occupation field
     occupation?: string;
     firstEncounterDate?: string;
     contrastDaily?: string;
@@ -323,6 +315,8 @@ export interface PartnerProfile {
     milestones: Record<string, string>;
 }
 
+export type PartnerType = 'stable' | 'dating' | 'casual' | 'service';
+
 export interface Snapshot {
     id?: number;
     timestamp: number;
@@ -333,7 +327,6 @@ export interface Snapshot {
         logs: LogEntry[];
         partners: PartnerProfile[];
         tags?: TagEntry[];
-        supplements?: Supplement[];
     };
 }
 
@@ -342,7 +335,12 @@ export interface StoredData {
     logs: LogEntry[];
 }
 
-export type EventType = 'morning_wood' | 'sleep' | 'alcohol' | 'exercise' | 'sex' | 'masturbation' | 'stress' | 'health' | 'supplement';
+export interface BackupState {
+    lastBackupAt?: number;
+    isAutoBackupEnabled: boolean;
+}
+
+export type EventType = 'morning_wood' | 'sleep' | 'alcohol' | 'exercise' | 'sex' | 'masturbation' | 'stress' | 'health';
 
 export interface UnifiedEvent {
     schemaVersion: number;
@@ -367,19 +365,9 @@ export interface UnifiedEvent {
     refId?: string;
 }
 
-export type ExerciseIntensity = 'low' | 'medium' | 'high';
-export type ExerciseFeeling = 'great' | 'ok' | 'tired' | 'bad';
-export type SexQuality = number;
-
-export interface MetaEntry {
-    key: string;
-    value: any;
-}
-
-export interface SystemLog {
-    id?: number;
-    timestamp: number;
-    level: string;
-    action: string;
-    details?: any;
+export interface ExerciseFeeling {
+    value: 'great' | 'ok' | 'tired' | 'bad';
+    label: string;
+    icon: any;
+    color: string;
 }

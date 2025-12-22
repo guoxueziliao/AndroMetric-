@@ -1,6 +1,5 @@
 
-import { db } from '../db';
-import { SystemLog } from '../types';
+import { db, SystemLog } from '../db';
 
 export type LogLevel = 'info' | 'warn' | 'error';
 

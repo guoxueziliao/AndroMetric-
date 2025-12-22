@@ -210,12 +210,12 @@ const AppContent: React.FC<{ data: any }> = ({ data }) => {
 
   const handleStartMasturbation = () => {
       if (ongoingMb) { handleFinishMasturbation(ongoingMb); return; }
-      // Fix: Removed non-existent properties 'materials', 'props', 'assets', 'materialsList'
       const newRecord: MasturbationRecordDetails = {
           id: Date.now().toString(),
           startTime: new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
           duration: 0, status: 'inProgress', tools: ['手'], contentItems: [],
-          edging: 'none', edgingCount: 0, lubricant: '无润滑', useCondom: false,
+          materials: [], props: [], assets: { sources: [], platforms: [], categories: [], target: '', actors: [] },
+          materialsList: [], edging: 'none', edgingCount: 0, lubricant: '无润滑', useCondom: false,
           ejaculation: true, orgasmIntensity: 3, mood: 'neutral', stressLevel: 3, energyLevel: 3, interrupted: false, interruptionReasons: [], notes: ''
       };
       wrapAction(async () => { await quickAddMasturbation(newRecord); }, '开始施法 (已记录开始时间)');

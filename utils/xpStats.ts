@@ -1,3 +1,4 @@
+
 import { LogEntry } from '../types';
 import { XP_GROUPS } from './constants';
 import { validateTag, ValidationResult } from './tagValidators';
@@ -61,18 +62,14 @@ export const calculateXpStats = (logs: LogEntry[]): XpAnalysisResult => {
         if (!log.masturbation || log.masturbation.length === 0) return;
 
         log.masturbation.forEach(record => {
-            // Fix: Access tags via contentItems and legacy assets via casting to any
-            const rawTags = Array.from(new Set([
-                ...(record.contentItems?.flatMap(ci => ci.xpTags || []) || []),
-                ...(((record as any).assets?.categories as string[] | undefined) || [])
-            ])) as string[];
-            
+            // Get tags from assets.categories
+            const rawTags = record.assets?.categories || [];
             if (rawTags.length === 0) return;
 
             totalXpRecords++;
 
             // 2. Record-level Deduplication
-            const uniqueTagsInRecord = Array.from(new Set(rawTags));
+            const uniqueTagsInRecord = Array.from(new Set(rawTags)) as string[];
 
             uniqueTagsInRecord.forEach(tag => {
                 // 3. Noise Filtering (Validation)

@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { LogEntry, TagType, TagEntry } from '../types';
 import { Tag as TagIcon, Edit2, Trash2, X, Check, Activity, ShieldAlert, Stethoscope, Plus, Search, ChevronRight, ChevronDown, LayoutGrid, User, Zap, Sparkles, Shirt, Heart, MousePointer2, AlertCircle } from 'lucide-react';
@@ -58,8 +59,7 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
             log.masturbation?.forEach(m => {
                 const tags = Array.from(new Set(m.contentItems?.flatMap(ci => ci.xpTags || []) || []));
                 tags.forEach(c => usage[c] = (usage[c] || 0) + 1);
-                // Fix: Access legacy assets via casting to any and ensure string index
-                const legacyTags = ((m as any).assets?.categories || []) as string[];
+                const legacyTags = Array.from(new Set(m.assets?.categories || []));
                 legacyTags.forEach(c => usage[c] = (usage[c] || 0) + 1);
             });
             (log.dailyEvents || []).forEach(e => usage[e] = (usage[e] || 0) + 1);
@@ -163,9 +163,8 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
                             return ci;
                         });
                     }
-                    // Fix: Handle legacy assets property via casting
-                    if ((m as any).assets?.categories?.includes(oldName)) {
-                        (m as any).assets.categories = Array.from(new Set(((m as any).assets.categories as string[]).map(t => t === oldName ? newName : t)));
+                    if (m.assets?.categories?.includes(oldName)) {
+                        m.assets.categories = Array.from(new Set(m.assets.categories.map(c => c === oldName ? newName : c)));
                         mMod = true;
                     }
                     if (mMod) modified = true;
@@ -196,9 +195,8 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
                             return ci;
                         });
                     }
-                    // Fix: Handle legacy assets property via casting
-                    if ((m as any).assets?.categories?.includes(tag)) {
-                        (m as any).assets.categories = ((m as any).assets.categories as string[]).filter(c => c !== tag);
+                    if (m.assets?.categories?.includes(tag)) {
+                        m.assets.categories = m.assets.categories.filter(c => c !== tag);
                         mMod = true;
                     }
                     if (mMod) modified = true;

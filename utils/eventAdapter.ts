@@ -124,17 +124,8 @@ export const flattenLogsToEvents = (logs: LogEntry[]): UnifiedEvent[] => {
                     }
                 }
                 const partners = new Set<string>();
-                const positions = new Set<string>();
-                if(s.interactions) {
-                    s.interactions.forEach(i => { 
-                        if(i.partner) partners.add(i.partner); 
-                        i.chain.forEach(a => {
-                            if(a.type === 'position') positions.add(a.name);
-                        });
-                    });
-                } else if(s.partner) {
-                    partners.add(s.partner);
-                }
+                if(s.interactions) s.interactions.forEach(i => { if(i.partner) partners.add(i.partner); });
+                else if(s.partner) partners.add(s.partner);
 
                 events.push(createEvent(
                     'sex',
@@ -147,7 +138,7 @@ export const flattenLogsToEvents = (logs: LogEntry[]): UnifiedEvent[] => {
                         withPartner: true,
                         isGood: s.indicators.partnerOrgasm 
                     },
-                    [...Array.from(partners), ...Array.from(positions), s.protection || ''],
+                    [...Array.from(partners), ...(s.positions || []), s.protection || ''],
                     s.id
                 ));
             });
@@ -165,14 +156,13 @@ export const flattenLogsToEvents = (logs: LogEntry[]): UnifiedEvent[] => {
                         ts = d.getTime();
                     }
                 }
-                const xpTags = Array.from(new Set(m.contentItems?.flatMap(ci => ci.xpTags || []) || []));
                 events.push(createEvent(
                     'masturbation',
                     log.date,
                     ts,
                     { duration: m.duration, intensity: m.orgasmIntensity },
                     { ejaculation: m.ejaculation, orgasm: m.orgasmIntensity ? m.orgasmIntensity >= 4 : true },
-                    [...xpTags, ...(m.tools || [])],
+                    [...(m.assets?.categories || []), ...(m.tools || [])],
                     m.id
                 ));
             });

@@ -141,19 +141,14 @@ const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave
 
              const process = (actName: string, type: 'act' | 'pos') => {
                  if(type === 'act') actCounts[actName] = (actCounts[actName] || 0) + weight;
-                 else process_pos(actName);
-             }
-
-             const process_pos = (posName: string) => {
-                 posCounts[posName] = (posCounts[posName] || 0) + weight;
+                 else posCounts[actName] = (posCounts[actName] || 0) + weight;
              }
 
              if (record.interactions) {
                   record.interactions.forEach(i => i.chain.forEach(a => process(a.name, a.type === 'act' ? 'act' : 'pos')));
              } else {
-                  // Fix: Using casting to avoid property access errors for legacy fields no longer in type
-                  (record as any).acts?.forEach((a: string) => process(a, 'act'));
-                  (record as any).positions?.forEach((p: string) => process_pos(p));
+                  record.acts?.forEach(a => process(a, 'act'));
+                  record.positions?.forEach(p => process(p, 'pos'));
              }
           });
       });

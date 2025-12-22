@@ -1,3 +1,4 @@
+
 import React, { useMemo } from 'react';
 import { LogEntry } from '../types';
 import { validateTag, ValidationLevel, TagType, SYNONYMS } from '../utils/tagValidators';
@@ -41,11 +42,7 @@ const TagHealthCheck: React.FC<TagHealthCheckProps> = ({ logs, onNavigateToTag }
         // Scan all logs
         logs.forEach(log => {
             // XP
-            log.masturbation?.forEach(m => {
-                // Fix: Look into both contentItems and legacy assets via casting
-                m.contentItems?.forEach(ci => ci.xpTags?.forEach(t => track(t, 'xp', log.date)));
-                ((m as any).assets?.categories as string[] | undefined)?.forEach(c => track(c, 'xp', log.date));
-            });
+            log.masturbation?.forEach(m => m.assets?.categories?.forEach(c => track(c, 'xp', log.date)));
             // Event
             log.dailyEvents?.forEach(e => track(e, 'event', log.date));
             // Symptom
