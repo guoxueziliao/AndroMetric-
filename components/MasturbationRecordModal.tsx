@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo, Suspense, lazy } from 'react';
 /* Added Droplets and User to fix 'Cannot find name' errors */
 import { X, Check, Clock, Film, PenLine, Plus, Minus, Zap, Edit2, Trash2, MonitorPlay, ChevronDown, LayoutGrid, Activity, ChevronLeft, AlertTriangle, Info, Search, Settings, Droplets, User, Battery, BatteryMedium, BatteryFull } from 'lucide-react';
@@ -176,7 +175,6 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">开始时间</label>
                         <div className="flex items-center justify-between">
                             <input type="time" value={data.startTime} onChange={e => updateData({startTime: e.target.value})} className="bg-transparent text-xl font-mono font-bold text-slate-800 dark:text-slate-100 outline-none w-full"/>
-                            <Clock size={18} className="text-slate-300" />
                         </div>
                     </div>
                     <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 flex flex-col gap-2">
