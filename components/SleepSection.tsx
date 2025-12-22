@@ -22,10 +22,12 @@ const DREAM_TYPES = [
 ];
 
 const LOCATIONS = [
-    { value: 'home', label: '自家' },
+    { value: 'home', label: '家里' },
     { value: 'hotel', label: '酒店' },
     { value: 'others_home', label: '别人家' },
     { value: 'dorm', label: '宿舍' },
+    { value: 'office', label: '办公室' },
+    { value: 'transport', label: '通勤中' },
     { value: 'other', label: '其他' },
 ];
 

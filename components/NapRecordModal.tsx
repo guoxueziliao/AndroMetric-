@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { CloudSun, Clock, Play, Sparkles, Star, Zap, Trash2, Check, Minus, Plus, MapPin, Leaf, RotateCcw, Heart, Shirt, Thermometer, BrainCircuit } from 'lucide-react';
 import Modal from './Modal';
@@ -25,6 +26,8 @@ const LOCATIONS: { value: SleepLocation, label: string }[] = [
     { value: 'office', label: '办公室' },
     { value: 'transport', label: '通勤中' },
     { value: 'hotel', label: '酒店' },
+    { value: 'others_home', label: '别人家' },
+    { value: 'dorm', label: '宿舍' },
     { value: 'other', label: '其他' }
 ];
 

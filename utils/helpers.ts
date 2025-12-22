@@ -1,5 +1,5 @@
 
-import { LogEntry, AlcoholConsumption, PornConsumption, PreSleepState, ExerciseIntensity, SexQuality, IllnessType, StressLevel, HardnessLevel, MorningWoodRetention, Weather, Location, Mood, SleepAttire, ChangeDetail, ExerciseRecord, SexRecordDetails, MasturbationRecordDetails, AlcoholRecord, NapRecord, HistoryCategory, HistoryEventType } from '../types';
+import { LogEntry, AlcoholConsumption, PornConsumption, PreSleepState, ExerciseIntensity, SexQuality, IllnessType, StressLevel, HardnessLevel, MorningWoodRetention, Weather, Location, Mood, SleepAttire, ChangeDetail, ExerciseRecord, SexRecordDetails, MasturbationRecordDetails, AlcoholRecord, NapRecord, HistoryCategory, HistoryEventType, SleepLocation, SleepTemperature } from '../types';
 
 export const getTodayDateString = (): string => {
     const todayDate = new Date();
@@ -83,6 +83,7 @@ export const LABELS = {
     preSleep: { tired: '疲劳', energetic: '兴奋', stressed: '压力', calm: '平静', other: '其他' } as Record<PreSleepState, string>,
     weather: { sunny: '晴', cloudy: '多云', rainy: '雨', snowy: '雪', windy: '大风', foggy: '雾' } as Record<Weather, string>,
     location: { home: '家', partner: '伴侣家', hotel: '酒店', travel: '旅途', other: '其他' } as Record<Location, string>,
+    sleepLocation: { home: '家里', hotel: '酒店', others_home: '别人家', dorm: '宿舍', office: '办公室', transport: '通勤中', other: '其他' } as Record<SleepLocation, string>,
     mood: { happy: '开心', excited: '兴奋', neutral: '平淡', anxious: '焦虑', sad: '低落', angry: '生气' } as Record<Mood, string>,
     attire: { naked: '裸睡', light: '内衣', pajamas: '睡衣', other: '其他' } as Record<SleepAttire, string>,
     drunkLevel: { none: '无', tipsy: '微醺', drunk: '醉', wasted: '烂醉' } as Record<string, string>,
@@ -127,6 +128,9 @@ export const generateLogSummary = (log: Partial<LogEntry>): Array<{ label: strin
             if (analysis.isInsufficient) warnings.push('睡眠不足');
             if (warnings.length > 0) sleepTxt.push(`⚠️ ${warnings.join(', ')}`);
         }
+        if (sleepRec.environment?.location) {
+            sleepTxt.push(`地点: ${LABELS.sleepLocation[sleepRec.environment.location]}`);
+        }
     } else if (sleepRec?.startTime) {
         sleepTxt.push(`${formatTime(sleepRec.startTime)} - ... (睡觉中)`);
     }
@@ -143,7 +147,8 @@ export const generateLogSummary = (log: Partial<LogEntry>): Array<{ label: strin
         const napSummary = sleepRec.naps.map(n => {
             if (n.ongoing) return `😴 进行中 (${n.startTime})`;
             const dreamStr = n.hasDream ? `(梦: ${n.dreamTypes?.join(',')})` : '';
-            return `😴 ${n.startTime}-${n.endTime || '?'} (${n.duration}分) ${dreamStr}`;
+            const locStr = n.location ? `@${LABELS.sleepLocation[n.location]}` : '';
+            return `😴 ${n.startTime}-${n.endTime || '?'} (${n.duration}分) ${locStr} ${dreamStr}`;
         }).join('\n');
         sleepTxt.push(`午休:\n${napSummary}`);
     }
