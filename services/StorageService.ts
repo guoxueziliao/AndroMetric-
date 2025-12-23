@@ -41,11 +41,24 @@ export const StorageService = {
         const partners = await db.partners.toArray();
         const tags = await db.tags.toArray();
         
+        // 抓取 LocalStorage 中的非数据库设置
+        let appSettings = null;
+        let userName = null;
+        try {
+            const settingsStr = localStorage.getItem('appSettings');
+            appSettings = settingsStr ? JSON.parse(settingsStr) : null;
+            userName = localStorage.getItem('userName');
+        } catch (e) {
+            console.error('Failed to capture localStorage for snapshot');
+        }
+        
         const snapshot = {
             appName: '硬度日记',
             appVersion: '0.0.6',
             dataVersion: LATEST_VERSION,
             exportDate: new Date().toISOString(),
+            settings: appSettings,
+            userName: userName,
             data: {
                 version: LATEST_VERSION,
                 logs: logs,
@@ -60,12 +73,15 @@ export const StorageService = {
         try {
             const parsed = JSON.parse(jsonString);
             const data = parsed.data || parsed;
+            
+            // 1. 数据迁移与升级
             const migratedData = runMigrations(data);
             const newLogs = migratedData.logs;
             const newPartners = data.partners || [];
             const newTags = data.tags || [];
 
-            await db.transaction('rw', db.logs, db.partners, db.tags, async () => {
+            // 2. 写入数据库
+            await db.transaction('rw', [db.logs, db.partners, db.tags, db.meta], async () => {
                 if (strategy === 'overwrite') {
                     await db.logs.clear();
                     await db.partners.clear();
@@ -74,13 +90,29 @@ export const StorageService = {
                 await db.logs.bulkPut(newLogs);
                 if (newPartners.length > 0) await db.partners.bulkPut(newPartners);
                 if (newTags.length > 0) await db.tags.bulkPut(newTags);
+                
+                // 同步数据版本号，避免导入后再次触发 migration
+                await db.meta.put({ key: 'dataVersion', value: LATEST_VERSION });
             });
+
+            // 3. 恢复应用设置 (LocalStorage)
+            if (parsed.settings) {
+                localStorage.setItem('appSettings', JSON.stringify(parsed.settings));
+            }
+            if (parsed.userName) {
+                localStorage.setItem('userName', parsed.userName);
+            }
             
             Logger.info('StorageService:RestoreSuccess', { count: newLogs.length, strategy });
             pluginManager.notifyDataChange(newLogs);
+            
+            // 如果恢复了设置，提示用户刷新以应用主题等变更
+            if (parsed.settings || parsed.userName) {
+                setTimeout(() => window.location.reload(), 1000);
+            }
         } catch (e) {
             Logger.error('StorageService:RestoreFailed', e);
-            throw new Error('Snapshot restore failed: ' + (e as Error).message);
+            throw new Error('快照还原失败: ' + (e as Error).message);
         }
     },
 
@@ -121,7 +153,6 @@ export const StorageService = {
      * Clears all data from IndexedDB.
      */
     async clearAllData(): Promise<void> {
-        /* Fix: Group tables into an array to stay within the transaction argument limit */
         await db.transaction('rw', [db.logs, db.partners, db.meta, db.system_logs, db.snapshots, db.tags], async () => {
             await Promise.all([
                 db.logs.clear(),
@@ -152,13 +183,23 @@ export const StorageService = {
             const tags = await db.tags.toArray();
             const meta = await db.meta.get('dataVersion');
             
+            // 内部快照也记录设置信息，确保回滚时设置也一致
+            let appSettings = null;
+            try {
+                const s = localStorage.getItem('appSettings');
+                appSettings = s ? JSON.parse(s) : null;
+            } catch(e){}
+
             const snapshot: Snapshot = {
                 timestamp: Date.now(),
-                dataVersion: meta ? meta.value : 0,
+                dataVersion: meta ? meta.value : LATEST_VERSION,
                 appVersion: '0.0.6',
                 description,
-                data: { logs, partners, tags }
+                data: { logs, partners, tags } as any // 快照结构扩展
             };
+            // 将设置信息存入快照对象的冗余字段
+            (snapshot as any).settings = appSettings;
+
             await db.snapshots.add(snapshot);
         },
         restore: async (id: number) => {
@@ -166,7 +207,7 @@ export const StorageService = {
             if (!snapshot) throw new Error('Snapshot not found');
             const data = snapshot.data as any;
             
-            await db.transaction('rw', db.logs, db.partners, db.tags, db.meta, async () => {
+            await db.transaction('rw', [db.logs, db.partners, db.tags, db.meta], async () => {
                 await db.logs.clear();
                 await db.partners.clear();
                 await db.tags.clear();
@@ -175,6 +216,13 @@ export const StorageService = {
                 if (data.tags) await db.tags.bulkAdd(data.tags);
                 await db.meta.put({ key: 'dataVersion', value: snapshot.dataVersion });
             });
+
+            // 内部快照还原也写回 LocalStorage
+            if ((snapshot as any).settings) {
+                localStorage.setItem('appSettings', JSON.stringify((snapshot as any).settings));
+                setTimeout(() => window.location.reload(), 500);
+            }
+
             pluginManager.notifyDataChange(data.logs);
         },
         delete: (id: number) => db.snapshots.delete(id)
@@ -194,7 +242,6 @@ export const StorageService = {
             allDesc: () => db.logs.orderBy('date').reverse().toArray(),
             get: (date: string) => db.logs.get(date)
         },
-        // Direct access for get
         get: (date: string) => db.logs.get(date),
         save: async (log: LogEntry) => {
             const { valid, errors } = validateLogEntry(log);
