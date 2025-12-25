@@ -165,9 +165,10 @@ const SexLifeView: React.FC = () => {
                             const borderColor = isSex ? 'border-pink-100 dark:border-pink-900/30' : 'border-blue-100 dark:border-blue-900/30';
                             
                             // 收集所有标签
-                            const allTags = isSex 
+                            // Fix: Explicitly type allTags as string[] to prevent 'unknown' type inference which can break rendering of #{tag} as a ReactNode.
+                            const allTags: string[] = (isSex 
                                 ? record.sexDetails?.interactions?.flatMap(i => [...(i.costumes || []), ...(i.toys || []), ...i.chain.map(c => c.name)]) || []
-                                : record.mbDetails?.contentItems?.flatMap(ci => ci.xpTags || []) || (record.mbDetails?.assets as any)?.categories || [];
+                                : record.mbDetails?.contentItems?.flatMap(ci => ci.xpTags || []) || record.mbDetails?.assets?.categories || []) as string[];
 
                             return (
                                 <div key={`${record.date}-${record.id}`} className="relative pl-8 animate-in fade-in slide-in-from-bottom-2 duration-500">

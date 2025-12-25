@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useMemo, Suspense, lazy } from 'react';
-import { X, Check, Clock, Film, PenLine, Plus, Minus, Zap, Edit2, Trash2, MonitorPlay, ChevronDown, LayoutGrid, Activity, ChevronLeft, AlertTriangle, Info, Search, Settings, Droplets, User, Battery, BatteryMedium, BatteryFull, PhoneOff, UserX, HeartOff } from 'lucide-react';
+import { X, Check, Clock, Film, PenLine, Plus, Minus, Zap, Edit2, Trash2, MonitorPlay, ChevronDown, LayoutGrid, Activity, ChevronLeft, AlertTriangle, Info, Search, Settings, Droplets, User, Battery, BatteryMedium, BatteryFull, PhoneOff, UserX, HeartOff, Flag } from 'lucide-react';
 import { MasturbationRecordDetails, LogEntry, PartnerProfile, ContentItem } from '../types';
 import Modal from './Modal';
 import { calculateInventory, LABELS } from '../utils/helpers';
 import { XP_DIMENSIONS_LIST } from '../utils/constants';
 import { useData } from '../contexts/DataContext';
-/* Fix: Import useToast to resolve the 'Cannot find name useToast' error */
 import { useToast } from '../contexts/ToastContext';
 import { validateTag } from '../utils/tagValidators';
 
@@ -57,6 +56,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
         volumeForceLevel: 3, postMood: '平静/贤者', fatigue: '无明显疲劳'
     });
 
+    const [endTime, setEndTime] = useState('');
     const [editingItem, setEditingItem] = useState<ContentItem | null>(null);
     const [activeTagTab, setActiveTagTab] = useState<string>('常用');
     const [tagSearch, setTagSearch] = useState('');
@@ -64,7 +64,6 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
 
     const inventory = useMemo(() => calculateInventory(logs), [logs, isOpen]);
 
-    // 计算标签使用频次
     const tagUsageMap = useMemo(() => {
         const counts: Record<string, number> = {};
         logs.forEach(log => {
@@ -72,16 +71,52 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                 m.contentItems?.forEach(ci => {
                     ci.xpTags?.forEach(tag => counts[tag] = (counts[tag] || 0) + 1);
                 });
-                // Compatibility with legacy categories if they exist
                 (m.assets as any)?.categories?.forEach((tag: string) => counts[tag] = (counts[tag] || 0) + 1);
             });
         });
         return counts;
     }, [logs]);
 
+    const calculateDurationFromTimes = (start: string, end: string) => {
+        if (!start || !end) return 0;
+        const [h1, m1] = start.split(':').map(Number);
+        const [h2, m2] = end.split(':').map(Number);
+        if (isNaN(h1) || isNaN(h2)) return 0;
+        let diff = (h2 * 60 + m2) - (h1 * 60 + m1);
+        if (diff < 0) diff += 24 * 60; // 跨天处理
+        return diff;
+    };
+
+    const handleStartTimeChange = (newStart: string) => {
+        const newDuration = calculateDurationFromTimes(newStart, endTime);
+        setData(prev => ({ ...prev, startTime: newStart, duration: newDuration }));
+    };
+
+    const handleEndTimeChange = (newEnd: string) => {
+        setEndTime(newEnd);
+        const newDuration = calculateDurationFromTimes(data.startTime, newEnd);
+        setData(prev => ({ ...prev, duration: newDuration }));
+    };
+
     useEffect(() => {
         if (isOpen) {
+            const now = new Date();
+            const nowStr = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+            
             if (initialData) {
+                let calculatedEndTime = nowStr;
+                let calculatedDuration = initialData.duration || 0;
+
+                // 如果是正在进行的快速记录，自动计算从开始到现在的时间
+                if (initialData.status === 'inProgress' && initialData.startTime) {
+                    calculatedDuration = calculateDurationFromTimes(initialData.startTime, nowStr);
+                } else if (initialData.startTime && initialData.duration) {
+                    // 如果是已有记录，根据时长推算结束时间
+                    const [h, m] = initialData.startTime.split(':').map(Number);
+                    const d = new Date(); d.setHours(h); d.setMinutes(m + initialData.duration);
+                    calculatedEndTime = d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+                }
+
                 setData({
                     ...initialData,
                     contentItems: initialData.contentItems || [],
@@ -94,19 +129,21 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                     lubricant: initialData.lubricant || '无润滑',
                     useCondom: initialData.useCondom || false,
                     interrupted: initialData.interrupted || false,
-                    interruptionReasons: initialData.interruptionReasons || []
+                    interruptionReasons: initialData.interruptionReasons || [],
+                    duration: calculatedDuration
                 });
+                setEndTime(calculatedEndTime);
             } else {
-                const now = new Date();
                 setData({
                     id: Date.now().toString(),
-                    startTime: now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
+                    startTime: nowStr,
                     duration: 0, status: 'completed', tools: ['手'], contentItems: [],
                     edging: 'none', edgingCount: 0, lubricant: '无润滑', useCondom: false, ejaculation: true, orgasmIntensity: 3,
                     satisfactionLevel: 3,
                     mood: 'neutral', stressLevel: 3, energyLevel: 3, interrupted: false, interruptionReasons: [], notes: '',
                     volumeForceLevel: 3, postMood: '平静/贤者', fatigue: '无明显疲劳'
                 });
+                setEndTime(nowStr);
             }
         }
     }, [isOpen, initialData]);
@@ -157,7 +194,6 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
         let pool = [];
         
         if (tagSearch) {
-            // 如果有搜索词，全局搜索 XP 标签，不限维度
             pool = xpTagsOnly
                 .filter(t => t.name.toLowerCase().includes(tagSearch.toLowerCase()))
                 .sort((a, b) => (tagUsageMap[b.name] || 0) - (tagUsageMap[a.name] || 0))
@@ -203,18 +239,29 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                     <span className="text-sm font-black text-slate-800 dark:text-slate-100">{inventory}</span>
                 </div>
 
-                {/* 1. Time Grid */}
-                <div className="grid grid-cols-2 gap-3">
-                    <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 flex flex-col gap-2">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">开始时间</label>
-                        <input type="time" value={data.startTime} onChange={e => updateData({startTime: e.target.value})} className="bg-transparent text-xl font-mono font-bold text-slate-800 dark:text-slate-100 outline-none w-full"/>
+                {/* 1. Time Grid - 自动时长逻辑核心 */}
+                <div className="space-y-3">
+                    <div className="grid grid-cols-2 gap-3">
+                        <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 flex flex-col gap-2 transition-all focus-within:border-brand-accent/50">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1"><Clock size={10}/> 开始时间</label>
+                            <input type="time" value={data.startTime} onChange={e => handleStartTimeChange(e.target.value)} className="bg-transparent text-xl font-mono font-bold text-slate-800 dark:text-slate-100 outline-none w-full"/>
+                        </div>
+                        <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 flex flex-col gap-2 transition-all focus-within:border-brand-accent/50">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1"><Flag size={10}/> 结束时间</label>
+                            <input type="time" value={endTime} onChange={e => handleEndTimeChange(e.target.value)} className="bg-transparent text-xl font-mono font-bold text-slate-800 dark:text-slate-100 outline-none w-full"/>
+                        </div>
                     </div>
-                    <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 flex flex-col gap-2">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">持续时长 (分)</label>
-                        <div className="flex items-center justify-between">
-                            <button onClick={() => updateData({duration: Math.max(0, data.duration - 1)})} className="text-slate-400 hover:text-brand-accent p-1"><Minus size={18}/></button>
-                            <span className="text-xl font-black text-slate-800 dark:text-slate-100 tabular-nums">{data.duration}</span>
-                            <button onClick={() => updateData({duration: data.duration + 1})} className="text-slate-400 hover:text-brand-accent p-1"><Plus size={18}/></button>
+                    
+                    {/* 时长微调与展示 */}
+                    <div className="bg-blue-50 dark:bg-blue-900/10 p-4 rounded-2xl border border-blue-100 dark:border-blue-900/30 flex items-center justify-between shadow-inner">
+                        <div className="flex flex-col">
+                            <span className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest">持续时长 (分钟)</span>
+                            <div className="text-xs text-blue-400 font-bold mt-0.5">根据起止时间自动计算</div>
+                        </div>
+                        <div className="flex items-center gap-4 bg-white dark:bg-slate-800 p-1.5 rounded-xl border border-blue-200 dark:border-blue-900/50 shadow-sm">
+                            <button onClick={() => updateData({duration: Math.max(0, data.duration - 1)})} className="p-1.5 text-slate-400 hover:text-red-500 transition-colors"><Minus size={18} strokeWidth={3}/></button>
+                            <span className="text-xl font-black text-slate-800 dark:text-slate-100 tabular-nums min-w-[2rem] text-center">{data.duration}</span>
+                            <button onClick={() => updateData({duration: data.duration + 1})} className="p-1.5 text-blue-600 hover:text-blue-500 transition-colors"><Plus size={18} strokeWidth={3}/></button>
                         </div>
                     </div>
                 </div>
@@ -344,17 +391,26 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                     )}
                 </div>
 
-                {/* 6. End Result Card */}
+                {/* 6. End Result Card - 改进二选一模式 */}
                 <div className="bg-slate-50 dark:bg-slate-900 p-5 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 space-y-6">
-                    <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-4">
-                        <span className="text-sm font-black text-slate-700 dark:text-slate-200">最终结局</span>
-                        <button 
-                            onClick={() => updateGlobal('ejaculation', !data.ejaculation)}
-                            className={`px-6 py-2 rounded-xl text-xs font-black transition-all ${data.ejaculation ? 'bg-blue-600 text-white shadow-lg' : 'bg-slate-200 dark:bg-slate-700 text-slate-500'}`}
-                        >
-                            {data.ejaculation ? '已射精' : 'Edging'}
-                        </button>
+                    <div className="flex flex-col gap-4 border-b border-slate-200 dark:border-slate-800 pb-5">
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">最终结局</span>
+                        <div className="flex p-1 bg-slate-200 dark:bg-slate-800 rounded-2xl">
+                            <button 
+                                onClick={() => updateData({ejaculation: true, volumeForceLevel: data.volumeForceLevel || 3})}
+                                className={`flex-1 py-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 ${data.ejaculation ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500'}`}
+                            >
+                                <Droplets size={14} className={data.ejaculation ? 'animate-pulse' : ''}/> 已射精
+                            </button>
+                            <button 
+                                onClick={() => updateData({ejaculation: false})}
+                                className={`flex-1 py-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 ${!data.ejaculation ? 'bg-slate-600 text-white shadow-lg' : 'text-slate-500'}`}
+                            >
+                                <HeartOff size={14}/> 未射精 (Edging)
+                            </button>
+                        </div>
                     </div>
+
                     {data.ejaculation && (
                         <div className="space-y-4 animate-in slide-in-from-top-2">
                             <div className="flex justify-between items-center px-1">
@@ -482,7 +538,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                                      <label className="text-xs font-black text-slate-400 uppercase tracking-widest">来源平台</label>
                                      <div className="grid grid-cols-3 gap-2">
                                          {PLATFORMS.map(p => (
-                                             <button key={p} onClick={() => setEditingItem({...editingItem, platform: p})} className={`py-2 rounded-xl text-[11px] font-bold transition-all border ${editingItem.platform === p ? 'bg-slate-800 text-white dark:bg-white dark:text-slate-900 border-slate-800' : 'bg-slate-50 dark:bg-slate-900 text-slate-500 border-slate-200 dark:border-slate-800'}`}>
+                                             <button key={p} onClick={() => setEditingItem({...editingItem, platform: p})} className={`py-2 rounded-xl text-[11px] font-bold transition-all border ${editingItem.platform === p ? 'bg-slate-800 text-white dark:bg-white dark:text-slate-900 border-slate-800' : 'bg-slate-50 dark:bg-slate-900 text-slate-500 border-slate-200 dark:border-slate-700'}`}>
                                                  {p}
                                              </button>
                                          ))}
@@ -511,7 +567,6 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                                      <button onClick={() => setIsTagManagerOpen(true)} className="p-1.5 bg-blue-50 dark:bg-blue-900/30 text-brand-accent rounded-lg flex items-center gap-1 text-[10px] font-black"><Settings size={12}/> 管理</button>
                                  </div>
 
-                                 {/* XP 标签搜索联想框 */}
                                  <div className="mb-4">
                                     <div className="relative group">
                                         <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-brand-accent transition-colors" />
