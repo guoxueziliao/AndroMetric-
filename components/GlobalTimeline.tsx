@@ -1,7 +1,7 @@
 
 import React, { useMemo } from 'react';
 import { LogEntry } from '../types';
-import { SunMedium, Moon, Coffee, Beer, Hand, HeartPulse, Dumbbell, Circle, Clock } from 'lucide-react';
+import { SunMedium, Moon, Coffee, Beer, Hand, HeartPulse, Dumbbell, Circle, Clock, RotateCcw } from 'lucide-react';
 
 interface GlobalTimelineProps {
     log: LogEntry;
@@ -15,6 +15,7 @@ interface TimelineEvent {
     icon: React.ElementType;
     color: string;
     timestamp: number; // For sorting
+    isDaily?: boolean;
 }
 
 export const GlobalTimeline: React.FC<GlobalTimelineProps> = ({ log }) => {
@@ -71,11 +72,12 @@ export const GlobalTimeline: React.FC<GlobalTimelineProps> = ({ log }) => {
                 list.push({
                     time: item.time,
                     type: 'caffeine',
-                    title: '提神饮品',
-                    desc: `${item.name} (${item.volume}ml x ${item.count})`,
-                    icon: Coffee,
-                    color: 'text-amber-700 bg-amber-100 dark:bg-amber-900/30',
-                    timestamp: getTimestamp(item.time)
+                    title: item.isDaily ? '全天饮茶' : '提神饮品',
+                    desc: item.isDaily ? `${item.name} (日常反复冲泡)` : `${item.name} (${item.volume}ml x ${item.count})`,
+                    icon: item.isDaily ? RotateCcw : Coffee,
+                    color: item.isDaily ? 'text-emerald-700 bg-emerald-100 dark:bg-emerald-900/30' : 'text-amber-700 bg-amber-100 dark:bg-amber-900/30',
+                    timestamp: getTimestamp(item.time),
+                    isDaily: item.isDaily
                 });
             });
         }

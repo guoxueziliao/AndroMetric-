@@ -242,6 +242,7 @@ export interface CaffeineItem {
     time: string;
     count: number;
     isCustom?: boolean;
+    isDaily?: boolean; // 新增：全天日常饮用
 }
 
 export interface LogEntry {
