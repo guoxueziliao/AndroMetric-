@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { LogEntry, TagType, TagEntry } from '../types';
 import { Tag as TagIcon, Edit2, Trash2, X, Check, Activity, ShieldAlert, Stethoscope, Plus, Search, ChevronRight, ChevronDown, LayoutGrid, User, Zap, Sparkles, Shirt, Heart, MousePointer2, AlertCircle } from 'lucide-react';
@@ -224,7 +223,8 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
             ) : (
                 <>
                     <div className="flex items-center gap-3 flex-1 cursor-pointer" onClick={() => onSelectTag?.(tag)}>
-                        <span className={`font-bold text-sm ${count === 0 ? 'text-slate-400' : 'text-brand-text dark:text-slate-200'}`}>{tag}</span>
+                        {/* 剥离 # 显示名称 */}
+                        <span className={`font-bold text-sm ${count === 0 ? 'text-slate-400' : 'text-brand-text dark:text-slate-200'}`}>{tag.replace(/^#/, '')}</span>
                         {count > 0 && <span className="text-[10px] bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded-full text-slate-500">{count}次</span>}
                     </div>
                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -312,7 +312,7 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
                                                             }}
                                                             className="px-3 py-1.5 bg-white dark:bg-slate-800 border border-blue-200 dark:border-blue-900 rounded-lg text-xs font-black text-blue-600 dark:text-blue-400 hover:bg-blue-50 transition-all flex items-center gap-1 shadow-sm"
                                                         >
-                                                            {s} <span className="text-[8px] opacity-60 font-medium">({tagsUsageMap[s] || 0}次)</span>
+                                                            {s.replace(/^#/, '')} <span className="text-[8px] opacity-60 font-medium">({tagsUsageMap[s] || 0}次)</span>
                                                         </button>
                                                     ))}
                                                 </div>

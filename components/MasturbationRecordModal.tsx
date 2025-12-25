@@ -33,6 +33,14 @@ const FORCE_LEVELS = [
     { lvl: 5, label: '爆发', desc: '极强冲力，射穿或喷射极远' },
 ];
 
+const ORGASM_LABELS: Record<number, { label: string, color: string }> = {
+    1: { label: '无感', color: 'text-slate-400' },
+    2: { label: '一般', color: 'text-blue-400' },
+    3: { label: '舒服', color: 'text-amber-500' },
+    4: { label: '很爽', color: 'text-orange-500' },
+    5: { label: '极致', color: 'text-pink-500' },
+};
+
 const SATISFACTION_LEVELS = [
     { lvl: 1, label: '毫无感觉', desc: '还是憋得慌', color: 'bg-slate-400' },
     { lvl: 2, label: '解压一般', desc: '完成了任务', color: 'bg-blue-300' },
@@ -217,6 +225,8 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
 
     if (!isOpen) return null;
 
+    const orgasmLabelInfo = ORGASM_LABELS[data.orgasmIntensity || 3] || ORGASM_LABELS[3];
+
     return (
         <Modal 
             isOpen={isOpen} 
@@ -284,6 +294,16 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                                     <div>
                                         <div className="text-xs font-black text-slate-700 dark:text-slate-200">{item.title || item.type}</div>
                                         <div className="text-[9px] text-slate-400 font-bold">{item.platform}</div>
+                                        {/* 素材关联标签预览 */}
+                                        {item.xpTags && item.xpTags.length > 0 && (
+                                            <div className="flex flex-wrap gap-1 mt-1">
+                                                {item.xpTags.map(tag => (
+                                                    <span key={tag} className="text-[8px] bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 px-1 rounded border border-blue-100 dark:border-blue-900/50">
+                                                        {tag.replace(/^#/, '')}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                                 <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -380,7 +400,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                                         <button 
                                             key={reason} 
                                             onClick={() => toggleInterruptionReason(reason)}
-                                            className={`px-3 py-1.5 rounded-xl text-[10px] font-bold border transition-all ${isSel ? 'bg-orange-500 text-white border-orange-600' : 'bg-white dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700'}`}
+                                            className={`px-3 py-1.5 rounded-xl text-[10px] font-bold border transition-all ${isSel ? 'bg-orange-500 text-white border-orange-600' : 'bg-white dark:bg-slate-900 text-slate-500 border-slate-200 dark:border-slate-700'}`}
                                         >
                                             {reason}
                                         </button>
@@ -434,7 +454,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                     <div className="space-y-4 pt-2 border-t border-slate-100 dark:border-slate-800 pt-4">
                         <div className="flex justify-between text-[10px] font-black text-slate-400 uppercase px-1">
                             <span>爽度评分 ({data.orgasmIntensity})</span>
-                            <span className="text-amber-500 flex items-center gap-1">舒服</span>
+                            <span className={`${orgasmLabelInfo.color} flex items-center gap-1 transition-colors duration-300`}>{orgasmLabelInfo.label}</span>
                         </div>
                         <input type="range" min="1" max="5" step="1" value={data.orgasmIntensity} onChange={e => updateData({orgasmIntensity: parseInt(e.target.value)})} className="w-full h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full appearance-none accent-pink-500" />
                     </div>
@@ -557,7 +577,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                                      <label className="text-xs font-black text-slate-400 uppercase tracking-widest">主演 / 角色</label>
                                      <div className="relative group">
                                          <User size={16} className="absolute left-3 top-3.5 text-slate-300" />
-                                         <input value={editingItem.actors?.join(' ') || ''} onChange={e => setEditingItem({...editingItem, actors: e.target.value.split(/\s+/)})} placeholder="多个演员用空格分隔..." className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl py-3 pl-9 pr-4 text-sm font-bold outline-none focus:ring-2 focus:ring-brand-accent/20 transition-all" />
+                                         <input value={editingItem.actors?.join(' ') || ''} onChange={e => setEditingItem({...editingItem, actors: e.target.value.split(/\s+/)})} placeholder="多个演员用空格分隔..." className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl py-3 pl-9 pr-4 text-sm font-bold outline-none focus:ring-2 focus:ring-brand-accent/20 transition-all" />
                                      </div>
                                  </div>
                              </div>
@@ -603,7 +623,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                                             const isSel = editingItem.xpTags?.includes(tag);
                                             return (
                                                 <button key={tag} onClick={() => toggleXpTag(tag)} className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${isSel ? 'bg-blue-500 text-white border-blue-600 shadow-sm' : 'bg-white dark:bg-slate-900 text-slate-500 border-slate-200 dark:border-slate-700'}`}>
-                                                    {tag}
+                                                    {tag.replace(/^#/, '')}
                                                 </button>
                                             );
                                          })

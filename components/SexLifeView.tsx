@@ -1,4 +1,3 @@
-
 import React, { useMemo, useState } from 'react';
 import { SexRecordDetails, MasturbationRecordDetails } from '../types';
 import { HeartHandshake, Calendar, Clock, MapPin, User, Droplets, Hand, Users, ArrowRight, ShieldCheck, Layers, ChevronDown, AlertTriangle, Film, Zap, PenLine, Quote, Hash, Info, Smartphone, ExternalLink } from 'lucide-react';
@@ -165,7 +164,6 @@ const SexLifeView: React.FC = () => {
                             const borderColor = isSex ? 'border-pink-100 dark:border-pink-900/30' : 'border-blue-100 dark:border-blue-900/30';
                             
                             // 收集所有标签
-                            // Fix: Explicitly type allTags as string[] to prevent 'unknown' type inference which can break rendering of #{tag} as a ReactNode.
                             const allTags: string[] = (isSex 
                                 ? record.sexDetails?.interactions?.flatMap(i => [...(i.costumes || []), ...(i.toys || []), ...i.chain.map(c => c.name)]) || []
                                 : record.mbDetails?.contentItems?.flatMap(ci => ci.xpTags || []) || record.mbDetails?.assets?.categories || []) as string[];
@@ -242,12 +240,12 @@ const SexLifeView: React.FC = () => {
                                             </div>
                                         )}
 
-                                        {/* 标签汇总展示 */}
+                                        {/* 标签汇总展示 - 自动剥离 # 符号 */}
                                         {allTags.length > 0 && (
                                             <div className="flex flex-wrap gap-1.5 mb-4">
                                                 {Array.from(new Set(allTags)).map((tag, i) => (
                                                     <span key={i} className={`px-2 py-1 rounded-lg text-[10px] font-bold border transition-colors ${isSex ? 'bg-pink-50/30 text-pink-600 border-pink-100 dark:bg-pink-900/10 dark:text-pink-400 dark:border-pink-900/30' : 'bg-blue-50/30 text-blue-600 border-blue-100 dark:bg-blue-900/10 dark:text-blue-400 dark:border-blue-900/30'}`}>
-                                                        #{tag}
+                                                        {tag.replace(/^#/, '')}
                                                     </span>
                                                 ))}
                                             </div>
