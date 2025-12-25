@@ -1,4 +1,4 @@
-import { X, Check, Clock, Film, PenLine, Plus, Minus, Zap, Edit2, Trash2, MonitorPlay, ChevronDown, LayoutGrid, Activity, ChevronLeft, AlertTriangle, Info, Search, Settings, Droplets, User, Battery, BatteryMedium, BatteryFull, PhoneOff, UserX, HeartOff, Flag, MapPin, Home, Bed, Sofa, Star, Hash } from 'lucide-react';
+import { X, Check, Clock, Film, PenLine, Plus, Minus, Zap, Edit2, Trash2, MonitorPlay, ChevronDown, LayoutGrid, Activity, ChevronLeft, AlertTriangle, Info, Search, Settings, Droplets, User, Battery, BatteryMedium, BatteryFull, PhoneOff, UserX, HeartOff, Flag, MapPin, Home, Bed, Sofa, Star, Hash, Monitor, Car } from 'lucide-react';
 import React, { useState, useEffect, useMemo, Suspense, lazy } from 'react';
 import { MasturbationRecordDetails, LogEntry, PartnerProfile, ContentItem } from '../types';
 import Modal from './Modal';
@@ -26,11 +26,11 @@ const TOOL_OPTIONS = ['手', '润滑液', '飞机杯', '名器/倒模', '电动�
 const LUBRICANT_OPTIONS = ['无润滑', '水基润滑液', '硅基润滑液', '油基润滑液', '人体分泌', '唾液', '其他'];
 const LOCATION_OPTIONS = [
     { label: '卧室/床上', icon: Bed },
-    { label: '浴室', icon: Droplets },
-    { label: '客厅', icon: Sofa },
-    { label: '酒店', icon: Home },
-    { label: '书房/电竞椅', icon: MonitorPlay },
-    { label: '公司/厕所', icon: UserX },
+    { label: '书桌/电脑前', icon: Monitor },
+    { label: '浴室/洗手间', icon: Droplets },
+    { label: '客厅/沙发', icon: Sofa },
+    { label: '酒店/宾馆', icon: Home },
+    { label: '私家车内', icon: Car },
     { label: '其他', icon: MapPin }
 ];
 
@@ -457,14 +457,14 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                         <div className="grid grid-cols-2 gap-3">
                             <div className="space-y-1.5">
                                 <label className="text-[10px] font-black text-slate-400 uppercase">素材类型</label>
-                                <select className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-2 text-xs font-bold" value={editingItem.type} onChange={e => setEditingItem({ ...editingItem, type: e.target.value })}>
+                                <select className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-2 text-xs font-bold" value={editingItem.type} onChange={e => setEditingItem({ ...editingItem, type: e.target.value })}>
                                     <option value="">选择类型</option>
                                     {CONTENT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                                 </select>
                             </div>
                             <div className="space-y-1.5">
                                 <label className="text-[10px] font-black text-slate-400 uppercase">来源平台</label>
-                                <select className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-2 text-xs font-bold" value={editingItem.platform} onChange={e => setEditingItem({ ...editingItem, platform: e.target.value })}>
+                                <select className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-2 text-xs font-bold" value={editingItem.platform} onChange={e => setEditingItem({ ...editingItem, platform: e.target.value })}>
                                     <option value="">选择平台</option>
                                     {PLATFORMS.map(p => <option key={p} value={p}>{p}</option>)}
                                 </select>
@@ -472,7 +472,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                         </div>
                         <div className="space-y-1.5">
                             <label className="text-[10px] font-black text-slate-400 uppercase">标题 / 作品 ID</label>
-                            <input className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-3 text-xs font-bold" placeholder="输入作品名" value={editingItem.title || ''} onChange={e => setEditingItem({ ...editingItem, title: e.target.value })} />
+                            <input className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-3 text-xs font-bold" placeholder="输入作品名" value={editingItem.title || ''} onChange={e => setEditingItem({ ...editingItem, title: e.target.value })} />
                         </div>
                         <button onClick={() => {
                             const next = data.contentItems.find(i => i.id === editingItem.id) ? data.contentItems.map(i => i.id === editingItem.id ? editingItem : i) : [...data.contentItems, editingItem];
