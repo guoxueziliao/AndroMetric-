@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { X, Clock, Coffee, CupSoda, Leaf, Zap, Plus, Minus, Check, PencilLine, RotateCcw } from 'lucide-react';
+import { X, Clock, Coffee, CupSoda, Leaf, Zap, Plus, Minus, Check, PencilLine, RotateCcw, Info } from 'lucide-react';
 import Modal from './Modal';
 import { CaffeineItem } from '../types';
 
@@ -40,7 +40,6 @@ const MENU_DATA: Record<string, any[]> = {
         { name: '吨吨桶', vol: 1000, desc: '标准' },
     ],
     chinese_tea: [
-        { name: '全天日常饮用', vol: 0, desc: '反复冲泡', isDaily: true },
         { type: 'divider', label: '—— 经典名茶 ——' },
         { name: '西湖龙井', vol: 300, desc: '标准' },
         { name: '普洱熟茶', vol: 300, desc: '标准' },
@@ -87,7 +86,7 @@ const BeverageModal: React.FC<BeverageModalProps> = ({ isOpen, onClose, onSave, 
         if (isOpen) {
             if (initialData) {
                 setSelectedName(initialData.name);
-                setVolume(initialData.volume);
+                setVolume(initialData.volume || 300);
                 setTime(initialData.time);
                 setIsDailyMode(!!initialData.isDaily);
                 if (initialData.isCustom) {
@@ -116,8 +115,7 @@ const BeverageModal: React.FC<BeverageModalProps> = ({ isOpen, onClose, onSave, 
     const handleItemClick = (item: any) => {
         if (item.type === 'divider') return;
         setSelectedName(item.name);
-        setVolume(item.vol);
-        setIsDailyMode(!!item.isDaily);
+        if (!isDailyMode) setVolume(item.vol);
     };
 
     const handleConfirm = () => {
@@ -139,6 +137,7 @@ const BeverageModal: React.FC<BeverageModalProps> = ({ isOpen, onClose, onSave, 
     return (
         <Modal isOpen={isOpen} onClose={onClose} title={initialData ? "修改记录" : "记录提神饮品"}>
             <div className="flex flex-col h-[75vh] -mx-4 -mb-4">
+                {/* 顶部预览卡片 */}
                 <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 shrink-0">
                     <div className={`transition-all duration-300 rounded-2xl p-4 flex items-center justify-between shadow-sm border ${
                         isDailyMode 
@@ -151,7 +150,7 @@ const BeverageModal: React.FC<BeverageModalProps> = ({ isOpen, onClose, onSave, 
                                 ? 'bg-white dark:bg-slate-800 text-emerald-600 border-emerald-100 dark:border-emerald-900/20' 
                                 : 'bg-white dark:bg-slate-800 text-orange-500 border-orange-100 dark:border-orange-900/20'
                             }`}>
-                                {isDailyMode ? <Leaf size={24} /> : <Coffee size={24} />}
+                                {activeCat === 'chinese_tea' ? <Leaf size={24} /> : (activeCat === 'functional' ? <Zap size={24} /> : <Coffee size={24} />)}
                             </div>
                             <div>
                                 <h3 className="font-black text-lg text-slate-800 dark:text-slate-100 truncate max-w-[180px]">
@@ -163,7 +162,7 @@ const BeverageModal: React.FC<BeverageModalProps> = ({ isOpen, onClose, onSave, 
                                         ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600' 
                                         : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
                                     }`}>
-                                        {isDailyMode ? '全天反复冲泡' : `${volume} 毫升`}
+                                        {isDailyMode ? '全天日常饮用' : `${volume} 毫升`}
                                     </span>
                                     {!isDailyMode && <span className="text-[10px] text-slate-400 font-bold tabular-nums">{time}</span>}
                                 </div>
@@ -174,11 +173,16 @@ const BeverageModal: React.FC<BeverageModalProps> = ({ isOpen, onClose, onSave, 
                 </div>
 
                 <div className="flex-1 flex overflow-hidden">
+                    {/* 左侧分类栏 */}
                     <div className="w-24 bg-slate-50/50 dark:bg-slate-900/50 border-r border-slate-100 dark:border-slate-800 flex flex-col pt-2 shrink-0 overflow-y-auto custom-scrollbar">
                         {CATEGORIES.map(cat => (
                             <button
                                 key={cat.id}
-                                onClick={() => { setActiveCat(cat.id); if(cat.id !== 'chinese_tea') setIsDailyMode(false); }}
+                                onClick={() => { 
+                                    setActiveCat(cat.id); 
+                                    // 切换到非茶类分类时自动关闭日常模式，除非是自定义
+                                    if(cat.id !== 'chinese_tea' && cat.id !== 'custom') setIsDailyMode(false); 
+                                }}
                                 className={`flex flex-col items-center justify-center py-4 px-1 gap-1 transition-all relative shrink-0 ${
                                     activeCat === cat.id ? 'text-orange-600 dark:text-orange-400 font-black' : 'text-slate-400 font-bold'
                                 }`}
@@ -192,6 +196,7 @@ const BeverageModal: React.FC<BeverageModalProps> = ({ isOpen, onClose, onSave, 
                         ))}
                     </div>
 
+                    {/* 右侧列表区 */}
                     <div className="flex-1 overflow-y-auto custom-scrollbar p-4">
                         {activeCat === 'custom' ? (
                             <div className="space-y-4 animate-in fade-in slide-in-from-right-4">
@@ -209,6 +214,37 @@ const BeverageModal: React.FC<BeverageModalProps> = ({ isOpen, onClose, onSave, 
                             </div>
                         ) : (
                             <div className="space-y-2">
+                                {/* 传统中国茶分类下的特殊开关 */}
+                                {activeCat === 'chinese_tea' && (
+                                    <div className="mb-4">
+                                        <button
+                                            onClick={() => setIsDailyMode(!isDailyMode)}
+                                            className={`w-full p-4 rounded-2xl border-2 transition-all flex items-center justify-between group ${
+                                                isDailyMode 
+                                                ? 'border-emerald-500 bg-emerald-50/50 dark:bg-emerald-900/10' 
+                                                : 'border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50'
+                                            }`}
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className={`p-2 rounded-xl transition-colors ${isDailyMode ? 'bg-emerald-500 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-400'}`}>
+                                                    <RotateCcw size={18} className={isDailyMode ? 'animate-spin-slow' : ''} />
+                                                </div>
+                                                <div className="text-left">
+                                                    <div className={`text-sm font-black transition-colors ${isDailyMode ? 'text-emerald-700 dark:text-emerald-300' : 'text-slate-500'}`}>全天日常饮用</div>
+                                                    <div className="text-[10px] text-slate-400 font-bold mt-0.5">不限容量 · 反复冲泡</div>
+                                                </div>
+                                            </div>
+                                            <div className={`w-6 h-6 rounded-full flex items-center justify-center transition-all ${isDailyMode ? 'bg-emerald-500 text-white' : 'border-2 border-slate-200 dark:border-slate-700'}`}>
+                                                {isDailyMode && <Check size={14} strokeWidth={4} />}
+                                            </div>
+                                        </button>
+                                        <div className="mt-2 flex items-center gap-1.5 px-1">
+                                            <Info size={12} className="text-slate-400" />
+                                            <span className="text-[10px] text-slate-400 font-bold">开启后可继续在下方选择茶叶品种</span>
+                                        </div>
+                                    </div>
+                                )}
+
                                 {MENU_DATA[activeCat]?.map((item, idx) => (
                                     item.type === 'divider' ? (
                                         <div key={`div-${idx}`} className="py-2 text-[10px] font-black text-slate-300 dark:text-slate-600 text-center uppercase tracking-[0.2em]">
@@ -219,21 +255,19 @@ const BeverageModal: React.FC<BeverageModalProps> = ({ isOpen, onClose, onSave, 
                                             key={item.name}
                                             onClick={() => handleItemClick(item)}
                                             className={`w-full p-4 rounded-2xl border-2 transition-all flex items-center justify-between group ${
-                                                selectedName === item.name && !isDailyMode && activeCat !== 'custom'
-                                                ? 'border-orange-500 bg-orange-50/30 dark:bg-orange-900/10'
-                                                : selectedName === item.name && isDailyMode
-                                                ? 'border-emerald-500 bg-emerald-50/30 dark:bg-emerald-900/10'
+                                                selectedName === item.name
+                                                ? (isDailyMode ? 'border-emerald-500 bg-emerald-50/30 dark:bg-emerald-900/10' : 'border-orange-500 bg-orange-50/30 dark:bg-orange-900/10')
                                                 : 'border-slate-50 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-orange-200'
                                             }`}
                                         >
                                             <div className="text-left">
-                                                <div className={`text-sm font-black transition-colors ${item.isDaily ? 'text-emerald-700 dark:text-emerald-300' : 'text-slate-700 dark:text-slate-200'}`}>{item.name}</div>
+                                                <div className={`text-sm font-black transition-colors ${selectedName === item.name && isDailyMode ? 'text-emerald-700 dark:text-emerald-300' : 'text-slate-700 dark:text-slate-200'}`}>{item.name}</div>
                                                 <div className="text-[10px] text-slate-400 font-bold mt-0.5">
-                                                    {item.isDaily ? '不限容量 · 反复冲泡' : `${item.vol}毫升 ${item.desc}`}
+                                                    {item.vol}毫升 {item.desc}
                                                 </div>
                                             </div>
                                             {selectedName === item.name && (
-                                                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-white ${item.isDaily ? 'bg-emerald-500' : 'bg-orange-500'}`}>
+                                                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-white ${isDailyMode ? 'bg-emerald-500' : 'bg-orange-500'}`}>
                                                     <Check size={14} strokeWidth={4} />
                                                 </div>
                                             )}
@@ -245,6 +279,7 @@ const BeverageModal: React.FC<BeverageModalProps> = ({ isOpen, onClose, onSave, 
                     </div>
                 </div>
 
+                {/* 底部容量选择/日常模式确认区 */}
                 <div className="px-6 py-6 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 space-y-6 shrink-0">
                     {!isDailyMode ? (
                         <div className="animate-in slide-in-from-bottom-2 duration-300 space-y-6">
