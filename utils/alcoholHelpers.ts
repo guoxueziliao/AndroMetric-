@@ -1,4 +1,3 @@
-
 import { LogEntry } from '../types';
 
 export interface DrinkPreset {
@@ -7,22 +6,18 @@ export interface DrinkPreset {
     volume: number;
     abv: number;
     icon: string;
-    category: 'beer' | 'spirit' | 'wine' | 'mixed' | 'other';
 }
 
-// 与截图 3/4 匹配的预设库
+// 简化后的核心品类
 export const DRINK_TYPES: DrinkPreset[] = [
-    { key: 'beer_bottle_large', name: '大瓶啤酒', volume: 500, abv: 4.0, icon: '🍺', category: 'beer' },
-    { key: 'beer_can', name: '罐装啤酒', volume: 330, abv: 4.5, icon: '🥫', category: 'beer' },
-    { key: 'beer_bottle_std', name: '瓶装啤酒', volume: 600, abv: 3.5, icon: '🍾', category: 'beer' },
-    { key: 'baijiu_1', name: '1两白酒', volume: 50, abv: 52.0, icon: '🍶', category: 'spirit' },
-    { key: 'baijiu_half', name: '半斤白酒', volume: 250, abv: 42.0, icon: '🏺', category: 'spirit' },
-    { key: 'medicinal_wine', name: '药酒', volume: 50, abv: 35.0, icon: '🏥', category: 'spirit' },
-    { key: 'red_wine', name: '红酒(杯)', volume: 150, abv: 12.5, icon: '🍷', category: 'wine' },
-    { key: 'fruit_wine', name: '果酒', volume: 330, abv: 8.0, icon: '🍑', category: 'wine' },
-    { key: 'soju', name: '韩国烧酒', volume: 360, abv: 16.5, icon: '🧪', category: 'other' },
-    { key: 'sake', name: '清酒', volume: 180, abv: 15.0, icon: '🍵', category: 'other' },
-    { key: 'cocktail', name: '鸡尾酒', volume: 250, abv: 15.0, icon: '🍸', category: 'mixed' },
+    { key: 'beer', name: '啤酒', volume: 500, abv: 4.0, icon: '🍺' },
+    { key: 'baijiu', name: '白酒', volume: 50, abv: 52.0, icon: '🍶' },
+    { key: 'red_wine', name: '红酒', volume: 150, abv: 12.5, icon: '🍷' },
+    { key: 'fruit_wine', name: '果酒', volume: 330, abv: 8.0, icon: '🍑' },
+    { key: 'soju', name: '烧酒', volume: 360, abv: 16.5, icon: '🧪' },
+    { key: 'sake', name: '清酒', volume: 180, abv: 15.0, icon: '🍵' },
+    { key: 'cocktail', name: '鸡尾酒', volume: 250, abv: 15.0, icon: '🍸' },
+    { key: 'other_wine', name: '其他', volume: 100, abv: 15.0, icon: '🥂' },
 ];
 
 export const calculatePureAlcohol = (volume: number, abv: number): number => {
