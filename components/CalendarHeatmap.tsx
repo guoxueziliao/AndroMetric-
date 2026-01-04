@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { LogEntry } from '../types';
 import { ChevronLeft, ChevronRight, Zap, Dumbbell, Moon, Clock, BatteryWarning, TrendingUp, TrendingDown, Minus, Calendar as CalendarIcon, ChevronDown as ChevronDownIcon, SunMedium, Hand, Heart, Beer, ShieldAlert, Film, BrainCircuit } from 'lucide-react';
 import { analyzeSleep, calculateDataQuality } from '../utils/helpers';
@@ -41,7 +41,6 @@ const getCalendarDays = (currentDate: Date) => {
 };
 
 // Auxiliary Color System for Completed Logs (Hardness Heatmap)
-// Updated for intuitive progression: Red -> Orange -> Amber -> Green -> Blue
 const getVisualsForCompleted = (level: number) => {
     switch (level) {
         case 1: // Bad/Soft
@@ -60,11 +59,27 @@ const getVisualsForCompleted = (level: number) => {
 };
 
 const CalendarHeatmap: React.FC<ActivityCalendarProps> = ({ logs, onDateClick, children }) => {
-    const [currentDate, setCurrentDate] = useState(new Date());
+    // 优先级：localStorage > new Date()
+    const [currentDate, setCurrentDate] = useState(() => {
+        try {
+            const saved = localStorage.getItem('calendar_viewing_month');
+            if (saved) {
+                const date = new Date(saved);
+                if (!isNaN(date.getTime())) return date;
+            }
+        } catch (e) {}
+        return new Date();
+    });
+
     const [activeFilter, setActiveFilter] = useState<FilterType>('all');
     const touchStart = useRef<number | null>(null);
     const touchEnd = useRef<number | null>(null);
     const minSwipeDistance = 50;
+
+    // 每次 currentDate 变化时持久化到本地
+    useEffect(() => {
+        localStorage.setItem('calendar_viewing_month', currentDate.toISOString());
+    }, [currentDate]);
 
     const onTouchStart = (e: React.TouchEvent) => { touchEnd.current = null; touchStart.current = e.targetTouches[0].clientX; }
     const onTouchMove = (e: React.TouchEvent) => { touchEnd.current = e.targetTouches[0].clientX; }
@@ -77,7 +92,6 @@ const CalendarHeatmap: React.FC<ActivityCalendarProps> = ({ logs, onDateClick, c
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth() + 1;
 
-    // --- Stats Logic ---
     const monthlyStats = useMemo(() => {
         const y = currentDate.getFullYear();
         const m = currentDate.getMonth();
@@ -93,8 +107,6 @@ const CalendarHeatmap: React.FC<ActivityCalendarProps> = ({ logs, onDateClick, c
         const validHardnessLogs = monthLogEntries.filter(l => l.morning?.wokeWithErection && l.morning.hardness);
         const avgHardness = validHardnessLogs.length ? validHardnessLogs.reduce((a,b) => a + (b.morning?.hardness||0), 0) / validHardnessLogs.length : 0;
         
-        // Calculate trend vs previous month
-        // ... (Skipping full trend calculation for brevity in rendering update) ...
         const trend = 0; // Placeholder
 
         const morningWoodRate = monthLogEntries.length > 0 ? Math.round((validHardnessLogs.length / monthLogEntries.length) * 100) : 0;
@@ -111,11 +123,9 @@ const CalendarHeatmap: React.FC<ActivityCalendarProps> = ({ logs, onDateClick, c
         const log = logsMap.get(dateStr);
         const isToday = new Date().toDateString() === day.toDateString();
         
-        // 1. Determine State & Score
         let status: 'empty' | 'draft' | 'completed' = 'empty';
         let qualityScore = 0;
         
-        // Specific Warning Flags
         let isSick = false;
         let isStressed = false;
         let isBadSleep = false;
@@ -125,14 +135,12 @@ const CalendarHeatmap: React.FC<ActivityCalendarProps> = ({ logs, onDateClick, c
             const isDraft = log.status === 'pending' || qualityScore < 60;
             status = isDraft ? 'draft' : 'completed';
             
-            // Check warnings
             const sleepAnalysis = analyzeSleep(log.sleep?.startTime, log.sleep?.endTime);
             if (log.health?.isSick) isSick = true;
             if ((log.stressLevel || 0) >= 4) isStressed = true;
             if (sleepAnalysis?.isInsufficient || sleepAnalysis?.isLate) isBadSleep = true;
         }
 
-        // 2. Filter Check
         let isDimmed = false;
         if (activeFilter !== 'all') {
             const checks: Record<FilterType, boolean> = {
@@ -141,7 +149,6 @@ const CalendarHeatmap: React.FC<ActivityCalendarProps> = ({ logs, onDateClick, c
                 sex: !!(log?.sex && log.sex.length > 0),
                 masturbation: !!(log?.masturbation && log.masturbation.length > 0),
                 sick: !!log?.health?.isSick,
-                /* Fix: Check alcoholRecords array for filtering instead of using non-existent alcoholRecord property */
                 alcohol: !!(log?.alcohol && log.alcohol !== 'none') || !!(log?.alcoholRecords && log.alcoholRecords.length > 0),
                 porn: !!(log?.pornConsumption && log.pornConsumption !== 'none'),
                 exercise: !!(log?.exercise && log.exercise.length > 0),
@@ -153,7 +160,6 @@ const CalendarHeatmap: React.FC<ActivityCalendarProps> = ({ logs, onDateClick, c
             if (!checks[activeFilter]) isDimmed = true;
         }
 
-        // 3. Visuals
         let containerClass = "bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 text-slate-300 dark:text-slate-600";
         let dateClass = "text-slate-400";
         let scoreClass = "hidden";
@@ -182,19 +188,16 @@ const CalendarHeatmap: React.FC<ActivityCalendarProps> = ({ logs, onDateClick, c
                 <div className="flex justify-between items-start">
                     <span className={`text-[10px] leading-none ml-0.5 mt-0.5 ${dateClass}`}>{day.getDate()}</span>
                     
-                    {/* Warning Icons Layer (Top Right) */}
                     {!isDimmed && (isSick || isStressed || isBadSleep) && (
                         <div className="flex gap-[1px] mt-0.5 mr-0.5">
                             {isSick && <ShieldAlert size={10} className="text-red-500" strokeWidth={3} />}
                             {isStressed && !isSick && <Zap size={10} className="text-orange-500" strokeWidth={3} fill="currentColor" />}
                             {isBadSleep && !isSick && !isStressed && <Moon size={10} className="text-purple-500" strokeWidth={3} />}
-                            {/* If too many, show a generic dot for overflow, but max 2 icons fit okay */}
                             {(isStressed && isSick) && <div className="w-1.5 h-1.5 rounded-full bg-orange-500"></div>}
                         </div>
                     )}
                 </div>
                 
-                {/* Index Layer: Score only */}
                 <div className="flex justify-end items-end mr-0.5 mb-0.5">
                     {status !== 'empty' && (
                         <span className={`leading-none ${scoreClass}`}>{qualityScore}</span>
@@ -226,7 +229,6 @@ const CalendarHeatmap: React.FC<ActivityCalendarProps> = ({ logs, onDateClick, c
     return (
         <div className="w-full space-y-4">
             <div className="flex items-center justify-between px-2">
-                {/* Year/Month Capsule */}
                 <div className="relative group">
                     <button className="flex items-center gap-2 px-4 py-2 rounded-full bg-white dark:bg-slate-800 shadow-sm border border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
                         <span className="text-xl font-black text-brand-text dark:text-slate-100 tracking-tight leading-none">
@@ -242,7 +244,6 @@ const CalendarHeatmap: React.FC<ActivityCalendarProps> = ({ logs, onDateClick, c
                     />
                 </div>
                 
-                {/* Navigation Capsule */}
                 <div className="flex items-center bg-white dark:bg-slate-800 rounded-full shadow-sm border border-slate-100 dark:border-slate-700 p-1">
                     <button onClick={prevMonth} className="p-2 rounded-full hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-400 hover:text-brand-text transition-colors">
                         <ChevronLeft size={18}/>
@@ -254,7 +255,6 @@ const CalendarHeatmap: React.FC<ActivityCalendarProps> = ({ logs, onDateClick, c
                 </div>
             </div>
             
-            {/* Filter Capsules */}
             <div className="flex gap-2 overflow-x-auto scrollbar-hide px-1 pb-1">
                 {FILTERS.map(f => {
                     const isActive = activeFilter === f.id;
@@ -285,7 +285,6 @@ const CalendarHeatmap: React.FC<ActivityCalendarProps> = ({ logs, onDateClick, c
             
             {children}
             
-            {/* Monthly Stats Summary */}
             <div className="grid grid-cols-2 gap-3 mt-4">
                 <DashItem 
                     label="平均硬度" 
