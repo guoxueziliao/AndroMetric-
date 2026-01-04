@@ -300,10 +300,17 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
         onClose={() => setIsSummaryModalOpen(false)} 
         title=""
         footer={summaryLog && (
-            <div className="w-full px-2 pb-2">
+            <div className="flex gap-3 w-full px-2 pb-2">
+                <button 
+                    onClick={() => handleDeleteRecord(summaryLog.date)}
+                    className="p-5 bg-red-50 dark:bg-red-900/20 text-red-500 rounded-full hover:bg-red-100 transition-colors active:scale-95"
+                    title="删除记录"
+                >
+                    <Trash2 size={20}/>
+                </button>
                 <button 
                     onClick={() => { setIsSummaryModalOpen(false); onEdit(summaryLog.date); }} 
-                    className="w-full py-5 bg-slate-100 dark:bg-white text-slate-900 font-black rounded-full shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-3"
+                    className="flex-1 py-5 bg-slate-100 dark:bg-white text-slate-900 font-black rounded-full shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-3"
                 >
                     <Edit3 size={20}/> 编辑详情
                 </button>
@@ -327,8 +334,12 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                     </div>
 
                     <div className="flex items-center gap-1">
-                        <button onClick={() => handleDeleteRecord(summaryLog.date)} className="p-2 text-slate-400 hover:text-red-500 transition-colors rounded-full"><Trash2 size={20}/></button>
-                        <button onClick={() => handleNavigateDate(1)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-400 hover:text-brand-accent"><ChevronRight size={24} /></button>
+                        <button 
+                          onClick={() => handleNavigateDate(1)} 
+                          className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-400 hover:text-brand-accent"
+                        >
+                          <ChevronRight size={24} />
+                        </button>
                     </div>
                 </div>
 
