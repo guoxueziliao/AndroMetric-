@@ -1,11 +1,10 @@
-
 import React, { useState, useCallback, useMemo } from 'react';
 import { 
     Plus, Heart, Hand, Dumbbell, 
     StickyNote, Check, Trash2, Clock, MapPin, 
     Zap, Activity, Sparkles, Sun, Cloud, CloudRain, 
     Snowflake, Wind, CloudFog, Home, Navigation, Hotel, Plane, 
-    Shirt, Droplets, ShieldAlert, Search, Coffee, Film, BrainCircuit, Edit3, ChevronRight, Beer
+    Shirt, Droplets, ShieldAlert, Search, Coffee, Film, BrainCircuit, Edit3, ChevronRight, Beer, RotateCcw, Leaf
 } from 'lucide-react';
 import BeverageModal from './BeverageModal';
 import SexRecordModal from './SexRecordModal';
@@ -137,7 +136,7 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
 
         setLog(prev => ({ 
             ...prev, 
-            alcoholRecords: next,
+            alcoholRecords: next, 
             alcohol: level
         }));
         markDirty();
@@ -223,10 +222,14 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
                                     {log.caffeineRecord?.items.map(item => (
                                         <div key={item.id} className="group flex justify-between items-center bg-white dark:bg-slate-800 p-3.5 rounded-2xl border border-slate-100 dark:border-white/5 shadow-sm">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-9 h-9 bg-orange-50 dark:bg-orange-900/30 rounded-xl flex items-center justify-center text-orange-500"><Coffee size={18}/></div>
+                                                <div className={`w-9 h-9 ${item.isDaily ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-500' : 'bg-orange-50 dark:bg-orange-900/30 text-orange-500'} rounded-xl flex items-center justify-center`}>
+                                                    {item.isDaily ? <RotateCcw size={18} className="animate-spin-slow" /> : <Coffee size={18}/>}
+                                                </div>
                                                 <div>
-                                                    <div className="text-sm font-black text-slate-700 dark:text-slate-200">{item.name}</div>
-                                                    <div className="text-[10px] text-slate-400 font-bold mt-0.5">{item.time} · {item.volume}毫升</div>
+                                                    <div className={`text-sm font-black ${item.isDaily ? 'text-emerald-700 dark:text-emerald-300' : 'text-slate-700 dark:text-slate-200'}`}>{item.name}</div>
+                                                    <div className="text-[10px] text-slate-400 font-bold mt-0.5">
+                                                        {item.time} · {item.isDaily ? '全天日常饮用' : `${item.volume}毫升`}
+                                                    </div>
                                                 </div>
                                             </div>
                                             <div className="flex gap-1.5">
