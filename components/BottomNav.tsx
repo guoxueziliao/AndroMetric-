@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Calendar, BarChart3, User, HeartHandshake } from 'lucide-react';
 
@@ -17,15 +16,17 @@ const NavItem: React.FC<{
   return (
     <button
       onClick={onClick}
-      className={`group relative flex items-center justify-center w-14 h-14 rounded-2xl transition-all duration-300 ${
+      className={`group relative flex flex-col items-center justify-center flex-1 h-14 transition-all duration-300 active:scale-90 ${
         isActive 
-          ? 'bg-brand-accent text-white shadow-glow translate-y-[-4px]' 
-          : 'text-brand-muted hover:bg-slate-100 dark:hover:bg-slate-800'
+          ? 'text-brand-accent' 
+          : 'text-brand-muted hover:text-slate-600 dark:hover:text-slate-300'
       }`}
     >
-      <Icon size={24} strokeWidth={isActive ? 2.5 : 2} />
+      <div className={`p-2 rounded-2xl transition-all duration-300 ${isActive ? 'bg-blue-50 dark:bg-blue-500/10 scale-110' : ''}`}>
+        <Icon size={24} strokeWidth={isActive ? 2.5 : 2} />
+      </div>
       {isActive && (
-        <span className="absolute -bottom-2 w-1 h-1 rounded-full bg-brand-accent"></span>
+        <span className="absolute bottom-1 w-1 h-1 rounded-full bg-brand-accent animate-in zoom-in duration-300"></span>
       )}
     </button>
   );
@@ -33,8 +34,9 @@ const NavItem: React.FC<{
 
 const BottomNav: React.FC<BottomNavProps> = ({ activeView, onViewChange }) => {
   return (
-    <nav className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-40 w-auto">
-      <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 dark:border-slate-800 p-2 flex gap-2 ring-1 ring-black/5">
+    <nav className="fixed bottom-0 left-0 right-0 z-40 w-full">
+      {/* 毛玻璃背景容器 */}
+      <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl border-t border-slate-200/50 dark:border-slate-800/50 px-2 pt-2 pb-8 flex justify-around items-center shadow-[0_-4px_20px_rgba(0,0,0,0.03)] dark:shadow-none ring-1 ring-black/5">
         <NavItem
           icon={Calendar}
           isActive={activeView === 'calendar'}
@@ -56,6 +58,9 @@ const BottomNav: React.FC<BottomNavProps> = ({ activeView, onViewChange }) => {
           onClick={() => onViewChange('my')}
         />
       </div>
+      
+      {/* 适配 iOS 底部安全区 (Home Indicator) 的额外空白 */}
+      <div className="h-[env(safe-area-inset-bottom)] bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl"></div>
     </nav>
   );
 };
