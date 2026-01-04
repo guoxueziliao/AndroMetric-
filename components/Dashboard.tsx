@@ -384,8 +384,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                                                     <ArrowRight size={18} className="text-slate-300 dark:text-slate-700" />
                                                 </div>
                                                 <div className="flex flex-col items-center flex-1">
-                                                    <span className="text-[9px] font-black text-slate-400 uppercase mb-1">醒来</span>
                                                     <span className="text-lg font-mono font-bold text-slate-700 dark:text-slate-200">{formatTime(summaryLog.sleep?.endTime)}</span>
+                                                    <span className="text-[9px] font-black text-slate-400 uppercase mt-1">醒来</span>
                                                 </div>
                                             </div>
 
@@ -466,7 +466,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
 
                     {activeSummaryTab === 'track' && (
                         <div className="animate-in fade-in slide-in-from-right-4 duration-300">
-                            <GlobalTimeline log={summaryLog} />
+                            <GlobalTimeline log={summaryLog} allLogs={logs} />
                         </div>
                     )}
 
