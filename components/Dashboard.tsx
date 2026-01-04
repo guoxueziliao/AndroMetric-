@@ -8,7 +8,7 @@ import {
   FastForward, Coffee, Bed, ArrowRight, User, Heart, RotateCcw, 
   MapPin, Sparkles, Shirt, Star, Thermometer, BrainCircuit, Tag, 
   Film, Smile, AlertTriangle, ChevronRight, ChevronLeft, Calendar, Check, 
-  AlertCircle, Sofa, X 
+  AlertCircle, Sofa, X, MoreHorizontal
 } from 'lucide-react';
 import Modal from './Modal';
 import SafeDeleteModal from './SafeDeleteModal';
@@ -41,7 +41,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
   
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [dateToDelete, setDateToDelete] = useState<string | null>(null);
-  const [isMbActionModalOpen, setIsMbActionModalOpen] = useState(false);
 
   const latestLog = useMemo(() => logs.length > 0 ? logs[0] : null, [logs]);
   const pendingLog = useMemo(() => logs.find(log => log.status === 'pending'), [logs]);
@@ -81,7 +80,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
           setIsSummaryModalOpen(true); 
         }
     } else { 
-        // 如果点击的是没有记录的日期，也允许打开详情查看空白页
         setSummaryLog(hydrateLog({ date }));
         setActiveSummaryTab('diary');
         setIsSummaryModalOpen(true);
@@ -142,7 +140,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
               <Icon size={14} className={colorClass} />
               <h3 className="text-[11px] font-black uppercase tracking-widest text-slate-400">{title}</h3>
           </div>
-          <div className="bg-slate-50/50 dark:bg-slate-900/50 border border-slate-100 dark:border-white/5 rounded-3xl p-5 space-y-4">
+          <div className="bg-white dark:bg-[#111827] border border-slate-100 dark:border-white/5 rounded-[2rem] p-5 shadow-sm space-y-4">
               {children}
           </div>
       </div>
@@ -305,7 +303,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
             <div className="w-full px-2 pb-2">
                 <button 
                     onClick={() => { setIsSummaryModalOpen(false); onEdit(summaryLog.date); }} 
-                    className="w-full py-4 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-[2rem] font-black shadow-xl active:scale-[0.98] transition-all flex items-center justify-center gap-3"
+                    className="w-full py-5 bg-slate-100 dark:bg-white text-slate-900 font-black rounded-full shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-3"
                 >
                     <Edit3 size={20}/> 编辑详情
                 </button>
@@ -313,8 +311,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
         )}
       >
         {summaryLog && (
-            <div className="space-y-6 animate-in fade-in duration-300 min-h-[450px] flex flex-col -mt-4">
-                <div className="flex justify-between items-center pb-2 border-b border-slate-50 dark:border-slate-800">
+            <div className="space-y-6 animate-in fade-in duration-300 min-h-[500px] flex flex-col -mt-4">
+                {/* Custom Header from Screenshot */}
+                <div className="flex justify-between items-center pb-2">
                     <button 
                         onClick={() => handleNavigateDate(-1)}
                         className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-400 hover:text-brand-accent"
@@ -327,23 +326,20 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                         <span className="text-[10px] font-bold text-brand-muted uppercase tracking-widest mt-0.5">{diaryDateInfo.sub}</span>
                     </div>
 
-                    <button 
-                        onClick={() => handleNavigateDate(1)}
-                        className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-400 hover:text-brand-accent"
-                    >
-                        <ChevronRight size={24} />
-                    </button>
-                    
-                    <button onClick={() => handleDeleteRecord(summaryLog.date)} className="p-2 ml-2 bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-red-500 transition-colors rounded-xl"><Trash2 size={18}/></button>
+                    <div className="flex items-center gap-1">
+                        <button onClick={() => handleDeleteRecord(summaryLog.date)} className="p-2 text-slate-400 hover:text-red-500 transition-colors rounded-full"><Trash2 size={20}/></button>
+                        <button onClick={() => handleNavigateDate(1)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-400 hover:text-brand-accent"><ChevronRight size={24} /></button>
+                    </div>
                 </div>
 
-                <div className="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl shrink-0 mt-2">
+                {/* Tabs from Screenshot */}
+                <div className="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl shrink-0">
                     {[{ id: 'diary', label: '日记' }, { id: 'track', label: '轨迹' }, { id: 'source', label: '溯源' }].map(tab => (
                         <button key={tab.id} onClick={() => setActiveSummaryTab(tab.id as SummaryTab)} className={`flex-1 py-2.5 text-xs font-black rounded-xl transition-all ${activeSummaryTab === tab.id ? 'bg-white dark:bg-slate-700 text-brand-accent shadow-md' : 'text-slate-400'}`}>{tab.label}</button>
                     ))}
                 </div>
 
-                <div className="flex-1 overflow-y-auto custom-scrollbar -mx-1 px-1 mt-4">
+                <div className="flex-1 overflow-y-auto custom-scrollbar -mx-1 px-1">
                     {activeSummaryTab === 'diary' && (
                         <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-300 pb-10">
                             {(!summaryLog.updatedAt || summaryLog.updatedAt < 0) ? (
@@ -356,66 +352,111 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                                 <>
                                     <SummarySection title="晨间生理反馈" icon={Zap} colorClass="text-amber-500">
                                         {summaryLog.morning?.wokeWithErection ? (
-                                            <div className="space-y-4">
-                                                <div className="flex justify-between items-center">
-                                                    <div className="flex flex-col">
-                                                        <span className="text-2xl font-black text-slate-800 dark:text-slate-100">{LABELS.hardness[summaryLog.morning.hardness || 3].split('(')[0]}</span>
-                                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">晨勃硬度评级</span>
-                                                    </div>
-                                                    <div className="bg-amber-100 dark:bg-amber-900/30 px-3 py-1.5 rounded-xl border border-amber-200 dark:border-amber-800">
-                                                        <span className="text-xs font-black text-amber-700 dark:text-amber-400">{LABELS.retention[summaryLog.morning.retention || 'normal']}</span>
-                                                    </div>
+                                            <div className="flex justify-between items-center">
+                                                <div className="flex flex-col">
+                                                    <span className="text-4xl font-black text-slate-800 dark:text-slate-100">{summaryLog.morning.hardness}级</span>
+                                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">晨勃硬度评级</span>
+                                                </div>
+                                                <div className="bg-amber-100/50 dark:bg-amber-900/30 px-4 py-2 rounded-2xl border border-amber-200/50 dark:border-amber-800/50">
+                                                    <span className="text-sm font-black text-amber-700 dark:text-amber-400">
+                                                        {LABELS.retention[summaryLog.morning.retention || 'normal']}
+                                                    </span>
                                                 </div>
                                             </div>
                                         ) : <div className="text-sm font-bold text-slate-400 italic py-2">今晨未察觉到晨勃</div>}
                                     </SummarySection>
 
                                     <SummarySection title="睡眠报告" icon={Moon} colorClass="text-blue-500">
-                                        <div className="space-y-4">
+                                        <div className="space-y-5">
                                             <div className="flex items-baseline gap-2">
-                                                <span className="text-3xl font-black text-slate-800 dark:text-slate-100 tracking-tight">
-                                                    {calculateSleepDuration(summaryLog.sleep?.startTime, summaryLog.sleep?.endTime) || '未记录时间'}
+                                                <span className="text-4xl font-black text-slate-800 dark:text-slate-100 tracking-tight">
+                                                    {calculateSleepDuration(summaryLog.sleep?.startTime, summaryLog.sleep?.endTime) || '--'}
                                                 </span>
-                                                <span className="text-xs font-bold text-slate-400">总睡眠</span>
+                                                <span className="text-[10px] font-black text-slate-400 uppercase">总睡眠</span>
                                             </div>
-                                            <div className="flex items-center justify-between text-[11px] font-bold text-slate-500 bg-white dark:bg-slate-800/50 p-3 rounded-2xl border border-slate-100 dark:border-white/5">
-                                                <div className="flex flex-col gap-1">
-                                                    <span className="opacity-50 font-black">入睡</span>
-                                                    <span className="font-mono text-sm">{formatTime(summaryLog.sleep?.startTime)}</span>
+                                            
+                                            <div className="bg-slate-50 dark:bg-slate-950 p-4 rounded-3xl border border-slate-100 dark:border-white/5 flex items-center justify-between shadow-inner">
+                                                <div className="flex flex-col items-center flex-1">
+                                                    <span className="text-[9px] font-black text-slate-400 uppercase mb-1">入睡</span>
+                                                    <span className="text-lg font-mono font-bold text-slate-700 dark:text-slate-200">{formatTime(summaryLog.sleep?.startTime)}</span>
                                                 </div>
-                                                <ArrowRight size={14} className="opacity-20"/>
-                                                <div className="flex flex-col gap-1 text-right">
-                                                    <span className="opacity-50 font-black">醒来</span>
-                                                    <span className="font-mono text-sm">{formatTime(summaryLog.sleep?.endTime)}</span>
+                                                <div className="px-4">
+                                                    <ArrowRight size={18} className="text-slate-300 dark:text-slate-700" />
+                                                </div>
+                                                <div className="flex flex-col items-center flex-1">
+                                                    <span className="text-[9px] font-black text-slate-400 uppercase mb-1">醒来</span>
+                                                    <span className="text-lg font-mono font-bold text-slate-700 dark:text-slate-200">{formatTime(summaryLog.sleep?.endTime)}</span>
                                                 </div>
                                             </div>
+
+                                            {summaryLog.sleep?.naps && summaryLog.sleep.naps.length > 0 && (
+                                                <div className="pt-2 space-y-2">
+                                                    {summaryLog.sleep.naps.map(nap => (
+                                                        <div key={nap.id} className="flex justify-between items-center text-xs font-bold text-slate-500 bg-slate-50 dark:bg-slate-950/50 p-3 rounded-2xl">
+                                                            <div className="flex items-center gap-2">
+                                                                <div className="w-1.5 h-1.5 rounded-full bg-orange-400"></div>
+                                                                <span>午休 ({nap.startTime})</span>
+                                                            </div>
+                                                            <span className="text-slate-400">{nap.duration}分钟</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
                                         </div>
                                     </SummarySection>
 
                                     <SummarySection title="活力记录" icon={Activity} colorClass="text-emerald-500">
-                                        <div className="space-y-4">
-                                            {summaryLog.exercise?.length ? summaryLog.exercise.map((ex, i) => (
-                                                <div key={i} className="bg-white dark:bg-slate-800/50 p-3 rounded-2xl border border-slate-100 dark:border-white/5 flex items-center justify-between">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="p-2 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl text-emerald-600"><Dumbbell size={16}/></div>
+                                        <div className="space-y-3">
+                                            {summaryLog.exercise?.map((ex, i) => (
+                                                <div key={ex.id} className="bg-slate-50 dark:bg-slate-950 p-4 rounded-[1.5rem] border border-slate-100 dark:border-white/5 flex items-center justify-between">
+                                                    <div className="flex items-center gap-4">
+                                                        <div className="p-2.5 bg-white dark:bg-slate-800 rounded-2xl text-emerald-500 shadow-sm"><Dumbbell size={20}/></div>
                                                         <div>
                                                             <div className="text-sm font-black text-slate-700 dark:text-slate-200">{ex.type}</div>
-                                                            <div className="text-[10px] text-slate-400 font-bold">{ex.startTime} · {ex.duration}分钟</div>
+                                                            <div className="text-[10px] text-slate-400 font-bold mt-0.5">{ex.startTime} · {ex.duration}分钟</div>
                                                         </div>
                                                     </div>
                                                 </div>
-                                            )) : null}
-                                            {summaryLog.sex?.length ? summaryLog.sex.map((s, i) => (
-                                                <div key={i} className="bg-white dark:bg-slate-800/50 p-3 rounded-2xl border border-slate-100 dark:border-white/5 flex items-center justify-between">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="p-2 bg-pink-50 dark:bg-pink-900/20 rounded-xl text-pink-600"><Heart size={16} fill="currentColor" fillOpacity={0.2}/></div>
+                                            ))}
+                                            {summaryLog.sex?.map(s => (
+                                                <div key={s.id} className="bg-slate-50 dark:bg-slate-950 p-4 rounded-[1.5rem] border border-slate-100 dark:border-white/5 flex items-center justify-between">
+                                                    <div className="flex items-center gap-4">
+                                                        <div className="p-2.5 bg-white dark:bg-slate-800 rounded-2xl text-pink-500 shadow-sm"><Heart size={20} fill="currentColor" fillOpacity={0.2}/></div>
                                                         <div>
                                                             <div className="text-sm font-black text-slate-700 dark:text-slate-200">{s.interactions?.[0]?.partner || '性爱记录'}</div>
-                                                            <div className="text-[10px] text-slate-400 font-bold">{s.startTime} · {s.duration}分钟</div>
+                                                            <div className="text-[10px] text-slate-400 font-bold mt-0.5">{s.startTime} · {s.duration}分钟</div>
                                                         </div>
                                                     </div>
                                                 </div>
-                                            )) : null}
+                                            ))}
+                                            {summaryLog.masturbation?.map(m => (
+                                                <div key={m.id} className="bg-slate-50 dark:bg-slate-950 p-4 rounded-[1.5rem] border border-slate-100 dark:border-white/5 flex items-center justify-between">
+                                                    <div className="flex items-center gap-4">
+                                                        <div className="p-2.5 bg-white dark:bg-slate-800 rounded-2xl text-blue-500 shadow-sm"><Hand size={20}/></div>
+                                                        <div>
+                                                            <div className="text-sm font-black text-slate-700 dark:text-slate-200">自慰记录</div>
+                                                            <div className="text-[10px] text-slate-400 font-bold mt-0.5">{m.startTime} · {m.duration}分钟</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                            {summaryLog.alcoholRecords?.map(alc => (
+                                                <div key={alc.id} className="bg-slate-50 dark:bg-slate-950 p-4 rounded-[1.5rem] border border-slate-100 dark:border-white/5 flex items-center justify-between">
+                                                    <div className="flex items-center gap-4">
+                                                        <div className="p-2.5 bg-white dark:bg-slate-800 rounded-2xl text-amber-500 shadow-sm"><Beer size={20}/></div>
+                                                        <div>
+                                                            <div className="text-sm font-black text-slate-700 dark:text-slate-200">饮酒 ({alc.totalGrams}g)</div>
+                                                            <div className="text-[10px] text-slate-400 font-bold mt-0.5">{alc.time} · {alc.items.map(i => i.name).join('+')}</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                            
+                                            {(!summaryLog.exercise?.length && !summaryLog.sex?.length && !summaryLog.masturbation?.length && !summaryLog.alcoholRecords?.length) && (
+                                                <div className="py-6 text-center text-[10px] text-slate-400 font-bold uppercase tracking-widest italic opacity-40">
+                                                    无活动记录
+                                                </div>
+                                            )}
                                         </div>
                                     </SummarySection>
                                 </>
@@ -445,10 +486,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
         onConfirm={confirmDelete}
         message={`确定要删除 ${dateToDelete} 的所有记录吗？删除后将无法找回。`}
       />
-
-      <Modal isOpen={isMbActionModalOpen} onClose={() => setIsMbActionModalOpen(false)} title="施法结束">
-          <div className="py-4 text-center text-slate-500">正在完成自慰记录...</div>
-      </Modal>
     </>
   );
 };
