@@ -99,7 +99,7 @@ export const GlobalTimeline: React.FC<GlobalTimelineProps> = ({ log, allLogs }) 
         }
 
         log.exercise?.forEach(ex => {
-            const time = ex.startTime.includes(':') ? ex.startTime : '18:00';
+            const time = ex.startTime && ex.startTime.includes(':') ? ex.startTime : '18:00';
             list.push({
                 time,
                 type: 'exercise',
@@ -151,8 +151,15 @@ export const GlobalTimeline: React.FC<GlobalTimelineProps> = ({ log, allLogs }) 
             });
         });
 
-        // 4. 今晚入睡（生理日终点，存放在下一份日记里）
-        const nextLog = allLogs.find(l => new Date(l.date).getTime() > new Date(log.date).getTime());
+        // 4. 今晚入睡（生理日终点，存放在【明天】的日记里）
+        // 修复点：限定查找当前日期的后一天记录
+        const currentLogDate = new Date(log.date + 'T12:00:00');
+        const tomorrowDate = new Date(currentLogDate);
+        tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+        const tomorrowDateStr = tomorrowDate.toISOString().split('T')[0];
+
+        const nextLog = allLogs.find(l => l.date === tomorrowDateStr);
+        
         if (nextLog && nextLog.sleep?.startTime) {
             const nextSleepTime = getLocalTime(nextLog.sleep.startTime);
             if (nextSleepTime) {
@@ -203,7 +210,11 @@ export const GlobalTimeline: React.FC<GlobalTimelineProps> = ({ log, allLogs }) 
                 ))}
             </div>
             
-            {!allLogs.find(l => new Date(l.date).getTime() > new Date(log.date).getTime()) && (
+            {!allLogs.find(l => {
+                const d = new Date(log.date + 'T12:00:00');
+                d.setDate(d.getDate() + 1);
+                return l.date === d.toISOString().split('T')[0];
+            }) && (
                 <div className="mt-8 p-4 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 text-center">
                     <p className="text-[10px] text-slate-400 font-bold italic">“今晚入睡”将在明天醒来打卡后自动同步至此。</p>
                 </div>
