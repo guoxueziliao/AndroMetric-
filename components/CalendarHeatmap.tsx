@@ -93,21 +93,83 @@ const CalendarHeatmap: React.FC<ActivityCalendarProps> = ({ logs, onDateClick, c
     const onTouchEnd = () => { if (!touchStart.current || !touchEnd.current) return; const distance = touchStart.current - touchEnd.current; if (distance > minSwipeDistance) nextMonth(); if (distance < -minSwipeDistance) prevMonth(); }
 
     const logsMap = useMemo(() => { const map = new Map<string, LogEntry>(); logs.forEach(log => map.set(log.date, log)); return map; }, [logs]);
-    const prevMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
-    const nextMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
-    const calendarDays = useMemo(() => getCalendarDays(currentDate), [currentDate]);
     
-    // 格式化左侧日期显示
+    const prevMonth = () => {
+        if (activeScope === 'today' || activeScope === 'week') {
+            const nextDate = new Date(currentDate);
+            nextDate.setDate(nextDate.getDate() - 7);
+            setCurrentDate(nextDate);
+        } else {
+            setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
+        }
+    };
+    
+    const nextMonth = () => {
+        if (activeScope === 'today' || activeScope === 'week') {
+            const nextDate = new Date(currentDate);
+            nextDate.setDate(nextDate.getDate() + 7);
+            setCurrentDate(nextDate);
+        } else {
+            setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
+        }
+    };
+
+    const calendarDays = useMemo(() => {
+        const fullMonthDays = getCalendarDays(currentDate);
+        
+        if (activeScope === 'month' || activeScope === 'year') {
+            return fullMonthDays;
+        }
+
+        if (activeScope === 'today' || activeScope === 'week') {
+            // 获取当前 currentDate 所在周的 7 天
+            const startOfWeek = new Date(currentDate);
+            const day = startOfWeek.getDay();
+            // 调整为周一作为开始
+            const diff = startOfWeek.getDate() - day + (day === 0 ? -6 : 1);
+            startOfWeek.setDate(diff);
+            
+            const weekDays = [];
+            for (let i = 0; i < 7; i++) {
+                const d = new Date(startOfWeek);
+                d.setDate(startOfWeek.getDate() + i);
+                weekDays.push(d);
+            }
+            return weekDays;
+        }
+
+        if (activeScope === 'pending') {
+            // “待定”模式：显示所有包含 pending 状态记录的日期，若当前月无 pending 则显示原样
+            const hasPendingInCurrentMonth = fullMonthDays.some(d => d && logsMap.get(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`)?.status === 'pending');
+            return fullMonthDays;
+        }
+
+        return fullMonthDays;
+    }, [currentDate, activeScope, logsMap]);
+    
     const dateInfo = useMemo(() => {
         const year = currentDate.getFullYear();
         const month = String(currentDate.getMonth() + 1).padStart(2, '0');
         const day = String(currentDate.getDate()).padStart(2, '0');
         const weekday = currentDate.toLocaleDateString('zh-CN', { weekday: 'short' });
         return {
-            full: `${year}/${month}/${day}`,
+            full: activeScope === 'month' ? `${year}/${month}` : `${year}/${month}/${day}`,
             weekday
         };
-    }, [currentDate]);
+    }, [currentDate, activeScope]);
+
+    const handleScopeChange = (scope: TimeScope) => {
+        setActiveScope(scope);
+        if (scope === 'today' || scope === 'week') {
+            setCurrentDate(new Date()); // 点击本日或本周，强制跳转回今天
+        } else if (scope === 'pending') {
+            // 查找最近一个待定记录的日期并跳转
+            const pendingLog = logs.find(l => l.status === 'pending');
+            if (pendingLog) {
+                setCurrentDate(new Date(pendingLog.date + 'T12:00:00'));
+            }
+        }
+    };
 
     const monthlyStats = useMemo(() => {
         const y = currentDate.getFullYear();
@@ -157,6 +219,11 @@ const CalendarHeatmap: React.FC<ActivityCalendarProps> = ({ logs, onDateClick, c
         }
 
         let isDimmed = false;
+        // 如果处于“待定”Scope，非 pending 的格子全部变暗
+        if (activeScope === 'pending' && log?.status !== 'pending') {
+            isDimmed = true;
+        }
+
         if (activeFilter !== 'all') {
             const checks: Record<FilterType, boolean> = {
                 all: true,
@@ -236,9 +303,7 @@ const CalendarHeatmap: React.FC<ActivityCalendarProps> = ({ logs, onDateClick, c
 
     return (
         <div className="w-full space-y-4">
-            {/* 新版日历头部 */}
             <div className="flex items-center justify-between px-1">
-                {/* 左侧：导航 + 日期显示 */}
                 <div className="flex items-center gap-1">
                     <button 
                         onClick={prevMonth} 
@@ -248,7 +313,9 @@ const CalendarHeatmap: React.FC<ActivityCalendarProps> = ({ logs, onDateClick, c
                     </button>
                     
                     <div className="relative flex flex-col items-start px-2 min-w-[90px]">
-                        <span className="text-[10px] font-bold text-slate-400 leading-tight">{dateInfo.weekday}</span>
+                        <span className="text-[10px] font-bold text-slate-400 leading-tight">
+                            {activeScope === 'month' ? '月度视图' : dateInfo.weekday}
+                        </span>
                         <div className="flex items-center gap-1.5">
                             <span className="text-sm font-black text-brand-text dark:text-slate-100 tracking-tight">
                                 {dateInfo.full}
@@ -273,12 +340,11 @@ const CalendarHeatmap: React.FC<ActivityCalendarProps> = ({ logs, onDateClick, c
                     </button>
                 </div>
                 
-                {/* 右侧：时间维度切换 */}
                 <div className="flex items-center bg-slate-100 dark:bg-slate-800/80 p-1 rounded-full border border-slate-200 dark:border-slate-700">
                     {TIME_SCOPES.map(scope => (
                         <button
                             key={scope.id}
-                            onClick={() => setActiveScope(scope.id)}
+                            onClick={() => handleScopeChange(scope.id)}
                             className={`px-2.5 py-1.5 rounded-full text-[10px] font-black transition-all ${
                                 activeScope === scope.id 
                                 ? 'bg-white dark:bg-slate-700 text-brand-text dark:text-slate-100 shadow-sm scale-105' 
@@ -316,7 +382,9 @@ const CalendarHeatmap: React.FC<ActivityCalendarProps> = ({ logs, onDateClick, c
                 <div className="grid grid-cols-7 gap-2 mb-3 text-center px-1">
                     {['一', '二', '三', '四', '五', '六', '日'].map(d => <span key={d} className="text-[10px] font-bold text-slate-300 dark:text-slate-600 uppercase">{d}</span>)}
                 </div>
-                <div className="grid grid-cols-7 gap-2">{calendarDays.map((day, idx) => renderCell(day, idx))}</div>
+                <div className="grid grid-cols-7 gap-2">
+                    {calendarDays.map((day, idx) => renderCell(day, idx))}
+                </div>
             </div>
             
             {children}
@@ -330,7 +398,7 @@ const CalendarHeatmap: React.FC<ActivityCalendarProps> = ({ logs, onDateClick, c
                     colorClass="text-brand-accent dark:text-blue-400"
                 />
                 <DashItem label="晨勃率" icon={SunMedium} value={`${monthlyStats.morningWoodRate}%`} sub="出现概率" colorClass="text-blue-500 dark:text-blue-400"/>
-                <DashItem label="自慰次数" icon={Hand} value={`${monthlyStats.masturbationCount}次`} sub="本月释放" colorClass="text-purple-500 dark:text-purple-400"/>
+                <DashItem label="自慰次数" icon={Hand} value={`${monthlyStats.masturbationCount}次`} sub="周期总计" colorClass="text-purple-500 dark:text-purple-400"/>
                 <DashItem label="性爱次数" icon={Heart} value={`${monthlyStats.sexCount}次`} sub="High Quality" colorClass="text-pink-500 dark:text-pink-400"/>
             </div>
         </div>
