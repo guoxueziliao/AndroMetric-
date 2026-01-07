@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { LogEntry } from '../types';
 import { ChevronLeft, ChevronRight, Zap, Dumbbell, Moon, Clock, BatteryWarning, TrendingUp, TrendingDown, Minus, Calendar as CalendarIcon, SunMedium, Hand, Heart, Beer, ShieldAlert, Film, BrainCircuit } from 'lucide-react';
@@ -11,7 +10,7 @@ interface ActivityCalendarProps {
 }
 
 type FilterType = 'all' | 'morning_wood' | 'sex' | 'masturbation' | 'sick' | 'alcohol' | 'porn' | 'exercise' | 'stress' | 'good_sleep' | 'late_sleep' | 'insufficient_sleep';
-type TimeScope = 'today' | 'week' | 'month' | 'year' | 'pending';
+type TimeScope = 'today' | 'week' | 'month' | 'year';
 
 const FILTERS: { id: FilterType; label: string; icon?: React.ElementType }[] = [
     { id: 'all', label: '全部' },
@@ -33,7 +32,6 @@ const TIME_SCOPES: { id: TimeScope; label: string }[] = [
     { id: 'week', label: '本周' },
     { id: 'month', label: '当月' },
     { id: 'year', label: '今年' },
-    { id: 'pending', label: '待定' },
 ];
 
 const getCalendarDays = (currentDate: Date) => {
@@ -138,14 +136,8 @@ const CalendarHeatmap: React.FC<ActivityCalendarProps> = ({ logs, onDateClick, c
             return weekDays;
         }
 
-        if (activeScope === 'pending') {
-            // “待定”模式：显示所有包含 pending 状态记录的日期，若当前月无 pending 则显示原样
-            const hasPendingInCurrentMonth = fullMonthDays.some(d => d && logsMap.get(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`)?.status === 'pending');
-            return fullMonthDays;
-        }
-
         return fullMonthDays;
-    }, [currentDate, activeScope, logsMap]);
+    }, [currentDate, activeScope]);
     
     const dateInfo = useMemo(() => {
         const year = currentDate.getFullYear();
@@ -162,12 +154,6 @@ const CalendarHeatmap: React.FC<ActivityCalendarProps> = ({ logs, onDateClick, c
         setActiveScope(scope);
         if (scope === 'today' || scope === 'week') {
             setCurrentDate(new Date()); // 点击本日或本周，强制跳转回今天
-        } else if (scope === 'pending') {
-            // 查找最近一个待定记录的日期并跳转
-            const pendingLog = logs.find(l => l.status === 'pending');
-            if (pendingLog) {
-                setCurrentDate(new Date(pendingLog.date + 'T12:00:00'));
-            }
         }
     };
 
@@ -219,11 +205,6 @@ const CalendarHeatmap: React.FC<ActivityCalendarProps> = ({ logs, onDateClick, c
         }
 
         let isDimmed = false;
-        // 如果处于“待定”Scope，非 pending 的格子全部变暗
-        if (activeScope === 'pending' && log?.status !== 'pending') {
-            isDimmed = true;
-        }
-
         if (activeFilter !== 'all') {
             const checks: Record<FilterType, boolean> = {
                 all: true,
