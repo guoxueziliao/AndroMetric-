@@ -1,4 +1,3 @@
-
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertTriangle } from 'lucide-react';
 import { Logger } from '../services/LoggerService';
@@ -12,10 +11,13 @@ interface State {
 }
 
 class ErrorBoundary extends Component<Props, State> {
+  // Added explicit props declaration to fix 'Property props does not exist on type ErrorBoundary'
+  public props: Props;
   public state: State = { hasError: false };
 
   constructor(props: Props) {
     super(props);
+    this.props = props;
   }
 
   public static getDerivedStateFromError(_: Error): State {
