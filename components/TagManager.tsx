@@ -62,35 +62,39 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
         const usage: Record<string, number> = {};
         logs.forEach(log => {
             log.masturbation?.forEach(m => {
-                // Fix: Explicitly cast tag arrays to string[] to resolve 'unknown' index type error on usage[c]
-                const tags = Array.from(new Set(m.contentItems?.flatMap(ci => ci.xpTags || []) || [])) as string[];
-                tags.forEach(c => usage[c] = (usage[c] || 0) + 1);
-                // Fix: Explicitly cast tag arrays to string[] to resolve 'unknown' index type error on usage[c]
-                const legacyTags = Array.from(new Set(m.assets?.categories || [])) as string[];
-                legacyTags.forEach(c => usage[c] = (usage[c] || 0) + 1);
+                const tags = (m.contentItems?.flatMap(ci => ci.xpTags || []) || []) as string[];
+                tags.forEach(c => { if(c) usage[c] = (usage[c] || 0) + 1; });
+                const legacyTags = (m.assets?.categories || []) as string[];
+                legacyTags.forEach(c => { if(c) usage[c] = (usage[c] || 0) + 1; });
             });
-            (log.dailyEvents || []).forEach(e => usage[e] = (usage[e] || 0) + 1);
-            (log.health?.symptoms || []).forEach(s => usage[s] = (usage[s] || 0) + 1);
+            (log.dailyEvents || []).forEach(e => { if(e) usage[e] = (usage[e] || 0) + 1; });
+            (log.health?.symptoms || []).forEach(s => { if(s) usage[s] = (usage[s] || 0) + 1; });
         });
         return usage;
     }, [logs]);
 
-    const suggestions = useMemo(() => {
-        if (!createInput.trim()) return [];
-        const currentType = activeTab === 'health_check' ? 'xp' : (activeTab as TagType);
-        
-        let pool: string[] = [];
-        if (currentType === 'xp') {
-            pool = userTags.filter(t => t.category === 'xp' && t.dimension === selectedXpDim).map(t => t.name);
-        } else if (currentType === 'event') {
-            pool = Array.from(new Set([...SYSTEM_EVENTS, ...userTags.filter(t => t.category === 'event').map(t => t.name)]));
-        } else if (currentType === 'symptom') {
-            pool = Array.from(new Set([...SYSTEM_SYMPTOMS, ...userTags.filter(t => t.category === 'symptom').map(t => t.name)]));
-        }
-
-        const input = createInput.toLowerCase();
-        return pool.filter(t => t.toLowerCase().includes(input)).slice(0, 5);
-    }, [createInput, userTags, activeTab, selectedXpDim]);
+    const renderTagItem = (tag: string, count: number) => (
+        <div key={tag} className="flex items-center justify-between p-3 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl group hover:border-brand-accent/50 transition-colors">
+            {editingTag === tag ? (
+                <div className="flex-1 flex items-center gap-2">
+                    <input autoFocus className="flex-1 bg-slate-50 dark:bg-slate-800 border border-brand-accent rounded px-2 py-1 text-sm outline-none" value={newTagName} onChange={e => setNewTagName(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleRename()}/>
+                    <button onClick={handleRename} className="p-1.5 bg-green-500 text-white rounded"><Check size={14}/></button>
+                    <button onClick={() => setEditingTag(null)} className="p-1.5 bg-slate-200 dark:bg-slate-700 text-slate-500 rounded"><X size={14}/></button>
+                </div>
+            ) : (
+                <>
+                    <div className="flex items-center gap-3 flex-1 cursor-pointer" onClick={() => onSelectTag?.(tag)}>
+                        <span className={`font-bold text-sm ${count === 0 ? 'text-slate-400' : 'text-brand-text dark:text-slate-200'}`}>{tag.replace(/^#/, '')}</span>
+                        {count > 0 && <span className="text-[10px] bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded-full text-slate-500">{count}次</span>}
+                    </div>
+                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onClick={() => { setEditingTag(tag); setNewTagName(tag); }} className="p-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-slate-400 hover:text-blue-500 rounded-lg"><Edit2 size={14}/></button>
+                        <button onClick={() => handleDelete(tag)} className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-400 hover:text-red-500 rounded-lg"><Trash2 size={14}/></button>
+                    </div>
+                </>
+            )}
+        </div>
+    );
 
     const handleCreate = async () => {
         const tagStr = createInput.trim();
@@ -167,34 +171,6 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
         showToast('标签已移除', 'success');
     };
 
-    const scrollToDimension = (dimId: string) => {
-        const element = document.getElementById(`dim-header-${dimId}`);
-        if (element) element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    };
-
-    const renderTagItem = (tag: string, count: number) => (
-        <div key={tag} className="flex items-center justify-between p-3 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl group hover:border-brand-accent/50 transition-colors">
-            {editingTag === tag ? (
-                <div className="flex-1 flex items-center gap-2">
-                    <input autoFocus className="flex-1 bg-slate-50 dark:bg-slate-800 border border-brand-accent rounded px-2 py-1 text-sm outline-none" value={newTagName} onChange={e => setNewTagName(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleRename()}/>
-                    <button onClick={handleRename} className="p-1.5 bg-green-500 text-white rounded"><Check size={14}/></button>
-                    <button onClick={() => setEditingTag(null)} className="p-1.5 bg-slate-200 dark:bg-slate-700 text-slate-500 rounded"><X size={14}/></button>
-                </div>
-            ) : (
-                <>
-                    <div className="flex items-center gap-3 flex-1 cursor-pointer" onClick={() => onSelectTag?.(tag)}>
-                        <span className={`font-bold text-sm ${count === 0 ? 'text-slate-400' : 'text-brand-text dark:text-slate-200'}`}>{tag.replace(/^#/, '')}</span>
-                        {count > 0 && <span className="text-[10px] bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded-full text-slate-500">{count}次</span>}
-                    </div>
-                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onClick={() => { setEditingTag(tag); setNewTagName(tag); }} className="p-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-slate-400 hover:text-blue-500 rounded-lg"><Edit2 size={14}/></button>
-                        <button onClick={() => handleDelete(tag)} className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-400 hover:text-red-500 rounded-lg"><Trash2 size={14}/></button>
-                    </div>
-                </>
-            )}
-        </div>
-    );
-
     return (
         <Modal isOpen={isOpen} onClose={onClose} title={onSelectTag ? "选择或创建标签" : "标签管理"}>
             <div className="h-[75vh] flex flex-col -mt-2">
@@ -253,7 +229,7 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
                         <div className="space-y-8 pb-10">
                             {XP_DIMENSIONS.map(dim => {
                                 const DimIcon = dim.icon;
-                                const allInDim = userTags.filter(t => t.dimension === dim.id && t.category === 'xp').map(t => t.name)
+                                const allInDim = (userTags.filter(t => t.dimension === dim.id && t.category === 'xp').map(t => t.name) as string[])
                                     .filter(t => t.toLowerCase().includes(searchTerm.toLowerCase()))
                                     .sort((a,b) => (tagsUsageMap[b]||0) - (tagsUsageMap[a]||0));
 
@@ -276,7 +252,7 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
                         </div>
                     ) : (
                         <div className="grid gap-2 pb-10">
-                            {(activeTab === 'event' ? [...SYSTEM_EVENTS, ...userTags.filter(t => t.category === 'event').map(t => t.name)] : [...SYSTEM_SYMPTOMS, ...userTags.filter(t => t.category === 'symptom').map(t => t.name)])
+                            {((activeTab === 'event' ? [...SYSTEM_EVENTS, ...userTags.filter(t => t.category === 'event').map(t => t.name)] : [...SYSTEM_SYMPTOMS, ...userTags.filter(t => t.category === 'symptom').map(t => t.name)]) as string[])
                                 .filter((val, index, self) => self.indexOf(val) === index)
                                 .filter(t => t.toLowerCase().includes(searchTerm.toLowerCase()))
                                 .map(tag => renderTagItem(tag, tagsUsageMap[tag] || 0))}

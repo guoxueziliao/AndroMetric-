@@ -3,27 +3,53 @@ import { useData } from '../contexts/DataContext';
 import { StatsEngine, MetricId, METRICS } from '../utils/StatsEngine';
 import { calculateXpStats, DimensionStat } from '../utils/xpStats';
 import { generateInsights, Insight } from '../utils/insights';
-import { Flame, Activity, HeartPulse, Zap, TrendingUp, Dumbbell, Beer, Moon, FlaskConical, Layers, Eye, EyeOff, BrainCircuit, Clock, Radar, CheckCircle, ArrowDown, AlertTriangle, Info, BarChart3, LayoutGrid, Sparkles, PieChart, Tag } from 'lucide-react';
+import { Activity, Zap, TrendingUp, Moon, BrainCircuit, Clock, Radar, CheckCircle, ArrowDown, AlertTriangle, Info, BarChart3, LayoutGrid, Tag, Eye, EyeOff } from 'lucide-react';
 import ErrorBoundary from './ErrorBoundary';
 import { Chart, CategoryScale, LinearScale, PointElement, LineElement, BarElement, BarController, Tooltip, Legend, Filler, ScatterController, LineController, BubbleController, ArcElement, PieController, DoughnutController, RadialLinearScale, RadarController, PolarAreaController } from 'chart.js';
 import { Line, Bar, Doughnut, Radar as RadarChart } from 'react-chartjs-2';
 
 Chart.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, BarController, ScatterController, LineController, BubbleController, ArcElement, PieController, DoughnutController, RadialLinearScale, RadarController, PolarAreaController, Tooltip, Legend, Filler);
 
-const ChartCard: React.FC<{ title: string, icon?: React.ElementType, children: React.ReactNode, subtext?: string, className?: string }> = ({ title, icon: Icon, children, subtext, className }) => (
+// --- Interfaces ---
+
+interface ChartCardProps {
+    title: string;
+    icon?: React.ElementType;
+    // Fix: Made children optional to resolve TS error where JSX nesting is not recognized as passing a required children prop
+    children?: React.ReactNode;
+    subtext?: string;
+    className?: string;
+}
+
+interface KPICardProps {
+    label: string;
+    value: string | number;
+    unit?: string;
+    icon: React.ElementType;
+    colorClass?: string;
+}
+
+// --- Sub-Components ---
+
+const ChartCard = ({ title, icon: Icon, children, subtext, className }: ChartCardProps) => (
     <div className={`bg-white dark:bg-slate-900 p-5 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col min-h-[350px] ${className || ''}`}>
         <div className="flex justify-between items-start mb-4">
-            <h3 className="font-bold text-brand-text dark:text-slate-200 flex items-center text-sm">{Icon && <Icon size={16} className="mr-2 text-brand-accent"/>}{title}</h3>
+            <h3 className="font-bold text-brand-text dark:text-slate-200 flex items-center text-sm">
+                {Icon && <Icon size={16} className="mr-2 text-brand-accent"/>}
+                {title}
+            </h3>
         </div>
         <div className="flex-1 relative flex flex-col items-center justify-center w-full">{children}</div>
         {subtext && <p className="text-xs text-slate-400 mt-3 text-center">{subtext}</p>}
     </div>
 );
 
-const KPICard: React.FC<{ label: string; value: string | number; unit?: string; icon: React.ElementType; colorClass?: string; }> = ({ label, value, unit, icon: Icon, colorClass = "text-brand-text" }) => (
+const KPICard = ({ label, value, unit, icon: Icon, colorClass = "text-brand-text" }: KPICardProps) => (
     <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col justify-between transition-transform hover:scale-[1.02]">
         <div className="flex justify-between items-start mb-2">
-            <div className="p-2 bg-brand-primary dark:bg-slate-800 rounded-2xl"><Icon size={20} className="text-brand-accent" /></div>
+            <div className="p-2 bg-brand-primary dark:bg-slate-800 rounded-2xl">
+                <Icon size={20} className="text-brand-accent" />
+            </div>
         </div>
         <div>
             <p className="text-xs text-brand-muted dark:text-slate-400 font-bold uppercase tracking-wider">{label}</p>
@@ -80,7 +106,10 @@ const StatsView: React.FC<{ isDarkMode: boolean }> = ({ isDarkMode }) => {
     const commonOptions = {
         responsive: true, maintainAspectRatio: false,
         plugins: { legend: { position: 'bottom' as const, labels: { color: theme.text, boxWidth: 10, usePointStyle: true, padding: 15, font: { size: 11 } } } },
-        scales: { y: { ticks: { color: theme.text, font: { size: 10 } }, grid: { color: theme.grid }, border: { display: false } }, x: { ticks: { color: theme.text, font: { size: 10 } }, grid: { display: false }, border: { display: false } } }
+        scales: { 
+            y: { ticks: { color: theme.text, font: { size: 10 } }, grid: { color: theme.grid }, border: { display: false } }, 
+            x: { ticks: { color: theme.text, font: { size: 10 } }, grid: { display: false }, border: { display: false } } 
+        }
     };
 
     const stats = useMemo(() => {
@@ -121,13 +150,23 @@ const StatsView: React.FC<{ isDarkMode: boolean }> = ({ isDarkMode }) => {
                         </div>
                         <ChartCard title="趋势对比分析" icon={TrendingUp} subtext="均线：硬度等级 | 柱状：对比指标">
                             <div className="w-full h-[250px]">
-                                <Line data={{
-                                    labels: stats.trends.labels,
-                                    datasets: [
-                                        { label: '硬度均线', data: stats.trends.hardnessSMA as any, borderColor: '#8b5cf6', borderWidth: 3, pointRadius: 0, tension: 0.4, fill: false, yAxisID: 'y' },
-                                        { type: 'bar' as const, label: comparisonConfig.label, data: stats.trends.comparisonData, backgroundColor: 'rgba(59, 130, 246, 0.4)', borderRadius: 4, yAxisID: 'y1' }
-                                    ]
-                                }} options={{ ...commonOptions, scales: { ...commonOptions.scales, y: { ...commonOptions.scales.y, min: 0, max: 6 }, y1: { position: 'right', display: true, min: 0, max: comparisonConfig.yMax, grid: {display:false}, ticks: {color: theme.text, font: {size: 10}} } } } as any} />
+                                <Line 
+                                    data={{
+                                        labels: stats.trends.labels,
+                                        datasets: [
+                                            { label: '硬度均线', data: stats.trends.hardnessSMA as any, borderColor: '#8b5cf6', borderWidth: 3, pointRadius: 0, tension: 0.4, fill: false, yAxisID: 'y' },
+                                            { type: 'bar' as const, label: comparisonConfig.label, data: stats.trends.comparisonData as any, backgroundColor: 'rgba(59, 130, 246, 0.4)', borderRadius: 4, yAxisID: 'y1' }
+                                        ]
+                                    } as any} 
+                                    options={{ 
+                                        ...commonOptions, 
+                                        scales: { 
+                                            ...commonOptions.scales, 
+                                            y: { ...commonOptions.scales.y, min: 0, max: 6 }, 
+                                            y1: { position: 'right', display: true, min: 0, max: comparisonConfig.yMax, grid: {display:false}, ticks: {color: theme.text, font: {size: 10}} } 
+                                        } 
+                                    } as any} 
+                                />
                             </div>
                         </ChartCard>
                         <div className="space-y-3">
@@ -141,29 +180,44 @@ const StatsView: React.FC<{ isDarkMode: boolean }> = ({ isDarkMode }) => {
                     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
                         <ChartCard title="偏好雷达 (XP维度)" icon={Radar}>
                             <div className="w-full h-[300px] flex items-center justify-center">
-                                <RadarChart data={{
-                                    labels: ['角色', '身体', '装扮', '玩法', '剧情', '风格'],
-                                    datasets: [{
-                                        label: '维度强度',
-                                        data: [
-                                            (xpStats.dimensionStats['角色'] as DimensionStat)?.recordCount || 0,
-                                            (xpStats.dimensionStats['身体'] as DimensionStat)?.recordCount || 0,
-                                            (xpStats.dimensionStats['装扮'] as DimensionStat)?.recordCount || 0,
-                                            (xpStats.dimensionStats['玩法'] as DimensionStat)?.recordCount || 0,
-                                            (xpStats.dimensionStats['剧情'] as DimensionStat)?.recordCount || 0,
-                                            (xpStats.dimensionStats['风格'] as DimensionStat)?.recordCount || 0
-                                        ],
-                                        backgroundColor: 'rgba(236, 72, 153, 0.2)', borderColor: '#ec4899', pointBackgroundColor: '#ec4899',
-                                    }]
-                                }} options={{ ...commonOptions, scales: { r: { angleLines: { color: theme.grid }, grid: { color: theme.grid }, pointLabels: { color: theme.text, font: { size: 11, weight: 'bold' } }, ticks: { display: false, backdropColor: 'transparent' } } } } as any} />
+                                <RadarChart 
+                                    data={{
+                                        labels: ['角色', '身体', '装扮', '玩法', '剧情', '风格'],
+                                        datasets: [{
+                                            label: '维度强度',
+                                            data: [
+                                                (xpStats.dimensionStats['角色'] as DimensionStat)?.recordCount || 0,
+                                                (xpStats.dimensionStats['身体'] as DimensionStat)?.recordCount || 0,
+                                                (xpStats.dimensionStats['装扮'] as DimensionStat)?.recordCount || 0,
+                                                (xpStats.dimensionStats['玩法'] as DimensionStat)?.recordCount || 0,
+                                                (xpStats.dimensionStats['剧情'] as DimensionStat)?.recordCount || 0,
+                                                (xpStats.dimensionStats['风格'] as DimensionStat)?.recordCount || 0
+                                            ],
+                                            backgroundColor: 'rgba(236, 72, 153, 0.2)', borderColor: '#ec4899', pointBackgroundColor: '#ec4899',
+                                        }]
+                                    } as any} 
+                                    options={{ 
+                                        ...commonOptions, 
+                                        scales: { 
+                                            r: { angleLines: { color: theme.grid }, grid: { color: theme.grid }, pointLabels: { color: theme.text, font: { size: 11, weight: 'bold' } }, ticks: { display: false, backdropColor: 'transparent' } } 
+                                        } 
+                                    } as any} 
+                                />
                             </div>
                         </ChartCard>
                         <ChartCard title="高频偏好 Top 10" icon={Tag} subtext="按记录去重统计">
                             <div className="w-full h-[300px]">
-                                <Bar data={{
-                                    labels: privacyMode ? xpStats.topTags.slice(0, 10).map((_, i) => `XP ${i+1}`) : xpStats.topTags.slice(0, 10).map(t => t.tag),
-                                    datasets: [{ label: '频次', data: xpStats.topTags.slice(0, 10).map(t => t.count), backgroundColor: 'rgba(139, 92, 246, 0.6)', borderRadius: 4, barThickness: 16 }]
-                                }} options={{ ...commonOptions, indexAxis: 'y' as const, plugins: { legend: { display: false } } }} />
+                                <Bar 
+                                    data={{
+                                        labels: privacyMode ? xpStats.topTags.slice(0, 10).map((_, i) => `XP ${i+1}`) : xpStats.topTags.slice(0, 10).map(t => t.tag),
+                                        datasets: [{ label: '频次', data: xpStats.topTags.slice(0, 10).map(t => t.count), backgroundColor: 'rgba(139, 92, 246, 0.6)', borderRadius: 4, barThickness: 16 }]
+                                    } as any} 
+                                    options={{ 
+                                        ...commonOptions, 
+                                        indexAxis: 'y' as const, 
+                                        plugins: { legend: { display: false } } 
+                                    } as any} 
+                                />
                             </div>
                         </ChartCard>
                     </div>
