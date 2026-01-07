@@ -57,11 +57,9 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
         logs.forEach(log => {
             log.masturbation?.forEach(m => {
                 const tags = Array.from(new Set(m.contentItems?.flatMap(ci => ci.xpTags || []) || []));
-                // Fixed: Explicitly typed iteration parameter to avoid index type errors on 'unknown'
-                tags.forEach((c: any) => usage[c as string] = (usage[c as string] || 0) + 1);
+                tags.forEach(c => usage[c] = (usage[c] || 0) + 1);
                 const legacyTags = Array.from(new Set(m.assets?.categories || []));
-                // Fixed: Explicitly typed iteration parameter to avoid index type errors on 'unknown'
-                legacyTags.forEach((c: any) => usage[c as string] = (usage[c as string] || 0) + 1);
+                legacyTags.forEach(c => usage[c] = (usage[c] || 0) + 1);
             });
             (log.dailyEvents || []).forEach(e => usage[e] = (usage[e] || 0) + 1);
             (log.health?.symptoms || []).forEach(s => usage[s] = (usage[s] || 0) + 1);
@@ -380,8 +378,7 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
                             {XP_DIMENSIONS.map(dim => {
                                 const dbInDim = userTags.filter(t => t.dimension === dim.id && t.category === 'xp').map(t => t.name);
                                 const allInDim = Array.from(new Set(dbInDim))
-                                    // Fixed: Cast t to string to fix 'unknown' type errors during toLowerCase
-                                    .filter((t: any) => (t as string).toLowerCase().includes(searchTerm.toLowerCase()))
+                                    .filter(t => t.toLowerCase().includes(searchTerm.toLowerCase()))
                                     .sort((a,b) => (tagsUsageMap[b as string]||0) - (tagsUsageMap[a as string]||0));
 
                                 if (allInDim.length === 0) {
@@ -403,8 +400,7 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
                                             <span className="text-[10px] font-black text-slate-400 bg-slate-50 dark:bg-slate-800 px-2 py-0.5 rounded-full">{allInDim.length}</span>
                                         </div>
                                         <div className="grid gap-2">
-                                            {/* Fixed: cast tag to any/string to satisfy renderTagItem and tagsUsageMap access */}
-                                            {allInDim.map((tag: any) => renderTagItem(tag as string, tagsUsageMap[tag as string] || 0))}
+                                            {allInDim.map(tag => renderTagItem(tag, tagsUsageMap[tag as string] || 0))}
                                         </div>
                                     </div>
                                 );
@@ -415,9 +411,8 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
                             {/* 系统内置 + 用户自定义 的 列表 */}
                             {(activeTab === 'event' ? [...SYSTEM_EVENTS, ...userTags.filter(t => t.category === 'event').map(t => t.name)] : [...SYSTEM_SYMPTOMS, ...userTags.filter(t => t.category === 'symptom').map(t => t.name)])
                                 .filter((val, index, self) => self.indexOf(val) === index) // 去重
-                                // Fixed: Cast t to string to fix 'unknown' type errors during toLowerCase
-                                .filter((t: any) => (t as string).toLowerCase().includes(searchTerm.toLowerCase()))
-                                .map((tag: any) => renderTagItem(tag as string, tagsUsageMap[tag as string] || 0))}
+                                .filter(t => t.toLowerCase().includes(searchTerm.toLowerCase()))
+                                .map(tag => renderTagItem(tag, tagsUsageMap[tag as string] || 0))}
                             {/* 如果搜索结果为空且不在创建模式，提示点击加号 */}
                             {searchTerm && !isCreating && (
                                 <div className="text-center py-8 text-slate-400 text-xs italic">

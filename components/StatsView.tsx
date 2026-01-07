@@ -1,3 +1,4 @@
+
 import React, { useMemo, useState } from 'react';
 import { useData } from '../contexts/DataContext';
 import { StatsEngine, MetricId, METRICS } from '../utils/StatsEngine';
@@ -367,20 +368,19 @@ const StatsView: React.FC<StatsViewProps> = ({ isDarkMode }) => {
                         {/* New XP Analysis Section */}
                         <ChartCard title="偏好雷达 (6维度)" icon={Radar} subtext="基于自慰记录的 XP 维度分布">
                             <div className="w-full h-[300px] flex items-center justify-center">
-                                {Object.values(xpStats.dimensionStats).some(d => (d as any).recordCount > 0) ? (
+                                {Object.values(xpStats.dimensionStats).some(d => d.recordCount > 0) ? (
                                     <RadarChart 
                                         data={{
                                             labels: ['角色', '身体', '装扮', '玩法', '剧情', '风格'],
                                             datasets: [{
                                                 label: '维度强度',
-                                                // Fixed: explicitly type dimensionStats members to fix 'unknown' type errors
                                                 data: [
-                                                    (xpStats.dimensionStats['角色'] as any).recordCount,
-                                                    (xpStats.dimensionStats['身体'] as any).recordCount,
-                                                    (xpStats.dimensionStats['装扮'] as any).recordCount,
-                                                    (xpStats.dimensionStats['玩法'] as any).recordCount,
-                                                    (xpStats.dimensionStats['剧情'] as any).recordCount,
-                                                    (xpStats.dimensionStats['风格'] as any).recordCount
+                                                    xpStats.dimensionStats['角色'].recordCount,
+                                                    xpStats.dimensionStats['身体'].recordCount,
+                                                    xpStats.dimensionStats['装扮'].recordCount,
+                                                    xpStats.dimensionStats['玩法'].recordCount,
+                                                    xpStats.dimensionStats['剧情'].recordCount,
+                                                    xpStats.dimensionStats['风格'].recordCount
                                                 ],
                                                 backgroundColor: 'rgba(236, 72, 153, 0.2)', // Pink
                                                 borderColor: '#ec4899',
@@ -502,11 +502,6 @@ const StatsView: React.FC<StatsViewProps> = ({ isDarkMode }) => {
                                             }
                                         }}
                                     />
-                                </div>
-                            ) : (
-                                <div className="flex flex-col items-center justify-center h-full text-slate-400">
-                                    <Info size={32} className="mb-2 opacity-50"/>
-                                    <p className="text-xs">暂无体位数据</p>
                                 </div>
                             ) : (
                                 <div className="flex flex-col items-center justify-center h-full text-slate-400">

@@ -11,7 +11,6 @@ interface ActivityCalendarProps {
 }
 
 type FilterType = 'all' | 'morning_wood' | 'sex' | 'masturbation' | 'sick' | 'alcohol' | 'porn' | 'exercise' | 'stress' | 'good_sleep' | 'late_sleep' | 'insufficient_sleep';
-type ViewGrain = 'today' | 'week' | 'month' | 'year' | 'tbd';
 
 const FILTERS: { id: FilterType; label: string; icon?: React.ElementType }[] = [
     { id: 'all', label: '全部' },
@@ -26,14 +25,6 @@ const FILTERS: { id: FilterType; label: string; icon?: React.ElementType }[] = [
     { id: 'alcohol', label: '饮酒', icon: Beer },
     { id: 'porn', label: '看片', icon: Film },
     { id: 'sick', label: '生病', icon: ShieldAlert },
-];
-
-const VIEW_GRAINS: { id: ViewGrain; label: string }[] = [
-    { id: 'today', label: '本日' },
-    { id: 'week', label: '本周' },
-    { id: 'month', label: '当月' },
-    { id: 'year', label: '今年' },
-    { id: 'tbd', label: '待定' },
 ];
 
 const getCalendarDays = (currentDate: Date) => {
@@ -81,8 +72,6 @@ const CalendarHeatmap: React.FC<ActivityCalendarProps> = ({ logs, onDateClick, c
     });
 
     const [activeFilter, setActiveFilter] = useState<FilterType>('all');
-    const [viewGrain, setViewGrain] = useState<ViewGrain>('month');
-
     const touchStart = useRef<number | null>(null);
     const touchEnd = useRef<number | null>(null);
     const minSwipeDistance = 50;
@@ -239,58 +228,30 @@ const CalendarHeatmap: React.FC<ActivityCalendarProps> = ({ logs, onDateClick, c
 
     return (
         <div className="w-full space-y-4">
-            {/* 重构后的头部导航 */}
-            <div className="flex items-center justify-between px-2 gap-4">
-                {/* 左侧：日期切换组合 */}
-                <div className="flex items-center bg-white/50 dark:bg-slate-900/50 rounded-full p-1 border border-slate-200/50 dark:border-slate-800/50 shadow-sm backdrop-blur-sm">
-                    <button 
-                        onClick={prevMonth} 
-                        className="p-1.5 rounded-full hover:bg-white dark:hover:bg-slate-800 text-slate-400 hover:text-brand-accent transition-all active:scale-90"
-                    >
-                        <ChevronLeft size={18}/>
+            <div className="flex items-center justify-between px-2">
+                <div className="relative group">
+                    <button className="flex items-center gap-2 px-4 py-2 rounded-full bg-white dark:bg-slate-800 shadow-sm border border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+                        <span className="text-xl font-black text-brand-text dark:text-slate-100 tracking-tight leading-none">
+                            {year}.{String(month).padStart(2,'0')}
+                        </span>
+                        <ChevronDownIcon size={16} className="text-slate-400"/>
                     </button>
-                    
-                    <div className="relative group px-1">
-                        <button className="flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-white dark:hover:bg-slate-800 transition-colors">
-                            <span className="text-lg font-black text-brand-text dark:text-slate-100 tracking-tight leading-none">
-                                {year}.{String(month).padStart(2,'0')}
-                            </span>
-                            <ChevronDownIcon size={14} className="text-slate-300 dark:text-slate-600"/>
-                        </button>
-                        <input 
-                            type="month" 
-                            className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                            value={monthValue}
-                            onChange={handleMonthChange}
-                        />
-                    </div>
-
-                    <button 
-                        onClick={nextMonth} 
-                        className="p-1.5 rounded-full hover:bg-white dark:hover:bg-slate-800 text-slate-400 hover:text-brand-accent transition-all active:scale-90"
-                    >
-                        <ChevronRight size={18}/>
-                    </button>
+                    <input 
+                        type="month" 
+                        className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                        value={monthValue}
+                        onChange={handleMonthChange}
+                    />
                 </div>
                 
-                {/* 右侧：视图粒度切换 (本日/本周/本月/今年/待定) */}
-                <div className="flex-1 flex bg-slate-200/50 dark:bg-slate-900/80 p-1 rounded-full border border-slate-300/30 dark:border-slate-800/50 relative overflow-hidden backdrop-blur-sm">
-                    {VIEW_GRAINS.map((grain) => {
-                        const isActive = viewGrain === grain.id;
-                        return (
-                            <button
-                                key={grain.id}
-                                onClick={() => setViewGrain(grain.id)}
-                                className={`flex-1 py-1.5 text-[11px] font-black rounded-full transition-all relative z-10 ${
-                                    isActive 
-                                    ? 'text-brand-text dark:text-slate-100 bg-white dark:bg-slate-700 shadow-sm' 
-                                    : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
-                                }`}
-                            >
-                                {grain.label}
-                            </button>
-                        );
-                    })}
+                <div className="flex items-center bg-white dark:bg-slate-800 rounded-full shadow-sm border border-slate-100 dark:border-slate-700 p-1">
+                    <button onClick={prevMonth} className="p-2 rounded-full hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-400 hover:text-brand-text transition-colors">
+                        <ChevronLeft size={18}/>
+                    </button>
+                    <div className="w-px h-4 bg-slate-200 dark:bg-slate-700 mx-1"></div>
+                    <button onClick={nextMonth} className="p-2 rounded-full hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-400 hover:text-brand-text transition-colors">
+                        <ChevronRight size={18}/>
+                    </button>
                 </div>
             </div>
             

@@ -62,8 +62,7 @@ const AlcoholRecordModal: React.FC<AlcoholRecordModalProps> = ({ isOpen, onClose
 
     const totalGrams = useMemo(() => {
         let sum = 0;
-        // Added explicit typing for Object.entries to fix 'unknown' type errors
-        Object.entries(selectedItems).forEach(([_, d]: [string, { count: number, abv: number, vol: number }]) => { sum += calculatePureAlcohol(d.vol, d.abv) * d.count; });
+        Object.entries(selectedItems).forEach(([_, d]) => { sum += calculatePureAlcohol(d.vol, d.abv) * d.count; });
         return Math.round(sum * 10) / 10;
     }, [selectedItems]);
 
@@ -78,8 +77,7 @@ const AlcoholRecordModal: React.FC<AlcoholRecordModalProps> = ({ isOpen, onClose
     };
 
     const handleSave = () => {
-        // Added explicit typing for Object.entries to fix 'unknown' type errors
-        const items: AlcoholItem[] = Object.entries(selectedItems).map(([key, val]: [string, { count: number, abv: number, vol: number }]) => ({
+        const items: AlcoholItem[] = Object.entries(selectedItems).map(([key, val]) => ({
             key, name: DRINK_TYPES.find(d => d.key === key)?.name || '未知',
             volume: val.vol, abv: val.abv, count: val.count, pureAlcohol: calculatePureAlcohol(val.vol, val.abv)
         }));
@@ -152,8 +150,7 @@ const AlcoholRecordModal: React.FC<AlcoholRecordModalProps> = ({ isOpen, onClose
                             {Object.keys(selectedItems).length > 0 && (
                                 <div className="space-y-4">
                                     <h4 className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase px-1">已添加清单 (可微调毫升/精度)</h4>
-                                    {/* Added explicit typing for Object.entries iteration to fix 'unknown' type errors */}
-                                    {Object.entries(selectedItems).map(([key, item]: [string, { count: number, abv: number, vol: number }]) => {
+                                    {Object.entries(selectedItems).map(([key, item]) => {
                                         const preset = DRINK_TYPES.find(d => d.key === key);
                                         const isExp = expandedKey === key;
                                         return (
