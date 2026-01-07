@@ -1,4 +1,3 @@
-
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertTriangle } from 'lucide-react';
 import { Logger } from '../services/LoggerService';
@@ -11,7 +10,8 @@ interface State {
   hasError: boolean;
 }
 
-class ErrorBoundary extends Component<Props, State> {
+// Fix: Use React.Component explicitly to ensure standard class component properties like 'props' are recognized correctly
+class ErrorBoundary extends React.Component<Props, State> {
   public state: State = { hasError: false };
 
   constructor(props: Props) {
@@ -30,6 +30,8 @@ class ErrorBoundary extends Component<Props, State> {
   }
 
   public render() {
+    // Fix: Explicitly cast 'this' to bypass the error where 'props' is not found on the ErrorBoundary type
+    const { children } = (this as React.Component<Props, State>).props;
     if (this.state.hasError) {
       return (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-center m-4">
@@ -48,7 +50,7 @@ class ErrorBoundary extends Component<Props, State> {
       );
     }
 
-    return this.props.children;
+    return children;
   }
 }
 

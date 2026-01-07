@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { LogEntry } from '../types';
-import { ChevronLeft, ChevronRight, Zap, Dumbbell, Moon, Clock, BatteryWarning, TrendingUp, TrendingDown, Minus, Calendar as CalendarIcon, ChevronDown as ChevronDownIcon, SunMedium, Hand, Heart, Beer, ShieldAlert, Film, BrainCircuit } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Zap, Dumbbell, Moon, Clock, BatteryWarning, TrendingUp, TrendingDown, Minus, Calendar as CalendarIcon, SunMedium, Hand, Heart, Beer, ShieldAlert, Film, BrainCircuit } from 'lucide-react';
 import { analyzeSleep, calculateDataQuality } from '../utils/helpers';
 
 interface ActivityCalendarProps {
@@ -11,6 +11,7 @@ interface ActivityCalendarProps {
 }
 
 type FilterType = 'all' | 'morning_wood' | 'sex' | 'masturbation' | 'sick' | 'alcohol' | 'porn' | 'exercise' | 'stress' | 'good_sleep' | 'late_sleep' | 'insufficient_sleep';
+type TimeScope = 'today' | 'week' | 'month' | 'year' | 'pending';
 
 const FILTERS: { id: FilterType; label: string; icon?: React.ElementType }[] = [
     { id: 'all', label: '全部' },
@@ -27,6 +28,14 @@ const FILTERS: { id: FilterType; label: string; icon?: React.ElementType }[] = [
     { id: 'sick', label: '生病', icon: ShieldAlert },
 ];
 
+const TIME_SCOPES: { id: TimeScope; label: string }[] = [
+    { id: 'today', label: '本日' },
+    { id: 'week', label: '本周' },
+    { id: 'month', label: '当月' },
+    { id: 'year', label: '今年' },
+    { id: 'pending', label: '待定' },
+];
+
 const getCalendarDays = (currentDate: Date) => {
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
@@ -40,18 +49,17 @@ const getCalendarDays = (currentDate: Date) => {
     return days;
 };
 
-// Auxiliary Color System for Completed Logs (Hardness Heatmap)
 const getVisualsForCompleted = (level: number) => {
     switch (level) {
-        case 1: // Bad/Soft
+        case 1:
             return { bg: 'bg-rose-50 dark:bg-rose-900/20', border: 'border-rose-200 dark:border-rose-800', text: 'text-rose-500', score: 'text-rose-600 dark:text-rose-400' };
-        case 2: // Weak
+        case 2:
             return { bg: 'bg-orange-50 dark:bg-orange-900/20', border: 'border-orange-200 dark:border-orange-800', text: 'text-orange-500', score: 'text-orange-600 dark:text-orange-400' };
-        case 3: // Standard (Mid)
+        case 3:
             return { bg: 'bg-amber-50 dark:bg-amber-900/20', border: 'border-amber-200 dark:border-amber-800', text: 'text-amber-600', score: 'text-amber-600 dark:text-amber-400' };
-        case 4: // Good/Hard
+        case 4:
             return { bg: 'bg-emerald-50 dark:bg-emerald-900/20', border: 'border-emerald-200 dark:border-emerald-800', text: 'text-emerald-500', score: 'text-emerald-600 dark:text-emerald-400' };
-        case 5: // Excellent/Iron
+        case 5:
             return { bg: 'bg-blue-50 dark:bg-blue-900/20', border: 'border-blue-200 dark:border-blue-800', text: 'text-blue-500', score: 'text-blue-600 dark:text-blue-400' };
         default: 
             return { bg: 'bg-slate-50 dark:bg-slate-800', border: 'border-slate-200 dark:border-slate-700', text: 'text-slate-400', score: 'text-slate-500' };
@@ -59,7 +67,6 @@ const getVisualsForCompleted = (level: number) => {
 };
 
 const CalendarHeatmap: React.FC<ActivityCalendarProps> = ({ logs, onDateClick, children }) => {
-    // 优先级：localStorage > new Date()
     const [currentDate, setCurrentDate] = useState(() => {
         try {
             const saved = localStorage.getItem('calendar_viewing_month');
@@ -72,11 +79,11 @@ const CalendarHeatmap: React.FC<ActivityCalendarProps> = ({ logs, onDateClick, c
     });
 
     const [activeFilter, setActiveFilter] = useState<FilterType>('all');
+    const [activeScope, setActiveScope] = useState<TimeScope>('month');
     const touchStart = useRef<number | null>(null);
     const touchEnd = useRef<number | null>(null);
     const minSwipeDistance = 50;
 
-    // 每次 currentDate 变化时持久化到本地
     useEffect(() => {
         localStorage.setItem('calendar_viewing_month', currentDate.toISOString());
     }, [currentDate]);
@@ -89,8 +96,18 @@ const CalendarHeatmap: React.FC<ActivityCalendarProps> = ({ logs, onDateClick, c
     const prevMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
     const nextMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
     const calendarDays = useMemo(() => getCalendarDays(currentDate), [currentDate]);
-    const year = currentDate.getFullYear();
-    const month = currentDate.getMonth() + 1;
+    
+    // 格式化左侧日期显示
+    const dateInfo = useMemo(() => {
+        const year = currentDate.getFullYear();
+        const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+        const day = String(currentDate.getDate()).padStart(2, '0');
+        const weekday = currentDate.toLocaleDateString('zh-CN', { weekday: 'short' });
+        return {
+            full: `${year}/${month}/${day}`,
+            weekday
+        };
+    }, [currentDate]);
 
     const monthlyStats = useMemo(() => {
         const y = currentDate.getFullYear();
@@ -107,13 +124,11 @@ const CalendarHeatmap: React.FC<ActivityCalendarProps> = ({ logs, onDateClick, c
         const validHardnessLogs = monthLogEntries.filter(l => l.morning?.wokeWithErection && l.morning.hardness);
         const avgHardness = validHardnessLogs.length ? validHardnessLogs.reduce((a,b) => a + (b.morning?.hardness||0), 0) / validHardnessLogs.length : 0;
         
-        const trend = 0; // Placeholder
-
         const morningWoodRate = monthLogEntries.length > 0 ? Math.round((validHardnessLogs.length / monthLogEntries.length) * 100) : 0;
         const masturbationCount = monthLogEntries.reduce((acc, l) => acc + (l.masturbation?.length || 0), 0);
         const sexCount = monthLogEntries.reduce((acc, l) => acc + (l.sex?.length || 0), 0);
 
-        return { avgHardness: avgHardness.toFixed(1), morningWoodRate, masturbationCount, sexCount, trend };
+        return { avgHardness: avgHardness.toFixed(1), morningWoodRate, masturbationCount, sexCount, trend: 0 };
     }, [currentDate, logsMap]);
 
     const renderCell = (day: Date | null, index: number) => {
@@ -187,21 +202,16 @@ const CalendarHeatmap: React.FC<ActivityCalendarProps> = ({ logs, onDateClick, c
             >
                 <div className="flex justify-between items-start">
                     <span className={`text-[10px] leading-none ml-0.5 mt-0.5 ${dateClass}`}>{day.getDate()}</span>
-                    
                     {!isDimmed && (isSick || isStressed || isBadSleep) && (
                         <div className="flex gap-[1px] mt-0.5 mr-0.5">
                             {isSick && <ShieldAlert size={10} className="text-red-500" strokeWidth={3} />}
                             {isStressed && !isSick && <Zap size={10} className="text-orange-500" strokeWidth={3} fill="currentColor" />}
                             {isBadSleep && !isSick && !isStressed && <Moon size={10} className="text-purple-500" strokeWidth={3} />}
-                            {(isStressed && isSick) && <div className="w-1.5 h-1.5 rounded-full bg-orange-500"></div>}
                         </div>
                     )}
                 </div>
-                
                 <div className="flex justify-end items-end mr-0.5 mb-0.5">
-                    {status !== 'empty' && (
-                        <span className={`leading-none ${scoreClass}`}>{qualityScore}</span>
-                    )}
+                    {status !== 'empty' && <span className={`leading-none ${scoreClass}`}>{qualityScore}</span>}
                 </div>
             </div>
         );
@@ -224,34 +234,60 @@ const CalendarHeatmap: React.FC<ActivityCalendarProps> = ({ logs, onDateClick, c
         setCurrentDate(new Date(y, m - 1, 1));
     };
 
-    const monthValue = `${year}-${String(month).padStart(2, '0')}`;
-
     return (
         <div className="w-full space-y-4">
-            <div className="flex items-center justify-between px-2">
-                <div className="relative group">
-                    <button className="flex items-center gap-2 px-4 py-2 rounded-full bg-white dark:bg-slate-800 shadow-sm border border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
-                        <span className="text-xl font-black text-brand-text dark:text-slate-100 tracking-tight leading-none">
-                            {year}.{String(month).padStart(2,'0')}
-                        </span>
-                        <ChevronDownIcon size={16} className="text-slate-400"/>
+            {/* 新版日历头部 */}
+            <div className="flex items-center justify-between px-1">
+                {/* 左侧：导航 + 日期显示 */}
+                <div className="flex items-center gap-1">
+                    <button 
+                        onClick={prevMonth} 
+                        className="p-2 text-slate-400 hover:text-brand-text dark:hover:text-slate-100 transition-colors"
+                    >
+                        <ChevronLeft size={20}/>
                     </button>
-                    <input 
-                        type="month" 
-                        className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                        value={monthValue}
-                        onChange={handleMonthChange}
-                    />
+                    
+                    <div className="relative flex flex-col items-start px-2 min-w-[90px]">
+                        <span className="text-[10px] font-bold text-slate-400 leading-tight">{dateInfo.weekday}</span>
+                        <div className="flex items-center gap-1.5">
+                            <span className="text-sm font-black text-brand-text dark:text-slate-100 tracking-tight">
+                                {dateInfo.full}
+                            </span>
+                            <div className="relative w-4 h-4 flex items-center justify-center">
+                                <CalendarIcon size={14} className="text-brand-accent"/>
+                                <input 
+                                    type="month" 
+                                    className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                                    value={`${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`}
+                                    onChange={handleMonthChange}
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    <button 
+                        onClick={nextMonth} 
+                        className="p-2 text-slate-400 hover:text-brand-text dark:hover:text-slate-100 transition-colors"
+                    >
+                        <ChevronRight size={20}/>
+                    </button>
                 </div>
                 
-                <div className="flex items-center bg-white dark:bg-slate-800 rounded-full shadow-sm border border-slate-100 dark:border-slate-700 p-1">
-                    <button onClick={prevMonth} className="p-2 rounded-full hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-400 hover:text-brand-text transition-colors">
-                        <ChevronLeft size={18}/>
-                    </button>
-                    <div className="w-px h-4 bg-slate-200 dark:bg-slate-700 mx-1"></div>
-                    <button onClick={nextMonth} className="p-2 rounded-full hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-400 hover:text-brand-text transition-colors">
-                        <ChevronRight size={18}/>
-                    </button>
+                {/* 右侧：时间维度切换 */}
+                <div className="flex items-center bg-slate-100 dark:bg-slate-800/80 p-1 rounded-full border border-slate-200 dark:border-slate-700">
+                    {TIME_SCOPES.map(scope => (
+                        <button
+                            key={scope.id}
+                            onClick={() => setActiveScope(scope.id)}
+                            className={`px-2.5 py-1.5 rounded-full text-[10px] font-black transition-all ${
+                                activeScope === scope.id 
+                                ? 'bg-white dark:bg-slate-700 text-brand-text dark:text-slate-100 shadow-sm scale-105' 
+                                : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+                            }`}
+                        >
+                            {scope.label}
+                        </button>
+                    ))}
                 </div>
             </div>
             
