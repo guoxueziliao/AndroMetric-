@@ -64,11 +64,14 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
 
         // Ensure morning state is fully initialized with defaults
         // This fixes the bug where "wokeWithErection" appears ON by default but saves as undefined
+        const wokeWithErection = base.morning?.wokeWithErection ?? true;
         return {
             ...base,
             morning: {
                 ...base.morning,
-                wokeWithErection: base.morning?.wokeWithErection ?? true,
+                wokeWithErection,
+                hardness: base.morning?.hardness ?? (wokeWithErection ? 3 : null),
+                retention: base.morning?.retention ?? (wokeWithErection ? 'normal' : null),
                 id: base.morning?.id || `m_${Date.now()}`,
                 timestamp: base.morning?.timestamp || Date.now()
             } as any
@@ -91,7 +94,18 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
     };
 
     const handleMorningChange = (field: any, value: any) => {
-        setLog(prev => ({ ...prev, morning: { ...prev.morning!, [field]: value } }));
+        setLog(prev => {
+            const newMorning = { ...prev.morning!, [field]: value };
+            if (field === 'wokeWithErection' && value === true) {
+                if (!newMorning.hardness) newMorning.hardness = 3;
+                if (!newMorning.retention) newMorning.retention = 'normal';
+            } else if (field === 'wokeWithErection' && value === false) {
+                newMorning.hardness = null;
+                newMorning.retention = null;
+                newMorning.wokenByErection = false;
+            }
+            return { ...prev, morning: newMorning };
+        });
         markDirty();
     };
 

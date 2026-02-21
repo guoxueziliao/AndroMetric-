@@ -232,7 +232,7 @@ const CalendarHeatmap: React.FC<ActivityCalendarProps> = ({ logs, onDateClick, c
             dateClass = "text-yellow-700 dark:text-yellow-500 font-medium";
             scoreClass = "text-yellow-600/50 dark:text-yellow-500/50 text-[9px]";
         } else if (status === 'completed') {
-            const level = log?.morning?.hardness || 3;
+            const level = log?.morning?.wokeWithErection ? (log?.morning?.hardness || 3) : 0;
             const visuals = getVisualsForCompleted(level);
             containerClass = `${visuals.bg} ${visuals.border}`;
             dateClass = visuals.text;
