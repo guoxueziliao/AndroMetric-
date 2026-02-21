@@ -49,7 +49,7 @@ const NapRecordModal: React.FC<NapRecordModalProps> = ({ isOpen, onClose, onSave
     useEffect(() => {
         if (isOpen) {
             const now = new Date();
-            const nowStr = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+            const nowStr = now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false });
 
             if (initialData) {
                 const updatedRecord = {
@@ -83,7 +83,7 @@ const NapRecordModal: React.FC<NapRecordModalProps> = ({ isOpen, onClose, onSave
                 } else if (initialData.startTime && initialData.duration) {
                     const [h, m] = initialData.startTime.split(':').map(Number);
                     const d = new Date(); d.setHours(h); d.setMinutes(m + initialData.duration);
-                    initialEndTime = d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+                    initialEndTime = d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false });
                 } else {
                     initialEndTime = nowStr;
                 }
@@ -96,7 +96,7 @@ const NapRecordModal: React.FC<NapRecordModalProps> = ({ isOpen, onClose, onSave
                     id: Date.now().toString(), startTime: nowStr, ongoing: false, duration: 30, quality: 3, hardness: null, hasDream: false, dreamTypes: [], notes: '',
                     location: 'home', temperature: 'comfortable', naturalAwakening: true, attire: 'light', withPartner: false, preSleepState: 'calm'
                 });
-                setEndTime(endD.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }));
+                setEndTime(endD.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false }));
             }
         }
     }, [isOpen, initialData]);

@@ -84,7 +84,7 @@ export const GlobalTimeline: React.FC<GlobalTimelineProps> = ({ log, allLogs }) 
         }
 
         // 3. 今日活动（基于生理时钟排序）
-        if (log.caffeineRecord?.items) {
+        if (log.caffeineRecord?.items && Array.isArray(log.caffeineRecord.items)) {
             log.caffeineRecord.items.forEach(item => {
                 list.push({
                     time: item.time,
@@ -98,20 +98,22 @@ export const GlobalTimeline: React.FC<GlobalTimelineProps> = ({ log, allLogs }) 
             });
         }
 
-        log.exercise?.forEach(ex => {
-            const time = ex.startTime && ex.startTime.includes(':') ? ex.startTime : '18:00';
-            list.push({
-                time,
-                type: 'exercise',
-                title: '运动',
-                desc: `${ex.type} (${ex.duration}m)`,
-                icon: Dumbbell,
-                color: 'text-green-600 bg-green-100 dark:bg-green-900/30',
-                timestamp: getPhysioWeight(time)
+        if (log.exercise && Array.isArray(log.exercise)) {
+            log.exercise.forEach(ex => {
+                const time = ex.startTime && ex.startTime.includes(':') ? ex.startTime : '18:00';
+                list.push({
+                    time,
+                    type: 'exercise',
+                    title: '运动',
+                    desc: `${ex.type} (${ex.duration}m)`,
+                    icon: Dumbbell,
+                    color: 'text-green-600 bg-green-100 dark:bg-green-900/30',
+                    timestamp: getPhysioWeight(time)
+                });
             });
-        });
+        }
 
-        if (log.alcoholRecords) {
+        if (log.alcoholRecords && Array.isArray(log.alcoholRecords)) {
             log.alcoholRecords.forEach(r => {
                 list.push({
                     time: r.time,
@@ -125,31 +127,35 @@ export const GlobalTimeline: React.FC<GlobalTimelineProps> = ({ log, allLogs }) 
             });
         }
 
-        log.masturbation?.forEach(m => {
-            const time = m.startTime || '22:00';
-            list.push({
-                time,
-                type: 'masturbation',
-                title: '自慰',
-                desc: `${m.duration}m ${m.ejaculation ? '(射精)' : '(Edging)'}`,
-                icon: Hand,
-                color: 'text-blue-600 bg-blue-100 dark:bg-blue-900/30',
-                timestamp: getPhysioWeight(time)
+        if (log.masturbation && Array.isArray(log.masturbation)) {
+            log.masturbation.forEach(m => {
+                const time = m.startTime || '22:00';
+                list.push({
+                    time,
+                    type: 'masturbation',
+                    title: '自慰',
+                    desc: `${m.duration}m ${m.ejaculation ? '(射精)' : '(Edging)'}`,
+                    icon: Hand,
+                    color: 'text-blue-600 bg-blue-100 dark:bg-blue-900/30',
+                    timestamp: getPhysioWeight(time)
+                });
             });
-        });
+        }
 
-        log.sex?.forEach(s => {
-            const time = s.startTime || '22:00';
-            list.push({
-                time,
-                type: 'sex',
-                title: '性生活',
-                desc: `${s.duration}m 与伴侣`,
-                icon: HeartPulse,
-                color: 'text-pink-600 bg-pink-100 dark:bg-pink-900/30',
-                timestamp: getPhysioWeight(time)
+        if (log.sex && Array.isArray(log.sex)) {
+            log.sex.forEach(s => {
+                const time = s.startTime || '22:00';
+                list.push({
+                    time,
+                    type: 'sex',
+                    title: '性生活',
+                    desc: `${s.duration}m 与伴侣`,
+                    icon: HeartPulse,
+                    color: 'text-pink-600 bg-pink-100 dark:bg-pink-900/30',
+                    timestamp: getPhysioWeight(time)
+                });
             });
-        });
+        }
 
         // 4. 今晚入睡（生理日终点，存放在【明天】的日记里）
         // 修复点：限定查找当前日期的后一天记录

@@ -54,7 +54,7 @@ const AlcoholRecordModal: React.FC<AlcoholRecordModalProps> = ({ isOpen, onClose
                 }
             } else {
                 setSelectedItems({}); setDrunkLevel('none'); setDrinkWhere('家'); setDrinkWith('独自'); setDrinkWhy('放松');
-                setTime(new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }));
+                setTime(new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false }));
                 setMode('sip');
             }
         }

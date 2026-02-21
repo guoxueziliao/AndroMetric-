@@ -25,7 +25,8 @@ interface TimelineRecord {
 const PAGE_SIZE = 20;
 
 const SexLifeView: React.FC = () => {
-    const { logs, partners, addOrUpdatePartner, deletePartner, addOrUpdateLog } = useData();
+    const { logs: rawLogs, partners, addOrUpdatePartner, deletePartner, addOrUpdateLog } = useData();
+    const logs = useMemo(() => Array.isArray(rawLogs) ? rawLogs : [], [rawLogs]);
     
     const [isPartnerManagerOpen, setIsPartnerManagerOpen] = useState(false);
     const [isSexModalOpen, setIsSexModalOpen] = useState(false);
@@ -35,28 +36,30 @@ const SexLifeView: React.FC = () => {
 
     const timeline = useMemo(() => {
         const allRecords: TimelineRecord[] = [];
-        logs.forEach(log => {
-            if (log.sex) {
-                log.sex.forEach(record => {
-                    allRecords.push({
-                        id: record.id, date: log.date, type: 'sex', startTime: record.startTime,
-                        partner: record.interactions?.[0]?.partner || record.partner,
-                        duration: record.duration, location: record.location,
-                        ejaculation: record.ejaculation, sexDetails: record, notes: record.notes
+        if (logs && Array.isArray(logs)) {
+            logs.forEach(log => {
+                if (log.sex && Array.isArray(log.sex)) {
+                    log.sex.forEach(record => {
+                        allRecords.push({
+                            id: record.id, date: log.date, type: 'sex', startTime: record.startTime,
+                            partner: record.interactions?.[0]?.partner || record.partner,
+                            duration: record.duration, location: record.location,
+                            ejaculation: record.ejaculation, sexDetails: record, notes: record.notes
+                        });
                     });
-                });
-            }
-            if (log.masturbation) {
-                log.masturbation.forEach(record => {
-                    allRecords.push({
-                        id: record.id, date: log.date, type: 'masturbation', startTime: record.startTime, 
-                        partner: '自慰', ejaculation: record.ejaculation, duration: record.duration,
-                        location: record.location,
-                        mbDetails: record, notes: record.notes
+                }
+                if (log.masturbation && Array.isArray(log.masturbation)) {
+                    log.masturbation.forEach(record => {
+                        allRecords.push({
+                            id: record.id, date: log.date, type: 'masturbation', startTime: record.startTime, 
+                            partner: '自慰', ejaculation: record.ejaculation, duration: record.duration,
+                            location: record.location,
+                            mbDetails: record, notes: record.notes
+                        });
                     });
-                });
-            }
-        });
+                }
+            });
+        }
         return allRecords.sort((a, b) => {
             const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
             if (dateDiff !== 0) return dateDiff;

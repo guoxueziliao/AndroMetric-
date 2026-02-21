@@ -83,7 +83,8 @@ const InsightCard: React.FC<{ insight: Insight }> = ({ insight }) => {
 };
 
 const StatsView: React.FC<{ isDarkMode: boolean }> = ({ isDarkMode }) => {
-    const { logs } = useData();
+    const { logs: rawLogs } = useData();
+    const logs = useMemo(() => Array.isArray(rawLogs) ? rawLogs : [], [rawLogs]);
     const [activeTab, setActiveTab] = useState<'overview' | 'sexual' | 'behavior'>('overview');
     const [privacyMode, setPrivacyMode] = useState(false);
     const [trendComparison, setTrendComparison] = useState<MetricId>('sleep');

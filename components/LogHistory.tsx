@@ -183,7 +183,7 @@ export const LogHistory: React.FC<LogHistoryProps> = ({ log }) => {
                                                 {typeConf.label}
                                             </span>
                                             <span className="text-[10px] text-brand-muted font-mono">
-                                                {new Date(record.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                                {new Date(record.timestamp).toLocaleTimeString('zh-CN', {hour: '2-digit', minute:'2-digit', hour12: false})}
                                             </span>
                                         </div>
                                     </div>

@@ -252,7 +252,8 @@ export const generateLogSummary = (log: Partial<LogEntry>): Array<{ label: strin
 };
 
 // Calculate Inventory (Time since last ejaculation)
-export const calculateInventory = (logs: LogEntry[]): string => {
+export const calculateInventory = (logs: LogEntry[] = []): string => {
+    if (!logs || !Array.isArray(logs)) return '未知';
     let lastEjaculationTime: number | null = null;
     
     // Sort logs descending

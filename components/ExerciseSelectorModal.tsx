@@ -53,15 +53,15 @@ const ExerciseRecordModal: React.FC<ExerciseRecordModalProps> = ({ isOpen, onClo
                 setRecord({ ...initialData, feeling: initialData.feeling || 'ok' });
                 const [h, m] = (initialData.startTime || '00:00').split(':').map(Number);
                 const d = new Date(); d.setHours(h); d.setMinutes(m + (initialData.duration || 0));
-                setEndTime(d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }));
+                setEndTime(d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false }));
             } else {
                 const now = new Date();
-                const nowStr = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+                const nowStr = now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false });
                 const endD = new Date(now); endD.setMinutes(now.getMinutes() + 30);
                 setRecord({
                     id: Date.now().toString(), type: '', startTime: nowStr, duration: 30, intensity: 'medium', bodyParts: [], steps: undefined, notes: '', feeling: 'ok'
                 });
-                setEndTime(endD.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }));
+                setEndTime(endD.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false }));
             }
         }
     }, [isOpen, initialData]);

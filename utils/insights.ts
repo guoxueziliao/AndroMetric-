@@ -102,7 +102,7 @@ const detectAnomalies = (logs: LogEntry[]): Insight[] => {
             
             const causes = [];
             /* Fix: Sum up grams from alcoholRecords instead of using non-existent alcoholRecord property */
-            const totalAlc = prev.alcoholRecords?.reduce((acc, r) => acc + r.totalGrams, 0) || 0;
+            const totalAlc = (prev.alcoholRecords && Array.isArray(prev.alcoholRecords)) ? prev.alcoholRecords.reduce((acc, r) => acc + r.totalGrams, 0) : 0;
             if (totalAlc > 40) causes.push(`饮酒 ${totalAlc}g`);
             if (prev.stressLevel && prev.stressLevel >= 4) causes.push(`高压状态`);
             
@@ -137,7 +137,7 @@ const analyzeMasturbationLoop = (logs: LogEntry[]): Insight[] => {
     const logMap = new Map(logs.map(l => [l.date, l]));
     
     logs.forEach(l => {
-        if (!l.masturbation || l.masturbation.length === 0) return;
+        if (!l.masturbation || !Array.isArray(l.masturbation) || l.masturbation.length === 0) return;
         const hasMultipleEdging = l.masturbation.some(m => m.edging === 'multiple');
         const hasEjaculation = l.masturbation.some(m => m.ejaculation);
         
@@ -177,10 +177,18 @@ const analyzeXPChange = (logs: LogEntry[]): Insight[] => {
     const countTags = (ls: LogEntry[]) => {
         const counts: Record<string, number> = {};
         let total = 0;
-        ls.forEach(l => l.masturbation?.forEach(m => m.assets?.categories?.forEach(c => {
-            counts[c] = (counts[c] || 0) + 1;
-            total++;
-        })));
+        ls.forEach(l => {
+            if (l.masturbation && Array.isArray(l.masturbation)) {
+                l.masturbation.forEach(m => {
+                    if (m.assets && Array.isArray(m.assets.categories)) {
+                        m.assets.categories.forEach(c => {
+                            counts[c] = (counts[c] || 0) + 1;
+                            total++;
+                        });
+                    }
+                });
+            }
+        });
         return { counts, total };
     };
     

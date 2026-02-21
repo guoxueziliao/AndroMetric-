@@ -67,36 +67,38 @@ const PartnerManager: React.FC<PartnerManagerProps> = ({ isOpen, onClose, partne
         const stats: Record<string, { lastDate: string; daysAgo: number; myCum: number; partnerCum: number }> = {};
         const today = new Date();
         
-        logs.forEach(log => {
-            if (log.sex) {
-                log.sex.forEach(record => {
-                    const partnersInRecord = new Set<string>();
-                    if (record.interactions) {
-                        record.interactions.forEach(i => { if(i.partner) partnersInRecord.add(i.partner); });
-                    } else if (record.partner) {
-                        partnersInRecord.add(record.partner);
-                    }
-                    
-                    partnersInRecord.forEach(name => {
-                        const logDate = new Date(log.date);
-                        
-                        if (!stats[name]) stats[name] = { lastDate: log.date, daysAgo: 0, myCum: 0, partnerCum: 0 };
-                        
-                        // Counts
-                        if (record.ejaculation) stats[name].myCum++;
-                        if (record.indicators.partnerOrgasm) stats[name].partnerCum++;
-
-                        // Find most recent
-                        if (logDate >= new Date(stats[name].lastDate)) {
-                            const diffTime = Math.abs(today.getTime() - logDate.getTime());
-                            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)); 
-                            stats[name].lastDate = log.date;
-                            stats[name].daysAgo = diffDays;
+        if (logs && Array.isArray(logs)) {
+            logs.forEach(log => {
+                if (log.sex) {
+                    log.sex.forEach(record => {
+                        const partnersInRecord = new Set<string>();
+                        if (record.interactions) {
+                            record.interactions.forEach(i => { if(i.partner) partnersInRecord.add(i.partner); });
+                        } else if (record.partner) {
+                            partnersInRecord.add(record.partner);
                         }
+                        
+                        partnersInRecord.forEach(name => {
+                            const logDate = new Date(log.date);
+                            
+                            if (!stats[name]) stats[name] = { lastDate: log.date, daysAgo: 0, myCum: 0, partnerCum: 0 };
+                            
+                            // Counts
+                            if (record.ejaculation) stats[name].myCum++;
+                            if (record.indicators.partnerOrgasm) stats[name].partnerCum++;
+
+                            // Find most recent
+                            if (logDate >= new Date(stats[name].lastDate)) {
+                                const diffTime = Math.abs(today.getTime() - logDate.getTime());
+                                const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)); 
+                                stats[name].lastDate = log.date;
+                                stats[name].daysAgo = diffDays;
+                            }
+                        });
                     });
-                });
-            }
-        });
+                }
+            });
+        }
         return stats;
     }, [logs]);
 

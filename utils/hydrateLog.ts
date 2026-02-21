@@ -32,13 +32,42 @@ export const hydrateLog = (raw: any): LogEntry => {
         notes: raw.notes ?? null,
         
         // Activity Arrays
-        exercise: Array.isArray(raw.exercise) ? raw.exercise.map((e: any) => ({...e, feeling: e.feeling || 'ok'})) : [],
-        sex: Array.isArray(raw.sex) ? raw.sex : [],
+        exercise: Array.isArray(raw.exercise) ? raw.exercise.map((e: any) => ({
+            ...e, 
+            feeling: e.feeling || 'ok',
+            bodyParts: Array.isArray(e.bodyParts) ? e.bodyParts : []
+        })) : [],
+        
+        sex: Array.isArray(raw.sex) ? raw.sex.map((s: any) => ({
+            ...s,
+            interactions: Array.isArray(s.interactions) ? s.interactions.map((i: any) => ({
+                ...i,
+                costumes: Array.isArray(i.costumes) ? i.costumes : [],
+                toys: Array.isArray(i.toys) ? i.toys : [],
+                chain: Array.isArray(i.chain) ? i.chain : []
+            })) : [],
+            positions: Array.isArray(s.positions) ? s.positions : []
+        })) : [],
+
         masturbation: Array.isArray(raw.masturbation) ? raw.masturbation.map((m: any) => ({
             ...m, 
             status: m.status || 'completed',
             satisfactionLevel: m.satisfactionLevel ?? (m.ejaculation ? 3 : 1), // Default based on ejaculation
-            contentItems: Array.isArray(m.contentItems) ? m.contentItems : [] 
+            contentItems: Array.isArray(m.contentItems) ? m.contentItems.map((c: any) => ({
+                ...c,
+                xpTags: Array.isArray(c.xpTags) ? c.xpTags : []
+            })) : [],
+            assets: m.assets ? {
+                ...m.assets,
+                sources: Array.isArray(m.assets.sources) ? m.assets.sources : [],
+                platforms: Array.isArray(m.assets.platforms) ? m.assets.platforms : [],
+                categories: Array.isArray(m.assets.categories) ? m.assets.categories : [],
+                actors: Array.isArray(m.assets.actors) ? m.assets.actors : []
+            } : { sources: [], platforms: [], categories: [], target: '', actors: [] },
+            tools: Array.isArray(m.tools) ? m.tools : [],
+            materials: Array.isArray(m.materials) ? m.materials : [],
+            props: Array.isArray(m.props) ? m.props : [],
+            materialsList: Array.isArray(m.materialsList) ? m.materialsList : []
         })) : [],
         
         // New Alcohol Array Support

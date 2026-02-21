@@ -8,6 +8,8 @@ interface Props {
 
 interface State {
   hasError: boolean;
+  error?: Error;
+  errorInfo?: ErrorInfo;
 }
 
 // Fix: Use React.Component explicitly to ensure standard class component properties like 'props' are recognized correctly
@@ -18,13 +20,14 @@ class ErrorBoundary extends React.Component<Props, State> {
     super(props);
   }
 
-  public static getDerivedStateFromError(_: Error): State {
+  public static getDerivedStateFromError(error: Error): State {
     // 更新状态，以便下一次渲染将显示回退UI。
-    return { hasError: true };
+    return { hasError: true, error };
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("Uncaught error in component:", error, errorInfo);
+    this.setState({ error, errorInfo });
     // Log to internal telemetry system
     Logger.error('UI:UncaughtError', error, { componentStack: errorInfo.componentStack });
   }
@@ -40,6 +43,12 @@ class ErrorBoundary extends React.Component<Props, State> {
              <h3 className="font-bold">组件加载失败</h3>
           </div>
           <p className="text-sm mt-1">系统已记录此错误。请尝试刷新页面。</p>
+          {this.state.error && (
+            <div className="mt-2 p-2 bg-red-100 rounded text-left overflow-auto max-h-32 text-xs font-mono">
+              <p className="font-bold">{this.state.error.toString()}</p>
+              {this.state.errorInfo && <pre>{this.state.errorInfo.componentStack}</pre>}
+            </div>
+          )}
           <button 
             onClick={() => window.location.reload()} 
             className="mt-3 px-4 py-1.5 bg-red-100 hover:bg-red-200 rounded text-xs font-bold transition-colors"

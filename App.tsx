@@ -84,13 +84,13 @@ const AppContent: React.FC<{ data: any }> = ({ data }) => {
     try { return window.localStorage.getItem('hasSeenWelcomeScreen') === 'true'; } catch { return false; }
   });
 
-  const safeLogs = logs || [];
+  const safeLogs = Array.isArray(logs) ? logs : [];
   const pendingLog = useMemo(() => safeLogs.find((log: LogEntry) => log.status === 'pending'), [safeLogs]);
-  const ongoingExercise = useMemo(() => safeLogs.flatMap((l: LogEntry) => l.exercise || []).find((e: ExerciseRecord) => e.ongoing), [safeLogs]);
-  const ongoingNap = useMemo(() => safeLogs.flatMap((l: LogEntry) => l.sleep?.naps || []).find((n: any) => n.ongoing), [safeLogs]);
-  const ongoingMb = useMemo(() => safeLogs.flatMap((l: LogEntry) => l.masturbation || []).find((m: MasturbationRecordDetails) => m.status === 'inProgress'), [safeLogs]);
+  const ongoingExercise = useMemo(() => safeLogs.flatMap((l: LogEntry) => (Array.isArray(l.exercise) ? l.exercise : [])).find((e: ExerciseRecord) => e.ongoing), [safeLogs]);
+  const ongoingNap = useMemo(() => safeLogs.flatMap((l: LogEntry) => (l.sleep && Array.isArray(l.sleep.naps) ? l.sleep.naps : [])).find((n: any) => n.ongoing), [safeLogs]);
+  const ongoingMb = useMemo(() => safeLogs.flatMap((l: LogEntry) => (Array.isArray(l.masturbation) ? l.masturbation : [])).find((m: MasturbationRecordDetails) => m.status === 'inProgress'), [safeLogs]);
   /* Fix: Use alcoholRecords array to check for ongoing sessions instead of the non-existent alcoholRecord property */
-  const ongoingAlcohol = useMemo(() => safeLogs.find((l: LogEntry) => l.alcoholRecords?.some(r => r.ongoing))?.alcoholRecords?.find((r: AlcoholRecord) => r.ongoing), [safeLogs]);
+  const ongoingAlcohol = useMemo(() => safeLogs.find((l: LogEntry) => Array.isArray(l.alcoholRecords) && l.alcoholRecords.some(r => r.ongoing))?.alcoholRecords?.find((r: AlcoholRecord) => r.ongoing), [safeLogs]);
 
   const editingLog = useMemo(() => editingLogDate ? safeLogs.find((log: LogEntry) => log.date === editingLogDate) || null : null, [safeLogs, editingLogDate]);
 
@@ -212,7 +212,7 @@ const AppContent: React.FC<{ data: any }> = ({ data }) => {
       if (ongoingMb) { handleFinishMasturbation(ongoingMb); return; }
       const newRecord: MasturbationRecordDetails = {
           id: Date.now().toString(),
-          startTime: new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
+          startTime: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false }),
           duration: 0, status: 'inProgress', tools: ['手'], contentItems: [],
           materials: [], props: [], assets: { sources: [], platforms: [], categories: [], target: '', actors: [] },
           materialsList: [], edging: 'none', edgingCount: 0, lubricant: '无润滑', useCondom: false,

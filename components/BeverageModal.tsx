@@ -102,7 +102,7 @@ const BeverageModal: React.FC<BeverageModalProps> = ({ isOpen, onClose, onSave, 
                 }
             } else {
                 const now = new Date();
-                setTime(now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }));
+                setTime(now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false }));
                 setActiveCat('coffee');
                 setSelectedName('拿铁');
                 setVolume(480);

@@ -59,11 +59,11 @@ export const calculateXpStats = (logs: LogEntry[]): XpAnalysisResult => {
 
     // 1. Traverse Logs
     logs.forEach(log => {
-        if (!log.masturbation || log.masturbation.length === 0) return;
+        if (!log.masturbation || !Array.isArray(log.masturbation) || log.masturbation.length === 0) return;
 
         log.masturbation.forEach(record => {
             // Get tags from assets.categories
-            const rawTags = record.assets?.categories || [];
+            const rawTags = (record.assets && Array.isArray(record.assets.categories)) ? record.assets.categories : [];
             if (rawTags.length === 0) return;
 
             totalXpRecords++;

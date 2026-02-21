@@ -62,7 +62,7 @@ export const flattenLogsToEvents = (logs: LogEntry[]): UnifiedEvent[] => {
 
         // 3. Alcohol Event
         /* Fix: Aggregate metrics from alcoholRecords array instead of using non-existent single record property */
-        if (log.alcoholRecords && log.alcoholRecords.length > 0) {
+        if (log.alcoholRecords && Array.isArray(log.alcoholRecords) && log.alcoholRecords.length > 0) {
             const totalGrams = log.alcoholRecords.reduce((acc, r) => acc + r.totalGrams, 0);
             const totalDuration = log.alcoholRecords.reduce((acc, r) => acc + r.durationMinutes, 0);
             const isAnyLate = log.alcoholRecords.some(r => r.isLate);
@@ -88,7 +88,7 @@ export const flattenLogsToEvents = (logs: LogEntry[]): UnifiedEvent[] => {
         }
 
         // 4. Exercise Events
-        if (log.exercise) {
+        if (log.exercise && Array.isArray(log.exercise)) {
             log.exercise.forEach(ex => {
                 let ts = dateBase;
                 if (ex.startTime) {
@@ -112,7 +112,7 @@ export const flattenLogsToEvents = (logs: LogEntry[]): UnifiedEvent[] => {
         }
 
         // 5. Sex Events
-        if (log.sex) {
+        if (log.sex && Array.isArray(log.sex)) {
             log.sex.forEach(s => {
                 let ts = dateBase;
                 if (s.startTime) {
@@ -124,7 +124,7 @@ export const flattenLogsToEvents = (logs: LogEntry[]): UnifiedEvent[] => {
                     }
                 }
                 const partners = new Set<string>();
-                if(s.interactions) s.interactions.forEach(i => { if(i.partner) partners.add(i.partner); });
+                if(s.interactions && Array.isArray(s.interactions)) s.interactions.forEach(i => { if(i.partner) partners.add(i.partner); });
                 else if(s.partner) partners.add(s.partner);
 
                 events.push(createEvent(
@@ -145,7 +145,7 @@ export const flattenLogsToEvents = (logs: LogEntry[]): UnifiedEvent[] => {
         }
 
         // 6. Masturbation Events
-        if (log.masturbation) {
+        if (log.masturbation && Array.isArray(log.masturbation)) {
             log.masturbation.forEach(m => {
                 let ts = dateBase;
                 if (m.startTime) {

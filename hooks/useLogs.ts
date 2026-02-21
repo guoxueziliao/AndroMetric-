@@ -166,12 +166,13 @@ export function useLogs() {
     }, [addOrUpdateLog, getActivityTargetDate]);
 
     const cancelOngoingMasturbation = useCallback(async () => {
-        const logToUpdate = logs.find(l => l.masturbation?.some(m => m.status === 'inProgress'));
+        const allLogs = await StorageService.logs.getAll();
+        const logToUpdate = allLogs.find(l => l.masturbation?.some(m => m.status === 'inProgress'));
         if (logToUpdate) {
             const nextMb = logToUpdate.masturbation.filter(m => m.status !== 'inProgress');
             await addOrUpdateLog({ ...logToUpdate, masturbation: nextMb });
         }
-    }, [logs, addOrUpdateLog]);
+    }, [addOrUpdateLog]);
 
     const saveExercise = useCallback(async (record: ExerciseRecord) => {
         const targetDateStr = getActivityTargetDate();
@@ -210,12 +211,13 @@ export function useLogs() {
     }, [addOrUpdateLog, getActivityTargetDate]);
 
     const cancelOngoingExercise = useCallback(async () => {
-        const logToUpdate = logs.find(l => l.exercise?.some(e => e.ongoing));
+        const allLogs = await StorageService.logs.getAll();
+        const logToUpdate = allLogs.find(l => l.exercise?.some(e => e.ongoing));
         if (logToUpdate) {
             const nextExercises = logToUpdate.exercise.filter(e => !e.ongoing);
             await addOrUpdateLog({ ...logToUpdate, exercise: nextExercises });
         }
-    }, [logs, addOrUpdateLog]);
+    }, [addOrUpdateLog]);
 
     const saveNap = useCallback(async (record: NapRecord) => {
         const targetDateStr = getActivityTargetDate();
@@ -254,7 +256,7 @@ export function useLogs() {
             return nap;
         } else {
             const now = new Date();
-            const nowStr = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+            const nowStr = now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false });
             const newNap: NapRecord = {
                 id: Date.now().toString(),
                 startTime: nowStr,
@@ -324,7 +326,7 @@ export function useLogs() {
         if (ongoingLog) {
             return ongoingLog.alcoholRecords.find(r => r.ongoing);
         } else {
-            const nowStr = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+            const nowStr = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false });
             const newRecord: AlcoholRecord = {
                 id: Date.now().toString(),
                 totalGrams: 0,

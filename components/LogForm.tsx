@@ -52,7 +52,7 @@ const QualityScoreRing = ({ score }: { score: number }) => {
 
 const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirtyStateChange, logs, partners }) => {
     const [log, setLog] = useState<LogEntry>(() => {
-        const base = existingLog || { 
+        const base = existingLog ? { ...existingLog } : { 
             date: logDate || '', status: 'completed', updatedAt: Date.now(),
             morning: { id: `m_${Date.now()}`, timestamp: Date.now(), wokeWithErection: true, wokenByErection: false },
             sleep: { id: `s_${Date.now()}`, quality: 3, naturalAwakening: true, nocturnalEmission: false, withPartner: false, naps: [], hasDream: false, dreamTypes: [], environment: { location: 'home', temperature: 'comfortable' } },
@@ -61,6 +61,17 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
             changeHistory: [],
             alcoholRecords: []
         } as LogEntry;
+
+        // Defensive: Ensure arrays are actually arrays
+        if (!Array.isArray(base.exercise)) base.exercise = [];
+        if (!Array.isArray(base.sex)) base.sex = [];
+        if (!Array.isArray(base.masturbation)) base.masturbation = [];
+        if (!Array.isArray(base.dailyEvents)) base.dailyEvents = [];
+        if (!Array.isArray(base.tags)) base.tags = [];
+        if (!Array.isArray(base.changeHistory)) base.changeHistory = [];
+        if (!Array.isArray(base.alcoholRecords)) base.alcoholRecords = [];
+        if (base.caffeineRecord && !Array.isArray(base.caffeineRecord.items)) base.caffeineRecord.items = [];
+        if (base.sleep && !Array.isArray(base.sleep.naps)) base.sleep.naps = [];
 
         // Ensure morning state is fully initialized with defaults
         // This fixes the bug where "wokeWithErection" appears ON by default but saves as undefined

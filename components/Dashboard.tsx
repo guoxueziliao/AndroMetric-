@@ -8,7 +8,7 @@ import {
   FastForward, Coffee, Bed, ArrowRight, User, Heart, RotateCcw, 
   MapPin, Sparkles, Shirt, Star, Thermometer, BrainCircuit, Tag, 
   Film, Smile, AlertTriangle, ChevronRight, ChevronLeft, Calendar, Check, 
-  AlertCircle, Sofa, X, MoreHorizontal
+  AlertCircle, Sofa, X, MoreHorizontal, StickyNote
 } from 'lucide-react';
 import Modal from './Modal';
 import SafeDeleteModal from './SafeDeleteModal';
@@ -31,8 +31,14 @@ interface DashboardProps {
 
 type SummaryTab = 'diary' | 'track' | 'source';
 
+const WEATHER_LABELS: Record<string, string> = { sunny: '晴', cloudy: '多云', rainy: '雨', snowy: '雪', windy: '大风', foggy: '雾' };
+const LOCATION_LABELS: Record<string, string> = { home: '家', partner: '伴侣家', hotel: '酒店', travel: '旅途', other: '其他' };
+const MOOD_LABELS: Record<string, string> = { happy: '开心', excited: '兴奋', neutral: '平静', anxious: '焦虑', sad: '低落', angry: '生气' };
+const PORN_LABELS: Record<string, string> = { none: '无', low: '少量', medium: '适量', high: '沉迷' };
+
 const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateToBackup, onFinishExercise, onFinishMasturbation, onFinishNap, onFinishAlcohol }) => {
-  const { logs, deleteLog, toggleNap, cancelOngoingNap, addOrUpdateLog, toggleSleepLog, cancelAlcoholRecord, cancelOngoingExercise, cancelOngoingMasturbation } = useData();
+  const { logs: rawLogs, deleteLog, toggleNap, cancelOngoingNap, addOrUpdateLog, toggleSleepLog, cancelAlcoholRecord, cancelOngoingExercise, cancelOngoingMasturbation } = useData();
+  const logs = useMemo(() => Array.isArray(rawLogs) ? rawLogs : [], [rawLogs]);
   const { showToast } = useToast();
 
   const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
@@ -41,6 +47,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
   
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [dateToDelete, setDateToDelete] = useState<string | null>(null);
+  const [taskToCancel, setTaskToCancel] = useState<'sleep' | 'nap' | 'mb' | 'exercise' | 'alcohol' | null>(null);
 
   const latestLog = useMemo(() => logs.length > 0 ? logs[0] : null, [logs]);
   const pendingLog = useMemo(() => logs.find(log => log.status === 'pending'), [logs]);
@@ -109,10 +116,14 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
       }
   };
 
-  const handleCancelTask = async (type: 'sleep' | 'nap' | 'mb' | 'exercise' | 'alcohol') => {
-      if (!confirm('确定要取消并丢弃当前计时的记录吗？')) return;
+  const handleRequestCancel = (type: 'sleep' | 'nap' | 'mb' | 'exercise' | 'alcohol') => {
+      setTaskToCancel(type);
+  };
+
+  const confirmCancel = async () => {
+      if (!taskToCancel) return;
       try {
-          switch(type) {
+          switch(taskToCancel) {
               case 'sleep': await toggleSleepLog(pendingLog || undefined); break;
               case 'nap': await cancelOngoingNap(); break;
               case 'mb': await cancelOngoingMasturbation(); break;
@@ -122,6 +133,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
           showToast('记录已取消', 'info');
       } catch (e) {
           showToast('取消失败', 'error');
+      } finally {
+          setTaskToCancel(null);
       }
   };
 
@@ -155,9 +168,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                 <h1 className="text-3xl font-black tracking-tight dark:text-slate-100">{greeting}</h1>
                 <p className="text-brand-muted text-sm font-medium">今天感觉如何？</p>
             </div>
-            <div className="w-10 h-10 bg-brand-card dark:bg-slate-900 rounded-full shadow-sm flex items-center justify-center border border-slate-100 dark:border-white/5 transition-colors">
-                <User size={20} className="text-brand-muted"/>
-            </div>
         </div>
 
         {/* Ongoing Tasks Banners */}
@@ -173,7 +183,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                             </div>
                         </div>
                         <div className="flex items-center gap-2">
-                            <button onClick={() => handleCancelTask('sleep')} className="p-2 text-white/60 hover:text-white transition-colors"><X size={18}/></button>
+                            <button onClick={() => handleRequestCancel('sleep')} className="p-2 text-white/60 hover:text-white transition-colors"><X size={18}/></button>
                             <button onClick={() => onEdit(pendingLog.date)} className="px-5 py-2 bg-white text-emerald-600 rounded-full text-xs font-bold shadow-sm active:scale-95 transition-all">醒了</button>
                         </div>
                     </div>
@@ -188,7 +198,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                             </div>
                         </div>
                         <div className="flex items-center gap-2">
-                            <button onClick={() => handleCancelTask('nap')} className="p-2 text-white/60 hover:text-white transition-colors"><X size={18}/></button>
+                            <button onClick={() => handleRequestCancel('nap')} className="p-2 text-white/60 hover:text-white transition-colors"><X size={18}/></button>
                             <button onClick={() => onFinishNap?.(ongoingNap)} className="px-5 py-2 bg-white text-orange-600 rounded-full text-xs font-bold shadow-sm active:scale-95 transition-all">醒了</button>
                         </div>
                     </div>
@@ -203,7 +213,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                             </div>
                         </div>
                         <div className="flex items-center gap-2">
-                            <button onClick={() => handleCancelTask('mb')} className="p-2 text-white/60 hover:text-white transition-colors"><X size={18}/></button>
+                            <button onClick={() => handleRequestCancel('mb')} className="p-2 text-white/60 hover:text-white transition-colors"><X size={18}/></button>
                             <button onClick={() => onFinishMasturbation?.(ongoingMb)} className="px-5 py-2 bg-white text-blue-600 rounded-full text-xs font-bold shadow-sm active:scale-95 transition-all">收工</button>
                         </div>
                     </div>
@@ -218,7 +228,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                             </div>
                         </div>
                         <div className="flex items-center gap-2">
-                            <button onClick={() => handleCancelTask('exercise')} className="p-2 text-white/60 hover:text-white transition-colors"><X size={18}/></button>
+                            <button onClick={() => handleRequestCancel('exercise')} className="p-2 text-white/60 hover:text-white transition-colors"><X size={18}/></button>
                             <button onClick={() => onFinishExercise?.(ongoingExercise)} className="px-5 py-2 bg-white text-orange-600 rounded-full text-xs font-bold shadow-sm active:scale-95 transition-all">完成</button>
                         </div>
                     </div>
@@ -233,7 +243,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                             </div>
                         </div>
                         <div className="flex items-center gap-2">
-                            <button onClick={() => handleCancelTask('alcohol')} className="p-2 text-white/60 hover:text-white transition-colors"><X size={18}/></button>
+                            <button onClick={() => handleRequestCancel('alcohol')} className="p-2 text-white/60 hover:text-white transition-colors"><X size={18}/></button>
                             <button onClick={() => onFinishAlcohol?.(ongoingAlcohol)} className="px-5 py-2 bg-white text-indigo-600 rounded-full text-xs font-bold shadow-sm active:scale-95 transition-all">结算</button>
                         </div>
                     </div>
@@ -281,14 +291,14 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                         })}
                     </div>
                 </div>
-                <div className="bg-white dark:bg-slate-900/40 rounded-3xl p-5 shadow-soft border border-slate-100 dark:border-white/5 flex flex-col justify-between h-60 transition-colors">
-                    <div className="flex items-center gap-2 mb-3">
+                <div className="bg-white dark:bg-slate-900/40 rounded-3xl p-5 shadow-soft border border-slate-100 dark:border-white/5 flex flex-col h-60 transition-colors">
+                    <div className="flex items-center gap-2 mb-6">
                         <div className="p-2 bg-orange-50 dark:bg-orange-500/10 rounded-full text-orange-500"><Activity size={18}/></div>
                         <span className="text-sm font-bold text-slate-800 dark:text-slate-300">活跃</span>
                     </div>
-                    <div className="space-y-2">
-                        <div className="flex items-center justify-between text-xs"><span className="text-slate-400 font-bold">运动</span><span className="font-black text-slate-700 dark:text-slate-200">{latestLog?.exercise?.length || 0}次</span></div>
-                        <div className="flex items-center justify-between text-xs"><span className="text-slate-400 font-bold">自慰</span><span className="font-black text-slate-700 dark:text-slate-200">{latestLog?.masturbation?.length || 0}次</span></div>
+                    <div className="space-y-4">
+                        <div className="flex items-center justify-between text-sm"><span className="text-slate-400 font-bold">运动</span><span className="font-black text-slate-700 dark:text-slate-200 text-lg">{latestLog?.exercise?.length || 0}次</span></div>
+                        <div className="flex items-center justify-between text-sm"><span className="text-slate-400 font-bold">自慰</span><span className="font-black text-slate-700 dark:text-slate-200 text-lg">{latestLog?.masturbation?.length || 0}次</span></div>
                     </div>
                 </div>
             </div>
@@ -470,6 +480,100 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                                             )}
                                         </div>
                                     </SummarySection>
+
+                                    {(summaryLog.weather || summaryLog.location || (summaryLog.caffeineRecord?.items && summaryLog.caffeineRecord.items.length > 0) || (summaryLog.pornConsumption && summaryLog.pornConsumption !== 'none')) && (
+                                        <SummarySection title="生活与环境" icon={CloudSun} colorClass="text-sky-500">
+                                            <div className="flex flex-wrap gap-3">
+                                                {summaryLog.weather && (
+                                                    <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-950 p-3 rounded-2xl border border-slate-100 dark:border-white/5">
+                                                        <CloudSun size={18} className="text-sky-500"/>
+                                                        <span className="text-sm font-black text-slate-700 dark:text-slate-200">{WEATHER_LABELS[summaryLog.weather] || summaryLog.weather}</span>
+                                                    </div>
+                                                )}
+                                                {summaryLog.location && (
+                                                    <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-950 p-3 rounded-2xl border border-slate-100 dark:border-white/5">
+                                                        <MapPin size={18} className="text-emerald-500"/>
+                                                        <span className="text-sm font-black text-slate-700 dark:text-slate-200">{LOCATION_LABELS[summaryLog.location] || summaryLog.location}</span>
+                                                    </div>
+                                                )}
+                                                {summaryLog.pornConsumption && summaryLog.pornConsumption !== 'none' && (
+                                                    <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-950 p-3 rounded-2xl border border-slate-100 dark:border-white/5">
+                                                        <Film size={18} className="text-pink-500"/>
+                                                        <span className="text-sm font-black text-slate-700 dark:text-slate-200">看片: {PORN_LABELS[summaryLog.pornConsumption] || summaryLog.pornConsumption}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            {summaryLog.caffeineRecord?.items && summaryLog.caffeineRecord.items.length > 0 && (
+                                                <div className="mt-3 space-y-2">
+                                                    {summaryLog.caffeineRecord.items.map(item => (
+                                                        <div key={item.id} className="flex items-center justify-between bg-slate-50 dark:bg-slate-950 p-3 rounded-2xl border border-slate-100 dark:border-white/5">
+                                                            <div className="flex items-center gap-3">
+                                                                <Coffee size={16} className="text-orange-500"/>
+                                                                <span className="text-sm font-black text-slate-700 dark:text-slate-200">{item.name}</span>
+                                                            </div>
+                                                            <span className="text-xs font-bold text-slate-400">{item.time} · {item.isDaily ? '全天' : `${item.volume}ml`}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </SummarySection>
+                                    )}
+
+                                    {(summaryLog.mood || summaryLog.stressLevel || summaryLog.health?.isSick) && (
+                                        <SummarySection title="健康与情绪" icon={Smile} colorClass="text-purple-500">
+                                            <div className="flex flex-wrap gap-3">
+                                                {summaryLog.mood && (
+                                                    <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-950 p-3 rounded-2xl border border-slate-100 dark:border-white/5">
+                                                        <Smile size={18} className="text-purple-500"/>
+                                                        <div className="flex flex-col">
+                                                            <span className="text-[10px] text-slate-400 font-bold uppercase">心情</span>
+                                                            <span className="text-sm font-black text-slate-700 dark:text-slate-200">{MOOD_LABELS[summaryLog.mood] || summaryLog.mood}</span>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                {summaryLog.stressLevel && (
+                                                    <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-950 p-3 rounded-2xl border border-slate-100 dark:border-white/5">
+                                                        <BrainCircuit size={18} className="text-orange-500"/>
+                                                        <div className="flex flex-col">
+                                                            <span className="text-[10px] text-slate-400 font-bold uppercase">压力</span>
+                                                            <span className="text-sm font-black text-slate-700 dark:text-slate-200">{summaryLog.stressLevel}级</span>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                {summaryLog.health?.isSick && (
+                                                    <div className="flex items-center gap-2 bg-red-50 dark:bg-red-900/20 p-3 rounded-2xl border border-red-100 dark:border-red-900/30 w-full">
+                                                        <ShieldAlert size={18} className="text-red-500"/>
+                                                        <div className="flex flex-col">
+                                                            <span className="text-[10px] text-red-400 font-bold uppercase">身体不适</span>
+                                                            <span className="text-sm font-black text-red-700 dark:text-red-400">
+                                                                {summaryLog.health.discomfortLevel === 'mild' ? '轻微' : summaryLog.health.discomfortLevel === 'moderate' ? '明显' : '很难受'}
+                                                                {summaryLog.health.symptoms?.length ? ` · ${summaryLog.health.symptoms.join(', ')}` : ''}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </SummarySection>
+                                    )}
+
+                                    {(summaryLog.notes || (summaryLog.dailyEvents && summaryLog.dailyEvents.length > 0)) && (
+                                        <SummarySection title="备注与事件" icon={StickyNote} colorClass="text-yellow-500">
+                                            {summaryLog.dailyEvents && summaryLog.dailyEvents.length > 0 && (
+                                                <div className="flex flex-wrap gap-2 mb-3">
+                                                    {summaryLog.dailyEvents.map(evt => (
+                                                        <span key={evt} className="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl text-xs font-bold">
+                                                            {evt}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            )}
+                                            {summaryLog.notes && (
+                                                <div className="bg-yellow-50/50 dark:bg-yellow-900/10 p-4 rounded-2xl border border-yellow-100 dark:border-yellow-900/30">
+                                                    <p className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap leading-relaxed">{summaryLog.notes}</p>
+                                                </div>
+                                            )}
+                                        </SummarySection>
+                                    )}
                                 </>
                             )}
                         </div>
@@ -489,6 +593,22 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                 </div>
             </div>
         )}
+      </Modal>
+
+      <Modal 
+        isOpen={!!taskToCancel} 
+        onClose={() => setTaskToCancel(null)} 
+        title="确认取消"
+        footer={
+            <div className="flex gap-3 w-full">
+                <button onClick={() => setTaskToCancel(null)} className="flex-1 py-3 bg-slate-100 dark:bg-slate-800 rounded-xl font-bold text-slate-600 dark:text-slate-300">保留</button>
+                <button onClick={confirmCancel} className="flex-1 py-3 bg-red-50 text-red-500 rounded-xl font-bold shadow-sm">确认丢弃</button>
+            </div>
+        }
+      >
+        <p className="text-sm text-slate-600 dark:text-slate-300">
+            确定要取消并丢弃当前计时的记录吗？此操作无法撤销。
+        </p>
       </Modal>
 
       <SafeDeleteModal 

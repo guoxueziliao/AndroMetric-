@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { X, Check, ChevronRight, Clock, Plus, Trash2, MapPin, ChevronDown, Activity, PlayCircle, Shirt, Zap, ArrowRight, Sparkles, Droplets, Flame, User, GripHorizontal, LayoutGrid, Tag, ArrowUp, ArrowDown, GripVertical, Star } from 'lucide-react';
 import { SexRecordDetails, SexInteraction, SexAction, SexActionType, PartnerProfile, LogEntry } from '../types';
+import { getSexRecommendations, Recommendation } from '../utils/recommendationEngine';
 
 interface SexRecordModalProps {
   isOpen: boolean;
@@ -129,29 +130,45 @@ const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave
   const activeInteraction = data.interactions.find(i => i.id === editingInteractionId);
   const activePartnerName = activeInteraction?.partner;
 
+  const recommendations = useMemo(() => getSexRecommendations(logs, activePartnerName), [logs, activePartnerName]);
+
+  const handleApplyRecommendation = (rec: Recommendation) => {
+      if (!activeInteraction) return;
+
+      if (rec.type === 'position') {
+          addToChain('position', rec.value);
+      } else if (rec.type === 'toy') {
+          toggleArrayItem('toys', rec.value);
+      } else if (rec.type === 'costume') {
+          toggleArrayItem('costumes', rec.value);
+      }
+  };
+
   const { sortedActs, sortedPositions } = useMemo(() => {
       const actCounts: Record<string, number> = {};
       const posCounts: Record<string, number> = {};
 
-      logs.forEach(log => {
-          if (!log.sex) return;
-          log.sex.forEach(record => {
-             const partnerMatch = activePartnerName && (record.interactions?.some(i => i.partner === activePartnerName) || record.partner === activePartnerName);
-             const weight = partnerMatch ? 5 : 1; 
-
-             const process = (actName: string, type: 'act' | 'pos') => {
-                 if(type === 'act') actCounts[actName] = (actCounts[actName] || 0) + weight;
-                 else posCounts[actName] = (posCounts[actName] || 0) + weight;
-             }
-
-             if (record.interactions) {
-                  record.interactions.forEach(i => i.chain.forEach(a => process(a.name, a.type === 'act' ? 'act' : 'pos')));
-             } else {
-                  record.acts?.forEach(a => process(a, 'act'));
-                  record.positions?.forEach(p => process(p, 'pos'));
-             }
+      if (logs && Array.isArray(logs)) {
+          logs.forEach(log => {
+              if (!log.sex) return;
+              log.sex.forEach(record => {
+                 const partnerMatch = activePartnerName && (record.interactions?.some(i => i.partner === activePartnerName) || record.partner === activePartnerName);
+                 const weight = partnerMatch ? 5 : 1; 
+    
+                 const process = (actName: string, type: 'act' | 'pos') => {
+                     if(type === 'act') actCounts[actName] = (actCounts[actName] || 0) + weight;
+                     else posCounts[actName] = (posCounts[actName] || 0) + weight;
+                 }
+    
+                 if (record.interactions) {
+                      record.interactions.forEach(i => i.chain.forEach(a => process(a.name, a.type === 'act' ? 'act' : 'pos')));
+                 } else {
+                      record.acts?.forEach(a => process(a, 'act'));
+                      record.positions?.forEach(p => process(p, 'pos'));
+                 }
+              });
           });
-      });
+      }
 
       const sortFn = (counts: Record<string, number>) => (a: string, b: string) => (counts[b] || 0) - (counts[a] || 0);
       return {
@@ -188,7 +205,7 @@ const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave
             const firstId = Date.now().toString();
             setData({
                 id: Date.now().toString(),
-                startTime: new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
+                startTime: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false }),
                 interactions: [{ id: firstId, partner: '', location: '', role: '', costumes: [], toys: [], chain: [] }],
                 duration: 20,
                 protection: '无保护措施',
@@ -499,6 +516,28 @@ const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave
                             <TabButton active={activeTab === 'props'} onClick={() => setActiveTab('props')} icon={Tag} label="氛围道具" />
                          </div>
                      </div>
+
+                     {/* Recommendations Bar */}
+                     {recommendations.length > 0 && (
+                         <div className="flex-none px-4 py-3 bg-gradient-to-r from-blue-50/50 to-indigo-50/50 dark:from-blue-900/10 dark:to-indigo-900/10 border-b border-slate-100 dark:border-slate-800">
+                             <div className="flex items-center gap-2 mb-2">
+                                 <Sparkles size={12} className="text-blue-500" />
+                                 <span className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest">智能推荐 (Smart Suggest)</span>
+                             </div>
+                             <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
+                                 {recommendations.map(rec => (
+                                     <button 
+                                         key={`${rec.type}-${rec.value}`}
+                                         onClick={() => handleApplyRecommendation(rec)}
+                                         className="flex-shrink-0 px-3 py-1.5 bg-white dark:bg-slate-800 text-[10px] font-bold text-slate-600 dark:text-slate-300 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex items-center gap-1.5 hover:text-blue-500 hover:border-blue-200 transition-all active:scale-95"
+                                     >
+                                         <span>{rec.value}</span>
+                                         <span className="text-[8px] text-slate-400 bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded-md">{rec.type === 'position' ? '姿势' : rec.type === 'toy' ? '玩具' : '服饰'}</span>
+                                     </button>
+                                 ))}
+                             </div>
+                         </div>
+                     )}
 
                      <div className="flex-1 overflow-y-auto p-5 custom-scrollbar bg-white dark:bg-slate-900">
                          

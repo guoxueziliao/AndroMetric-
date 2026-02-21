@@ -32,7 +32,8 @@ const StatBox = ({ label, value, colorClass, bgClass }: { label: string, value: 
 );
 
 const MyView: React.FC<MyViewProps> = ({ settings, onUpdateSettings, installPrompt, onShowVersionHistory, onNavigateToLog }) => {
-  const { logs, partners, importLogs } = useData();
+  const { logs: rawLogs, partners, importLogs } = useData();
+  const logs = useMemo(() => Array.isArray(rawLogs) ? rawLogs : [], [rawLogs]);
   const { showToast } = useToast();
   
   // Queries

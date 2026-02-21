@@ -90,7 +90,13 @@ const CalendarHeatmap: React.FC<ActivityCalendarProps> = ({ logs, onDateClick, c
     const onTouchMove = (e: React.TouchEvent) => { touchEnd.current = e.targetTouches[0].clientX; }
     const onTouchEnd = () => { if (!touchStart.current || !touchEnd.current) return; const distance = touchStart.current - touchEnd.current; if (distance > minSwipeDistance) nextMonth(); if (distance < -minSwipeDistance) prevMonth(); }
 
-    const logsMap = useMemo(() => { const map = new Map<string, LogEntry>(); logs.forEach(log => map.set(log.date, log)); return map; }, [logs]);
+    const logsMap = useMemo(() => { 
+        const map = new Map<string, LogEntry>(); 
+        if (logs && Array.isArray(logs)) {
+            logs.forEach(log => map.set(log.date, log)); 
+        }
+        return map; 
+    }, [logs]);
     
     const prevMonth = () => {
         if (activeScope === 'today' || activeScope === 'week') {
