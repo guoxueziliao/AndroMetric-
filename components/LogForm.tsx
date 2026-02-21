@@ -51,15 +51,29 @@ const QualityScoreRing = ({ score }: { score: number }) => {
 };
 
 const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirtyStateChange, logs, partners }) => {
-    const [log, setLog] = useState<LogEntry>(existingLog || { 
-        date: logDate || '', status: 'completed', updatedAt: Date.now(),
-        morning: { id: `m_${Date.now()}`, timestamp: Date.now(), wokeWithErection: true, wokenByErection: false },
-        sleep: { id: `s_${Date.now()}`, quality: 3, naturalAwakening: true, nocturnalEmission: false, withPartner: false, naps: [], hasDream: false, dreamTypes: [], environment: { location: 'home', temperature: 'comfortable' } },
-        exercise: [], sex: [], masturbation: [], dailyEvents: [], tags: [],
-        health: { isSick: false, symptoms: [], medications: [] },
-        changeHistory: [],
-        alcoholRecords: []
-    } as LogEntry);
+    const [log, setLog] = useState<LogEntry>(() => {
+        const base = existingLog || { 
+            date: logDate || '', status: 'completed', updatedAt: Date.now(),
+            morning: { id: `m_${Date.now()}`, timestamp: Date.now(), wokeWithErection: true, wokenByErection: false },
+            sleep: { id: `s_${Date.now()}`, quality: 3, naturalAwakening: true, nocturnalEmission: false, withPartner: false, naps: [], hasDream: false, dreamTypes: [], environment: { location: 'home', temperature: 'comfortable' } },
+            exercise: [], sex: [], masturbation: [], dailyEvents: [], tags: [],
+            health: { isSick: false, symptoms: [], medications: [] },
+            changeHistory: [],
+            alcoholRecords: []
+        } as LogEntry;
+
+        // Ensure morning state is fully initialized with defaults
+        // This fixes the bug where "wokeWithErection" appears ON by default but saves as undefined
+        return {
+            ...base,
+            morning: {
+                ...base.morning,
+                wokeWithErection: base.morning?.wokeWithErection ?? true,
+                id: base.morning?.id || `m_${Date.now()}`,
+                timestamp: base.morning?.timestamp || Date.now()
+            } as any
+        };
+    });
 
     const [activeMidTab, setActiveMidTab] = useState<MidTabType>('life');
     const [modalState, setModalState] = useState({ bev: false, sex: false, mb: false, ex: false, alc: false, nap: false });

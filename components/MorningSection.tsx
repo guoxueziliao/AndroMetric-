@@ -39,7 +39,7 @@ const MorningSection: React.FC<MorningSectionProps> = ({ morning, onChange }) =>
                 <input 
                     type="checkbox" 
                     className="toggle-checkbox" 
-                    checked={morning.wokeWithErection ?? true} 
+                    checked={morning.wokeWithErection === true} 
                     onChange={(e) => onChange('wokeWithErection', e.target.checked)} 
                 />
             </div>
