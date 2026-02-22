@@ -4,7 +4,6 @@ import { Upload, Download, Info, Settings, Save, AlertTriangle, GitMerge, Replac
 import { LogEntry, BackupState, AppSettings, PartnerProfile, Snapshot } from '../types';
 import Modal from './Modal';
 import { useLocalStorage } from '../hooks/useLocalStorage';
-import DeveloperManualModal from './DeveloperManualModal';
 import { useData } from '../contexts/DataContext';
 import { useToast } from '../contexts/ToastContext';
 import { Logger } from '../services/LoggerService';
@@ -54,7 +53,6 @@ const MyView: React.FC<MyViewProps> = ({ settings, onUpdateSettings, installProm
   const [userName, setUserName] = useLocalStorage('userName', 'User');
   const [isEditingName, setIsEditingName] = useState(false);
   const [tempName, setTempName] = useState(userName);
-  const [isManualOpen, setIsManualOpen] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [exportButtonText, setExportButtonText] = useState('导出为通用 JSON');
@@ -362,17 +360,6 @@ const MyView: React.FC<MyViewProps> = ({ settings, onUpdateSettings, installProm
                 <ChevronRight size={18} className="text-slate-400"/>
             </button>
 
-            <button onClick={() => setIsManualOpen(true)} className="w-full bg-white dark:bg-slate-900 p-4 rounded-2xl flex items-center justify-between border border-slate-100 dark:border-slate-800 shadow-sm hover:scale-[1.01] transition-transform">
-                <div className="flex items-center space-x-3">
-                    <div className="p-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-xl"><Book size={20}/></div>
-                    <div className="text-left">
-                        <h3 className="font-bold text-brand-text dark:text-slate-200">开发者手册</h3>
-                        <p className="text-xs text-brand-muted dark:text-slate-500">设计哲学与架构文档</p>
-                    </div>
-                </div>
-                <ChevronRight size={18} className="text-slate-400"/>
-            </button>
-
             {installPrompt && (
                 <button onClick={handleInstallApp} className="w-full bg-gradient-to-r from-brand-accent to-blue-600 p-4 rounded-2xl flex items-center justify-between shadow-md text-white hover:scale-[1.01] transition-transform">
                     <div className="flex items-center space-x-3">
@@ -570,9 +557,6 @@ const MyView: React.FC<MyViewProps> = ({ settings, onUpdateSettings, installProm
               </div>
           </div>
       </Modal>
-
-      {/* Manual Modal */}
-      <DeveloperManualModal isOpen={isManualOpen} onClose={() => setIsManualOpen(false)} />
       
       {/* Tag Manager Modal */}
       <Suspense fallback={null}>

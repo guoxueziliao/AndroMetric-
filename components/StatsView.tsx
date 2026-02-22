@@ -87,7 +87,6 @@ const StatsView: React.FC<{ isDarkMode: boolean }> = ({ isDarkMode }) => {
     const { logs: rawLogs } = useData();
     const logs = useMemo(() => Array.isArray(rawLogs) ? rawLogs : [], [rawLogs]);
     const [activeTab, setActiveTab] = useState<'overview' | 'sexual' | 'behavior'>('overview');
-    const [privacyMode, setPrivacyMode] = useState(false);
     const [trendComparison, setTrendComparison] = useState<MetricId>('sleep');
 
     const displayLogs = useMemo(() => {
@@ -136,7 +135,6 @@ const StatsView: React.FC<{ isDarkMode: boolean }> = ({ isDarkMode }) => {
             <div className="space-y-6 pb-24">
                 <div className="flex justify-between items-center px-1">
                     <h2 className="text-2xl font-bold text-brand-text dark:text-slate-100">数据洞察</h2>
-                    <button onClick={() => setPrivacyMode(!privacyMode)} className={`p-2 rounded-full transition-colors ${privacyMode ? 'bg-brand-accent text-white' : 'bg-white dark:bg-slate-800 text-brand-muted border border-slate-100 dark:border-slate-700'}`}>{privacyMode ? <EyeOff size={18} /> : <Eye size={18} />}</button>
                 </div>
 
                 <div className="flex p-1 bg-brand-primary dark:bg-slate-900/50 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-x-auto scrollbar-hide">
@@ -231,7 +229,7 @@ const StatsView: React.FC<{ isDarkMode: boolean }> = ({ isDarkMode }) => {
                             <div className="w-full h-[300px]">
                                 <Bar 
                                     data={{
-                                        labels: privacyMode ? xpStats.topTags.slice(0, 10).map((_, i) => `XP ${i+1}`) : xpStats.topTags.slice(0, 10).map(t => t.tag),
+                                        labels: xpStats.topTags.slice(0, 10).map(t => t.tag),
                                         datasets: [{ label: '频次', data: xpStats.topTags.slice(0, 10).map(t => t.count), backgroundColor: 'rgba(139, 92, 246, 0.6)', borderRadius: 4, barThickness: 16 }]
                                     } as any} 
                                     options={{ 
