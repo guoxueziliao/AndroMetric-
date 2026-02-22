@@ -3,8 +3,9 @@ import { useData } from '../contexts/DataContext';
 import { StatsEngine, MetricId, METRICS } from '../utils/StatsEngine';
 import { calculateXpStats, DimensionStat } from '../utils/xpStats';
 import { generateInsights, Insight } from '../utils/insights';
-import { Activity, Zap, TrendingUp, Moon, BrainCircuit, Clock, Radar, CheckCircle, ArrowDown, AlertTriangle, Info, BarChart3, LayoutGrid, Tag, Eye, EyeOff } from 'lucide-react';
+import { Activity, Zap, TrendingUp, Moon, BrainCircuit, Clock, Radar, CheckCircle, ArrowDown, AlertTriangle, Info, BarChart3, LayoutGrid, Tag, Eye, EyeOff, Sparkles } from 'lucide-react';
 import ErrorBoundary from './ErrorBoundary';
+import { getMasturbationRecommendations } from '../utils/recommendationEngine';
 import { Chart, CategoryScale, LinearScale, PointElement, LineElement, BarElement, BarController, Tooltip, Legend, Filler, ScatterController, LineController, BubbleController, ArcElement, PieController, DoughnutController, RadialLinearScale, RadarController, PolarAreaController } from 'chart.js';
 import { Line, Bar, Doughnut, Radar as RadarChart } from 'react-chartjs-2';
 
@@ -97,6 +98,7 @@ const StatsView: React.FC<{ isDarkMode: boolean }> = ({ isDarkMode }) => {
     const statsEngine = useMemo(() => new StatsEngine(displayLogs), [displayLogs]);
     const insights = useMemo(() => generateInsights(displayLogs), [displayLogs]);
     const xpStats = useMemo(() => calculateXpStats(displayLogs), [displayLogs]);
+    const recommendations = useMemo(() => getMasturbationRecommendations(displayLogs), [displayLogs]);
 
     const theme = useMemo(() => ({
         grid: isDarkMode ? '#1e293b' : '#f1f5f9', 
@@ -179,6 +181,25 @@ const StatsView: React.FC<{ isDarkMode: boolean }> = ({ isDarkMode }) => {
 
                 {activeTab === 'behavior' && (
                     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
+                        {recommendations.length > 0 && (
+                            <div className="bg-gradient-to-r from-pink-50 to-purple-50 dark:from-pink-900/10 dark:to-purple-900/10 p-5 rounded-3xl border border-pink-100 dark:border-pink-900/30">
+                                <div className="flex items-center gap-2 mb-3">
+                                    <Sparkles size={16} className="text-pink-500" />
+                                    <span className="text-xs font-black text-pink-600 dark:text-pink-400 uppercase tracking-widest">为你推荐 (Based on History)</span>
+                                </div>
+                                <div className="flex flex-wrap gap-2">
+                                    {recommendations.map(rec => (
+                                        <div 
+                                            key={`${rec.type}-${rec.value}`}
+                                            className="px-3 py-1.5 bg-white dark:bg-slate-800 text-xs font-bold text-slate-600 dark:text-slate-300 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex items-center gap-2"
+                                        >
+                                            <span>{rec.value}</span>
+                                            <span className="text-[9px] text-slate-400 bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded-md">{rec.type === 'tag' ? '标签' : '工具'}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                         <ChartCard title="偏好雷达 (XP维度)" icon={Radar}>
                             <div className="w-full h-[300px] flex items-center justify-center">
                                 <RadarChart 

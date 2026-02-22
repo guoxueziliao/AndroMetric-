@@ -7,7 +7,6 @@ import { XP_DIMENSIONS_LIST } from '../utils/constants';
 import { useData } from '../contexts/DataContext';
 import { useToast } from '../contexts/ToastContext';
 import { validateTag } from '../utils/tagValidators';
-import { getMasturbationRecommendations, Recommendation } from '../utils/recommendationEngine';
 
 const TagManager = lazy(() => import('./TagManager'));
 
@@ -81,53 +80,6 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
     const [isTagManagerOpen, setIsTagManagerOpen] = useState(false);
 
     const inventory = useMemo(() => calculateInventory(logs), [logs, isOpen]);
-    const recommendations = useMemo(() => getMasturbationRecommendations(logs), [logs]);
-
-    const handleApplyRecommendation = (rec: Recommendation) => {
-        if (rec.type === 'tool') {
-            if (!data.tools.includes(rec.value)) {
-                updateData({ tools: [...data.tools, rec.value] });
-                showToast(`已添加工具: ${rec.value}`);
-            }
-        } else if (rec.type === 'tag') {
-            // Logic to add tag to content item
-            let targetItem = editingItem;
-            
-            // If not editing, try to find the first item or create a new one
-            if (!targetItem) {
-                if (data.contentItems.length > 0) {
-                    // Update the first item directly
-                    const firstItem = data.contentItems[0];
-                    if (!firstItem.xpTags?.includes(rec.value)) {
-                        const newItems = data.contentItems.map((item, idx) => 
-                            idx === 0 ? { ...item, xpTags: [...(item.xpTags || []), rec.value] } : item
-                        );
-                        updateData({ contentItems: newItems });
-                        showToast(`已添加标签: ${rec.value}`);
-                    }
-                    return;
-                } else {
-                    // Create a new default item
-                    const newItem: ContentItem = { 
-                        id: Date.now().toString(), 
-                        type: '幻想', 
-                        xpTags: [rec.value],
-                        platform: '',
-                        title: ''
-                    };
-                    updateData({ contentItems: [newItem] });
-                    showToast(`已创建新素材并添加标签: ${rec.value}`);
-                    return;
-                }
-            }
-
-            // If editing, update the editing state
-            if (targetItem && !targetItem.xpTags?.includes(rec.value)) {
-                setEditingItem({ ...targetItem, xpTags: [...(targetItem.xpTags || []), rec.value] });
-                showToast(`已添加标签: ${rec.value}`);
-            }
-        }
-    };
 
     const tagUsageMap = useMemo(() => {
         const counts: Record<string, number> = {};
@@ -308,28 +260,6 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                     </div>
                     <span className="text-sm font-black text-slate-800 dark:text-slate-100">{inventory}</span>
                 </div>
-
-                {/* Recommendations Section */}
-                {recommendations.length > 0 && (
-                    <div className="bg-gradient-to-r from-pink-50 to-purple-50 dark:from-pink-900/10 dark:to-purple-900/10 p-4 rounded-2xl border border-pink-100 dark:border-pink-900/30">
-                        <div className="flex items-center gap-2 mb-3">
-                            <Sparkles size={14} className="text-pink-500" />
-                            <span className="text-xs font-black text-pink-600 dark:text-pink-400 uppercase tracking-widest">为你推荐 (Based on History)</span>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                            {recommendations.map(rec => (
-                                <button 
-                                    key={`${rec.type}-${rec.value}`}
-                                    onClick={() => handleApplyRecommendation(rec)}
-                                    className="px-3 py-1.5 bg-white dark:bg-slate-800 text-xs font-bold text-slate-600 dark:text-slate-300 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex items-center gap-2 hover:text-pink-500 hover:border-pink-200 transition-all active:scale-95"
-                                >
-                                    <span>{rec.value}</span>
-                                    <span className="text-[9px] text-slate-400 bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded-md">{rec.type === 'tag' ? '标签' : '工具'}</span>
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                )}
 
                 {/* 1. Time Grid - 自动时长逻辑核心 */}
                 <div className="space-y-3">
