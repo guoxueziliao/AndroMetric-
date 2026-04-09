@@ -1,108 +1,286 @@
+// Service Worker for Hardness Diary PWA
+// Optimized for mobile with offline-first strategy
 
-const CACHE_NAME = 'hardness-diary-cache-v7';
-const urlsToCache = [
+const CACHE_VERSION = 'v8';
+const CACHE_NAME = `hardness-diary-${CACHE_VERSION}`;
+const STATIC_CACHE = `${CACHE_NAME}-static`;
+const IMAGE_CACHE = `${CACHE_NAME}-images`;
+const DATA_CACHE = `${CACHE_NAME}-data`;
+
+// Core app assets - must be available offline
+const CORE_ASSETS = [
   '/',
   '/index.html',
-  '/index.tsx',
   '/manifest.json',
-  '/icon-192.png',
-  '/icon-512.png',
-  // App dependencies from importmap
-  'https://cdn.tailwindcss.com',
-  'https://aistudiocdn.com/react@^18.3.1',
-  'https://aistudiocdn.com/react-dom@^18.3.1/',
-  'https://aistudiocdn.com/react@^18.3.1/',
-  'https://aistudiocdn.com/lucide-react@0.344.0',
-  'https://aistudiocdn.com/chart.js@^4.4.3/+esm',
-  'https://aistudiocdn.com/marked@^13.0.2',
-  'https://aistudiocdn.com/react-chartjs-2@^5.3.1'
+  '/icons/icon-192x192.png',
+  '/icons/icon-512x512.png'
 ];
 
-// Install event: caches the core assets.
-self.addEventListener('install', event => {
+// External dependencies to cache
+const EXTERNAL_ASSETS = [
+  'https://cdn.tailwindcss.com'
+];
+
+// IndexedDB setup for dynamic caching
+const DB_NAME = 'HardnessDiarySW';
+const DB_VERSION = 1;
+
+// Install event - cache core assets
+self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => {
-        console.log('Opened cache');
-        // Use { cache: 'reload' } to bypass browser cache for dependencies during install
-        const requests = urlsToCache.map(url => new Request(url, { cache: 'reload' }));
-        return cache.addAll(requests);
+    caches.open(STATIC_CACHE)
+      .then((cache) => {
+        console.log('[SW] Caching core assets');
+        return cache.addAll(CORE_ASSETS);
+      })
+      .then(() => {
+        return caches.open(STATIC_CACHE);
+      })
+      .then((cache) => {
+        // Cache external assets with CORS mode
+        const externalRequests = EXTERNAL_ASSETS.map(url => {
+          return fetch(url, { mode: 'cors', cache: 'reload' })
+            .then(response => {
+              if (response.ok) {
+                return cache.put(url, response);
+              }
+            })
+            .catch(err => console.warn('[SW] Failed to cache external:', url, err));
+        });
+        return Promise.allSettled(externalRequests);
+      })
+      .then(() => {
+        console.log('[SW] Install complete');
+        return self.skipWaiting();
+      })
+      .catch((err) => {
+        console.error('[SW] Install failed:', err);
       })
   );
-  self.skipWaiting(); // Force activation
 });
 
-// Fetch event: Network First for local, Cache First for external
-self.addEventListener('fetch', event => {
-  if (event.request.method !== 'GET') return;
+// Activate event - clean up old caches
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys()
+      .then((cacheNames) => {
+        return Promise.all(
+          cacheNames
+            .filter((name) => name.startsWith('hardness-diary-') && !name.includes(CACHE_VERSION))
+            .map((name) => {
+              console.log('[SW] Deleting old cache:', name);
+              return caches.delete(name);
+            })
+        );
+      })
+      .then(() => {
+        console.log('[SW] Activation complete');
+        return self.clients.claim();
+      })
+  );
+});
 
-  const url = new URL(event.request.url);
-  const isLocal = url.origin === location.origin;
-
-  // SPA Navigation Fallback
-  if (event.request.mode === 'navigate') {
+// Fetch event - smart caching strategy
+self.addEventListener('fetch', (event) => {
+  const { request } = event;
+  const url = new URL(request.url);
+  
+  // Skip non-GET requests
+  if (request.method !== 'GET') return;
+  
+  // Skip chrome extensions and non-http requests
+  if (!url.protocol.startsWith('http')) return;
+  
+  // Strategy 1: Network First for API/data requests
+  if (url.pathname.startsWith('/api/') || request.headers.get('Accept')?.includes('application/json')) {
+    event.respondWith(networkFirst(request, DATA_CACHE));
+    return;
+  }
+  
+  // Strategy 2: Cache First for images
+  if (request.destination === 'image' || url.pathname.match(/\.(png|jpg|jpeg|gif|svg|webp)$/)) {
+    event.respondWith(cacheFirst(request, IMAGE_CACHE));
+    return;
+  }
+  
+  // Strategy 3: Stale While Revalidate for static assets
+  if (url.pathname.match(/\.(js|css|woff|woff2)$/)) {
+    event.respondWith(staleWhileRevalidate(request, STATIC_CACHE));
+    return;
+  }
+  
+  // Strategy 4: Network First with offline fallback for navigation
+  if (request.mode === 'navigate') {
     event.respondWith(
-      fetch(event.request)
+      fetch(request)
         .catch(() => caches.match('/index.html'))
+        .catch(() => new Response('Offline - App not cached', { status: 503 }))
     );
     return;
   }
-
-  // Local Assets: Network First -> Cache
-  // Ensures user gets latest version of app code when online
-  if (isLocal) {
-    event.respondWith(
-      fetch(event.request)
-        .then(networkResponse => {
-          // Check for valid response
-          if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
-            return networkResponse;
-          }
-          const responseToCache = networkResponse.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(event.request, responseToCache));
-          return networkResponse;
-        })
-        .catch(() => caches.match(event.request))
-    );
+  
+  // Strategy 5: Cache First for external CDN resources
+  if (EXTERNAL_ASSETS.some(asset => url.href.includes(asset))) {
+    event.respondWith(cacheFirst(request, STATIC_CACHE));
     return;
   }
+  
+  // Default: Network First
+  event.respondWith(networkFirst(request, STATIC_CACHE));
+});
 
-  // External/CDN Assets: Cache First -> Network
-  // Improves performance for libraries
-  event.respondWith(
-    caches.match(event.request)
-      .then(cachedResponse => {
-        if (cachedResponse) {
-          return cachedResponse;
-        }
-        return fetch(event.request).then(
-          networkResponse => {
-            // Allow cors responses for CDNs
-            if (!networkResponse || networkResponse.status !== 200 || (networkResponse.type !== 'basic' && networkResponse.type !== 'cors')) {
-              return networkResponse;
-            }
-            const responseToCache = networkResponse.clone();
-            caches.open(CACHE_NAME).then(cache => cache.put(event.request, responseToCache));
-            return networkResponse;
-          }
-        ).catch(err => console.error('Fetch failed for external asset:', err));
-      })
+// Network First strategy - tries network, falls back to cache
+async function networkFirst(request, cacheName) {
+  try {
+    const networkResponse = await fetch(request);
+    
+    if (networkResponse.ok) {
+      const cache = await caches.open(cacheName);
+      cache.put(request, networkResponse.clone());
+    }
+    
+    return networkResponse;
+  } catch (error) {
+    console.log('[SW] Network failed, trying cache:', request.url);
+    const cachedResponse = await caches.match(request);
+    
+    if (cachedResponse) {
+      return cachedResponse;
+    }
+    
+    throw error;
+  }
+}
+
+// Cache First strategy - returns cache if available
+async function cacheFirst(request, cacheName) {
+  const cachedResponse = await caches.match(request);
+  
+  if (cachedResponse) {
+    // Refresh cache in background for next time
+    caches.open(cacheName).then(cache => {
+      fetch(request).then(response => {
+        if (response.ok) cache.put(request, response);
+      }).catch(() => {});
+    });
+    return cachedResponse;
+  }
+  
+  try {
+    const networkResponse = await fetch(request);
+    
+    if (networkResponse.ok) {
+      const cache = await caches.open(cacheName);
+      cache.put(request, networkResponse.clone());
+    }
+    
+    return networkResponse;
+  } catch (error) {
+    // Return a fallback image if available
+    if (request.destination === 'image') {
+      return caches.match('/icons/icon-192x192.png');
+    }
+    throw error;
+  }
+}
+
+// Stale While Revalidate - return cache immediately, update in background
+async function staleWhileRevalidate(request, cacheName) {
+  const cachedResponse = await caches.match(request);
+  
+  const fetchPromise = fetch(request).then(async (networkResponse) => {
+    if (networkResponse.ok) {
+      const cache = await caches.open(cacheName);
+      cache.put(request, networkResponse.clone());
+    }
+    return networkResponse;
+  }).catch(() => cachedResponse);
+  
+  return cachedResponse || fetchPromise;
+}
+
+// Background Sync for offline actions
+self.addEventListener('sync', (event) => {
+  if (event.tag === 'sync-logs') {
+    event.waitUntil(syncLogs());
+  }
+});
+
+async function syncLogs() {
+  console.log('[SW] Background sync triggered');
+  // Logic for syncing pending logs when back online
+  const clients = await self.clients.matchAll();
+  clients.forEach(client => {
+    client.postMessage({
+      type: 'SYNC_COMPLETE',
+      timestamp: Date.now()
+    });
+  });
+}
+
+// Push notifications (placeholder for future)
+self.addEventListener('push', (event) => {
+  if (!event.data) return;
+  
+  const data = event.data.json();
+  const options = {
+    body: data.body,
+    icon: '/icons/icon-192x192.png',
+    badge: '/icons/icon-72x72.png',
+    tag: data.tag || 'default',
+    requireInteraction: false
+  };
+  
+  event.waitUntil(
+    self.registration.showNotification(data.title || '硬度日记', options)
   );
 });
 
-// Activate event: cleans up old caches.
-self.addEventListener('activate', event => {
-  const cacheWhitelist = [CACHE_NAME];
+// Notification click handler
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  
   event.waitUntil(
-    caches.keys().then(cacheNames => {
-      return Promise.all(
-        cacheNames.map(cacheName => {
-          if (cacheWhitelist.indexOf(cacheName) === -1) {
-            return caches.delete(cacheName);
-          }
-        })
-      );
+    self.clients.matchAll({ type: 'window' }).then((clientList) => {
+      for (const client of clientList) {
+        if (client.url && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      if (self.clients.openWindow) {
+        return self.clients.openWindow('/');
+      }
     })
   );
-  self.clients.claim(); // Take control immediately
 });
+
+// Message handling from main app
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+  
+  if (event.data && event.data.type === 'GET_VERSION') {
+    event.ports[0].postMessage({ version: CACHE_VERSION });
+  }
+  
+  if (event.data && event.data.type === 'CACHE_URLS') {
+    const urls = event.data.urls || [];
+    event.waitUntil(
+      caches.open(DATA_CACHE).then(cache => {
+        return Promise.all(
+          urls.map(url => fetch(url).then(res => cache.put(url, res)))
+        );
+      })
+    );
+  }
+});
+
+// Periodic background sync (if supported)
+self.addEventListener('periodicsync', (event) => {
+  if (event.tag === 'periodic-sync') {
+    event.waitUntil(syncLogs());
+  }
+});
+
+console.log('[SW] Service Worker loaded, version:', CACHE_VERSION);

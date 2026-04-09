@@ -12,13 +12,13 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { DataHealthReport } from '../utils/dataHealthCheck';
 import { db } from '../db';
 import { LATEST_VERSION } from '../utils/migration';
+import { InstallButton } from './PWAInstallPrompt';
 
 const TagManager = lazy(() => import('./TagManager'));
 
 interface MyViewProps {
   settings: AppSettings;
   onUpdateSettings: (newSettings: AppSettings) => void;
-  installPrompt: any;
   onShowVersionHistory: () => void;
   onNavigateToLog: (date: string) => void;
 }
@@ -30,7 +30,7 @@ const StatBox = ({ label, value, colorClass, bgClass }: { label: string, value: 
     </div>
 );
 
-const MyView: React.FC<MyViewProps> = ({ settings, onUpdateSettings, installPrompt, onShowVersionHistory, onNavigateToLog }) => {
+const MyView: React.FC<MyViewProps> = ({ settings, onUpdateSettings, onShowVersionHistory, onNavigateToLog }) => {
   const { logs: rawLogs, partners, importLogs } = useData();
   const logs = useMemo(() => Array.isArray(rawLogs) ? rawLogs : [], [rawLogs]);
   const { showToast } = useToast();
@@ -256,12 +256,7 @@ const MyView: React.FC<MyViewProps> = ({ settings, onUpdateSettings, installProm
       }
   };
   
-  const handleInstallApp = async () => {
-      if (!installPrompt) return;
-      installPrompt.prompt();
-      const { outcome } = await installPrompt.userChoice;
-      console.log(`User response to the install prompt: ${outcome}`);
-  };
+
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -360,18 +355,7 @@ const MyView: React.FC<MyViewProps> = ({ settings, onUpdateSettings, installProm
                 <ChevronRight size={18} className="text-slate-400"/>
             </button>
 
-            {installPrompt && (
-                <button onClick={handleInstallApp} className="w-full bg-gradient-to-r from-brand-accent to-blue-600 p-4 rounded-2xl flex items-center justify-between shadow-md text-white hover:scale-[1.01] transition-transform">
-                    <div className="flex items-center space-x-3">
-                        <div className="p-2 bg-white/20 rounded-xl"><Smartphone size={20}/></div>
-                        <div className="text-left">
-                            <h3 className="font-bold">安装应用 (PWA)</h3>
-                            <p className="text-xs opacity-80">添加到桌面，体验更佳</p>
-                        </div>
-                    </div>
-                    <Download size={18}/>
-                </button>
-            )}
+<InstallButton className="w-full" />
         </div>
       </div>
 

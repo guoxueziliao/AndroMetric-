@@ -11,16 +11,18 @@ import Modal from './components/Modal';
 import SexRecordModal from './components/SexRecordModal';
 import MasturbationRecordModal from './components/MasturbationRecordModal';
 import ExerciseRecordModal from './components/ExerciseSelectorModal';
-import AlcoholRecordModal from './components/AlcoholRecordModal'; 
+import AlcoholRecordModal from './components/AlcoholRecordModal';
 import VersionHistoryModal from './components/VersionHistoryModal';
 import NapRecordModal from './components/NapRecordModal';
 import Welcome from './components/Welcome';
+import PWAInstallPrompt from './components/PWAInstallPrompt';
 import { useLogs } from './hooks/useLogs';
 import { ToastProvider, useToast } from './contexts/ToastContext';
 import { DataContext } from './contexts/DataContext';
 import { pluginManager } from './services/PluginManager';
 import { AlcoholAnalysisPlugin } from './plugins/CoreAnalysis';
 import { StorageService } from './services/StorageService';
+import { registerServiceWorker } from './hooks/usePWA';
 
 // Lazy Load Heavy Views
 const MyView = lazy(() => import('./components/MyView'));
@@ -64,7 +66,7 @@ const AppContent: React.FC<{ data: any }> = ({ data }) => {
   const [isBlurred, setIsBlurred] = useState(false);
   
   // PWA Install Prompt State
-  const [installPrompt, setInstallPrompt] = useState<any>(null);
+
   
   // Quick Record Modals
   const [isQuickSexModalOpen, setIsQuickSexModalOpen] = useState(false);
@@ -99,13 +101,12 @@ const AppContent: React.FC<{ data: any }> = ({ data }) => {
     pluginManager.register(AlcoholAnalysisPlugin);
     pluginManager.initAll();
 
-    const handleBeforeInstallPrompt = (e: any) => { e.preventDefault(); setInstallPrompt(e); };
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     const handleVisibilityChange = () => { setIsBlurred(document.hidden); };
     document.addEventListener('visibilitychange', handleVisibilityChange);
-    
+
+    registerServiceWorker();
+
     return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, []);
@@ -257,7 +258,7 @@ const AppContent: React.FC<{ data: any }> = ({ data }) => {
             <Suspense fallback={<LoadingFallback />}>
                 {activeMainView === 'stats' && <StatsView isDarkMode={isDarkMode} />}
                 {activeMainView === 'sexlife' && <SexLifeView />}
-                {activeMainView === 'my' && <MyView settings={settings} onUpdateSettings={setSettings} installPrompt={installPrompt} onShowVersionHistory={() => setIsVersionHistoryOpen(true)} onNavigateToLog={handleEdit} />}
+                {activeMainView === 'my' && <MyView settings={settings} onUpdateSettings={setSettings} onShowVersionHistory={() => setIsVersionHistoryOpen(true)} onNavigateToLog={handleEdit} />}
             </Suspense>
           </main>
         )}
@@ -303,10 +304,12 @@ const AppContent: React.FC<{ data: any }> = ({ data }) => {
         <MasturbationRecordModal isOpen={isQuickMbModalOpen} onClose={() => { setIsQuickMbModalOpen(false); setMbToFinish(null); }} onSave={(record) => wrapAction(async () => { await quickAddMasturbation(record); setIsQuickMbModalOpen(false); setMbToFinish(null); }, '自慰记录已完成')} dateStr="现在" initialData={mbToFinish || undefined} logs={logs} partners={partners} />
         <ExerciseRecordModal isOpen={isExerciseModalOpen} onClose={() => { setIsExerciseModalOpen(false); setExerciseToFinish(null); }} onSave={onSaveExercise} initialData={exerciseToFinish || undefined} mode={exerciseToFinish ? 'finish' : 'start'} />
         <AlcoholRecordModal isOpen={isAlcoholModalOpen} onClose={() => { setIsAlcoholModalOpen(false); setAlcToFinish(null); }} initialData={alcToFinish || undefined} onSave={(r) => wrapAction(async () => await saveAlcoholRecord(r), '饮酒记录已保存')} />
-        <NapRecordModal isOpen={isNapModalOpen} onClose={() => { setIsNapModalOpen(false); setNapToFinish(null); }} onSave={handleSaveNapFlow} initialData={napToFinish || undefined} />
-      </div>
+      <NapRecordModal isOpen={isNapModalOpen} onClose={() => { setIsNapModalOpen(false); setNapToFinish(null); }} onSave={handleSaveNapFlow} initialData={napToFinish || undefined} />
+
+      <PWAInstallPrompt />
     </div>
-  );
+  </div>
+);
 };
 
 const App: React.FC = () => {
