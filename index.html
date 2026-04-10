@@ -8,11 +8,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>硬度日记</title>
 
-    <meta name="theme-color" content="#F5F7FA" />
+<meta name="theme-color" content="#020617" media="(prefers-color-scheme: dark)" />
+<meta name="theme-color" content="#F5F7FA" media="(prefers-color-scheme: light)" />
 
-  <!-- iOS PWA Support -->
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<!-- iOS PWA Support -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-touch-fullscreen" content="yes">
   <meta name="apple-mobile-web-app-title" content="硬度日记">
   <link rel="apple-touch-icon" href="/icons/icon-180x180.png">
   <link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152x152.png">
@@ -141,13 +143,45 @@
         border: 1px solid rgba(255, 255, 255, 0.05);
       }
       
-      /* Dark mode card optimization */
-      .dark-card {
-        background: linear-gradient(145deg, rgba(30, 41, 59, 0.4), rgba(15, 23, 42, 0.4));
-        backdrop-filter: blur(8px);
-        border: 1px solid rgba(255, 255, 255, 0.05);
-      }
-    </style>
+/* Dark mode card optimization */
+.dark-card {
+background: linear-gradient(145deg, rgba(30, 41, 59, 0.4), rgba(15, 23, 42, 0.4));
+backdrop-filter: blur(8px);
+border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Fullscreen notch/safe area support */
+.safe-area-top {
+padding-top: env(safe-area-inset-top);
+}
+
+.safe-area-bottom {
+padding-bottom: env(safe-area-inset-bottom);
+}
+
+.safe-area-left {
+padding-left: env(safe-area-inset-left);
+}
+
+.safe-area-right {
+padding-right: env(safe-area-inset-right);
+}
+
+/* Status bar background for fullscreen mode */
+.status-bar-bg {
+background-color: #F5F7FA;
+transition: background-color 0.3s ease;
+}
+
+.dark .status-bar-bg {
+background-color: #020617;
+}
+
+/* Hide scrollbar for iOS momentum scrolling */
+* {
+-webkit-overflow-scrolling: touch;
+}
+</style>
 </head>
   <body class="bg-brand-bg text-brand-text dark:bg-[#020617] dark:text-slate-100 transition-colors duration-500 selection:bg-blue-100 selection:text-blue-900">
     <div id="root"></div>

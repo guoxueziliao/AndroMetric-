@@ -33,8 +33,8 @@ export default defineConfig({
         ],
         start_url: ".",
         display: "standalone",
-        background_color: "#f8fafc",
-        theme_color: "#3b82f6"
+        background_color: "#020617",
+        theme_color: "#020617"
       },
       workbox: {
         // Cache external CDNs used in index.html

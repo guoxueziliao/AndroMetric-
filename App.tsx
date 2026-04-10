@@ -240,7 +240,7 @@ const AppContent: React.FC<{ data: any }> = ({ data }) => {
   if (!hasSeenWelcome) return <Welcome onGetStarted={() => { window.localStorage.setItem('hasSeenWelcomeScreen', 'true'); setHasSeenWelcome(true); }} />;
 
   return (
-    <div className={`min-h-screen bg-brand-bg dark:bg-slate-950 text-brand-text dark:text-slate-200 font-sans transition-all duration-500 ${isBlurred ? 'blur-md grayscale opacity-50' : ''}`}>
+    <div className={`min-h-screen bg-brand-bg dark:bg-slate-950 text-brand-text dark:text-slate-200 font-sans transition-all duration-500 safe-area-top safe-area-bottom safe-area-left safe-area-right ${isBlurred ? 'blur-md grayscale opacity-50' : ''}`}>
       <div className="container mx-auto max-w-lg p-4 pb-32">
         {view === 'dashboard' && (
           <main className="animate-in fade-in duration-300">
