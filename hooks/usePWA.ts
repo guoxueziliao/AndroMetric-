@@ -8,6 +8,8 @@ interface PWAState {
   installPrompt: Event | null;
   swVersion: string;
   updateAvailable: boolean;
+  isAndroid: boolean;
+  isIOS: boolean;
 }
 
 export function usePWA() {
