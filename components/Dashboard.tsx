@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { LogEntry, ExerciseRecord, SexRecordDetails, MasturbationRecordDetails, NapRecord, AlcoholRecord } from '../types';
 import CalendarHeatmap from './CalendarHeatmap';
 import { 
@@ -77,66 +77,86 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
       return '晚上好';
   }, []);
 
-  const handleDateClickForSummary = (date: string) => {
+  const handleDateClickForSummary = useCallback((date: string) => {
     const log = logs.find(l => l.date === date);
     if (log) {
-        if (log.status === 'pending') onEdit(log.date);
-        else { 
-          setSummaryLog(log); 
-          setActiveSummaryTab('diary');
-          setIsSummaryModalOpen(true); 
-        }
-    } else { 
-        setSummaryLog(hydrateLog({ date }));
+      if (log.status === 'pending') onEdit(log.date);
+      else {
+        setSummaryLog(log);
         setActiveSummaryTab('diary');
         setIsSummaryModalOpen(true);
+      }
+    } else {
+      setSummaryLog(hydrateLog({ date }));
+      setActiveSummaryTab('diary');
+      setIsSummaryModalOpen(true);
     }
-  };
+  }, [logs, onEdit]);
 
-  const handleNavigateDate = (direction: number) => {
+  const handleNavigateDate = useCallback((direction: number) => {
     if (!summaryLog) return;
     const current = new Date(summaryLog.date + 'T12:00:00');
     current.setDate(current.getDate() + direction);
     const targetDateStr = current.toISOString().split('T')[0];
-    
+
     const existing = logs.find(l => l.date === targetDateStr);
     setSummaryLog(existing || hydrateLog({ date: targetDateStr }));
-  };
+  }, [summaryLog, logs]);
 
-  const handleDeleteRecord = (date: string) => {
-      setDateToDelete(date);
-      setIsDeleteDialogOpen(true);
-  };
+  const handleDeleteRecord = useCallback((date: string) => {
+    setDateToDelete(date);
+    setIsDeleteDialogOpen(true);
+  }, []);
 
-  const confirmDelete = async () => {
-      if (dateToDelete) {
-          await deleteLog(dateToDelete);
-          setIsSummaryModalOpen(false);
-          showToast('记录已成功删除', 'success');
+  const confirmDelete = useCallback(async () => {
+    if (dateToDelete) {
+      await deleteLog(dateToDelete);
+      setIsSummaryModalOpen(false);
+      showToast('记录已成功删除', 'success');
+    }
+  }, [dateToDelete, deleteLog, showToast]);
+
+  const handleRequestCancel = useCallback((type: 'sleep' | 'nap' | 'mb' | 'exercise' | 'alcohol') => {
+    setTaskToCancel(type);
+  }, []);
+
+  const confirmCancel = useCallback(async () => {
+    if (!taskToCancel) return;
+    try {
+      switch(taskToCancel) {
+        case 'sleep': await toggleSleepLog(pendingLog || undefined); break;
+        case 'nap': await cancelOngoingNap(); break;
+        case 'mb': await cancelOngoingMasturbation(); break;
+        case 'exercise': await cancelOngoingExercise(); break;
+        case 'alcohol': await cancelAlcoholRecord(); break;
       }
-  };
+      showToast('记录已取消', 'info');
+    } catch (e) {
+      showToast('取消失败', 'error');
+    } finally {
+      setTaskToCancel(null);
+    }
+  }, [taskToCancel, toggleSleepLog, cancelOngoingNap, cancelOngoingMasturbation, cancelOngoingExercise, cancelAlcoholRecord, pendingLog, showToast]);
 
-  const handleRequestCancel = (type: 'sleep' | 'nap' | 'mb' | 'exercise' | 'alcohol') => {
-      setTaskToCancel(type);
-  };
+  const handleEditPendingLog = useCallback(() => {
+    if (pendingLog) onEdit(pendingLog.date);
+  }, [pendingLog, onEdit]);
 
-  const confirmCancel = async () => {
-      if (!taskToCancel) return;
-      try {
-          switch(taskToCancel) {
-              case 'sleep': await toggleSleepLog(pendingLog || undefined); break;
-              case 'nap': await cancelOngoingNap(); break;
-              case 'mb': await cancelOngoingMasturbation(); break;
-              case 'exercise': await cancelOngoingExercise(); break;
-              case 'alcohol': await cancelAlcoholRecord(); break;
-          }
-          showToast('记录已取消', 'info');
-      } catch (e) {
-          showToast('取消失败', 'error');
-      } finally {
-          setTaskToCancel(null);
-      }
-  };
+  const handleFinishNapCallback = useCallback(() => {
+    if (ongoingNap) onFinishNap?.(ongoingNap);
+  }, [ongoingNap, onFinishNap]);
+
+  const handleFinishMasturbationCallback = useCallback(() => {
+    if (ongoingMb) onFinishMasturbation?.(ongoingMb);
+  }, [ongoingMb, onFinishMasturbation]);
+
+  const handleFinishExerciseCallback = useCallback(() => {
+    if (ongoingExercise) onFinishExercise?.(ongoingExercise);
+  }, [ongoingExercise, onFinishExercise]);
+
+  const handleFinishAlcoholCallback = useCallback(() => {
+    if (ongoingAlcohol) onFinishAlcohol?.(ongoingAlcohol);
+  }, [ongoingAlcohol, onFinishAlcohol]);
 
   const diaryDateInfo = useMemo(() => {
     if (!summaryLog) return { main: '', sub: '' };
