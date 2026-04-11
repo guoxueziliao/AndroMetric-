@@ -272,8 +272,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
             </section>
         )}
 
-        <CalendarHeatmap logs={logs} onDateClick={handleDateClickForSummary}>
-            <div className="grid grid-cols-2 gap-4 mt-2">
+<CalendarHeatmap logs={logs} onDateClick={handleDateClickForSummary}>
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mt-2">
                 <div className="bg-white dark:bg-slate-900/40 rounded-3xl p-4 shadow-soft border border-slate-100 dark:border-white/5 flex flex-col h-60 transition-colors overflow-hidden">
                     <div className="flex justify-between items-center mb-3 shrink-0">
                         <div className="flex items-center gap-2">
