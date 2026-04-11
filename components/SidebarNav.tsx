@@ -62,7 +62,7 @@ const SidebarNav: React.FC<SidebarNavProps> = ({
               onClick={() => onNavigate(item.id)}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all ${
+              className={`relative w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all ${
                 isActive
                   ? 'bg-brand-accent text-white shadow-lg shadow-brand-accent/30'
                   : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
@@ -75,13 +75,15 @@ const SidebarNav: React.FC<SidebarNavProps> = ({
               >
                 {item.label}
               </motion.span>
-              {isActive && (
-                <motion.div
-                  layoutId="activeIndicator"
-                  className="absolute left-0 w-1 h-8 bg-brand-accent rounded-r-full"
-                  transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                />
-              )}
+      {isActive && (
+              <motion.div
+                layoutId="activeIndicator"
+                className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-white rounded-r-full"
+                initial={{ opacity: 0, scaleY: 0 }}
+                animate={{ opacity: 1, scaleY: 1 }}
+                transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+              />
+            )}
             </motion.button>
           );
         })}
