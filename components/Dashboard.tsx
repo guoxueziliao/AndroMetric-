@@ -1,5 +1,6 @@
 
 import React, { useState, useMemo, useCallback } from 'react';
+import { motion } from 'framer-motion';
 import { LogEntry, ExerciseRecord, SexRecordDetails, MasturbationRecordDetails, NapRecord, AlcoholRecord } from '../types';
 import CalendarHeatmap from './CalendarHeatmap';
 import { 
@@ -281,8 +282,15 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                         </div>
                         {(pendingLog || ongoingNap) && <span className="text-[9px] font-black text-emerald-500 animate-pulse">正在休息</span>}
                     </div>
-                    <div className="flex-1 overflow-y-auto custom-scrollbar pr-0.5 space-y-2">
-                        {last7Days.map(date => {
+<motion.div 
+        className="flex-1 overflow-y-auto custom-scrollbar pr-0.5 space-y-2"
+        initial="hidden"
+        animate="visible"
+        variants={{
+          visible: { transition: { staggerChildren: 0.05 } }
+        }}
+      >
+      {last7Days.map((date, index) => {
                             const log = logs.find(l => l.date === date);
                             const analysis = log?.sleep?.startTime && log?.sleep?.endTime ? analyzeSleep(log.sleep.startTime, log.sleep.endTime) : null;
                             const nocturnalHours = analysis?.durationHours || 0;
@@ -290,8 +298,14 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                             const napHours = totalNapMinutes / 60;
                             const totalHours = nocturnalHours + napHours;
                             const isToday = date === last7Days[0];
-                            return (
-                                <div key={date} className={`flex flex-col gap-1 p-1.5 rounded-xl transition-all ${isToday ? 'bg-blue-50/40 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/30' : 'border border-transparent'}`}>
+return (
+      <motion.div 
+        key={date}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: index * 0.05, duration: 0.3 }}
+        className={`flex flex-col gap-1 p-1.5 rounded-xl transition-all ${isToday ? 'bg-blue-50/40 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/30' : 'border border-transparent'}`}
+      >
                                     <div className="flex justify-between items-center text-[9px] font-bold text-slate-400">
                                         <span className="font-mono">{date.split('-').slice(1).join('/')}</span>
                                         <div className="flex gap-1">
@@ -306,9 +320,10 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
                                         </div>
                                         <div className="text-[10px] font-black text-slate-600 dark:text-slate-300 w-8 text-right tabular-nums">{totalHours > 0 ? `${totalHours.toFixed(1)}h` : '--'}</div>
                                     </div>
-                                </div>
-                            );
-                        })}
+</motion.div>
+      );
+      })}
+      </motion.div>
                     </div>
                 </div>
                 <div className="bg-white dark:bg-slate-900/40 rounded-3xl p-5 shadow-soft border border-slate-100 dark:border-white/5 flex flex-col h-60 transition-colors">
