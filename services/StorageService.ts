@@ -8,6 +8,7 @@ import { Logger } from './LoggerService';
 import { hydrateLog } from '../utils/hydrateLog';
 import { checkDataHealth, DataHealthReport } from '../utils/dataHealthCheck';
 import { repairLogUsingHistory } from '../utils/historyRepair';
+import { backupService } from './BackupService';
 
 export const StorageService = {
     async init() {
@@ -243,13 +244,19 @@ export const StorageService = {
             get: (date: string) => db.logs.get(date)
         },
         get: (date: string) => db.logs.get(date),
-        save: async (log: LogEntry) => {
-            const { valid, errors } = validateLogEntry(log);
-            if (!valid) throw new Error(errors[0]);
-            const logToSave = hydrateLog({ ...log, updatedAt: Date.now() });
-            await db.logs.put(logToSave);
-            db.logs.toArray().then(allLogs => pluginManager.notifyDataChange(allLogs));
-        },
+save: async (log: LogEntry) => {
+      const { valid, errors } = validateLogEntry(log);
+      if (!valid) throw new Error(errors[0]);
+      const logToSave = hydrateLog({ ...log, updatedAt: Date.now() });
+      await db.logs.put(logToSave);
+
+      const allLogs = await db.logs.toArray();
+      pluginManager.notifyDataChange(allLogs);
+
+      backupService.autoBackup(allLogs).catch(err => {
+        Logger.warn('StorageService:AutoBackupFailed', err);
+      });
+    },
         delete: async (date: string) => {
             await db.logs.delete(date);
             db.logs.toArray().then(allLogs => pluginManager.notifyDataChange(allLogs));

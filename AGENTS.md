@@ -1,7 +1,7 @@
 # 硬度日记 (Hardness Diary) - Project Knowledge Base
 
-**Generated:** 2026-04-09  
-**Version:** 0.0.6  
+**Generated:** 2026-04-11
+**Version:** 0.0.7
 **Stack:** React + TypeScript + Vite PWA + Dexie (IndexedDB)
 
 ---

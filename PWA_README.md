@@ -128,3 +128,4 @@ npm run preview
 - Safari 11.1+ (iOS 11.3+)
 - Edge 17+
 - Samsung Internet 5+
+ 

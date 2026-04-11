@@ -1,6 +1,6 @@
 
 import React, { useRef, useState, useEffect, useMemo, lazy, Suspense } from 'react';
-import { Upload, Download, Info, Settings, Save, AlertTriangle, GitMerge, Replace, Archive, Database, History, Trash2, FileSpreadsheet, Smartphone, Moon, Sun, Palette, Share2, Pencil, X, Book, AppWindow, FolderInput, Clock, Bug, Stethoscope, CheckCircle, Wrench, RotateCcw, ShieldCheck, ChevronRight, AlertCircle, ArrowRight, Tags } from 'lucide-react';
+import { Upload, Download, Info, Settings, Save, AlertTriangle, GitMerge, Replace, Archive, Database, History, Trash2, FileSpreadsheet, Smartphone, Moon, Sun, Palette, Share2, Pencil, X, Book, AppWindow, FolderInput, Clock, Bug, Stethoscope, CheckCircle, Wrench, RotateCcw, ShieldCheck, ChevronRight, AlertCircle, ArrowRight, Tags, Shield } from 'lucide-react';
 import { LogEntry, BackupState, AppSettings, PartnerProfile, Snapshot } from '../types';
 import Modal from './Modal';
 import { useLocalStorage } from '../hooks/useLocalStorage';
@@ -15,6 +15,7 @@ import { LATEST_VERSION } from '../utils/migration';
 import { InstallButton } from './PWAInstallPrompt';
 
 const TagManager = lazy(() => import('./TagManager'));
+const BackupSettings = lazy(() => import('./BackupSettings'));
 
 interface MyViewProps {
   settings: AppSettings;
@@ -461,24 +462,31 @@ const MyView: React.FC<MyViewProps> = ({ settings, onUpdateSettings, onShowVersi
                   </div>
               </section>
 
-              {/* Tag Management */}
-              <section>
-                  <button 
-                    onClick={() => { setIsSettingsOpen(false); setIsTagManagerOpen(true); }}
-                    className="w-full p-4 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-sm"
-                  >
-                      <div className="flex items-center gap-3">
-                          <div className="p-2 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-xl">
-                              <Tags size={20} />
-                          </div>
-                          <div className="text-left">
-                              <h3 className="font-bold text-sm text-brand-text dark:text-slate-200">标签管理</h3>
-                              <p className="text-xs text-brand-muted dark:text-slate-500">重命名或合并 XP、事件标签</p>
-                          </div>
-                      </div>
-                      <ChevronRight size={18} className="text-slate-400" />
-                  </button>
-              </section>
+{/* Auto Backup Settings */}
+      <section>
+        <Suspense fallback={null}>
+          <BackupSettings logs={logs} />
+        </Suspense>
+      </section>
+
+      {/* Tag Management */}
+      <section>
+        <button
+          onClick={() => { setIsSettingsOpen(false); setIsTagManagerOpen(true); }}
+          className="w-full p-4 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-sm"
+        >
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-xl">
+              <Tags size={20} />
+            </div>
+            <div className="text-left">
+              <h3 className="font-bold text-sm text-brand-text dark:text-slate-200">标签管理</h3>
+              <p className="text-xs text-brand-muted dark:text-slate-500">重命名或合并 XP、事件标签</p>
+            </div>
+          </div>
+          <ChevronRight size={18} className="text-slate-400" />
+        </button>
+      </section>
 
               {/* 3. Snapshots */}
               <section>

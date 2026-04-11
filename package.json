@@ -1,14 +1,15 @@
-
 {
   "name": "hardness-diary",
   "private": true,
-  "version": "0.0.6",
+  "version": "0.0.7",
   "type": "module",
-  "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
-  },
+"scripts": {
+"dev": "vite",
+"build": "vite build",
+"preview": "vite preview",
+"test": "bun test",
+"test:watch": "bun test --watch"
+},
   "dependencies": {
     "chart.js": "^4.4.3",
     "dexie": "^4.0.1",
@@ -20,9 +21,12 @@
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
     "@types/react": "^18.3.1",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.2.1",
+    "happy-dom": "^20.8.9",
     "typescript": "^5.4.2",
     "vite": "^5.1.6",
     "vite-plugin-pwa": "^0.21.1"
