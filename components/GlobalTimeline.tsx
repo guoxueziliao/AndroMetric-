@@ -20,7 +20,7 @@ interface TimelineEvent {
 
 export const GlobalTimeline: React.FC<GlobalTimelineProps> = ({ log, allLogs }) => {
     
-    const getLocalTime = (isoString?: string): string | undefined => {
+    const getLocalTime = (isoString?: string | null): string | undefined => {
         if (!isoString) return undefined;
         if (isoString.includes('T')) {
             try {

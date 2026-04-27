@@ -50,7 +50,7 @@ const TagHealthCheck: React.FC<TagHealthCheckProps> = ({ logs, onNavigateToTag }
         });
 
         const issues: Issue[] = [];
-        const stats = { total: 0, xp: 0, event: 0, symptom: 0, highRisk: 0, medRisk: 0, lowRisk: 0 };
+        const stats = { total: 0, xp: 0, event: 0, symptom: 0, health_check: 0, highRisk: 0, medRisk: 0, lowRisk: 0 };
         const now = Date.now();
         const ninetyDays = 90 * 24 * 60 * 60 * 1000;
 

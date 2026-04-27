@@ -9,7 +9,7 @@ export const getTodayDateString = (): string => {
     return `${year}-${month}-${day}`;
 };
 
-export const formatTime = (isoString?: string): string => {
+export const formatTime = (isoString?: string | null): string => {
     if (!isoString) return '--:--';
     try {
         if (/^\d{1,2}:\d{2}$/.test(isoString)) return isoString;
@@ -45,7 +45,7 @@ export const formatHistoryValue = (field: string, val: string | null | undefined
     return String(val);
 };
 
-export const calculateSleepDuration = (sleepTime?: string, wakeTime?: string): string | null => {
+export const calculateSleepDuration = (sleepTime?: string | null, wakeTime?: string | null): string | null => {
     if (!sleepTime || !wakeTime) return null;
     const start = new Date(sleepTime).getTime();
     const end = new Date(wakeTime).getTime();
@@ -57,7 +57,7 @@ export const calculateSleepDuration = (sleepTime?: string, wakeTime?: string): s
     return `${hours}小时 ${minutes}分钟`;
 };
 
-export const analyzeSleep = (sleepTime?: string, wakeTime?: string) => {
+export const analyzeSleep = (sleepTime?: string | null, wakeTime?: string | null) => {
     if (!sleepTime || !wakeTime) return null;
     const start = new Date(sleepTime);
     const end = new Date(wakeTime);

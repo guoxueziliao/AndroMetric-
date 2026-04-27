@@ -807,7 +807,7 @@ const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave
                                         </button>
                                     ))}
                                 </div>
-                                {data.ejaculationLocation.includes('口') && (
+                                {data.ejaculationLocation?.includes('口') && (
                                      <div className="flex items-center gap-2 mt-2">
                                          <input id="swallow" type="checkbox" checked={data.semenSwallowed} onChange={e => updateGlobal('semenSwallowed', e.target.checked)} className="accent-pink-500 w-4 h-4 rounded"/>
                                          <label htmlFor="swallow" className="text-xs text-slate-600 dark:text-slate-300 font-bold">吞精</label>

@@ -161,7 +161,7 @@ function migrateV33toV34(logs: any[]): LogEntry[] {
             log.alcoholRecord.time = '20:00'; // Default time
         }
         if (log.masturbation) {
-            log.masturbation = log.masturbation.map(m => ({
+            log.masturbation = log.masturbation.map((m: any) => ({
                 ...m,
                 volumeForceLevel: m.volumeForceLevel || (m.ejaculation ? 3 : undefined),
                 postMood: m.postMood || undefined,

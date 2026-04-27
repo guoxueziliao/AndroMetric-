@@ -325,7 +325,6 @@ return (
       })}
       </motion.div>
                     </div>
-                </div>
                 <div className="bg-white dark:bg-slate-900/40 rounded-3xl p-5 shadow-soft border border-slate-100 dark:border-white/5 flex flex-col h-60 transition-colors">
                     <div className="flex items-center gap-2 mb-6">
                         <div className="p-2 bg-orange-50 dark:bg-orange-500/10 rounded-full text-orange-500"><Activity size={18}/></div>

@@ -150,7 +150,9 @@ const analyzeMasturbationLoop = (logs: LogEntry[]): Insight[] => {
     });
     
     if (edgingNextDays.length >= 3) {
-        const valid = logs.filter(l => l.morning?.wokeWithErection && l.morning?.hardness).map(l => l.morning!.hardness || 0);
+        const valid: number[] = logs
+            .filter(l => l.morning?.wokeWithErection && l.morning?.hardness)
+            .map(l => l.morning!.hardness || 0);
         const globalAvg = valid.length ? valid.reduce((a,b)=>a+b,0)/valid.length : 0;
         const edgingAvg = edgingNextDays.reduce((a,b)=>a+b,0) / edgingNextDays.length;
         

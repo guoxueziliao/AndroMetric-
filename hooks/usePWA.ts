@@ -20,7 +20,9 @@ export function usePWA() {
     canInstall: false,
     installPrompt: null,
     swVersion: '',
-    updateAvailable: false
+    updateAvailable: false,
+    isAndroid: /Android/i.test(navigator.userAgent),
+    isIOS: /iPad|iPhone|iPod/.test(navigator.userAgent)
   });
 
   useEffect(() => {
