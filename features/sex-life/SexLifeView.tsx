@@ -1,11 +1,10 @@
 import React, { useMemo, useState } from 'react';
-import type { SexRecordDetails, MasturbationRecordDetails } from '../../domain';
+import type { LogEntry, MasturbationRecordDetails, PartnerProfile, SexRecordDetails } from '../../domain';
 import { HeartHandshake, Clock, MapPin, Droplets, Hand, Users, ChevronDown, AlertTriangle, Film, Quote, Smartphone } from 'lucide-react';
 import { ErrorBoundary } from '../../shared/ui';
 import PartnerManager from './PartnerManager';
 import SexRecordModal from './SexRecordModal';
 import MasturbationRecordModal from './MasturbationRecordModal';
-import { useData } from '../../contexts/DataContext';
 import { LABELS } from '../../shared/lib';
 
 interface TimelineRecord {
@@ -22,10 +21,23 @@ interface TimelineRecord {
     notes?: string;
 }
 
+interface SexLifeViewProps {
+    logs: LogEntry[];
+    partners: PartnerProfile[];
+    onAddOrUpdateLog: (log: LogEntry) => Promise<void>;
+    onAddOrUpdatePartner: (partner: PartnerProfile) => Promise<void>;
+    onDeletePartner: (id: string) => Promise<void>;
+}
+
 const PAGE_SIZE = 20;
 
-const SexLifeView: React.FC = () => {
-    const { logs: rawLogs, partners, addOrUpdatePartner, deletePartner, addOrUpdateLog } = useData();
+const SexLifeView: React.FC<SexLifeViewProps> = ({
+    logs: rawLogs,
+    partners,
+    onAddOrUpdateLog,
+    onAddOrUpdatePartner,
+    onDeletePartner
+}) => {
     const logs = useMemo(() => Array.isArray(rawLogs) ? rawLogs : [], [rawLogs]);
     
     const [isPartnerManagerOpen, setIsPartnerManagerOpen] = useState(false);
@@ -109,7 +121,7 @@ const SexLifeView: React.FC = () => {
         const logToUpdate = logs.find(l => l.date === editingRecord.date);
         if (!logToUpdate) return;
         const newSexList = (logToUpdate.sex || []).map(s => s.id === updatedDetails.id ? updatedDetails : s);
-        await addOrUpdateLog({ ...logToUpdate, sex: newSexList });
+        await onAddOrUpdateLog({ ...logToUpdate, sex: newSexList });
     };
 
     const handleSaveMbRecord = async (updatedDetails: MasturbationRecordDetails) => {
@@ -117,7 +129,7 @@ const SexLifeView: React.FC = () => {
         const logToUpdate = logs.find(l => l.date === editingRecord.date);
         if (!logToUpdate) return;
         const newMbList = (logToUpdate.masturbation || []).map(m => m.id === updatedDetails.id ? updatedDetails : m);
-        await addOrUpdateLog({ ...logToUpdate, masturbation: newMbList });
+        await onAddOrUpdateLog({ ...logToUpdate, masturbation: newMbList });
     };
 
     return (
@@ -305,7 +317,7 @@ const SexLifeView: React.FC = () => {
                 )}
             </div>
             
-            <PartnerManager isOpen={isPartnerManagerOpen} onClose={() => setIsPartnerManagerOpen(false)} partners={partners} onSave={addOrUpdatePartner} onDelete={deletePartner} logs={logs} />
+            <PartnerManager isOpen={isPartnerManagerOpen} onClose={() => setIsPartnerManagerOpen(false)} partners={partners} onSave={onAddOrUpdatePartner} onDelete={onDeletePartner} logs={logs} />
             <SexRecordModal isOpen={isSexModalOpen} onClose={() => { setIsSexModalOpen(false); setEditingRecord(null); }} onSave={handleSaveSexRecord} initialData={editingRecord?.sexDetails} dateStr={editingRecord?.date || ''} partners={partners} logs={logs} />
             <MasturbationRecordModal isOpen={isMbModalOpen} onClose={() => { setIsMbModalOpen(false); setEditingRecord(null); }} onSave={handleSaveMbRecord} initialData={editingRecord?.mbDetails} dateStr={editingRecord?.date || ''} logs={logs} partners={partners} />
         </ErrorBoundary>

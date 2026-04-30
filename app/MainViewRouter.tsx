@@ -36,6 +36,9 @@ interface MainViewRouterProps {
   editingLogDate: string | null;
   onMainViewChange: (view: MainView) => void;
   onEdit: (date: string) => void;
+  onAddOrUpdateLog: (log: LogEntry) => Promise<void>;
+  onAddOrUpdatePartner: (partner: PartnerProfile) => Promise<void>;
+  onDeletePartner: (id: string) => Promise<void>;
   onDeleteLog: (date: string) => Promise<void>;
   onToggleSleepLog: (pendingLog?: LogEntry) => Promise<void>;
   onCancelOngoingNap: () => Promise<void>;
@@ -64,6 +67,9 @@ const MainViewRouter: React.FC<MainViewRouterProps> = ({
   editingLogDate,
   onMainViewChange,
   onEdit,
+  onAddOrUpdateLog,
+  onAddOrUpdatePartner,
+  onDeletePartner,
   onDeleteLog,
   onToggleSleepLog,
   onCancelOngoingNap,
@@ -101,7 +107,15 @@ const MainViewRouter: React.FC<MainViewRouterProps> = ({
         )}
         <Suspense fallback={<LoadingFallback />}>
           {activeMainView === 'stats' && <StatsView isDarkMode={isDarkMode} logs={logs} />}
-          {activeMainView === 'sexlife' && <SexLifeView />}
+          {activeMainView === 'sexlife' && (
+            <SexLifeView
+              logs={logs}
+              partners={partners}
+              onAddOrUpdateLog={onAddOrUpdateLog}
+              onAddOrUpdatePartner={onAddOrUpdatePartner}
+              onDeletePartner={onDeletePartner}
+            />
+          )}
           {activeMainView === 'my' && (
             <MyView
               settings={settings}
