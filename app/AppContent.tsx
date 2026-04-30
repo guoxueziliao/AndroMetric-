@@ -20,7 +20,17 @@ import { useWelcomeScreen } from './useWelcomeScreen';
 import type { MainView } from './viewTypes';
 
 const AppContent: React.FC<{ data: AppData }> = ({ data }) => {
-  const { logs, partners, isInitializing } = data;
+  const {
+    logs,
+    partners,
+    isInitializing,
+    deleteLog,
+    toggleSleepLog,
+    cancelOngoingNap,
+    cancelAlcoholRecord,
+    cancelOngoingExercise,
+    cancelOngoingMasturbation
+  } = data;
   const { showToast } = useToast();
 
   const [settings, setSettings] = useLocalStorage<AppSettings>('appSettings', defaultSettings);
@@ -66,6 +76,12 @@ const AppContent: React.FC<{ data: AppData }> = ({ data }) => {
               editingLogDate={editingLogDate}
               onMainViewChange={setActiveMainView}
               onEdit={handleEdit}
+              onDeleteLog={deleteLog}
+              onToggleSleepLog={toggleSleepLog}
+              onCancelOngoingNap={cancelOngoingNap}
+              onCancelAlcoholRecord={cancelAlcoholRecord}
+              onCancelOngoingExercise={cancelOngoingExercise}
+              onCancelOngoingMasturbation={cancelOngoingMasturbation}
               onBackToDashboard={handleBackToDashboard}
               onSaveLog={handleSaveLog}
               onDirtyStateChange={setIsFormDirty}

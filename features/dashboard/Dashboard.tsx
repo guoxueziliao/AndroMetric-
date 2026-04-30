@@ -10,13 +10,19 @@ import {
 import { Modal, SafeDeleteModal } from '../../shared/ui';
 import { formatTime, calculateSleepDuration, analyzeSleep, LABELS } from '../../shared/lib';
 import { hydrateLog } from '../../core/storage';
-import { useData } from '../../contexts/DataContext';
 import { useToast } from '../../contexts/ToastContext';
 import { LogHistory } from './LogHistory';
 import { GlobalTimeline } from './GlobalTimeline';
 
 interface DashboardProps {
+  logs: LogEntry[];
   onEdit: (date: string) => void;
+  onDeleteLog: (date: string) => Promise<void>;
+  onToggleSleepLog: (pendingLog?: LogEntry) => Promise<void>;
+  onCancelOngoingNap: () => Promise<void>;
+  onCancelAlcoholRecord: () => Promise<void>;
+  onCancelOngoingExercise: () => Promise<void>;
+  onCancelOngoingMasturbation: () => Promise<void>;
   onFinishExercise?: (record: ExerciseRecord) => void;
   onFinishMasturbation?: (record: MasturbationRecordDetails) => void;
   onFinishNap?: (record: NapRecord) => void;
@@ -37,8 +43,20 @@ interface SummarySectionProps {
   colorClass?: string;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ onEdit, onFinishExercise, onFinishMasturbation, onFinishNap, onFinishAlcohol }) => {
-  const { logs: rawLogs, deleteLog, cancelOngoingNap, toggleSleepLog, cancelAlcoholRecord, cancelOngoingExercise, cancelOngoingMasturbation } = useData();
+const Dashboard: React.FC<DashboardProps> = ({
+  logs: rawLogs,
+  onEdit,
+  onDeleteLog,
+  onToggleSleepLog,
+  onCancelOngoingNap,
+  onCancelAlcoholRecord,
+  onCancelOngoingExercise,
+  onCancelOngoingMasturbation,
+  onFinishExercise,
+  onFinishMasturbation,
+  onFinishNap,
+  onFinishAlcohol
+}) => {
   const logs = useMemo(() => Array.isArray(rawLogs) ? rawLogs : [], [rawLogs]);
   const { showToast } = useToast();
 
@@ -111,11 +129,11 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onFinishExercise, onFinis
 
   const confirmDelete = useCallback(async () => {
     if (dateToDelete) {
-      await deleteLog(dateToDelete);
+      await onDeleteLog(dateToDelete);
       setIsSummaryModalOpen(false);
       showToast('记录已成功删除', 'success');
     }
-  }, [dateToDelete, deleteLog, showToast]);
+  }, [dateToDelete, onDeleteLog, showToast]);
 
   const handleRequestCancel = useCallback((type: 'sleep' | 'nap' | 'mb' | 'exercise' | 'alcohol') => {
     setTaskToCancel(type);
@@ -125,11 +143,11 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onFinishExercise, onFinis
     if (!taskToCancel) return;
     try {
       switch(taskToCancel) {
-        case 'sleep': await toggleSleepLog(pendingLog || undefined); break;
-        case 'nap': await cancelOngoingNap(); break;
-        case 'mb': await cancelOngoingMasturbation(); break;
-        case 'exercise': await cancelOngoingExercise(); break;
-        case 'alcohol': await cancelAlcoholRecord(); break;
+        case 'sleep': await onToggleSleepLog(pendingLog || undefined); break;
+        case 'nap': await onCancelOngoingNap(); break;
+        case 'mb': await onCancelOngoingMasturbation(); break;
+        case 'exercise': await onCancelOngoingExercise(); break;
+        case 'alcohol': await onCancelAlcoholRecord(); break;
       }
       showToast('记录已取消', 'info');
     } catch {
@@ -137,7 +155,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onFinishExercise, onFinis
     } finally {
       setTaskToCancel(null);
     }
-  }, [taskToCancel, toggleSleepLog, cancelOngoingNap, cancelOngoingMasturbation, cancelOngoingExercise, cancelAlcoholRecord, pendingLog, showToast]);
+  }, [taskToCancel, onToggleSleepLog, onCancelOngoingNap, onCancelOngoingMasturbation, onCancelOngoingExercise, onCancelAlcoholRecord, pendingLog, showToast]);
 
   const diaryDateInfo = useMemo(() => {
     if (!summaryLog) return { main: '', sub: '' };

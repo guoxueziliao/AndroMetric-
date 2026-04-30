@@ -36,6 +36,12 @@ interface MainViewRouterProps {
   editingLogDate: string | null;
   onMainViewChange: (view: MainView) => void;
   onEdit: (date: string) => void;
+  onDeleteLog: (date: string) => Promise<void>;
+  onToggleSleepLog: (pendingLog?: LogEntry) => Promise<void>;
+  onCancelOngoingNap: () => Promise<void>;
+  onCancelAlcoholRecord: () => Promise<void>;
+  onCancelOngoingExercise: () => Promise<void>;
+  onCancelOngoingMasturbation: () => Promise<void>;
   onBackToDashboard: () => void;
   onSaveLog: (log: LogEntry) => void;
   onDirtyStateChange: (isDirty: boolean) => void;
@@ -58,6 +64,12 @@ const MainViewRouter: React.FC<MainViewRouterProps> = ({
   editingLogDate,
   onMainViewChange,
   onEdit,
+  onDeleteLog,
+  onToggleSleepLog,
+  onCancelOngoingNap,
+  onCancelAlcoholRecord,
+  onCancelOngoingExercise,
+  onCancelOngoingMasturbation,
   onBackToDashboard,
   onSaveLog,
   onDirtyStateChange,
@@ -73,7 +85,14 @@ const MainViewRouter: React.FC<MainViewRouterProps> = ({
       <main className="animate-in fade-in duration-300">
         {activeMainView === 'calendar' && (
           <Dashboard
+            logs={logs}
             onEdit={onEdit}
+            onDeleteLog={onDeleteLog}
+            onToggleSleepLog={onToggleSleepLog}
+            onCancelOngoingNap={onCancelOngoingNap}
+            onCancelAlcoholRecord={onCancelAlcoholRecord}
+            onCancelOngoingExercise={onCancelOngoingExercise}
+            onCancelOngoingMasturbation={onCancelOngoingMasturbation}
             onFinishExercise={onFinishExercise}
             onFinishMasturbation={onFinishMasturbation}
             onFinishNap={onFinishNap}
