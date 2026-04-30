@@ -16,7 +16,7 @@ Privacy-first male health tracking PWA. Local-first architecture using Dexie.js 
 
 ```
 ./
-├── components/          # Legacy app-shell widgets and compatibility components
+├── components/          # Legacy compatibility and parking-lot components
 ├── app/                 # App composition and top-level routing
 ├── features/            # Business-domain feature modules
 ├── shared/              # Shared UI and pure helpers
@@ -48,6 +48,7 @@ Privacy-first male health tracking PWA. Local-first architecture using Dexie.js 
 | UI state management | `hooks/useLogs.ts` | Main data hook |
 | Dashboard/home | `features/dashboard/*` | Home view, calendar heatmap, timeline, log history |
 | Quick actions | `features/quick-actions/*` | FAB, quick record controller, ongoing selectors |
+| PWA install/update UI | `features/pwa/*` | Install prompt, update prompt, install button |
 | Tag management | `features/tags/*` | Tag manager and tag health check |
 | Backup/version history | `features/backup/*` | Local backup settings and version history modal |
 | Theme settings | `features/settings/*` | Theme UI and theme hook |

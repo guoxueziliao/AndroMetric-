@@ -3,7 +3,7 @@ import React, { useMemo, useState } from 'react';
 import { AppSettings } from '../types';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import Welcome from './Welcome';
-import PWAInstallPrompt from '../components/PWAInstallPrompt';
+import { PWAInstallPrompt } from '../features/pwa';
 import { useToast } from '../contexts/ToastContext';
 import { VersionHistoryModal } from '../features/backup';
 import { Modal } from '../shared/ui';

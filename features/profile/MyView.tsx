@@ -1,15 +1,15 @@
 
 import React, { useRef, useState, useEffect, useMemo, lazy, Suspense } from 'react';
-import { Settings, AlertTriangle, Archive, Database, History, Trash2, Smartphone, Moon, Sun, Share2, Pencil, X, FolderInput, Stethoscope, CheckCircle, Wrench, RotateCcw, ShieldCheck, ChevronRight, AlertCircle, ArrowRight, Tags } from 'lucide-react';
+import { Settings, AlertTriangle, Archive, Database, History, Trash2, Smartphone, Moon, Sun, Share2, Pencil, FolderInput, Stethoscope, CheckCircle, Wrench, RotateCcw, ShieldCheck, ChevronRight, AlertCircle, ArrowRight, Tags } from 'lucide-react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import type { AppSettings, LogEntry, Snapshot } from '../../domain';
+import type { AppSettings, Snapshot } from '../../domain';
 import { useData } from '../../contexts/DataContext';
 import { useToast } from '../../contexts/ToastContext';
 import { StorageService, db } from '../../core/storage';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
 import { Modal } from '../../shared/ui';
 import { DataHealthReport } from '../../utils/dataHealthCheck';
-import { InstallButton } from '../../components/PWAInstallPrompt';
+import { InstallButton } from '../pwa';
 
 const TagManager = lazy(() => import('../tags').then((module) => ({ default: module.TagManager })));
 const BackupSettings = lazy(() => import('../backup').then((module) => ({ default: module.BackupSettings })));
@@ -53,7 +53,6 @@ const MyView: React.FC<MyViewProps> = ({ settings, onUpdateSettings, onShowVersi
   const [tempName, setTempName] = useState(userName);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [exportButtonText, setExportButtonText] = useState('导出为通用 JSON');
   const [importStatus, setImportStatus] = useState<'idle' | 'importing' | 'success' | 'error'>('idle');
   
   const [snapshotFeedback, setSnapshotFeedback] = useState('');
@@ -191,8 +190,6 @@ const MyView: React.FC<MyViewProps> = ({ settings, onUpdateSettings, onShowVersi
   const handleExportClick = () => {
     handleExportData('export');
     onUpdateSettings({ ...settings, lastExportAt: Date.now() });
-    setExportButtonText('已导出！');
-    setTimeout(() => setExportButtonText('导出为通用 JSON'), 2000);
   };
   
   const handleFileSystemBackup = async () => {

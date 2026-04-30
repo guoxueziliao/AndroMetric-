@@ -29,7 +29,8 @@
 │   ├── stats/
 │   ├── tags/
 │   ├── backup/
-│   └── settings/
+│   ├── settings/
+│   └── pwa/
 ├── shared/
 │   ├── ui/
 │   └── lib/
@@ -85,6 +86,7 @@ features/dashboard/
 - `tags`：标签管理、标签体检、标签校验 UI。
 - `backup`：手动导出、快照、自动备份设置。
 - `settings`：主题、隐私、PWA、应用设置。
+- `pwa`：安装提示、更新提示、离线提示、安装按钮。
 
 ### `shared/ui`
 
@@ -409,6 +411,7 @@ Provider 只负责装配，不承载业务流程。
 | `components/Welcome.tsx` | 已迁入 `app/Welcome.tsx` |
 | `components/LogHistory.tsx` | 已迁入 `features/dashboard/LogHistory.tsx` |
 | `components/DiffRow.tsx` | 已迁入 `features/dashboard/DiffRow.tsx` |
+| `components/PWAInstallPrompt.tsx` | 已迁入 `features/pwa/PWAInstallPrompt.tsx` |
 
 ## 禁止事项
 

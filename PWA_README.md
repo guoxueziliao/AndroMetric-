@@ -34,7 +34,7 @@
 - 通知权限管理
 - 周期性同步支持
 
-### 5. ✅ 安装提示组件 (components/PWAInstallPrompt.tsx)
+### 5. ✅ 安装提示组件 (features/pwa/PWAInstallPrompt.tsx)
 - 智能安装提示 (3秒后自动弹出)
 - 更新提示弹窗
 - 离线状态横幅
@@ -128,4 +128,3 @@ npm run preview
 - Safari 11.1+ (iOS 11.3+)
 - Edge 17+
 - Samsung Internet 5+
- 

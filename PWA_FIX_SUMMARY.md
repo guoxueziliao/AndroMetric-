@@ -17,7 +17,7 @@
 - iOS 设备默认显示手动安装指南
 - Android 支持自动安装检测
 
-### 3. 优化安装提示 (PWAInstallPrompt.tsx)
+### 3. 优化安装提示 (features/pwa/PWAInstallPrompt.tsx)
 - iOS Safari：显示"添加到主屏幕"步骤指南
 - Android Chrome：支持自动安装提示
 - 其他浏览器：显示通用安装指南
@@ -80,7 +80,7 @@
 ## 相关文件
 - `/index.html` - 添加 manifest 链接
 - `/hooks/usePWA.ts` - 平台检测逻辑
-- `/components/PWAInstallPrompt.tsx` - 安装提示组件
+- `/features/pwa/PWAInstallPrompt.tsx` - 安装提示组件
 - `/manifest.json` - PWA 配置
 - `/sw.js` - Service Worker
 

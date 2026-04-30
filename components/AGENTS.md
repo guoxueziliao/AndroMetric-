@@ -6,7 +6,7 @@
 
 ## OVERVIEW
 
-5 legacy React components for compatibility shims and parking-lot code. Heavy usage of controlled inputs, React Context, and Tailwind styling.
+4 legacy React components for compatibility shims and parking-lot code. Heavy usage of controlled inputs, React Context, and Tailwind styling.
 
 ---
 
@@ -17,6 +17,7 @@
 | Shared modal/control | `../shared/ui/*` | Modal, Toast, selectors, form controls, error boundary |
 | App shell | `../app/*` | Welcome screen, bottom navigation, providers, routing |
 | Dashboard history | `../features/dashboard/*` | Log history and diff rows |
+| PWA install/update UI | `../features/pwa/*` | Install prompt, update prompt, install button |
 | Daily record modals | `../features/daily-log/*Modal.tsx` | Caffeine, exercise, alcohol, and nap record forms |
 | Sex life records | `../features/sex-life/*` | Partner manager, sex modal, masturbation modal |
 
@@ -54,6 +55,7 @@ No large sex-life forms remain in `components/`; those business components now l
 - **App shell:** Welcome screen and bottom navigation live in `app`
 - **Daily log:** Main record form, morning/sleep/health sections, and lifestyle record modals live in `features/daily-log`
 - **Quick actions:** Floating action button and quick record controller live in `features/quick-actions`
+- **PWA UI:** Install prompt, update prompt, and install button live in `features/pwa`
 - **Sex life:** Timeline view, partner manager, sex modal, and masturbation modal live in `features/sex-life`
 - **Stats:** Stats view and hardness chart live in `features/stats`
 - **Shared UI:** Modal, Toast, DateTimePicker, form controls, selectors, and ErrorBoundary live in `shared/ui`
