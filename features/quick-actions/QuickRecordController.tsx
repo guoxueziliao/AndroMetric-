@@ -27,7 +27,9 @@ const QuickRecordController: React.FC<QuickRecordControllerProps> = ({ data, isE
     logs,
     partners,
     userTags,
+    addOrUpdateLog,
     addOrUpdateTag,
+    deleteTag,
     quickAddSex,
     quickAddMasturbation,
     saveExercise,
@@ -191,7 +193,9 @@ const QuickRecordController: React.FC<QuickRecordControllerProps> = ({ data, isE
         logs={logs}
         partners={partners}
         userTags={userTags}
+        onAddOrUpdateLog={addOrUpdateLog}
         onAddOrUpdateTag={addOrUpdateTag}
+        onDeleteTag={deleteTag}
       />
 
       <ExerciseRecordModal

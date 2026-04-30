@@ -2,7 +2,7 @@
 import React, { useRef, useState, useEffect, useMemo, lazy, Suspense } from 'react';
 import { Settings, AlertTriangle, Archive, Database, History, Trash2, Smartphone, Moon, Sun, Share2, Pencil, FolderInput, Stethoscope, CheckCircle, Wrench, RotateCcw, ShieldCheck, ChevronRight, AlertCircle, ArrowRight, Tags } from 'lucide-react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import type { AppSettings, LogEntry, Snapshot } from '../../domain';
+import type { AppSettings, LogEntry, Snapshot, TagEntry, TagType } from '../../domain';
 import { useToast } from '../../contexts/ToastContext';
 import { StorageService, db } from '../../core/storage';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
@@ -16,6 +16,10 @@ const BackupSettings = lazy(() => import('../backup').then((module) => ({ defaul
 interface MyViewProps {
   settings: AppSettings;
   logs: LogEntry[];
+  userTags: TagEntry[];
+  onAddOrUpdateLog: (log: LogEntry) => Promise<void>;
+  onAddOrUpdateTag: (tag: TagEntry) => Promise<void>;
+  onDeleteTag: (name: string, category: TagType) => Promise<void>;
   onUpdateSettings: (newSettings: AppSettings) => void;
   onShowVersionHistory: () => void;
   onNavigateToLog: (date: string) => void;
@@ -28,7 +32,7 @@ const StatBox = ({ label, value, colorClass, bgClass }: { label: string, value: 
     </div>
 );
 
-const MyView: React.FC<MyViewProps> = ({ settings, logs: rawLogs, onUpdateSettings, onShowVersionHistory, onNavigateToLog }) => {
+const MyView: React.FC<MyViewProps> = ({ settings, logs: rawLogs, userTags, onAddOrUpdateLog, onAddOrUpdateTag, onDeleteTag, onUpdateSettings, onShowVersionHistory, onNavigateToLog }) => {
   const logs = useMemo(() => Array.isArray(rawLogs) ? rawLogs : [], [rawLogs]);
   const { showToast } = useToast();
   
@@ -543,7 +547,15 @@ const MyView: React.FC<MyViewProps> = ({ settings, logs: rawLogs, onUpdateSettin
       
       {/* Tag Manager Modal */}
       <Suspense fallback={null}>
-          <TagManager isOpen={isTagManagerOpen} onClose={() => setIsTagManagerOpen(false)} />
+          <TagManager
+            isOpen={isTagManagerOpen}
+            onClose={() => setIsTagManagerOpen(false)}
+            logs={logs}
+            userTags={userTags}
+            onAddOrUpdateLog={onAddOrUpdateLog}
+            onAddOrUpdateTag={onAddOrUpdateTag}
+            onDeleteTag={onDeleteTag}
+          />
       </Suspense>
 
       {/* Clear Data Confirmation */}

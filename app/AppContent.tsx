@@ -29,6 +29,7 @@ const AppContent: React.FC<{ data: AppData }> = ({ data }) => {
     addOrUpdatePartner,
     deletePartner,
     addOrUpdateTag,
+    deleteTag,
     deleteLog,
     toggleSleepLog,
     cancelOngoingNap,
@@ -86,6 +87,7 @@ const AppContent: React.FC<{ data: AppData }> = ({ data }) => {
               onAddOrUpdatePartner={addOrUpdatePartner}
               onDeletePartner={deletePartner}
               onAddOrUpdateTag={addOrUpdateTag}
+              onDeleteTag={deleteTag}
               onDeleteLog={deleteLog}
               onToggleSleepLog={toggleSleepLog}
               onCancelOngoingNap={cancelOngoingNap}

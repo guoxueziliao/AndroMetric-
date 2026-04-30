@@ -1,7 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import type { TagType } from '../../domain';
+import type { LogEntry, TagEntry, TagType } from '../../domain';
 import { Tag as TagIcon, Edit2, Trash2, X, Check, Activity, ShieldAlert, Stethoscope, Plus, Search, User, Zap, Sparkles, Shirt, Heart } from 'lucide-react';
-import { useData } from '../../contexts/DataContext';
 import { useToast } from '../../contexts/ToastContext';
 import { validateTag } from '../../shared/lib';
 import { Modal } from '../../shared/ui';
@@ -32,10 +31,25 @@ interface TagManagerProps {
     onSelectTag?: (tag: string) => void;
     initialSearch?: string;
     defaultTab?: TagType | 'health_check';
+    logs: LogEntry[];
+    userTags: TagEntry[];
+    onAddOrUpdateLog: (log: LogEntry) => Promise<void>;
+    onAddOrUpdateTag: (tag: TagEntry) => Promise<void>;
+    onDeleteTag: (name: string, category: TagType) => Promise<void>;
 }
 
-const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, initialSearch = '', defaultTab = 'xp' }) => {
-    const { logs, addOrUpdateLog, userTags, addOrUpdateTag, deleteTag } = useData();
+const TagManager: React.FC<TagManagerProps> = ({
+    isOpen,
+    onClose,
+    onSelectTag,
+    initialSearch = '',
+    defaultTab = 'xp',
+    logs,
+    userTags,
+    onAddOrUpdateLog,
+    onAddOrUpdateTag,
+    onDeleteTag
+}) => {
     const { showToast } = useToast();
     const [activeTab, setActiveTab] = useState<TagType | 'health_check'>(defaultTab);
     const [searchTerm, setSearchTerm] = useState(initialSearch);
@@ -112,7 +126,7 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
         }
         const res = validateTag(tagStr, currentType);
         if (res.level === 'P0') { showToast(`禁止创建: ${res.message}`, 'error'); return; }
-        await addOrUpdateTag({ name: tagStr, category: currentType, dimension: activeTab === 'xp' ? selectedXpDim! : undefined, createdAt: Date.now() });
+        await onAddOrUpdateTag({ name: tagStr, category: currentType, dimension: activeTab === 'xp' ? selectedXpDim! : undefined, createdAt: Date.now() });
         if (onSelectTag) { onSelectTag(tagStr); onClose(); }
         else { showToast(`已添加标签 "${tagStr}"`, 'success'); setSearchTerm(tagStr); setIsCreating(false); setCreateInput(''); setSelectedXpDim(null); }
     };
@@ -122,7 +136,7 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
         const oldName = editingTag;
         const newName = newTagName.trim();
         const oldTag = userTags.find(t => t.name === oldName && t.category === activeTab);
-        if (oldTag) { await deleteTag(oldName, activeTab as TagType); await addOrUpdateTag({ ...oldTag, name: newName }); }
+        if (oldTag) { await onDeleteTag(oldName, activeTab as TagType); await onAddOrUpdateTag({ ...oldTag, name: newName }); }
         for (const log of logs) {
             let modified = false;
             let newLog = { ...log };
@@ -140,7 +154,7 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
                     return m;
                 });
             }
-            if (modified) await addOrUpdateLog(newLog);
+            if (modified) await onAddOrUpdateLog(newLog);
         }
         showToast('标签已重命名', 'success');
         setEditingTag(null);
@@ -148,7 +162,7 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
 
     const handleDelete = async (tag: string) => {
         if (!confirm(`确定删除 "${tag}" 吗？`)) return;
-        await deleteTag(tag, activeTab as TagType);
+        await onDeleteTag(tag, activeTab as TagType);
         for (const log of logs) {
             let modified = false;
             let newLog = { ...log };
@@ -166,7 +180,7 @@ const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, i
                     return m;
                 });
             }
-            if (modified) await addOrUpdateLog(newLog);
+            if (modified) await onAddOrUpdateLog(newLog);
         }
         showToast('标签已移除', 'success');
     };

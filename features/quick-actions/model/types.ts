@@ -6,14 +6,17 @@ import type {
   NapRecord,
   PartnerProfile,
   SexRecordDetails,
-  TagEntry
+  TagEntry,
+  TagType
 } from '../../../domain';
 
 export interface QuickRecordData {
   logs: LogEntry[];
   partners: PartnerProfile[];
   userTags: TagEntry[];
+  addOrUpdateLog: (log: LogEntry) => Promise<void>;
   addOrUpdateTag: (tag: TagEntry) => Promise<void>;
+  deleteTag: (name: string, category: TagType) => Promise<void>;
   quickAddSex: (record: SexRecordDetails) => Promise<void>;
   quickAddMasturbation: (record: MasturbationRecordDetails) => Promise<void>;
   saveExercise: (record: ExerciseRecord) => Promise<void>;

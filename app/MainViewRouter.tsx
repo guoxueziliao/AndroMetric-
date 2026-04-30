@@ -8,7 +8,8 @@ import {
   MasturbationRecordDetails,
   NapRecord,
   PartnerProfile,
-  TagEntry
+  TagEntry,
+  TagType
 } from '../types';
 import BottomNav from './BottomNav';
 import { Dashboard } from '../features/dashboard';
@@ -42,6 +43,7 @@ interface MainViewRouterProps {
   onAddOrUpdatePartner: (partner: PartnerProfile) => Promise<void>;
   onDeletePartner: (id: string) => Promise<void>;
   onAddOrUpdateTag: (tag: TagEntry) => Promise<void>;
+  onDeleteTag: (name: string, category: TagType) => Promise<void>;
   onDeleteLog: (date: string) => Promise<void>;
   onToggleSleepLog: (pendingLog?: LogEntry) => Promise<void>;
   onCancelOngoingNap: () => Promise<void>;
@@ -75,6 +77,7 @@ const MainViewRouter: React.FC<MainViewRouterProps> = ({
   onAddOrUpdatePartner,
   onDeletePartner,
   onAddOrUpdateTag,
+  onDeleteTag,
   onDeleteLog,
   onToggleSleepLog,
   onCancelOngoingNap,
@@ -121,12 +124,17 @@ const MainViewRouter: React.FC<MainViewRouterProps> = ({
               onAddOrUpdatePartner={onAddOrUpdatePartner}
               onDeletePartner={onDeletePartner}
               onAddOrUpdateTag={onAddOrUpdateTag}
+              onDeleteTag={onDeleteTag}
             />
           )}
           {activeMainView === 'my' && (
             <MyView
               settings={settings}
               logs={logs}
+              userTags={userTags}
+              onAddOrUpdateLog={onAddOrUpdateLog}
+              onAddOrUpdateTag={onAddOrUpdateTag}
+              onDeleteTag={onDeleteTag}
               onUpdateSettings={onUpdateSettings}
               onShowVersionHistory={onShowVersionHistory}
               onNavigateToLog={onEdit}
@@ -152,7 +160,9 @@ const MainViewRouter: React.FC<MainViewRouterProps> = ({
           logs={logs}
           partners={partners}
           userTags={userTags}
+          onAddOrUpdateLog={onAddOrUpdateLog}
           onAddOrUpdateTag={onAddOrUpdateTag}
+          onDeleteTag={onDeleteTag}
         />
       </main>
     )}

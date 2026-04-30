@@ -11,7 +11,7 @@ import ExerciseRecordModal from './ExerciseRecordModal';
 import AlcoholRecordModal from './AlcoholRecordModal';
 import NapRecordModal from './NapRecordModal';
 import { SexRecordModal, MasturbationRecordModal } from '../sex-life';
-import type { LogEntry, PartnerProfile, AlcoholRecord, TagEntry } from '../../domain';
+import type { LogEntry, PartnerProfile, AlcoholRecord, TagEntry, TagType } from '../../domain';
 import MorningSection from './MorningSection';
 import SleepSection from './SleepSection';
 import { FaceSelector, MOOD_FACES, STRESS_FACES } from '../../shared/ui';
@@ -25,7 +25,9 @@ interface LogFormProps {
   logs: LogEntry[];
   partners: PartnerProfile[];
   userTags: TagEntry[];
+  onAddOrUpdateLog: (log: LogEntry) => Promise<void>;
   onAddOrUpdateTag: (tag: TagEntry) => Promise<void>;
+  onDeleteTag: (name: string, category: TagType) => Promise<void>;
 }
 
 type MidTabType = 'life' | 'env' | 'health';
@@ -49,7 +51,7 @@ const QualityScoreRing = ({ score }: { score: number }) => {
     );
 };
 
-const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirtyStateChange, logs, partners, userTags, onAddOrUpdateTag }) => {
+const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirtyStateChange, logs, partners, userTags, onAddOrUpdateLog, onAddOrUpdateTag, onDeleteTag }) => {
     const [log, setLog] = useState<LogEntry>(() => {
         const base = existingLog ? { ...existingLog } : { 
             date: logDate || '', status: 'completed', updatedAt: Date.now(),
@@ -625,7 +627,7 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
                     setField('masturbation', exists ? current.map(x => x.id === r.id ? r : x) : [...current, r]);
                     setModalState(s => ({ ...s, mb: false })); 
                 }} 
-                dateStr={log.date} logs={logs} partners={partners} userTags={userTags} onAddOrUpdateTag={onAddOrUpdateTag}
+                dateStr={log.date} logs={logs} partners={partners} userTags={userTags} onAddOrUpdateLog={onAddOrUpdateLog} onAddOrUpdateTag={onAddOrUpdateTag} onDeleteTag={onDeleteTag}
             />
             <ExerciseRecordModal 
                 isOpen={modalState.ex} 

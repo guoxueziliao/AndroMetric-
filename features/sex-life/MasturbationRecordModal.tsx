@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, Suspense, lazy } from 'react';
 import { Check, Clock, Film, PenLine, Plus, Minus, Zap, Edit2, Trash2, MonitorPlay, ChevronDown, LayoutGrid, Activity, ChevronLeft, AlertTriangle, Search, Settings, Droplets, User, BatteryFull, PhoneOff, HeartOff, Flag, Home, Sofa, Monitor, Car, MapPin } from 'lucide-react';
-import type { MasturbationRecordDetails, LogEntry, PartnerProfile, ContentItem, TagEntry } from '../../domain';
+import type { MasturbationRecordDetails, LogEntry, PartnerProfile, ContentItem, TagEntry, TagType } from '../../domain';
 import { Modal } from '../../shared/ui';
 import { calculateInventory, XP_DIMENSIONS_LIST, validateTag } from '../../shared/lib';
 import { useToast } from '../../contexts/ToastContext';
@@ -16,7 +16,9 @@ interface MasturbationRecordModalProps {
   partners?: PartnerProfile[];
   logs?: LogEntry[];
   userTags: TagEntry[];
+  onAddOrUpdateLog: (log: LogEntry) => Promise<void>;
   onAddOrUpdateTag: (tag: TagEntry) => Promise<void>;
+  onDeleteTag: (name: string, category: TagType) => Promise<void>;
 }
 
 const CONTENT_TYPES = ['视频', '直播', '图片', '小说', '回忆', '幻想', '音频', '漫画'];
@@ -61,7 +63,7 @@ const POST_MOOD_OPTIONS = ['满足/愉悦', '平静/贤者', '空虚/后悔', '�
 const FATIGUE_OPTIONS = ['精神焕发', '无明显疲劳', '轻微困倦', '身体沉重', '秒睡'];
 const INTERRUPTION_REASONS = ['电话/消息', '有人敲门/进入', '突然没兴致', '身体不适', '环境干扰', '被迫中止'];
 
-const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpen, onClose, onSave, initialData, logs = [], userTags, onAddOrUpdateTag }) => {
+const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpen, onClose, onSave, initialData, logs = [], userTags, onAddOrUpdateLog, onAddOrUpdateTag, onDeleteTag }) => {
     const { showToast } = useToast();
     const [data, setData] = useState<MasturbationRecordDetails>({
         id: '', startTime: '', duration: 15, status: 'completed', tools: ['手'], contentItems: [],
@@ -691,7 +693,15 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
             </Modal>
             
             <Suspense fallback={null}>
-                <TagManager isOpen={isTagManagerOpen} onClose={() => setIsTagManagerOpen(false)} />
+                <TagManager
+                    isOpen={isTagManagerOpen}
+                    onClose={() => setIsTagManagerOpen(false)}
+                    logs={logs}
+                    userTags={userTags}
+                    onAddOrUpdateLog={onAddOrUpdateLog}
+                    onAddOrUpdateTag={onAddOrUpdateTag}
+                    onDeleteTag={onDeleteTag}
+                />
             </Suspense>
         </Modal>
     );
