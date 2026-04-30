@@ -62,6 +62,53 @@ const AppContent: React.FC<{ data: AppData }> = ({ data }) => {
     handleSaveLog
   } = useLogEditor({ data, logs: safeLogs, showToast });
 
+  const mainViewData = useMemo(() => ({
+    settings,
+    logs: safeLogs,
+    partners,
+    userTags,
+    editingLog,
+    editingLogDate
+  }), [settings, safeLogs, partners, userTags, editingLog, editingLogDate]);
+
+  const mainViewBaseActions = useMemo(() => ({
+    onMainViewChange: setActiveMainView,
+    onEdit: handleEdit,
+    onAddOrUpdateLog: addOrUpdateLog,
+    onAddOrUpdatePartner: addOrUpdatePartner,
+    onDeletePartner: deletePartner,
+    onAddOrUpdateTag: addOrUpdateTag,
+    onDeleteTag: deleteTag,
+    onDeleteLog: deleteLog,
+    onToggleSleepLog: toggleSleepLog,
+    onCancelOngoingNap: cancelOngoingNap,
+    onCancelAlcoholRecord: cancelAlcoholRecord,
+    onCancelOngoingExercise: cancelOngoingExercise,
+    onCancelOngoingMasturbation: cancelOngoingMasturbation,
+    onBackToDashboard: handleBackToDashboard,
+    onSaveLog: handleSaveLog,
+    onDirtyStateChange: setIsFormDirty,
+    onUpdateSettings: setSettings,
+    onShowVersionHistory: () => setIsVersionHistoryOpen(true)
+  }), [
+    handleEdit,
+    addOrUpdateLog,
+    addOrUpdatePartner,
+    deletePartner,
+    addOrUpdateTag,
+    deleteTag,
+    deleteLog,
+    toggleSleepLog,
+    cancelOngoingNap,
+    cancelAlcoholRecord,
+    cancelOngoingExercise,
+    cancelOngoingMasturbation,
+    handleBackToDashboard,
+    handleSaveLog,
+    setIsFormDirty,
+    setSettings
+  ]);
+
   if (isInitializing) return <InitializationScreen />;
 
   if (!hasSeenWelcome) return <Welcome onGetStarted={markWelcomeSeen} />;
@@ -69,50 +116,31 @@ const AppContent: React.FC<{ data: AppData }> = ({ data }) => {
   return (
     <div className={`min-h-screen bg-brand-bg dark:bg-slate-950 text-brand-text dark:text-slate-200 font-sans transition-all duration-500 safe-area-top safe-area-bottom safe-area-left safe-area-right ${isBlurred ? 'blur-md grayscale opacity-50' : ''}`}>
       <QuickRecordController data={quickRecordData} isEnabled={view === 'dashboard'}>
-        {({ onFinishExercise, onFinishMasturbation, onFinishNap, onFinishAlcohol }) => (
-          <div className="container mx-auto max-w-lg p-4 pb-32">
-            <MainViewRouter
-              view={view}
-              activeMainView={activeMainView}
-              isDarkMode={isDarkMode}
-              settings={settings}
-              logs={safeLogs}
-              partners={partners}
-              userTags={userTags}
-              editingLog={editingLog}
-              editingLogDate={editingLogDate}
-              onMainViewChange={setActiveMainView}
-              onEdit={handleEdit}
-              onAddOrUpdateLog={addOrUpdateLog}
-              onAddOrUpdatePartner={addOrUpdatePartner}
-              onDeletePartner={deletePartner}
-              onAddOrUpdateTag={addOrUpdateTag}
-              onDeleteTag={deleteTag}
-              onDeleteLog={deleteLog}
-              onToggleSleepLog={toggleSleepLog}
-              onCancelOngoingNap={cancelOngoingNap}
-              onCancelAlcoholRecord={cancelAlcoholRecord}
-              onCancelOngoingExercise={cancelOngoingExercise}
-              onCancelOngoingMasturbation={cancelOngoingMasturbation}
-              onBackToDashboard={handleBackToDashboard}
-              onSaveLog={handleSaveLog}
-              onDirtyStateChange={setIsFormDirty}
-              onUpdateSettings={setSettings}
-              onShowVersionHistory={() => setIsVersionHistoryOpen(true)}
-              onFinishExercise={onFinishExercise}
-              onFinishMasturbation={onFinishMasturbation}
-              onFinishNap={onFinishNap}
-              onFinishAlcohol={onFinishAlcohol}
-            />
+        {(quickRecordHandlers) => {
+          const mainViewActions = {
+            ...mainViewBaseActions,
+            ...quickRecordHandlers
+          };
 
-            <Modal isOpen={isConfirmBackModalOpen} onClose={() => setIsConfirmBackModalOpen(false)} title="未保存的更改" footer={<div className="flex gap-3 w-full"><button onClick={() => setIsConfirmBackModalOpen(false)} className="flex-1 py-3 bg-slate-100 dark:bg-slate-800 rounded-xl">继续编辑</button><button onClick={confirmLeaveForm} className="flex-1 py-3 bg-red-50 text-red-500 rounded-xl font-bold">放弃</button></div>}>
-                <p>您有未保存的更改。确定要离开吗？</p>
-            </Modal>
+          return (
+            <div className="container mx-auto max-w-lg p-4 pb-32">
+              <MainViewRouter
+                view={view}
+                activeMainView={activeMainView}
+                isDarkMode={isDarkMode}
+                data={mainViewData}
+                actions={mainViewActions}
+              />
 
-            <VersionHistoryModal isOpen={isVersionHistoryOpen} onClose={() => setIsVersionHistoryOpen(false)} />
-            <PWAInstallPrompt />
-          </div>
-        )}
+              <Modal isOpen={isConfirmBackModalOpen} onClose={() => setIsConfirmBackModalOpen(false)} title="未保存的更改" footer={<div className="flex gap-3 w-full"><button onClick={() => setIsConfirmBackModalOpen(false)} className="flex-1 py-3 bg-slate-100 dark:bg-slate-800 rounded-xl">继续编辑</button><button onClick={confirmLeaveForm} className="flex-1 py-3 bg-red-50 text-red-500 rounded-xl font-bold">放弃</button></div>}>
+                  <p>您有未保存的更改。确定要离开吗？</p>
+              </Modal>
+
+              <VersionHistoryModal isOpen={isVersionHistoryOpen} onClose={() => setIsVersionHistoryOpen(false)} />
+              <PWAInstallPrompt />
+            </div>
+          );
+        }}
       </QuickRecordController>
     </div>
   );

@@ -27,16 +27,16 @@ const LoadingFallback = () => (
   </div>
 );
 
-interface MainViewRouterProps {
-  view: AppView;
-  activeMainView: MainView;
-  isDarkMode: boolean;
+interface MainViewRouterData {
   settings: AppSettings;
   logs: LogEntry[];
   partners: PartnerProfile[];
   userTags: TagEntry[];
   editingLog: LogEntry | null;
   editingLogDate: string | null;
+}
+
+interface MainViewRouterActions {
   onMainViewChange: (view: MainView) => void;
   onEdit: (date: string) => void;
   onAddOrUpdateLog: (log: LogEntry) => Promise<void>;
@@ -61,114 +61,132 @@ interface MainViewRouterProps {
   onFinishAlcohol: (record: AlcoholRecord) => void;
 }
 
+interface MainViewRouterProps {
+  view: AppView;
+  activeMainView: MainView;
+  isDarkMode: boolean;
+  data: MainViewRouterData;
+  actions: MainViewRouterActions;
+}
+
 const MainViewRouter: React.FC<MainViewRouterProps> = ({
   view,
   activeMainView,
   isDarkMode,
-  settings,
-  logs,
-  partners,
-  userTags,
-  editingLog,
-  editingLogDate,
-  onMainViewChange,
-  onEdit,
-  onAddOrUpdateLog,
-  onAddOrUpdatePartner,
-  onDeletePartner,
-  onAddOrUpdateTag,
-  onDeleteTag,
-  onDeleteLog,
-  onToggleSleepLog,
-  onCancelOngoingNap,
-  onCancelAlcoholRecord,
-  onCancelOngoingExercise,
-  onCancelOngoingMasturbation,
-  onBackToDashboard,
-  onSaveLog,
-  onDirtyStateChange,
-  onUpdateSettings,
-  onShowVersionHistory,
-  onFinishExercise,
-  onFinishMasturbation,
-  onFinishNap,
-  onFinishAlcohol
-}) => (
-  <>
-    {view === 'dashboard' && (
-      <main className="animate-in fade-in duration-300">
-        {activeMainView === 'calendar' && (
-          <Dashboard
+  data,
+  actions
+}) => {
+  const {
+    settings,
+    logs,
+    partners,
+    userTags,
+    editingLog,
+    editingLogDate
+  } = data;
+
+  const {
+    onMainViewChange,
+    onEdit,
+    onAddOrUpdateLog,
+    onAddOrUpdatePartner,
+    onDeletePartner,
+    onAddOrUpdateTag,
+    onDeleteTag,
+    onDeleteLog,
+    onToggleSleepLog,
+    onCancelOngoingNap,
+    onCancelAlcoholRecord,
+    onCancelOngoingExercise,
+    onCancelOngoingMasturbation,
+    onBackToDashboard,
+    onSaveLog,
+    onDirtyStateChange,
+    onUpdateSettings,
+    onShowVersionHistory,
+    onFinishExercise,
+    onFinishMasturbation,
+    onFinishNap,
+    onFinishAlcohol
+  } = actions;
+
+  return (
+    <>
+      {view === 'dashboard' && (
+        <main className="animate-in fade-in duration-300">
+          {activeMainView === 'calendar' && (
+            <Dashboard
+              logs={logs}
+              onEdit={onEdit}
+              onDeleteLog={onDeleteLog}
+              onToggleSleepLog={onToggleSleepLog}
+              onCancelOngoingNap={onCancelOngoingNap}
+              onCancelAlcoholRecord={onCancelAlcoholRecord}
+              onCancelOngoingExercise={onCancelOngoingExercise}
+              onCancelOngoingMasturbation={onCancelOngoingMasturbation}
+              onFinishExercise={onFinishExercise}
+              onFinishMasturbation={onFinishMasturbation}
+              onFinishNap={onFinishNap}
+              onFinishAlcohol={onFinishAlcohol}
+            />
+          )}
+          <Suspense fallback={<LoadingFallback />}>
+            {activeMainView === 'stats' && <StatsView isDarkMode={isDarkMode} logs={logs} />}
+            {activeMainView === 'sexlife' && (
+              <SexLifeView
+                logs={logs}
+                partners={partners}
+                userTags={userTags}
+                onAddOrUpdateLog={onAddOrUpdateLog}
+                onAddOrUpdatePartner={onAddOrUpdatePartner}
+                onDeletePartner={onDeletePartner}
+                onAddOrUpdateTag={onAddOrUpdateTag}
+                onDeleteTag={onDeleteTag}
+              />
+            )}
+            {activeMainView === 'my' && (
+              <MyView
+                settings={settings}
+                logs={logs}
+                userTags={userTags}
+                onAddOrUpdateLog={onAddOrUpdateLog}
+                onAddOrUpdateTag={onAddOrUpdateTag}
+                onDeleteTag={onDeleteTag}
+                onUpdateSettings={onUpdateSettings}
+                onShowVersionHistory={onShowVersionHistory}
+                onNavigateToLog={onEdit}
+              />
+            )}
+          </Suspense>
+        </main>
+      )}
+
+      {view === 'form' && (
+        <main className="animate-in slide-in-from-right duration-300">
+          <div className="flex items-center mb-6 pt-2">
+            <button onClick={onBackToDashboard} className="mr-4 p-3 bg-white dark:bg-slate-800 rounded-full shadow-sm">
+              <ArrowLeft size={20} />
+            </button>
+            <h2 className="text-2xl font-black tracking-tight">{editingLogDate ? '编辑记录' : '新记录'}</h2>
+          </div>
+          <LogForm
+            onSave={onSaveLog}
+            existingLog={editingLog}
+            logDate={editingLogDate}
+            onDirtyStateChange={onDirtyStateChange}
             logs={logs}
-            onEdit={onEdit}
-            onDeleteLog={onDeleteLog}
-            onToggleSleepLog={onToggleSleepLog}
-            onCancelOngoingNap={onCancelOngoingNap}
-            onCancelAlcoholRecord={onCancelAlcoholRecord}
-            onCancelOngoingExercise={onCancelOngoingExercise}
-            onCancelOngoingMasturbation={onCancelOngoingMasturbation}
-            onFinishExercise={onFinishExercise}
-            onFinishMasturbation={onFinishMasturbation}
-            onFinishNap={onFinishNap}
-            onFinishAlcohol={onFinishAlcohol}
+            partners={partners}
+            userTags={userTags}
+            onAddOrUpdateLog={onAddOrUpdateLog}
+            onAddOrUpdateTag={onAddOrUpdateTag}
+            onDeleteTag={onDeleteTag}
           />
-        )}
-        <Suspense fallback={<LoadingFallback />}>
-          {activeMainView === 'stats' && <StatsView isDarkMode={isDarkMode} logs={logs} />}
-          {activeMainView === 'sexlife' && (
-            <SexLifeView
-              logs={logs}
-              partners={partners}
-              userTags={userTags}
-              onAddOrUpdateLog={onAddOrUpdateLog}
-              onAddOrUpdatePartner={onAddOrUpdatePartner}
-              onDeletePartner={onDeletePartner}
-              onAddOrUpdateTag={onAddOrUpdateTag}
-              onDeleteTag={onDeleteTag}
-            />
-          )}
-          {activeMainView === 'my' && (
-            <MyView
-              settings={settings}
-              logs={logs}
-              userTags={userTags}
-              onAddOrUpdateLog={onAddOrUpdateLog}
-              onAddOrUpdateTag={onAddOrUpdateTag}
-              onDeleteTag={onDeleteTag}
-              onUpdateSettings={onUpdateSettings}
-              onShowVersionHistory={onShowVersionHistory}
-              onNavigateToLog={onEdit}
-            />
-          )}
-        </Suspense>
-      </main>
-    )}
+        </main>
+      )}
 
-    {view === 'form' && (
-      <main className="animate-in slide-in-from-right duration-300">
-        <div className="flex items-center mb-6 pt-2">
-          <button onClick={onBackToDashboard} className="mr-4 p-3 bg-white dark:bg-slate-800 rounded-full shadow-sm">
-            <ArrowLeft size={20} />
-          </button>
-          <h2 className="text-2xl font-black tracking-tight">{editingLogDate ? '编辑记录' : '新记录'}</h2>
-        </div>
-        <LogForm
-          onSave={onSaveLog}
-          existingLog={editingLog}
-          logDate={editingLogDate}
-          onDirtyStateChange={onDirtyStateChange}
-          logs={logs}
-          partners={partners}
-          userTags={userTags}
-          onAddOrUpdateLog={onAddOrUpdateLog}
-          onAddOrUpdateTag={onAddOrUpdateTag}
-          onDeleteTag={onDeleteTag}
-        />
-      </main>
-    )}
-
-    {view === 'dashboard' && <BottomNav activeView={activeMainView} onViewChange={onMainViewChange} />}
-  </>
-);
+      {view === 'dashboard' && <BottomNav activeView={activeMainView} onViewChange={onMainViewChange} />}
+    </>
+  );
+};
 
 export default MainViewRouter;
