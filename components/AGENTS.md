@@ -1,4 +1,4 @@
-# components/ - UI Components
+# components/ - Legacy Notes
 
 **Parent:** ../AGENTS.md
 
@@ -6,7 +6,7 @@
 
 ## OVERVIEW
 
-4 legacy React components for compatibility shims and parking-lot code. Heavy usage of controlled inputs, React Context, and Tailwind styling.
+No runtime React components remain in this directory. Keep this file only as a routing note for old paths and future cleanup.
 
 ---
 
@@ -18,6 +18,7 @@
 | App shell | `../app/*` | Welcome screen, bottom navigation, providers, routing |
 | Dashboard history | `../features/dashboard/*` | Log history and diff rows |
 | PWA install/update UI | `../features/pwa/*` | Install prompt, update prompt, install button |
+| Disabled analysis placeholders | `../features/analysis/*` | AI and analysis placeholders |
 | Daily record modals | `../features/daily-log/*Modal.tsx` | Caffeine, exercise, alcohol, and nap record forms |
 | Sex life records | `../features/sex-life/*` | Partner manager, sex modal, masturbation modal |
 
@@ -25,12 +26,9 @@
 
 ## CONVENTIONS
 
-- **Props interface:** Named `*Props` (e.g., `ModalProps`)
-- **Forward refs:** Use `React.forwardRef` for form inputs
-- **Event handlers:** Prefix with `handle*` (e.g., `handleSave`, `handleClose`)
-- **Modal state:** `[isModalOpen, setIsModalOpen]` pattern
-- **Form dirty tracking:** `isFormDirty` + `onDirtyStateChange` callback
-- **Tailwind:** Brand colors over defaults (`brand-bg` not `bg-gray-100`)
+- Do not add new runtime components here.
+- Put new UI into the owning feature or `shared/ui`.
+- If an old import points to `components/*`, route it to the mapped destination above.
 
 ---
 
@@ -53,12 +51,14 @@ No large sex-life forms remain in `components/`; those business components now l
 
 - **Dashboard:** Home view, calendar heatmap, global timeline, and log history live in `features/dashboard`
 - **App shell:** Welcome screen and bottom navigation live in `app`
+- **Desktop sidebar:** `SidebarNav` lives in `app`
+- **Analysis placeholders:** disabled AI/analysis placeholders live in `features/analysis`
 - **Daily log:** Main record form, morning/sleep/health sections, and lifestyle record modals live in `features/daily-log`
 - **Quick actions:** Floating action button and quick record controller live in `features/quick-actions`
 - **PWA UI:** Install prompt, update prompt, and install button live in `features/pwa`
 - **Sex life:** Timeline view, partner manager, sex modal, and masturbation modal live in `features/sex-life`
 - **Stats:** Stats view and hardness chart live in `features/stats`
-- **Shared UI:** Modal, Toast, DateTimePicker, form controls, selectors, and ErrorBoundary live in `shared/ui`
+- **Shared UI:** Modal, Toast, DateTimePicker, NoticeSystem, form controls, selectors, and ErrorBoundary live in `shared/ui`
 - **Lazy imports:** App shell lazy-loads StatsView, SexLifeView, and `features/profile/MyView`
 - **Suspense:** Wrap lazy views with `<Suspense fallback={LoadingFallback}>`
 - **Legacy scope:** Keep new business components out of `components/`; prefer the owning feature module.

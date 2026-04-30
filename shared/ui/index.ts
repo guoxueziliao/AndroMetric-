@@ -8,3 +8,4 @@ export { default as SafeDeleteModal } from './SafeDeleteModal';
 export { default as ErrorBoundary } from './ErrorBoundary';
 export { default as AnimatedButton } from './AnimatedButton';
 export { default as AnimatedPage, AnimatedPresence } from './AnimatedPage';
+export * from './NoticeSystem';

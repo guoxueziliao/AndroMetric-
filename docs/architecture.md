@@ -21,6 +21,7 @@
 │   └── useQuickRecordData.ts
 ├── features/
 │   ├── dashboard/
+│   ├── analysis/
 │   ├── daily-log/
 │   ├── quick-actions/
 │   │   ├── QuickRecordController.tsx
@@ -79,6 +80,7 @@ features/dashboard/
 业务域建议：
 
 - `dashboard`：首页、日历、摘要弹窗、ongoing banners、全局时间轴入口。
+- `analysis`：已禁用的 AI/分析占位入口，后续恢复时再接入真实用例。
 - `daily-log`：完整日记编辑、晨间、睡眠、健康、生活方式记录。
 - `quick-actions`：FAB、快速记录 controller、ongoing 状态 selector、快速记录默认值 factory。
 - `sex-life`：性生活视图、伴侣管理、性记录和自慰记录的业务入口。
@@ -101,6 +103,7 @@ features/dashboard/
 - `HardnessSelector`
 - `SafeDeleteModal`
 - `ErrorBoundary`
+- `NoticeSystem`
 - `AnimatedButton`
 - `AnimatedPage`
 
@@ -376,6 +379,7 @@ Provider 只负责装配，不承载业务流程。
 | `components/ErrorBoundary.tsx` | 已迁入 `shared/ui/ErrorBoundary.tsx` |
 | `components/ui/AnimatedButton.tsx` | 已迁入 `shared/ui/AnimatedButton.tsx` |
 | `components/ui/AnimatedPage.tsx` | 已迁入 `shared/ui/AnimatedPage.tsx` |
+| `components/NoticeSystem.tsx` | 已迁入 `shared/ui/NoticeSystem.tsx` |
 | `components/TagManager.tsx` | 已迁入 `features/tags/TagManager.tsx` |
 | `components/TagHealthCheck.tsx` | 已迁入 `features/tags/TagHealthCheck.tsx` |
 | `components/BackupSettings.tsx` | 已迁入 `features/backup/BackupSettings.tsx` |
@@ -412,6 +416,9 @@ Provider 只负责装配，不承载业务流程。
 | `components/LogHistory.tsx` | 已迁入 `features/dashboard/LogHistory.tsx` |
 | `components/DiffRow.tsx` | 已迁入 `features/dashboard/DiffRow.tsx` |
 | `components/PWAInstallPrompt.tsx` | 已迁入 `features/pwa/PWAInstallPrompt.tsx` |
+| `components/AIAnalyst.tsx` | 已迁入 `features/analysis/AIAnalyst.tsx` |
+| `components/AnalysisView.tsx` | 已迁入 `features/analysis/AnalysisView.tsx` |
+| `components/SidebarNav.tsx` | 已迁入 `app/SidebarNav.tsx` |
 
 ## 禁止事项
 

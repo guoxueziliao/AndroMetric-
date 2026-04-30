@@ -16,7 +16,7 @@ Privacy-first male health tracking PWA. Local-first architecture using Dexie.js 
 
 ```
 ./
-├── components/          # Legacy compatibility and parking-lot components
+├── components/          # Legacy notes only; no runtime components
 ├── app/                 # App composition and top-level routing
 ├── features/            # Business-domain feature modules
 ├── shared/              # Shared UI and pure helpers
@@ -43,6 +43,7 @@ Privacy-first male health tracking PWA. Local-first architecture using Dexie.js 
 | New daily modal/form | `features/daily-log/*Modal.tsx` | Copy existing record modal pattern |
 | Shared UI primitive | `shared/ui/*` | Modal, Toast, selectors, form controls, error boundary |
 | App shell | `app/*` | Providers, welcome screen, bottom navigation, main view routing |
+| Disabled analysis placeholders | `features/analysis/*` | AI/analysis placeholders kept out of active UI |
 | Daily log form | `features/daily-log/*` | Main record form, morning/sleep/health sections, lifestyle modals |
 | Stats/analytics | `features/stats/*` | Stats view, charts, XP radar, factor analysis |
 | UI state management | `hooks/useLogs.ts` | Main data hook |
