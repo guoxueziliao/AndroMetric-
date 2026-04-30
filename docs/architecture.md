@@ -388,6 +388,10 @@ Provider 只负责装配，不承载业务流程。
 | `utils/insights.ts` | 已迁入 `features/stats/model/insights.ts` |
 | `utils/eventAdapter.ts` | 已迁入 `features/stats/model/eventAdapter.ts` |
 | `app/QuickRecordController.tsx` | 第二阶段迁入 `features/quick-actions/QuickRecordController.tsx` |
+| `components/SexLifeView.tsx` | 已迁入 `features/sex-life/SexLifeView.tsx` |
+| `components/PartnerManager.tsx` | 已迁入 `features/sex-life/PartnerManager.tsx`，后续再拆分 |
+| `components/SexRecordModal.tsx` | 已迁入 `features/sex-life/SexRecordModal.tsx`，后续再拆分 |
+| `components/MasturbationRecordModal.tsx` | 已迁入 `features/sex-life/MasturbationRecordModal.tsx`，后续再拆分 |
 
 ## 禁止事项
 

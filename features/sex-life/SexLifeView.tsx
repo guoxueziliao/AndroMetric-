@@ -1,12 +1,12 @@
 import React, { useMemo, useState } from 'react';
-import { SexRecordDetails, MasturbationRecordDetails } from '../types';
-import { HeartHandshake, Calendar, Clock, MapPin, User, Droplets, Hand, Users, ArrowRight, ShieldCheck, Layers, ChevronDown, AlertTriangle, Film, Zap, PenLine, Quote, Hash, Info, Smartphone, ExternalLink } from 'lucide-react';
-import ErrorBoundary from './ErrorBoundary';
+import type { SexRecordDetails, MasturbationRecordDetails } from '../../domain';
+import { HeartHandshake, Clock, MapPin, Droplets, Hand, Users, ChevronDown, AlertTriangle, Film, Quote, Smartphone } from 'lucide-react';
+import { ErrorBoundary } from '../../shared/ui';
 import PartnerManager from './PartnerManager';
 import SexRecordModal from './SexRecordModal';
 import MasturbationRecordModal from './MasturbationRecordModal';
-import { useData } from '../contexts/DataContext';
-import { LABELS } from '../utils/helpers';
+import { useData } from '../../contexts/DataContext';
+import { LABELS } from '../../shared/lib';
 
 interface TimelineRecord {
     id: string;

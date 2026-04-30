@@ -7,8 +7,7 @@ import {
     Shirt, Droplets, ShieldAlert, Search, Coffee, Edit3, Beer, RotateCcw
 } from 'lucide-react';
 import BeverageModal from '../../components/BeverageModal';
-import SexRecordModal from '../../components/SexRecordModal';
-import MasturbationRecordModal from '../../components/MasturbationRecordModal';
+import { SexRecordModal, MasturbationRecordModal } from '../sex-life';
 import ExerciseRecordModal from '../../components/ExerciseSelectorModal';
 import AlcoholRecordModal from '../../components/AlcoholRecordModal';
 import NapRecordModal from '../../components/NapRecordModal';

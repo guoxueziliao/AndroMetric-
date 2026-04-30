@@ -1,14 +1,12 @@
 import React, { useState, useEffect, useMemo, Suspense, lazy } from 'react';
-import { X, Check, Clock, Film, PenLine, Plus, Minus, Zap, Edit2, Trash2, MonitorPlay, ChevronDown, LayoutGrid, Activity, ChevronLeft, AlertTriangle, Info, Search, Settings, Droplets, User, Battery, BatteryMedium, BatteryFull, PhoneOff, UserX, HeartOff, Flag, Home, Sofa, Monitor, Car, MapPin, Sparkles } from 'lucide-react';
-import { MasturbationRecordDetails, LogEntry, PartnerProfile, ContentItem } from '../types';
-import Modal from './Modal';
-import { calculateInventory, LABELS } from '../utils/helpers';
-import { XP_DIMENSIONS_LIST } from '../utils/constants';
-import { useData } from '../contexts/DataContext';
-import { useToast } from '../contexts/ToastContext';
-import { validateTag } from '../utils/tagValidators';
+import { Check, Clock, Film, PenLine, Plus, Minus, Zap, Edit2, Trash2, MonitorPlay, ChevronDown, LayoutGrid, Activity, ChevronLeft, AlertTriangle, Search, Settings, Droplets, User, BatteryFull, PhoneOff, HeartOff, Flag, Home, Sofa, Monitor, Car, MapPin } from 'lucide-react';
+import type { MasturbationRecordDetails, LogEntry, PartnerProfile, ContentItem } from '../../domain';
+import { Modal } from '../../shared/ui';
+import { calculateInventory, XP_DIMENSIONS_LIST, validateTag } from '../../shared/lib';
+import { useData } from '../../contexts/DataContext';
+import { useToast } from '../../contexts/ToastContext';
 
-const TagManager = lazy(() => import('../features/tags').then((module) => ({ default: module.TagManager })));
+const TagManager = lazy(() => import('../tags').then((module) => ({ default: module.TagManager })));
 
 interface MasturbationRecordModalProps {
   isOpen: boolean;

@@ -1,8 +1,8 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { X, Check, ChevronRight, Clock, Plus, Trash2, MapPin, ChevronDown, Activity, PlayCircle, Shirt, Zap, ArrowRight, Sparkles, Droplets, Flame, User, GripHorizontal, LayoutGrid, Tag, ArrowUp, ArrowDown, GripVertical, Star } from 'lucide-react';
-import { SexRecordDetails, SexInteraction, SexAction, SexActionType, PartnerProfile, LogEntry } from '../types';
-import { getSexRecommendations, Recommendation } from '../utils/recommendationEngine';
+import { X, ChevronRight, Plus, Trash2, MapPin, ChevronDown, Activity, Shirt, Zap, ArrowRight, Sparkles, Droplets, Flame, User, GripHorizontal, LayoutGrid, Tag, GripVertical, Star } from 'lucide-react';
+import type { SexRecordDetails, SexInteraction, SexAction, SexActionType, PartnerProfile, LogEntry } from '../../domain';
+import { getSexRecommendations, type Recommendation } from '../../utils/recommendationEngine';
 
 interface SexRecordModalProps {
   isOpen: boolean;
@@ -71,7 +71,7 @@ const Card: React.FC<{ children: React.ReactNode, className?: string, onClick?: 
     </div>
 );
 
-const Chip: React.FC<{ label: string, active: boolean, onClick: () => void, color?: string }> = ({ label, active, onClick, color = 'blue' }) => {
+const Chip: React.FC<{ label: string, active: boolean, onClick: () => void, color?: string }> = ({ label, active, onClick, color: _color = 'blue' }) => {
     // Reverted to clean slate theme
     return (
         <button
@@ -100,7 +100,7 @@ const TabButton: React.FC<{ active: boolean, onClick: () => void, icon: React.El
     </button>
 );
 
-const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave, initialData, dateStr, partners = [], logs = [] }) => {
+const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave, initialData, partners = [], logs = [] }) => {
   const [data, setData] = useState<SexRecordDetails>({
     id: '',
     startTime: '',

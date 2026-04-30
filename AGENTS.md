@@ -48,8 +48,9 @@ Privacy-first male health tracking PWA. Local-first architecture using Dexie.js 
 | Tag management | `features/tags/*` | Tag manager and tag health check |
 | Backup/version history | `features/backup/*` | Local backup settings and version history modal |
 | Theme settings | `features/settings/*` | Theme UI and theme hook |
-| Partner management | `components/PartnerManager.tsx` | 761 lines, complex form |
-| Sex/Masturbation records | `components/SexRecordModal.tsx`, `MasturbationRecordModal.tsx` | Large modals |
+| Sex life view | `features/sex-life/*` | Sex timeline, partner manager, sex and masturbation modals |
+| Partner management | `features/sex-life/PartnerManager.tsx` | 761 lines, complex form |
+| Sex/Masturbation records | `features/sex-life/SexRecordModal.tsx`, `features/sex-life/MasturbationRecordModal.tsx` | Large modals |
 
 ---
 
@@ -101,4 +102,4 @@ npm run preview      # Preview production build
 - **PWA:** Service worker auto-updates. Offline functionality via vite-plugin-pwa.
 - **Dexie:** Currently at version 5. Add migrations for schema changes.
 - **Tailwind:** Loaded via CDN in index.html, cached by service worker.
-- **Large Components:** SexRecordModal (880 lines), PartnerManager (761 lines), MasturbationRecordModal (701 lines); `features/daily-log/LogForm.tsx` remains large and should be split before adding major features.
+- **Large Components:** `features/sex-life/SexRecordModal.tsx` (880 lines), `features/sex-life/PartnerManager.tsx` (761 lines), `features/sex-life/MasturbationRecordModal.tsx` (701 lines); `features/daily-log/LogForm.tsx` remains large and should be split before adding major features.

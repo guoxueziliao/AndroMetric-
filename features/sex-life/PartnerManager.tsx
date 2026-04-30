@@ -1,9 +1,8 @@
 
 import React, { useState, useMemo } from 'react';
-import { PartnerProfile, PartnerType, LogEntry } from '../types';
-import { ArrowLeft, User, Ruler, Weight, GraduationCap, Briefcase, MapPin, Tag, Heart, Skull, ShieldCheck, Edit2, Trash2, Plus, Check, X, ChevronRight, Ruler as RulerIcon, Users, Calendar, Sparkles, Cigarette, Wine, Home, ThumbsUp, ThumbsDown, BrainCircuit, Flag, Info, Flame, Thermometer, Zap, BookOpen, Clock } from 'lucide-react';
-import Modal from './Modal';
-import SafeDeleteModal from './SafeDeleteModal';
+import type { PartnerProfile, PartnerType, LogEntry } from '../../domain';
+import { Heart, Edit2, Trash2, Plus, ChevronRight, Ruler as RulerIcon, Cigarette, Wine, ThumbsUp, ThumbsDown, BrainCircuit, Flag, Clock } from 'lucide-react';
+import { Modal, SafeDeleteModal } from '../../shared/ui';
 
 interface PartnerManagerProps {
     isOpen: boolean;
