@@ -366,8 +366,12 @@ Provider 只负责装配，不承载业务流程。
 | `types.ts` | 逐步拆到 `domain/types`，保留 re-export |
 | `utils/helpers.ts` | 拆到 `shared/lib` 和 `domain/rules` |
 | `components/Modal.tsx` | 迁入 `shared/ui` |
-| `components/TagManager.tsx` | 迁入 `features/tags` |
-| `components/BackupSettings.tsx` | 迁入 `features/backup` |
+| `components/TagManager.tsx` | 已迁入 `features/tags/TagManager.tsx` |
+| `components/TagHealthCheck.tsx` | 已迁入 `features/tags/TagHealthCheck.tsx` |
+| `components/BackupSettings.tsx` | 已迁入 `features/backup/BackupSettings.tsx` |
+| `components/VersionHistoryModal.tsx` | 已迁入 `features/backup/VersionHistoryModal.tsx` |
+| `components/settings/ThemeSettings.tsx` | 已迁入 `features/settings/ThemeSettings.tsx` |
+| `hooks/useTheme.ts` | 已迁入 `features/settings/useTheme.ts` |
 | `components/Dashboard.tsx` | 迁入 `features/dashboard` 后再拆分 |
 | `app/QuickRecordController.tsx` | 第二阶段迁入 `features/quick-actions/QuickRecordController.tsx` |
 

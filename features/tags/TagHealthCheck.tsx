@@ -1,8 +1,7 @@
-
 import React, { useMemo } from 'react';
-import { LogEntry } from '../types';
-import { validateTag, ValidationLevel, TagType, SYNONYMS } from '../utils/tagValidators';
-import { AlertCircle, AlertTriangle, Info, CheckCircle, ShieldCheck, ArrowRight, Activity, Tag, ShieldAlert } from 'lucide-react';
+import type { LogEntry, TagType } from '../../domain';
+import { Info, ShieldCheck, ArrowRight, Activity, Tag, ShieldAlert } from 'lucide-react';
+import { validateTag, SYNONYMS } from '../../shared/lib';
 
 interface TagHealthCheckProps {
     logs: LogEntry[];

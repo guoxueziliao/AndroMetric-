@@ -1,10 +1,10 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { LogEntry, TagType, TagEntry } from '../types';
-import { Tag as TagIcon, Edit2, Trash2, X, Check, Activity, ShieldAlert, Stethoscope, Plus, Search, ChevronRight, ChevronDown, LayoutGrid, User, Zap, Sparkles, Shirt, Heart, MousePointer2, AlertCircle } from 'lucide-react';
-import Modal from './Modal';
-import { useData } from '../contexts/DataContext';
-import { useToast } from '../contexts/ToastContext';
-import { validateTag } from '../utils/tagValidators';
+import type { TagType } from '../../domain';
+import { Tag as TagIcon, Edit2, Trash2, X, Check, Activity, ShieldAlert, Stethoscope, Plus, Search, User, Zap, Sparkles, Shirt, Heart } from 'lucide-react';
+import { useData } from '../../contexts/DataContext';
+import { useToast } from '../../contexts/ToastContext';
+import { validateTag } from '../../shared/lib';
+import { Modal } from '../../shared/ui';
 import TagHealthCheck from './TagHealthCheck';
 
 interface XpDimension {
@@ -37,7 +37,7 @@ interface TagManagerProps {
 const TagManager: React.FC<TagManagerProps> = ({ isOpen, onClose, onSelectTag, initialSearch = '', defaultTab = 'xp' }) => {
     const { logs, addOrUpdateLog, userTags, addOrUpdateTag, deleteTag } = useData();
     const { showToast } = useToast();
-    const [activeTab, setActiveTab] = useState<TagType | 'health_check'>(defaultTab as any);
+    const [activeTab, setActiveTab] = useState<TagType | 'health_check'>(defaultTab);
     const [searchTerm, setSearchTerm] = useState(initialSearch);
     const [editingTag, setEditingTag] = useState<string | null>(null);
     const [newTagName, setNewTagName] = useState('');

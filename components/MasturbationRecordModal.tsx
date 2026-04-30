@@ -8,7 +8,7 @@ import { useData } from '../contexts/DataContext';
 import { useToast } from '../contexts/ToastContext';
 import { validateTag } from '../utils/tagValidators';
 
-const TagManager = lazy(() => import('./TagManager'));
+const TagManager = lazy(() => import('../features/tags').then((module) => ({ default: module.TagManager })));
 
 interface MasturbationRecordModalProps {
   isOpen: boolean;

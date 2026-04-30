@@ -43,6 +43,9 @@ Privacy-first male health tracking PWA. Local-first architecture using Dexie.js 
 | New modal/form | `components/*Modal.tsx` | Copy existing pattern |
 | Stats/analytics | `utils/StatsEngine.ts`, `utils/xpStats.ts` | XP radar, factor analysis |
 | UI state management | `hooks/useLogs.ts` | Main data hook |
+| Tag management | `features/tags/*` | Tag manager and tag health check |
+| Backup/version history | `features/backup/*` | Local backup settings and version history modal |
+| Theme settings | `features/settings/*` | Theme UI and theme hook |
 | Partner management | `components/PartnerManager.tsx` | 761 lines, complex form |
 | Sex/Masturbation records | `components/SexRecordModal.tsx`, `MasturbationRecordModal.tsx` | Large modals |
 

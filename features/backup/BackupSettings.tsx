@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Folder, Shield, Clock, AlertCircle, CheckCircle, Download, Trash2 } from 'lucide-react';
-import { backupService, BackupMetadata } from '../services/BackupService';
-import { LogEntry } from '../types';
-import { StorageService } from '../services/StorageService';
+import { Folder, Shield, Clock, AlertCircle, CheckCircle, Download } from 'lucide-react';
+import type { LogEntry } from '../../domain';
+import { StorageService, backupService, type BackupMetadata } from '../../core/storage';
 
 interface BackupSettingsProps {
   logs?: LogEntry[];
@@ -101,14 +100,6 @@ const BackupSettings: React.FC<BackupSettingsProps> = ({ logs }) => {
       hour: '2-digit',
       minute: '2-digit'
     });
-  };
-
-  const formatBytes = (bytes: number): string => {
-    if (bytes === 0) return '0 B';
-    const k = 1024;
-    const sizes = ['B', 'KB', 'MB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
   return (

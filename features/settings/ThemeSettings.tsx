@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Sun, Moon, Monitor, Palette, Sparkles } from 'lucide-react';
-import { useTheme } from '../../hooks/useTheme';
+import { useTheme } from './useTheme';
 
 const ThemeSettings: React.FC = () => {
   const {
@@ -9,7 +9,6 @@ const ThemeSettings: React.FC = () => {
     themeMode,
     isGradient,
     isDark,
-    themeColors,
     setThemeColor,
     setThemeMode,
     toggleGradient
@@ -42,7 +41,7 @@ const ThemeSettings: React.FC = () => {
               key={color.id}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              onClick={() => setThemeColor(color.id as any)}
+              onClick={() => setThemeColor(color.id)}
               className={`relative aspect-square rounded-2xl flex flex-col items-center justify-center gap-1 transition-all ${
                 themeColor === color.id
                   ? `ring-2 ring-offset-2 ring-offset-white dark:ring-offset-slate-900 ring-${color.id}-500 ${color.shadow} shadow-lg`
@@ -76,7 +75,7 @@ const ThemeSettings: React.FC = () => {
               <motion.button
                 key={mode.id}
                 whileTap={{ scale: 0.95 }}
-                onClick={() => setThemeMode(mode.id as any)}
+                onClick={() => setThemeMode(mode.id)}
                 className={`flex-1 py-3 flex items-center justify-center gap-2 text-xs font-bold rounded-lg transition-all ${
                   themeMode === mode.id
                     ? 'bg-white dark:bg-slate-700 text-brand-accent shadow-sm'
