@@ -1,7 +1,4 @@
-export { default as FAB } from '../../components/FAB';
-export { default as ExerciseRecordModal } from '../../components/ExerciseSelectorModal';
-export { default as AlcoholRecordModal } from '../../components/AlcoholRecordModal';
-export { default as NapRecordModal } from '../../components/NapRecordModal';
+export { default as FAB } from './FAB';
 export { default as QuickRecordController } from './QuickRecordController';
 export { createMasturbationStartRecord } from './model/createMasturbationStartRecord';
 export {

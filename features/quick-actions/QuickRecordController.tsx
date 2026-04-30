@@ -2,11 +2,9 @@ import React, { useMemo, useState } from 'react';
 import type { AlcoholRecord, ExerciseRecord, MasturbationRecordDetails, NapRecord } from '../../domain';
 import { useToast } from '../../contexts/ToastContext';
 import { MasturbationRecordModal, SexRecordModal } from '../sex-life';
+import { AlcoholRecordModal, ExerciseRecordModal, NapRecordModal } from '../daily-log';
 import { getErrorMessage } from '../../shared/lib';
-import FAB from '../../components/FAB';
-import ExerciseRecordModal from '../../components/ExerciseSelectorModal';
-import AlcoholRecordModal from '../../components/AlcoholRecordModal';
-import NapRecordModal from '../../components/NapRecordModal';
+import FAB from './FAB';
 import { createMasturbationStartRecord } from './model/createMasturbationStartRecord';
 import {
   selectOngoingAlcohol,

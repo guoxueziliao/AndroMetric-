@@ -1,8 +1,8 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { X, Search, ChevronDown, ChevronUp, Check, Dumbbell, Clock, Activity, PenLine, Play, Flag, Footprints, Smile, Frown, Meh, Zap, Timer, TrendingUp, Sparkles, Target, Flame, HeartPulse } from 'lucide-react';
-import Modal from './Modal';
-import { ExerciseRecord, ExerciseIntensity, ExerciseFeeling } from '../types';
+import { Search, ChevronDown, ChevronUp, Check, Clock, PenLine, Play, Flag, Footprints, Smile, Frown, Meh, Zap, TrendingUp, Sparkles, Target, Flame } from 'lucide-react';
+import { Modal } from '../../shared/ui';
+import type { ExerciseRecord, ExerciseIntensity } from '../../domain';
 
 const EXERCISE_CATEGORIES = [
   { name: "步行", items: ["日常步行", "户外步行", "室内步行", "徒步", "遛狗", "城市散步", "负重步行"] },

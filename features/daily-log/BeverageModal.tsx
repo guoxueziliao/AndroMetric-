@@ -1,8 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
-import { X, Clock, Coffee, CupSoda, Leaf, Zap, Plus, Minus, Check, PencilLine, RotateCcw, Info } from 'lucide-react';
-import Modal from './Modal';
-import { CaffeineItem } from '../types';
+import { Clock, Coffee, CupSoda, Leaf, Zap, Plus, Minus, Check, PencilLine, RotateCcw, Info } from 'lucide-react';
+import { Modal } from '../../shared/ui';
+import type { CaffeineItem } from '../../domain';
 
 interface BeverageModalProps {
     isOpen: boolean;

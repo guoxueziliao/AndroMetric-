@@ -6,11 +6,11 @@ import {
     Snowflake, Wind, CloudFog, Home, Navigation, Hotel, Plane, 
     Shirt, Droplets, ShieldAlert, Search, Coffee, Edit3, Beer, RotateCcw
 } from 'lucide-react';
-import BeverageModal from '../../components/BeverageModal';
+import BeverageModal from './BeverageModal';
+import ExerciseRecordModal from './ExerciseRecordModal';
+import AlcoholRecordModal from './AlcoholRecordModal';
+import NapRecordModal from './NapRecordModal';
 import { SexRecordModal, MasturbationRecordModal } from '../sex-life';
-import ExerciseRecordModal from '../../components/ExerciseSelectorModal';
-import AlcoholRecordModal from '../../components/AlcoholRecordModal';
-import NapRecordModal from '../../components/NapRecordModal';
 import type { LogEntry, PartnerProfile, AlcoholRecord } from '../../domain';
 import MorningSection from './MorningSection';
 import SleepSection from './SleepSection';

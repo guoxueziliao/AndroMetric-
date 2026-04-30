@@ -6,7 +6,7 @@
 
 ## OVERVIEW
 
-23 legacy React components for forms, modals, charts, and views. Heavy usage of controlled inputs, React Context, and Tailwind styling.
+18 legacy React components for shared UI, app shell widgets, and compatibility shims. Heavy usage of controlled inputs, React Context, and Tailwind styling.
 
 ---
 
@@ -16,6 +16,7 @@
 |------|-----------|-------|
 | Add new modal | Copy `Modal.tsx` pattern | Use `isOpen`, `onClose`, `title` props |
 | Toast notifications | `Toast.tsx` | Via ToastContext |
+| Daily record modals | `../features/daily-log/*Modal.tsx` | Caffeine, exercise, alcohol, and nap record forms |
 | Sex life records | `../features/sex-life/*` | Partner manager, sex modal, masturbation modal |
 
 ---
@@ -49,10 +50,11 @@ No large sex-life forms remain in `components/`; those business components now l
 ## NOTES
 
 - **Dashboard:** Home view, calendar heatmap, and global timeline live in `features/dashboard`
-- **Daily log:** Main record form and morning/sleep/health sections live in `features/daily-log`
+- **Daily log:** Main record form, morning/sleep/health sections, and lifestyle record modals live in `features/daily-log`
+- **Quick actions:** Floating action button and quick record controller live in `features/quick-actions`
 - **Sex life:** Timeline view, partner manager, sex modal, and masturbation modal live in `features/sex-life`
 - **Stats:** Stats view and hardness chart live in `features/stats`
 - **Lazy imports:** App shell lazy-loads StatsView, SexLifeView, and `features/profile/MyView`
 - **Suspense:** Wrap lazy views with `<Suspense fallback={LoadingFallback}>`
 - **Error Boundary:** `ErrorBoundary.tsx` wraps critical components
-- **Quick actions:** FAB.tsx manages quick record entry flow
+- **Legacy scope:** Keep new business components out of `components/`; prefer the owning feature module.

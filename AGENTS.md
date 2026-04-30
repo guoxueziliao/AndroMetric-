@@ -40,11 +40,12 @@ Privacy-first male health tracking PWA. Local-first architecture using Dexie.js 
 |------|----------|-------|
 | Add new record type | `types.ts` → `LogEntry` interface | All data structures defined here |
 | Database migration | `utils/migration.ts` | Add version upgrade logic |
-| New modal/form | `components/*Modal.tsx` | Copy existing pattern |
-| Daily log form | `features/daily-log/*` | Main record form and morning/sleep/health sections |
+| New daily modal/form | `features/daily-log/*Modal.tsx` | Copy existing record modal pattern |
+| Daily log form | `features/daily-log/*` | Main record form, morning/sleep/health sections, lifestyle modals |
 | Stats/analytics | `features/stats/*` | Stats view, charts, XP radar, factor analysis |
 | UI state management | `hooks/useLogs.ts` | Main data hook |
 | Dashboard/home | `features/dashboard/*` | Home view, calendar heatmap, timeline entry |
+| Quick actions | `features/quick-actions/*` | FAB, quick record controller, ongoing selectors |
 | Tag management | `features/tags/*` | Tag manager and tag health check |
 | Backup/version history | `features/backup/*` | Local backup settings and version history modal |
 | Theme settings | `features/settings/*` | Theme UI and theme hook |
@@ -81,7 +82,7 @@ Privacy-first male health tracking PWA. Local-first architecture using Dexie.js 
 - **Lazy Loading:** Heavy views (StatsView, SexLifeView, `features/profile/MyView`) use React.lazy()
 - **Plugin System:** `services/PluginManager.ts` - register analysis plugins
 - **Version History:** Automatic snapshots before major operations
-- **Quick Actions:** FAB (Floating Action Button) pattern for instant recording
+- **Quick Actions:** `features/quick-actions/FAB.tsx` provides the floating action button for instant recording
 
 ---
 

@@ -392,6 +392,11 @@ Provider 只负责装配，不承载业务流程。
 | `components/PartnerManager.tsx` | 已迁入 `features/sex-life/PartnerManager.tsx`，后续再拆分 |
 | `components/SexRecordModal.tsx` | 已迁入 `features/sex-life/SexRecordModal.tsx`，后续再拆分 |
 | `components/MasturbationRecordModal.tsx` | 已迁入 `features/sex-life/MasturbationRecordModal.tsx`，后续再拆分 |
+| `components/FAB.tsx` | 已迁入 `features/quick-actions/FAB.tsx` |
+| `components/BeverageModal.tsx` | 已迁入 `features/daily-log/BeverageModal.tsx` |
+| `components/ExerciseSelectorModal.tsx` | 已迁入 `features/daily-log/ExerciseRecordModal.tsx` |
+| `components/AlcoholRecordModal.tsx` | 已迁入 `features/daily-log/AlcoholRecordModal.tsx` |
+| `components/NapRecordModal.tsx` | 已迁入 `features/daily-log/NapRecordModal.tsx` |
 
 ## 禁止事项
 

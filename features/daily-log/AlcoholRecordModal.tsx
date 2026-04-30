@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Check, Minus, Plus, Moon, Clock, Trash2, Users, MapPin, Target, ChevronDown, ChevronUp, ChevronRight, Beer, Sparkles } from 'lucide-react';
-import Modal from './Modal';
-import { AlcoholRecord, AlcoholItem, DrunkLevel } from '../types';
-import { DRINK_TYPES, getPrediction, calculatePureAlcohol } from '../utils/alcoholHelpers';
-import { useData } from '../contexts/DataContext';
+import { Minus, Plus, Trash2, Users, MapPin, Target, ChevronDown, ChevronUp, ChevronRight, Beer, Sparkles } from 'lucide-react';
+import { Modal } from '../../shared/ui';
+import type { AlcoholRecord, AlcoholItem, DrunkLevel } from '../../domain';
+import { DRINK_TYPES, getPrediction, calculatePureAlcohol } from '../../utils/alcoholHelpers';
 
 interface AlcoholRecordModalProps {
     isOpen: boolean;

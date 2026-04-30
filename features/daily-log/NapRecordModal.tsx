@@ -1,10 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
-import { CloudSun, Clock, Play, Sparkles, Star, Zap, Trash2, Check, Minus, Plus, MapPin, Leaf, RotateCcw, Heart, Shirt, Thermometer, BrainCircuit } from 'lucide-react';
-import Modal from './Modal';
-import { NapRecord, SleepLocation, SleepTemperature, SleepAttire, PreSleepState } from '../types';
-import HardnessSelector from './HardnessSelector';
-import { RangeSlider, IconToggleButton } from './FormControls';
+import { Clock, Sparkles, Star, Zap, Check, MapPin, Leaf, Heart, Shirt, Thermometer, BrainCircuit } from 'lucide-react';
+import type { NapRecord, SleepLocation } from '../../domain';
+import { HardnessSelector, IconToggleButton, Modal, RangeSlider } from '../../shared/ui';
 
 interface NapRecordModalProps {
     isOpen: boolean;
