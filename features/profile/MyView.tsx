@@ -573,11 +573,15 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
           <TagManager
             isOpen={isTagManagerOpen}
             onClose={() => setIsTagManagerOpen(false)}
-            logs={logs}
-            userTags={userTags}
-            onAddOrUpdateLog={onAddOrUpdateLog}
-            onAddOrUpdateTag={onAddOrUpdateTag}
-            onDeleteTag={onDeleteTag}
+            data={{
+              logs,
+              userTags
+            }}
+            actions={{
+              onAddOrUpdateLog,
+              onAddOrUpdateTag,
+              onDeleteTag
+            }}
           />
       </Suspense>
 

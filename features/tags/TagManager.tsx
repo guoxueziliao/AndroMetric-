@@ -25,17 +25,25 @@ const XP_DIMENSIONS: XpDimension[] = [
 const SYSTEM_EVENTS = ['加班', '吵架', '出差', '聚会', '家庭烦心事', '生病'];
 const SYSTEM_SYMPTOMS = ['头痛', '喉咙痛', '胃不适', '肌肉酸痛', '腹泻', '发烧', '鼻塞', '乏力', '咳嗽'];
 
+interface TagManagerData {
+    logs: LogEntry[];
+    userTags: TagEntry[];
+}
+
+interface TagManagerActions {
+    onAddOrUpdateLog: (log: LogEntry) => Promise<void>;
+    onAddOrUpdateTag: (tag: TagEntry) => Promise<void>;
+    onDeleteTag: (name: string, category: TagType) => Promise<void>;
+}
+
 interface TagManagerProps {
     isOpen: boolean;
     onClose: () => void;
     onSelectTag?: (tag: string) => void;
     initialSearch?: string;
     defaultTab?: TagType | 'health_check';
-    logs: LogEntry[];
-    userTags: TagEntry[];
-    onAddOrUpdateLog: (log: LogEntry) => Promise<void>;
-    onAddOrUpdateTag: (tag: TagEntry) => Promise<void>;
-    onDeleteTag: (name: string, category: TagType) => Promise<void>;
+    data: TagManagerData;
+    actions: TagManagerActions;
 }
 
 const TagManager: React.FC<TagManagerProps> = ({
@@ -44,12 +52,20 @@ const TagManager: React.FC<TagManagerProps> = ({
     onSelectTag,
     initialSearch = '',
     defaultTab = 'xp',
-    logs,
-    userTags,
-    onAddOrUpdateLog,
-    onAddOrUpdateTag,
-    onDeleteTag
+    data,
+    actions
 }) => {
+    const {
+        logs,
+        userTags
+    } = data;
+
+    const {
+        onAddOrUpdateLog,
+        onAddOrUpdateTag,
+        onDeleteTag
+    } = actions;
+
     const { showToast } = useToast();
     const [activeTab, setActiveTab] = useState<TagType | 'health_check'>(defaultTab);
     const [searchTerm, setSearchTerm] = useState(initialSearch);
