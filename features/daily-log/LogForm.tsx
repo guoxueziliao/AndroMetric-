@@ -17,17 +17,25 @@ import SleepSection from './SleepSection';
 import { FaceSelector, MOOD_FACES, STRESS_FACES } from '../../shared/ui';
 import { calculateDataQuality, formatDateFriendly } from '../../shared/lib';
 
-interface LogFormProps {
-  onSave: (log: LogEntry) => void;
+interface LogFormData {
   existingLog: LogEntry | null;
   logDate: string | null;
-  onDirtyStateChange: (isDirty: boolean) => void;
   logs: LogEntry[];
   partners: PartnerProfile[];
   userTags: TagEntry[];
+}
+
+interface LogFormActions {
+  onSave: (log: LogEntry) => void;
+  onDirtyStateChange: (isDirty: boolean) => void;
   onAddOrUpdateLog: (log: LogEntry) => Promise<void>;
   onAddOrUpdateTag: (tag: TagEntry) => Promise<void>;
   onDeleteTag: (name: string, category: TagType) => Promise<void>;
+}
+
+interface LogFormProps {
+  data: LogFormData;
+  actions: LogFormActions;
 }
 
 type MidTabType = 'life' | 'env' | 'health';
@@ -51,7 +59,23 @@ const QualityScoreRing = ({ score }: { score: number }) => {
     );
 };
 
-const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirtyStateChange, logs, partners, userTags, onAddOrUpdateLog, onAddOrUpdateTag, onDeleteTag }) => {
+const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
+    const {
+        existingLog,
+        logDate,
+        logs,
+        partners,
+        userTags
+    } = data;
+
+    const {
+        onSave,
+        onDirtyStateChange,
+        onAddOrUpdateLog,
+        onAddOrUpdateTag,
+        onDeleteTag
+    } = actions;
+
     const [log, setLog] = useState<LogEntry>(() => {
         const base = existingLog ? { ...existingLog } : { 
             date: logDate || '', status: 'completed', updatedAt: Date.now(),

@@ -180,16 +180,20 @@ const MainViewRouter: React.FC<MainViewRouterProps> = ({
             <h2 className="text-2xl font-black tracking-tight">{editingLogDate ? '编辑记录' : '新记录'}</h2>
           </div>
           <LogForm
-            onSave={onSaveLog}
-            existingLog={editingLog}
-            logDate={editingLogDate}
-            onDirtyStateChange={onDirtyStateChange}
-            logs={logs}
-            partners={partners}
-            userTags={userTags}
-            onAddOrUpdateLog={onAddOrUpdateLog}
-            onAddOrUpdateTag={onAddOrUpdateTag}
-            onDeleteTag={onDeleteTag}
+            data={{
+              existingLog: editingLog,
+              logDate: editingLogDate,
+              logs,
+              partners,
+              userTags
+            }}
+            actions={{
+              onSave: onSaveLog,
+              onDirtyStateChange,
+              onAddOrUpdateLog,
+              onAddOrUpdateTag,
+              onDeleteTag
+            }}
           />
         </main>
       )}
