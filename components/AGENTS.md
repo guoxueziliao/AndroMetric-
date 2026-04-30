@@ -59,7 +59,7 @@
 
 ## NOTES
 
-- **Lazy imports:** App.tsx lazy-loads StatsView, SexLifeView, MyView
+- **Lazy imports:** App shell lazy-loads StatsView, SexLifeView, and `features/profile/MyView`
 - **Suspense:** Wrap lazy views with `<Suspense fallback={LoadingFallback}>`
 - **Error Boundary:** `ErrorBoundary.tsx` wraps critical components
 - **Quick actions:** FAB.tsx manages quick record entry flow

@@ -1,21 +1,18 @@
 
 import React, { useRef, useState, useEffect, useMemo, lazy, Suspense } from 'react';
-import { Upload, Download, Info, Settings, Save, AlertTriangle, GitMerge, Replace, Archive, Database, History, Trash2, FileSpreadsheet, Smartphone, Moon, Sun, Palette, Share2, Pencil, X, Book, AppWindow, FolderInput, Clock, Bug, Stethoscope, CheckCircle, Wrench, RotateCcw, ShieldCheck, ChevronRight, AlertCircle, ArrowRight, Tags, Shield } from 'lucide-react';
-import { LogEntry, BackupState, AppSettings, PartnerProfile, Snapshot } from '../types';
-import Modal from './Modal';
-import { useLocalStorage } from '../hooks/useLocalStorage';
-import { useData } from '../contexts/DataContext';
-import { useToast } from '../contexts/ToastContext';
-import { Logger } from '../services/LoggerService';
-import { StorageService } from '../services/StorageService';
+import { Settings, AlertTriangle, Archive, Database, History, Trash2, Smartphone, Moon, Sun, Share2, Pencil, X, FolderInput, Stethoscope, CheckCircle, Wrench, RotateCcw, ShieldCheck, ChevronRight, AlertCircle, ArrowRight, Tags } from 'lucide-react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { DataHealthReport } from '../utils/dataHealthCheck';
-import { db } from '../db';
-import { LATEST_VERSION } from '../utils/migration';
-import { InstallButton } from './PWAInstallPrompt';
+import type { AppSettings, LogEntry, Snapshot } from '../../domain';
+import { useData } from '../../contexts/DataContext';
+import { useToast } from '../../contexts/ToastContext';
+import { StorageService, db } from '../../core/storage';
+import { useLocalStorage } from '../../hooks/useLocalStorage';
+import { Modal } from '../../shared/ui';
+import { DataHealthReport } from '../../utils/dataHealthCheck';
+import { InstallButton } from '../../components/PWAInstallPrompt';
 
-const TagManager = lazy(() => import('./TagManager'));
-const BackupSettings = lazy(() => import('./BackupSettings'));
+const TagManager = lazy(() => import('../tags').then((module) => ({ default: module.TagManager })));
+const BackupSettings = lazy(() => import('../backup').then((module) => ({ default: module.BackupSettings })));
 
 interface MyViewProps {
   settings: AppSettings;
@@ -32,7 +29,7 @@ const StatBox = ({ label, value, colorClass, bgClass }: { label: string, value: 
 );
 
 const MyView: React.FC<MyViewProps> = ({ settings, onUpdateSettings, onShowVersionHistory, onNavigateToLog }) => {
-  const { logs: rawLogs, partners, importLogs } = useData();
+  const { logs: rawLogs } = useData();
   const logs = useMemo(() => Array.isArray(rawLogs) ? rawLogs : [], [rawLogs]);
   const { showToast } = useToast();
   
@@ -72,7 +69,6 @@ const MyView: React.FC<MyViewProps> = ({ settings, onUpdateSettings, onShowVersi
   // Health Check State
   const [healthReport, setHealthReport] = useState<DataHealthReport | null>(null);
   const [isRepairing, setIsRepairing] = useState(false);
-  const [hasAttemptedRepair, setHasAttemptedRepair] = useState(false);
 
   // Mobile Detection
   const [isMobile, setIsMobile] = useState(() => {
@@ -118,7 +114,6 @@ const MyView: React.FC<MyViewProps> = ({ settings, onUpdateSettings, onShowVersi
       if (!confirm('系统将自动创建当前数据的备份快照，随后尝试修复数据结构错误。\n\n确定要开始修复吗？')) return;
       
       setIsRepairing(true);
-      setHasAttemptedRepair(true);
       try {
           showToast('正在创建安全备份...', 'info');
           await StorageService.snapshots.create(`系统自动备份 - v${settings.version} 修复前`);

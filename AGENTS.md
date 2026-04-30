@@ -16,7 +16,12 @@ Privacy-first male health tracking PWA. Local-first architecture using Dexie.js 
 
 ```
 ./
-├── components/          # 36 UI components - modals, charts, forms
+├── components/          # Legacy UI components - modals, charts, forms
+├── app/                 # App composition and top-level routing
+├── features/            # Business-domain feature modules
+├── shared/              # Shared UI and pure helpers
+├── core/                # Storage and infrastructure adapters
+├── domain/              # Domain types and rules
 ├── utils/              # Data processing, stats, migrations
 ├── services/           # Storage, logging, plugin system
 ├── hooks/              # React hooks (useLogs, useLocalStorage)
@@ -67,7 +72,7 @@ Privacy-first male health tracking PWA. Local-first architecture using Dexie.js 
 ## UNIQUE STYLES
 
 - **Privacy Mode:** `settings.privacyMode` triggers `blur-md grayscale opacity-50` on app container
-- **Lazy Loading:** Heavy views (StatsView, SexLifeView, MyView) use React.lazy()
+- **Lazy Loading:** Heavy views (StatsView, SexLifeView, `features/profile/MyView`) use React.lazy()
 - **Plugin System:** `services/PluginManager.ts` - register analysis plugins
 - **Version History:** Automatic snapshots before major operations
 - **Quick Actions:** FAB (Floating Action Button) pattern for instant recording
