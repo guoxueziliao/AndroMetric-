@@ -117,17 +117,19 @@ const MainViewRouter: React.FC<MainViewRouterProps> = ({
           {activeMainView === 'calendar' && (
             <Dashboard
               logs={logs}
-              onEdit={onEdit}
-              onDeleteLog={onDeleteLog}
-              onToggleSleepLog={onToggleSleepLog}
-              onCancelOngoingNap={onCancelOngoingNap}
-              onCancelAlcoholRecord={onCancelAlcoholRecord}
-              onCancelOngoingExercise={onCancelOngoingExercise}
-              onCancelOngoingMasturbation={onCancelOngoingMasturbation}
-              onFinishExercise={onFinishExercise}
-              onFinishMasturbation={onFinishMasturbation}
-              onFinishNap={onFinishNap}
-              onFinishAlcohol={onFinishAlcohol}
+              actions={{
+                onEdit,
+                onDeleteLog,
+                onToggleSleepLog,
+                onCancelOngoingNap,
+                onCancelAlcoholRecord,
+                onCancelOngoingExercise,
+                onCancelOngoingMasturbation,
+                onFinishExercise,
+                onFinishMasturbation,
+                onFinishNap,
+                onFinishAlcohol
+              }}
             />
           )}
           <Suspense fallback={<LoadingFallback />}>

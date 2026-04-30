@@ -14,8 +14,7 @@ import { useToast } from '../../contexts/ToastContext';
 import { LogHistory } from './LogHistory';
 import { GlobalTimeline } from './GlobalTimeline';
 
-interface DashboardProps {
-  logs: LogEntry[];
+interface DashboardActions {
   onEdit: (date: string) => void;
   onDeleteLog: (date: string) => Promise<void>;
   onToggleSleepLog: (pendingLog?: LogEntry) => Promise<void>;
@@ -27,6 +26,11 @@ interface DashboardProps {
   onFinishMasturbation?: (record: MasturbationRecordDetails) => void;
   onFinishNap?: (record: NapRecord) => void;
   onFinishAlcohol?: (record: AlcoholRecord) => void;
+}
+
+interface DashboardProps {
+  logs: LogEntry[];
+  actions: DashboardActions;
 }
 
 type SummaryTab = 'diary' | 'track' | 'source';
@@ -45,18 +49,22 @@ interface SummarySectionProps {
 
 const Dashboard: React.FC<DashboardProps> = ({
   logs: rawLogs,
-  onEdit,
-  onDeleteLog,
-  onToggleSleepLog,
-  onCancelOngoingNap,
-  onCancelAlcoholRecord,
-  onCancelOngoingExercise,
-  onCancelOngoingMasturbation,
-  onFinishExercise,
-  onFinishMasturbation,
-  onFinishNap,
-  onFinishAlcohol
+  actions
 }) => {
+  const {
+    onEdit,
+    onDeleteLog,
+    onToggleSleepLog,
+    onCancelOngoingNap,
+    onCancelAlcoholRecord,
+    onCancelOngoingExercise,
+    onCancelOngoingMasturbation,
+    onFinishExercise,
+    onFinishMasturbation,
+    onFinishNap,
+    onFinishAlcohol
+  } = actions;
+
   const logs = useMemo(() => Array.isArray(rawLogs) ? rawLogs : [], [rawLogs]);
   const { showToast } = useToast();
 
