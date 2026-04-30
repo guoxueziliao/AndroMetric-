@@ -42,7 +42,7 @@ Privacy-first male health tracking PWA. Local-first architecture using Dexie.js 
 | Database migration | `utils/migration.ts` | Add version upgrade logic |
 | New modal/form | `components/*Modal.tsx` | Copy existing pattern |
 | Daily log form | `features/daily-log/*` | Main record form and morning/sleep/health sections |
-| Stats/analytics | `utils/StatsEngine.ts`, `utils/xpStats.ts` | XP radar, factor analysis |
+| Stats/analytics | `features/stats/*` | Stats view, charts, XP radar, factor analysis |
 | UI state management | `hooks/useLogs.ts` | Main data hook |
 | Dashboard/home | `features/dashboard/*` | Home view, calendar heatmap, timeline entry |
 | Tag management | `features/tags/*` | Tag manager and tag health check |

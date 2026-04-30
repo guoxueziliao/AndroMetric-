@@ -1,6 +1,5 @@
-
-import { LogEntry, UnifiedEvent, EventType } from '../types';
-import { analyzeSleep } from './helpers';
+import type { LogEntry, UnifiedEvent, EventType } from '../../../domain';
+import { analyzeSleep } from '../../../shared/lib';
 
 const createEvent = (
     type: EventType, 

@@ -6,7 +6,7 @@
 
 ## OVERVIEW
 
-15 utility modules for data transformation, statistics, migrations, validation, and analysis engines.
+12 utility modules for data transformation, migrations, validation, and shared analysis helpers.
 
 ---
 
@@ -15,17 +15,13 @@
 | Task | Module | Notes |
 |------|--------|-------|
 | Database migration | `migration.ts` | Schema upgrades, data transformations |
-| Stats calculation | `StatsEngine.ts` | Averages, trends, correlations |
-| XP analysis | `xpStats.ts` | Radar chart data, tag dimensions |
 | Data validation | `validators.ts`, `tagValidators.ts` | Input validation rules |
 | Data repair | `historyRepair.ts` | Fix corrupted history entries |
 | Hydrate records | `hydrateLog.ts` | Enrich partial log entries |
-| Insights | `insights.ts` | Factor analysis, correlations |
 | Regression analysis | `regression.ts` | Linear regression for trends |
 | Recommendations | `recommendationEngine.ts` | Personalized suggestions |
 | Helpers | `helpers.ts` | Date formatting, calculations |
 | Alcohol helpers | `alcoholHelpers.ts` | BAC calculations |
-| Event adapter | `eventAdapter.ts` | Convert records to unified events |
 | Health check | `dataHealthCheck.ts` | Data integrity validation |
 | Constants | `constants.ts` | Shared constants |
 
@@ -66,10 +62,7 @@ export async function runMigrations(db: HardnessDiaryDatabase): Promise<void> {
 
 ## STATS ENGINE
 
-- **Input:** `LogEntry[]` array
-- **Output:** Calculated averages, trends, correlations
-- **XP Radar:** 6 dimensions from tag analysis
-- **Factor Analysis:** Correlates lifestyle factors with hardness levels
+Stats-specific engines, XP radar logic, insights, and event normalization live in `features/stats/model`.
 
 ---
 

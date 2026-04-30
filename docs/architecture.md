@@ -381,6 +381,12 @@ Provider 只负责装配，不承载业务流程。
 | `components/HealthSection.tsx` | 已迁入 `features/daily-log/HealthSection.tsx` |
 | `hooks/useSmartDefaults.ts` | 已迁入 `features/daily-log/model/useSmartDefaults.ts` |
 | `utils/smartDefaults.ts` | 已迁入 `features/daily-log/model/smartDefaults.ts` |
+| `components/StatsView.tsx` | 已迁入 `features/stats/StatsView.tsx` |
+| `components/HardnessChart.tsx` | 已迁入 `features/stats/HardnessChart.tsx` |
+| `utils/StatsEngine.ts` | 已迁入 `features/stats/model/StatsEngine.ts` |
+| `utils/xpStats.ts` | 已迁入 `features/stats/model/xpStats.ts` |
+| `utils/insights.ts` | 已迁入 `features/stats/model/insights.ts` |
+| `utils/eventAdapter.ts` | 已迁入 `features/stats/model/eventAdapter.ts` |
 | `app/QuickRecordController.tsx` | 第二阶段迁入 `features/quick-actions/QuickRecordController.tsx` |
 
 ## 禁止事项

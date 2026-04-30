@@ -1,7 +1,7 @@
-
-import { LogEntry } from '../types';
-import { StatsEngine, METRICS, MetricId } from './StatsEngine';
-import { analyzeSleep } from './helpers';
+import type { LogEntry } from '../../../domain';
+import { StatsEngine } from './StatsEngine';
+import type { MetricId } from './StatsEngine';
+import { analyzeSleep } from '../../../shared/lib';
 
 export interface Insight {
     id: string;
@@ -27,8 +27,6 @@ const generateCorrelations = (logs: LogEntry[]): Insight[] => {
         // Threshold for significant insight (e.g., difference > 0.3 levels)
         if (Math.abs(result.diff) > 0.3) {
             const isPositiveCorrelation = result.diff > 0;
-            const factorConfig = METRICS[factorId];
-            
             // Logic: 
             // If factor is 'Good' (like Sleep, Exercise) and Diff > 0 -> Positive Insight
             // If factor is 'Bad' (Alcohol, Stress) and Diff < 0 -> Warning/Negative

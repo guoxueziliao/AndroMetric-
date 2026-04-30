@@ -1,7 +1,6 @@
-
 import React, { useEffect, useMemo, useRef } from 'react';
-import { LogEntry, MorningWoodRetention } from '../types';
-import { analyzeSleep } from '../utils/helpers';
+import type { LogEntry, MorningWoodRetention } from '../../domain';
+import { analyzeSleep } from '../../shared/lib';
 import { Chart, LineController, LineElement, PointElement, BarController, BarElement, CategoryScale, LinearScale, Legend, Tooltip, Filler, ChartOptions, Plugin } from 'chart.js';
 import { BarChart3 } from 'lucide-react';
 
@@ -138,7 +137,7 @@ const HardnessChart: React.FC<HardnessChartProps> = ({ logs, privacyMode, isDark
                     { type: 'line', label: '晨勃硬度', data: hardnessData, borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.1)', tension: 0.3, borderWidth: 2, pointBackgroundColor: pointColors, pointBorderColor: isDarkMode ? '#1e293b' : '#ffffff', pointBorderWidth: 1, pointRadius: 5, pointHoverRadius: 7, yAxisID: 'y', fill: false, order: 1 }
                 ]
             },
-            options: options as any,
+            options,
             plugins: [eventMarkersPlugin]
         });
 

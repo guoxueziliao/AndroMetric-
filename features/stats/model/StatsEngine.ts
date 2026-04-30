@@ -1,5 +1,4 @@
-
-import { LogEntry, UnifiedEvent } from '../types';
+import type { LogEntry, UnifiedEvent } from '../../../domain';
 import { flattenLogsToEvents } from './eventAdapter';
 
 // --- Types ---
@@ -181,7 +180,7 @@ export class StatsEngine {
         // But getSeries now fills 0 for sums, so it's mostly continuous for those.
         const dateToValueMap = new Map(series.map(d => [d.date, d.value]));
         
-        return this.sortedDates.map((date, i) => {
+        return this.sortedDates.map((_, i) => {
             if (i < windowSize - 1) return null;
 
             let sum = 0;

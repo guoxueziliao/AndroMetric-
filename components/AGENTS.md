@@ -17,7 +17,6 @@
 | Add new modal | Copy `Modal.tsx` pattern | Use `isOpen`, `onClose`, `title` props |
 | Partner management | `PartnerManager.tsx` | 761 lines, CRUD operations |
 | Sex record entry | `SexRecordModal.tsx` | 880 lines, multi-step form |
-| Dashboard charts | `HardnessChart.tsx` | Chart.js integration |
 | Toast notifications | `Toast.tsx` | Via ToastContext |
 
 ---
@@ -56,6 +55,7 @@
 
 - **Dashboard:** Home view, calendar heatmap, and global timeline live in `features/dashboard`
 - **Daily log:** Main record form and morning/sleep/health sections live in `features/daily-log`
+- **Stats:** Stats view and hardness chart live in `features/stats`
 - **Lazy imports:** App shell lazy-loads StatsView, SexLifeView, and `features/profile/MyView`
 - **Suspense:** Wrap lazy views with `<Suspense fallback={LoadingFallback}>`
 - **Error Boundary:** `ErrorBoundary.tsx` wraps critical components

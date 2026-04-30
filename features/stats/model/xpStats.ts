@@ -1,7 +1,5 @@
-
-import { LogEntry } from '../types';
-import { XP_GROUPS } from './constants';
-import { validateTag, ValidationResult } from './tagValidators';
+import type { LogEntry } from '../../../domain';
+import { XP_GROUPS, validateTag } from '../../../shared/lib';
 
 // --- Types ---
 

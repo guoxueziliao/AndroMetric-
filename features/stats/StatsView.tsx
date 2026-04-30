@@ -1,13 +1,16 @@
 import React, { useMemo, useState } from 'react';
-import { useData } from '../contexts/DataContext';
-import { StatsEngine, MetricId, METRICS } from '../utils/StatsEngine';
-import { calculateXpStats, DimensionStat } from '../utils/xpStats';
-import { generateInsights, Insight } from '../utils/insights';
-import { Activity, Zap, TrendingUp, Moon, BrainCircuit, Clock, Radar, CheckCircle, ArrowDown, AlertTriangle, Info, BarChart3, LayoutGrid, Tag, Eye, EyeOff, Sparkles } from 'lucide-react';
-import ErrorBoundary from './ErrorBoundary';
-import { getMasturbationRecommendations } from '../utils/recommendationEngine';
+import { useData } from '../../contexts/DataContext';
+import { StatsEngine, METRICS } from './model/StatsEngine';
+import type { MetricId } from './model/StatsEngine';
+import { calculateXpStats } from './model/xpStats';
+import type { DimensionStat } from './model/xpStats';
+import { generateInsights } from './model/insights';
+import type { Insight } from './model/insights';
+import { Activity, Zap, TrendingUp, BrainCircuit, Radar, CheckCircle, ArrowDown, AlertTriangle, Info, Tag, Sparkles } from 'lucide-react';
+import { ErrorBoundary } from '../../shared/ui';
+import { getMasturbationRecommendations } from '../../utils/recommendationEngine';
 import { Chart, CategoryScale, LinearScale, PointElement, LineElement, BarElement, BarController, Tooltip, Legend, Filler, ScatterController, LineController, BubbleController, ArcElement, PieController, DoughnutController, RadialLinearScale, RadarController, PolarAreaController } from 'chart.js';
-import { Line, Bar, Doughnut, Radar as RadarChart } from 'react-chartjs-2';
+import { Line, Bar, Radar as RadarChart } from 'react-chartjs-2';
 
 Chart.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, BarController, ScatterController, LineController, BubbleController, ArcElement, PieController, DoughnutController, RadialLinearScale, RadarController, PolarAreaController, Tooltip, Legend, Filler);
 
@@ -29,6 +32,13 @@ interface KPICardProps {
     icon: React.ElementType;
     colorClass?: string;
 }
+
+type StatsTab = 'overview' | 'sexual' | 'behavior';
+const STATS_TABS: { id: StatsTab; label: string }[] = [
+    { id: 'overview', label: '总览' },
+    { id: 'behavior', label: '习惯' },
+    { id: 'sexual', label: '性爱' }
+];
 
 // --- Sub-Components ---
 
@@ -86,8 +96,8 @@ const InsightCard: React.FC<{ insight: Insight }> = ({ insight }) => {
 const StatsView: React.FC<{ isDarkMode: boolean }> = ({ isDarkMode }) => {
     const { logs: rawLogs } = useData();
     const logs = useMemo(() => Array.isArray(rawLogs) ? rawLogs : [], [rawLogs]);
-    const [activeTab, setActiveTab] = useState<'overview' | 'sexual' | 'behavior'>('overview');
-    const [trendComparison, setTrendComparison] = useState<MetricId>('sleep');
+    const [activeTab, setActiveTab] = useState<StatsTab>('overview');
+    const [trendComparison] = useState<MetricId>('sleep');
 
     const displayLogs = useMemo(() => {
         return [...logs].filter(l => l.status === 'completed' && !isNaN(new Date(l.date).getTime()))
@@ -138,8 +148,8 @@ const StatsView: React.FC<{ isDarkMode: boolean }> = ({ isDarkMode }) => {
                 </div>
 
                 <div className="flex p-1 bg-brand-primary dark:bg-slate-900/50 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-x-auto scrollbar-hide">
-                    {[{ id: 'overview', label: '总览' }, { id: 'behavior', label: '习惯' }, { id: 'sexual', label: '性爱' }].map(tab => (
-                        <button key={tab.id} onClick={() => setActiveTab(tab.id as any)} className={`flex-1 py-2 px-3 text-xs font-bold rounded-xl transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-white dark:bg-slate-800 text-brand-accent shadow-sm' : 'text-brand-muted dark:text-slate-500'}`}>{tab.label}</button>
+                    {STATS_TABS.map(tab => (
+                        <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex-1 py-2 px-3 text-xs font-bold rounded-xl transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-white dark:bg-slate-800 text-brand-accent shadow-sm' : 'text-brand-muted dark:text-slate-500'}`}>{tab.label}</button>
                     ))}
                 </div>
 
