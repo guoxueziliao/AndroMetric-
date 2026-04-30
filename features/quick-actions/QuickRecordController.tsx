@@ -1,20 +1,24 @@
 import React, { useMemo, useState } from 'react';
-import { AlcoholRecord, ExerciseRecord, LogEntry, MasturbationRecordDetails, NapRecord } from '../types';
-import { useToast } from '../contexts/ToastContext';
-import { FAB, AlcoholRecordModal, ExerciseRecordModal, NapRecordModal } from '../features/quick-actions';
-import { MasturbationRecordModal, SexRecordModal } from '../features/sex-life';
-import { getErrorMessage } from '../shared/lib';
-import type { AppData } from './AppProviders';
-
-interface QuickRecordHandlers {
-  onFinishExercise: (record: ExerciseRecord) => void;
-  onFinishMasturbation: (record: MasturbationRecordDetails) => void;
-  onFinishNap: (record: NapRecord) => void;
-  onFinishAlcohol: (record: AlcoholRecord) => void;
-}
+import type { AlcoholRecord, ExerciseRecord, MasturbationRecordDetails, NapRecord } from '../../domain';
+import { useToast } from '../../contexts/ToastContext';
+import { MasturbationRecordModal, SexRecordModal } from '../sex-life';
+import { getErrorMessage } from '../../shared/lib';
+import FAB from '../../components/FAB';
+import ExerciseRecordModal from '../../components/ExerciseSelectorModal';
+import AlcoholRecordModal from '../../components/AlcoholRecordModal';
+import NapRecordModal from '../../components/NapRecordModal';
+import { createMasturbationStartRecord } from './model/createMasturbationStartRecord';
+import {
+  selectOngoingAlcohol,
+  selectOngoingExercise,
+  selectOngoingMasturbation,
+  selectOngoingNap,
+  selectPendingSleepLog
+} from './model/selectors';
+import type { QuickRecordData, QuickRecordHandlers } from './model/types';
 
 interface QuickRecordControllerProps {
-  data: AppData;
+  data: QuickRecordData;
   isEnabled: boolean;
   children: (handlers: QuickRecordHandlers) => React.ReactNode;
 }
@@ -48,11 +52,11 @@ const QuickRecordController: React.FC<QuickRecordControllerProps> = ({ data, isE
   const [napToFinish, setNapToFinish] = useState<NapRecord | null>(null);
 
   const safeLogs = Array.isArray(logs) ? logs : [];
-  const pendingLog = useMemo(() => safeLogs.find((log: LogEntry) => log.status === 'pending'), [safeLogs]);
-  const ongoingExercise = useMemo(() => safeLogs.flatMap((log: LogEntry) => (Array.isArray(log.exercise) ? log.exercise : [])).find((record: ExerciseRecord) => record.ongoing), [safeLogs]);
-  const ongoingNap = useMemo(() => safeLogs.flatMap((log: LogEntry) => (log.sleep && Array.isArray(log.sleep.naps) ? log.sleep.naps : [])).find((record: NapRecord) => record.ongoing), [safeLogs]);
-  const ongoingMb = useMemo(() => safeLogs.flatMap((log: LogEntry) => (Array.isArray(log.masturbation) ? log.masturbation : [])).find((record: MasturbationRecordDetails) => record.status === 'inProgress'), [safeLogs]);
-  const ongoingAlcohol = useMemo(() => safeLogs.find((log: LogEntry) => Array.isArray(log.alcoholRecords) && log.alcoholRecords.some(record => record.ongoing))?.alcoholRecords?.find((record: AlcoholRecord) => record.ongoing), [safeLogs]);
+  const pendingLog = useMemo(() => selectPendingSleepLog(safeLogs), [safeLogs]);
+  const ongoingExercise = useMemo(() => selectOngoingExercise(safeLogs), [safeLogs]);
+  const ongoingNap = useMemo(() => selectOngoingNap(safeLogs), [safeLogs]);
+  const ongoingMb = useMemo(() => selectOngoingMasturbation(safeLogs), [safeLogs]);
+  const ongoingAlcohol = useMemo(() => selectOngoingAlcohol(safeLogs), [safeLogs]);
 
   const wrapAction = async (action: () => Promise<unknown>, successMsg: string) => {
     try {
@@ -109,31 +113,7 @@ const QuickRecordController: React.FC<QuickRecordControllerProps> = ({ data, isE
       return;
     }
 
-    const newRecord: MasturbationRecordDetails = {
-      id: Date.now().toString(),
-      startTime: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false }),
-      duration: 0,
-      status: 'inProgress',
-      tools: ['手'],
-      contentItems: [],
-      materials: [],
-      props: [],
-      assets: { sources: [], platforms: [], categories: [], target: '', actors: [] },
-      materialsList: [],
-      edging: 'none',
-      edgingCount: 0,
-      lubricant: '无润滑',
-      useCondom: false,
-      ejaculation: true,
-      orgasmIntensity: 3,
-      mood: 'neutral',
-      stressLevel: 3,
-      energyLevel: 3,
-      interrupted: false,
-      interruptionReasons: [],
-      notes: ''
-    };
-
+    const newRecord = createMasturbationStartRecord();
     wrapAction(async () => { await quickAddMasturbation(newRecord); }, '开始施法 (已记录开始时间)');
   };
 

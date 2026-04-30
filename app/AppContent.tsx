@@ -10,10 +10,11 @@ import { Modal } from '../shared/ui';
 import type { AppData } from './AppProviders';
 import { defaultSettings } from './appConfig';
 import InitializationScreen from './InitializationScreen';
-import QuickRecordController from './QuickRecordController';
+import { QuickRecordController } from '../features/quick-actions';
 import MainViewRouter from './MainViewRouter';
 import { useAppBootstrap } from './useAppBootstrap';
 import { useLogEditor } from './useLogEditor';
+import { useQuickRecordData } from './useQuickRecordData';
 import { useThemeMode } from './useThemeMode';
 import { useWelcomeScreen } from './useWelcomeScreen';
 import type { MainView } from './viewTypes';
@@ -26,6 +27,7 @@ const AppContent: React.FC<{ data: AppData }> = ({ data }) => {
   const isDarkMode = useThemeMode(settings.theme);
   const { isBlurred } = useAppBootstrap();
   const { hasSeenWelcome, markWelcomeSeen } = useWelcomeScreen();
+  const quickRecordData = useQuickRecordData(data);
 
   const [activeMainView, setActiveMainView] = useState<MainView>('calendar');
   const [isVersionHistoryOpen, setIsVersionHistoryOpen] = useState(false);
@@ -50,7 +52,7 @@ const AppContent: React.FC<{ data: AppData }> = ({ data }) => {
 
   return (
     <div className={`min-h-screen bg-brand-bg dark:bg-slate-950 text-brand-text dark:text-slate-200 font-sans transition-all duration-500 safe-area-top safe-area-bottom safe-area-left safe-area-right ${isBlurred ? 'blur-md grayscale opacity-50' : ''}`}>
-      <QuickRecordController data={data} isEnabled={view === 'dashboard'}>
+      <QuickRecordController data={quickRecordData} isEnabled={view === 'dashboard'}>
         {({ onFinishExercise, onFinishMasturbation, onFinishNap, onFinishAlcohol }) => (
           <div className="container mx-auto max-w-lg p-4 pb-32">
             <MainViewRouter
@@ -84,8 +86,8 @@ const AppContent: React.FC<{ data: AppData }> = ({ data }) => {
           </div>
         )}
       </QuickRecordController>
-  </div>
-);
+    </div>
+  );
 };
 
 export default AppContent;

@@ -16,13 +16,15 @@
 ./
 ├── app/
 │   ├── AppProviders.tsx
-│   ├── AppShell.tsx
 │   ├── MainViewRouter.tsx
-│   └── QuickRecordController.tsx
+│   ├── useLogEditor.ts
+│   └── useQuickRecordData.ts
 ├── features/
 │   ├── dashboard/
 │   ├── daily-log/
 │   ├── quick-actions/
+│   │   ├── QuickRecordController.tsx
+│   │   └── model/
 │   ├── sex-life/
 │   ├── stats/
 │   ├── tags/
@@ -49,13 +51,14 @@
 - Provider 组合，例如 Toast、Data、Theme、PWA 初始化。
 - 主视图路由状态，例如 calendar、stats、sexlife、my。
 - 顶层布局壳，例如移动端容器、底部导航挂载点。
-- 快捷记录弹窗的顶层编排，例如打开/关闭 Sex、Masturbation、Exercise、Nap、Alcohol modal。
+- 兼容 adapter，例如把现有 `useLogs()` facade 映射成 feature 需要的窄接口。
 
 不应放入：
 
 - Dexie 查询。
 - 日志写入逻辑。
 - 统计、推荐、标签规则。
+- 快捷记录、标签、备份等具体业务流程。
 - 大段页面 JSX。
 
 ### `features/`
@@ -76,7 +79,7 @@ features/dashboard/
 
 - `dashboard`：首页、日历、摘要弹窗、ongoing banners、全局时间轴入口。
 - `daily-log`：完整日记编辑、晨间、睡眠、健康、生活方式记录。
-- `quick-actions`：FAB 和快速记录流程。
+- `quick-actions`：FAB、快速记录 controller、ongoing 状态 selector、快速记录默认值 factory。
 - `sex-life`：性生活视图、伴侣管理、性记录和自慰记录的业务入口。
 - `stats`：统计视图、洞察、XP 统计展示。
 - `tags`：标签管理、标签体检、标签校验 UI。
@@ -311,7 +314,7 @@ Provider 只负责装配，不承载业务流程。
    - 从 `App.tsx` 抽出 `AppProviders`。
    - 抽出 `AppShell` 管布局和导航。
    - 抽出 `MainViewRouter` 管主视图切换。
-   - 抽出 `QuickRecordController` 管快捷记录弹窗和 ongoing 状态。
+   - 第一阶段可临时抽出 `QuickRecordController`，第二阶段迁入 `features/quick-actions`。
 
 4. 拆数据层 facade
    - 从 `useLogs.ts` 抽出 query hooks。
@@ -323,6 +326,32 @@ Provider 只负责装配，不承载业务流程。
    - 先迁移 `tags`、`backup`、`settings`，这些模块相对独立。
    - 再迁移 `dashboard` 的外层结构。
    - 暂缓深拆 `LogForm`、`SexRecordModal`、`MasturbationRecordModal`、`PartnerManager`。
+
+## 第二阶段迁移顺序
+
+第二阶段开始把 re-export 骨架推进为真实 feature 边界。仍然不改变用户行为，不修改 IndexedDB schema，不触发 migration。
+
+1. 选择一个垂直业务域落地真实边界
+   - 优先选择 `quick-actions`，因为它跨 FAB、弹窗、ongoing 状态和快捷写入命令。
+   - 将 controller 放到 `features/quick-actions/QuickRecordController.tsx`。
+   - 将 ongoing 状态派生放到 `features/quick-actions/model/selectors.ts`。
+   - 将快速记录默认值构造放到 `features/quick-actions/model/*`。
+
+2. 建立 app 到 feature 的窄接口 adapter
+   - `app` 不再把整个 `AppData` 作为业务依赖传入 feature。
+   - 通过 `useQuickRecordData()` 把 `useLogs()` 的兼容 facade 映射成 `QuickRecordData`。
+   - feature 只能依赖 `QuickRecordData` 中声明的字段和命令。
+
+3. 每次迁移一个 feature
+   - 先迁移 controller 和 selector，再迁移 use case。
+   - 旧组件允许继续由 feature 内部 adapter 引用。
+   - 其它模块只能从 feature 的 `index.ts` 公开入口导入。
+
+4. 验证边界
+   - `app` 可以导入 `features/quick-actions` 的公开入口。
+   - `features/quick-actions` 不允许导入 `app`。
+   - `features/quick-actions/model` 不允许依赖 React、Toast、DOM 或 Dexie。
+   - 构建通过后再提交，不混入 `dist` 产物。
 
 ## 现有文件迁移映射
 
@@ -340,6 +369,7 @@ Provider 只负责装配，不承载业务流程。
 | `components/TagManager.tsx` | 迁入 `features/tags` |
 | `components/BackupSettings.tsx` | 迁入 `features/backup` |
 | `components/Dashboard.tsx` | 迁入 `features/dashboard` 后再拆分 |
+| `app/QuickRecordController.tsx` | 第二阶段迁入 `features/quick-actions/QuickRecordController.tsx` |
 
 ## 禁止事项
 
