@@ -1,8 +1,8 @@
 
 import React from 'react';
-import { ArrowUpRight, Plus, Trash2, Hash } from 'lucide-react';
-import { ChangeDetail } from '../types';
-import { formatHistoryValue } from '../utils/helpers';
+import { ArrowUpRight, Plus, Trash2 } from 'lucide-react';
+import type { ChangeDetail } from '../../domain';
+import { formatHistoryValue } from '../../shared/lib';
 
 interface DiffRowProps {
     diff: ChangeDetail;

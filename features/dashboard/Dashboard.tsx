@@ -12,7 +12,7 @@ import { formatTime, calculateSleepDuration, analyzeSleep, LABELS } from '../../
 import { hydrateLog } from '../../core/storage';
 import { useData } from '../../contexts/DataContext';
 import { useToast } from '../../contexts/ToastContext';
-import { LogHistory } from '../../components/LogHistory';
+import { LogHistory } from './LogHistory';
 import { GlobalTimeline } from './GlobalTimeline';
 
 interface DashboardProps {

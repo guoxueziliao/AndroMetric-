@@ -42,10 +42,11 @@ Privacy-first male health tracking PWA. Local-first architecture using Dexie.js 
 | Database migration | `utils/migration.ts` | Add version upgrade logic |
 | New daily modal/form | `features/daily-log/*Modal.tsx` | Copy existing record modal pattern |
 | Shared UI primitive | `shared/ui/*` | Modal, Toast, selectors, form controls, error boundary |
+| App shell | `app/*` | Providers, welcome screen, bottom navigation, main view routing |
 | Daily log form | `features/daily-log/*` | Main record form, morning/sleep/health sections, lifestyle modals |
 | Stats/analytics | `features/stats/*` | Stats view, charts, XP radar, factor analysis |
 | UI state management | `hooks/useLogs.ts` | Main data hook |
-| Dashboard/home | `features/dashboard/*` | Home view, calendar heatmap, timeline entry |
+| Dashboard/home | `features/dashboard/*` | Home view, calendar heatmap, timeline, log history |
 | Quick actions | `features/quick-actions/*` | FAB, quick record controller, ongoing selectors |
 | Tag management | `features/tags/*` | Tag manager and tag health check |
 | Backup/version history | `features/backup/*` | Local backup settings and version history modal |

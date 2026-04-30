@@ -405,6 +405,10 @@ Provider 只负责装配，不承载业务流程。
 | `components/ExerciseSelectorModal.tsx` | 已迁入 `features/daily-log/ExerciseRecordModal.tsx` |
 | `components/AlcoholRecordModal.tsx` | 已迁入 `features/daily-log/AlcoholRecordModal.tsx` |
 | `components/NapRecordModal.tsx` | 已迁入 `features/daily-log/NapRecordModal.tsx` |
+| `components/BottomNav.tsx` | 已迁入 `app/BottomNav.tsx` |
+| `components/Welcome.tsx` | 已迁入 `app/Welcome.tsx` |
+| `components/LogHistory.tsx` | 已迁入 `features/dashboard/LogHistory.tsx` |
+| `components/DiffRow.tsx` | 已迁入 `features/dashboard/DiffRow.tsx` |
 
 ## 禁止事项
 

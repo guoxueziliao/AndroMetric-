@@ -9,7 +9,7 @@ import {
   NapRecord,
   PartnerProfile
 } from '../types';
-import BottomNav from '../components/BottomNav';
+import BottomNav from './BottomNav';
 import { Dashboard } from '../features/dashboard';
 import { LogForm } from '../features/daily-log';
 import type { AppView, MainView } from './viewTypes';
