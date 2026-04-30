@@ -152,15 +152,19 @@ const MainViewRouter: React.FC<MainViewRouterProps> = ({
             )}
             {activeMainView === 'my' && (
               <MyView
-                settings={settings}
-                logs={logs}
-                userTags={userTags}
-                onAddOrUpdateLog={onAddOrUpdateLog}
-                onAddOrUpdateTag={onAddOrUpdateTag}
-                onDeleteTag={onDeleteTag}
-                onUpdateSettings={onUpdateSettings}
-                onShowVersionHistory={onShowVersionHistory}
-                onNavigateToLog={onEdit}
+                data={{
+                  settings,
+                  logs,
+                  userTags
+                }}
+                actions={{
+                  onAddOrUpdateLog,
+                  onAddOrUpdateTag,
+                  onDeleteTag,
+                  onUpdateSettings,
+                  onShowVersionHistory,
+                  onNavigateToLog: onEdit
+                }}
               />
             )}
           </Suspense>

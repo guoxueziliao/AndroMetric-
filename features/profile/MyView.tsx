@@ -13,16 +13,24 @@ import { InstallButton } from '../pwa';
 const TagManager = lazy(() => import('../tags').then((module) => ({ default: module.TagManager })));
 const BackupSettings = lazy(() => import('../backup').then((module) => ({ default: module.BackupSettings })));
 
-interface MyViewProps {
+interface MyViewData {
   settings: AppSettings;
   logs: LogEntry[];
   userTags: TagEntry[];
+}
+
+interface MyViewActions {
   onAddOrUpdateLog: (log: LogEntry) => Promise<void>;
   onAddOrUpdateTag: (tag: TagEntry) => Promise<void>;
   onDeleteTag: (name: string, category: TagType) => Promise<void>;
   onUpdateSettings: (newSettings: AppSettings) => void;
   onShowVersionHistory: () => void;
   onNavigateToLog: (date: string) => void;
+}
+
+interface MyViewProps {
+  data: MyViewData;
+  actions: MyViewActions;
 }
 
 const StatBox = ({ label, value, colorClass, bgClass }: { label: string, value: number | string, colorClass: string, bgClass: string }) => (
@@ -32,7 +40,22 @@ const StatBox = ({ label, value, colorClass, bgClass }: { label: string, value: 
     </div>
 );
 
-const MyView: React.FC<MyViewProps> = ({ settings, logs: rawLogs, userTags, onAddOrUpdateLog, onAddOrUpdateTag, onDeleteTag, onUpdateSettings, onShowVersionHistory, onNavigateToLog }) => {
+const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
+  const {
+    settings,
+    logs: rawLogs,
+    userTags
+  } = data;
+
+  const {
+    onAddOrUpdateLog,
+    onAddOrUpdateTag,
+    onDeleteTag,
+    onUpdateSettings,
+    onShowVersionHistory,
+    onNavigateToLog
+  } = actions;
+
   const logs = useMemo(() => Array.isArray(rawLogs) ? rawLogs : [], [rawLogs]);
   const { showToast } = useToast();
   
