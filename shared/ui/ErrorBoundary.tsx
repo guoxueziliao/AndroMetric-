@@ -1,6 +1,6 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import React, { ErrorInfo, ReactNode } from 'react';
 import { AlertTriangle } from 'lucide-react';
-import { Logger } from '../services/LoggerService';
+import { Logger } from '../../services/LoggerService';
 
 interface Props {
   children?: ReactNode;

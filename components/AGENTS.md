@@ -6,7 +6,7 @@
 
 ## OVERVIEW
 
-18 legacy React components for shared UI, app shell widgets, and compatibility shims. Heavy usage of controlled inputs, React Context, and Tailwind styling.
+9 legacy React components for app shell widgets and compatibility shims. Heavy usage of controlled inputs, React Context, and Tailwind styling.
 
 ---
 
@@ -14,8 +14,7 @@
 
 | Task | Component | Notes |
 |------|-----------|-------|
-| Add new modal | Copy `Modal.tsx` pattern | Use `isOpen`, `onClose`, `title` props |
-| Toast notifications | `Toast.tsx` | Via ToastContext |
+| Shared modal/control | `../shared/ui/*` | Modal, Toast, selectors, form controls, error boundary |
 | Daily record modals | `../features/daily-log/*Modal.tsx` | Caffeine, exercise, alcohol, and nap record forms |
 | Sex life records | `../features/sex-life/*` | Partner manager, sex modal, masturbation modal |
 
@@ -54,7 +53,7 @@ No large sex-life forms remain in `components/`; those business components now l
 - **Quick actions:** Floating action button and quick record controller live in `features/quick-actions`
 - **Sex life:** Timeline view, partner manager, sex modal, and masturbation modal live in `features/sex-life`
 - **Stats:** Stats view and hardness chart live in `features/stats`
+- **Shared UI:** Modal, Toast, DateTimePicker, form controls, selectors, and ErrorBoundary live in `shared/ui`
 - **Lazy imports:** App shell lazy-loads StatsView, SexLifeView, and `features/profile/MyView`
 - **Suspense:** Wrap lazy views with `<Suspense fallback={LoadingFallback}>`
-- **Error Boundary:** `ErrorBoundary.tsx` wraps critical components
 - **Legacy scope:** Keep new business components out of `components/`; prefer the owning feature module.

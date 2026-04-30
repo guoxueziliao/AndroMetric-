@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import { pageTransition } from '../../hooks/useAnimation';
 
 interface AnimatedPageProps {
@@ -13,8 +13,8 @@ export const AnimatedPage: React.FC<AnimatedPageProps> = ({
   className = '',
   mode = 'fade'
 }) => {
-  const variants = {
-    fade: pageTransition,
+  const variants: Record<NonNullable<AnimatedPageProps['mode']>, Variants> = {
+    fade: pageTransition as Variants,
     slide: {
       initial: { opacity: 0, x: 20 },
       animate: { opacity: 1, x: 0, transition: { duration: 0.4, ease: [0.4, 0, 0.2, 1] } },

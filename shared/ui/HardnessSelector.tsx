@@ -1,6 +1,3 @@
-
-import React from 'react';
-
 const HardnessSelector = ({ value, onChange }: { value: number, onChange: (val: number) => void }) => {
     const levels = [
         { val: 1, label: '豆腐', sub: '软趴趴', color: 'bg-green-100 border-green-200 dark:bg-green-900/20 dark:border-green-800', rotation: 135 },

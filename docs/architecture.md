@@ -365,7 +365,15 @@ Provider 只负责装配，不承载业务流程。
 | `utils/migration.ts` | 迁入 `core/storage/migrations`，保留 re-export |
 | `types.ts` | 逐步拆到 `domain/types`，保留 re-export |
 | `utils/helpers.ts` | 拆到 `shared/lib` 和 `domain/rules` |
-| `components/Modal.tsx` | 迁入 `shared/ui` |
+| `components/Modal.tsx` | 已迁入 `shared/ui/Modal.tsx` |
+| `components/Toast.tsx` | 已迁入 `shared/ui/Toast.tsx` |
+| `components/DateTimePicker.tsx` | 已迁入 `shared/ui/DateTimePicker.tsx` |
+| `components/FormControls.tsx` | 已迁入 `shared/ui/FormControls.tsx` |
+| `components/HardnessSelector.tsx` | 已迁入 `shared/ui/HardnessSelector.tsx` |
+| `components/SafeDeleteModal.tsx` | 已迁入 `shared/ui/SafeDeleteModal.tsx` |
+| `components/ErrorBoundary.tsx` | 已迁入 `shared/ui/ErrorBoundary.tsx` |
+| `components/ui/AnimatedButton.tsx` | 已迁入 `shared/ui/AnimatedButton.tsx` |
+| `components/ui/AnimatedPage.tsx` | 已迁入 `shared/ui/AnimatedPage.tsx` |
 | `components/TagManager.tsx` | 已迁入 `features/tags/TagManager.tsx` |
 | `components/TagHealthCheck.tsx` | 已迁入 `features/tags/TagHealthCheck.tsx` |
 | `components/BackupSettings.tsx` | 已迁入 `features/backup/BackupSettings.tsx` |

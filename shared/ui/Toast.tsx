@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle, AlertTriangle, XCircle, X, Info } from 'lucide-react';
+import React, { useEffect } from 'react';
+import { motion, AnimatePresence, type Variants } from 'framer-motion';
+import { CheckCircle, XCircle, X, Info } from 'lucide-react';
 
 export type ToastType = 'success' | 'error' | 'info';
 
@@ -13,7 +13,7 @@ interface ToastProps {
   showProgress?: boolean;
 }
 
-const toastVariants = {
+const toastVariants: Variants = {
   initial: { 
     opacity: 0, 
     y: -50, 
@@ -39,17 +39,6 @@ const toastVariants = {
   }
 };
 
-const progressVariants = {
-  initial: { scaleX: 1 },
-  animate: (duration: number) => ({
-    scaleX: 0,
-    transition: { 
-      duration: duration / 1000, 
-      ease: 'linear' 
-    }
-  })
-};
-
 const Toast: React.FC<ToastProps> = ({ 
   message, 
   type, 
@@ -58,11 +47,8 @@ const Toast: React.FC<ToastProps> = ({
   duration = 3000,
   showProgress = true
 }) => {
-  const [progress, setProgress] = useState(100);
-
   useEffect(() => {
     if (isVisible) {
-      setProgress(100);
       const timer = setTimeout(onClose, duration);
       return () => clearTimeout(timer);
     }

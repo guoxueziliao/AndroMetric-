@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import Modal from './Modal';
-import { ShieldAlert, Trash2 } from 'lucide-react';
+import { ShieldAlert } from 'lucide-react';
 
 interface SafeDeleteModalProps {
     isOpen: boolean;

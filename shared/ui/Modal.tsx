@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import { X } from 'lucide-react';
 
 interface ModalProps {
@@ -10,7 +10,7 @@ interface ModalProps {
   footer?: React.ReactNode;
 }
 
-const backdropVariants = {
+const backdropVariants: Variants = {
   hidden: { opacity: 0 },
   visible: { 
     opacity: 1,
@@ -22,7 +22,7 @@ const backdropVariants = {
   }
 };
 
-const contentVariants = {
+const contentVariants: Variants = {
   hidden: { 
     opacity: 0, 
     scale: 0.95, 

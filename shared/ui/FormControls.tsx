@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Mood, StressLevel } from '../types';
+import type { Mood, StressLevel } from '../../domain';
 
 // --- Reusable Controls ---
 

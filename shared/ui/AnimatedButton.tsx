@@ -55,7 +55,7 @@ const AnimatedButton: React.FC<AnimatedButtonProps> = ({
   const rippleIdRef = useRef(0);
 
   const handleClick = useCallback(async (e: React.MouseEvent<HTMLButtonElement>) => {
-    if (disabled || isLoading || isSuccess) return;
+    if (disabled || loading || isLoading || isSuccess) return;
 
     if (showRipple && buttonRef.current) {
       const rect = buttonRef.current.getBoundingClientRect();
@@ -81,9 +81,10 @@ const AnimatedButton: React.FC<AnimatedButtonProps> = ({
     } else if (onClick) {
       onClick();
     }
-  }, [disabled, isLoading, isSuccess, onClick, onClickAsync, showRipple, successDuration]);
+  }, [disabled, loading, isLoading, isSuccess, onClick, onClickAsync, showRipple, successDuration]);
 
-  const isDisabled = disabled || isLoading;
+  const isBusy = loading || isLoading;
+  const isDisabled = disabled || isBusy;
 
   return (
     <motion.button
@@ -103,7 +104,7 @@ const AnimatedButton: React.FC<AnimatedButtonProps> = ({
       `}
     >
       <AnimatePresence mode="wait">
-        {isLoading ? (
+        {isBusy ? (
           <motion.div
             key="loading"
             initial={{ opacity: 0, scale: 0.8 }}

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Download, X, Smartphone, RefreshCw, WifiOff } from 'lucide-react';
 import { usePWA } from '../hooks/usePWA';
-import Modal from './Modal';
+import { Modal } from '../shared/ui';
 
 export const PWAInstallPrompt: React.FC = () => {
   const { isInstalled, canInstall, isOffline, installApp, updateAvailable, updateApp } = usePWA();
