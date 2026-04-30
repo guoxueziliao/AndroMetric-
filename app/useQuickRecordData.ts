@@ -6,6 +6,8 @@ export const useQuickRecordData = (data: AppData): QuickRecordData => {
   const {
     logs,
     partners,
+    userTags,
+    addOrUpdateTag,
     quickAddSex,
     quickAddMasturbation,
     saveExercise,
@@ -19,6 +21,8 @@ export const useQuickRecordData = (data: AppData): QuickRecordData => {
   return useMemo(() => ({
     logs,
     partners,
+    userTags,
+    addOrUpdateTag,
     quickAddSex,
     quickAddMasturbation,
     saveExercise,
@@ -30,6 +34,8 @@ export const useQuickRecordData = (data: AppData): QuickRecordData => {
   }), [
     logs,
     partners,
+    userTags,
+    addOrUpdateTag,
     quickAddSex,
     quickAddMasturbation,
     saveExercise,

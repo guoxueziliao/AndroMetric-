@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import type { LogEntry, MasturbationRecordDetails, PartnerProfile, SexRecordDetails } from '../../domain';
+import type { LogEntry, MasturbationRecordDetails, PartnerProfile, SexRecordDetails, TagEntry } from '../../domain';
 import { HeartHandshake, Clock, MapPin, Droplets, Hand, Users, ChevronDown, AlertTriangle, Film, Quote, Smartphone } from 'lucide-react';
 import { ErrorBoundary } from '../../shared/ui';
 import PartnerManager from './PartnerManager';
@@ -24,9 +24,11 @@ interface TimelineRecord {
 interface SexLifeViewProps {
     logs: LogEntry[];
     partners: PartnerProfile[];
+    userTags: TagEntry[];
     onAddOrUpdateLog: (log: LogEntry) => Promise<void>;
     onAddOrUpdatePartner: (partner: PartnerProfile) => Promise<void>;
     onDeletePartner: (id: string) => Promise<void>;
+    onAddOrUpdateTag: (tag: TagEntry) => Promise<void>;
 }
 
 const PAGE_SIZE = 20;
@@ -34,9 +36,11 @@ const PAGE_SIZE = 20;
 const SexLifeView: React.FC<SexLifeViewProps> = ({
     logs: rawLogs,
     partners,
+    userTags,
     onAddOrUpdateLog,
     onAddOrUpdatePartner,
-    onDeletePartner
+    onDeletePartner,
+    onAddOrUpdateTag
 }) => {
     const logs = useMemo(() => Array.isArray(rawLogs) ? rawLogs : [], [rawLogs]);
     
@@ -319,7 +323,7 @@ const SexLifeView: React.FC<SexLifeViewProps> = ({
             
             <PartnerManager isOpen={isPartnerManagerOpen} onClose={() => setIsPartnerManagerOpen(false)} partners={partners} onSave={onAddOrUpdatePartner} onDelete={onDeletePartner} logs={logs} />
             <SexRecordModal isOpen={isSexModalOpen} onClose={() => { setIsSexModalOpen(false); setEditingRecord(null); }} onSave={handleSaveSexRecord} initialData={editingRecord?.sexDetails} dateStr={editingRecord?.date || ''} partners={partners} logs={logs} />
-            <MasturbationRecordModal isOpen={isMbModalOpen} onClose={() => { setIsMbModalOpen(false); setEditingRecord(null); }} onSave={handleSaveMbRecord} initialData={editingRecord?.mbDetails} dateStr={editingRecord?.date || ''} logs={logs} partners={partners} />
+            <MasturbationRecordModal isOpen={isMbModalOpen} onClose={() => { setIsMbModalOpen(false); setEditingRecord(null); }} onSave={handleSaveMbRecord} initialData={editingRecord?.mbDetails} dateStr={editingRecord?.date || ''} logs={logs} partners={partners} userTags={userTags} onAddOrUpdateTag={onAddOrUpdateTag} />
         </ErrorBoundary>
     );
 };

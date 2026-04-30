@@ -7,7 +7,8 @@ import {
   LogEntry,
   MasturbationRecordDetails,
   NapRecord,
-  PartnerProfile
+  PartnerProfile,
+  TagEntry
 } from '../types';
 import BottomNav from './BottomNav';
 import { Dashboard } from '../features/dashboard';
@@ -32,6 +33,7 @@ interface MainViewRouterProps {
   settings: AppSettings;
   logs: LogEntry[];
   partners: PartnerProfile[];
+  userTags: TagEntry[];
   editingLog: LogEntry | null;
   editingLogDate: string | null;
   onMainViewChange: (view: MainView) => void;
@@ -39,6 +41,7 @@ interface MainViewRouterProps {
   onAddOrUpdateLog: (log: LogEntry) => Promise<void>;
   onAddOrUpdatePartner: (partner: PartnerProfile) => Promise<void>;
   onDeletePartner: (id: string) => Promise<void>;
+  onAddOrUpdateTag: (tag: TagEntry) => Promise<void>;
   onDeleteLog: (date: string) => Promise<void>;
   onToggleSleepLog: (pendingLog?: LogEntry) => Promise<void>;
   onCancelOngoingNap: () => Promise<void>;
@@ -63,6 +66,7 @@ const MainViewRouter: React.FC<MainViewRouterProps> = ({
   settings,
   logs,
   partners,
+  userTags,
   editingLog,
   editingLogDate,
   onMainViewChange,
@@ -70,6 +74,7 @@ const MainViewRouter: React.FC<MainViewRouterProps> = ({
   onAddOrUpdateLog,
   onAddOrUpdatePartner,
   onDeletePartner,
+  onAddOrUpdateTag,
   onDeleteLog,
   onToggleSleepLog,
   onCancelOngoingNap,
@@ -111,9 +116,11 @@ const MainViewRouter: React.FC<MainViewRouterProps> = ({
             <SexLifeView
               logs={logs}
               partners={partners}
+              userTags={userTags}
               onAddOrUpdateLog={onAddOrUpdateLog}
               onAddOrUpdatePartner={onAddOrUpdatePartner}
               onDeletePartner={onDeletePartner}
+              onAddOrUpdateTag={onAddOrUpdateTag}
             />
           )}
           {activeMainView === 'my' && (
@@ -144,6 +151,8 @@ const MainViewRouter: React.FC<MainViewRouterProps> = ({
           onDirtyStateChange={onDirtyStateChange}
           logs={logs}
           partners={partners}
+          userTags={userTags}
+          onAddOrUpdateTag={onAddOrUpdateTag}
         />
       </main>
     )}

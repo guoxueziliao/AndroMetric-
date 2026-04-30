@@ -23,10 +23,12 @@ const AppContent: React.FC<{ data: AppData }> = ({ data }) => {
   const {
     logs,
     partners,
+    userTags,
     isInitializing,
     addOrUpdateLog,
     addOrUpdatePartner,
     deletePartner,
+    addOrUpdateTag,
     deleteLog,
     toggleSleepLog,
     cancelOngoingNap,
@@ -75,6 +77,7 @@ const AppContent: React.FC<{ data: AppData }> = ({ data }) => {
               settings={settings}
               logs={safeLogs}
               partners={partners}
+              userTags={userTags}
               editingLog={editingLog}
               editingLogDate={editingLogDate}
               onMainViewChange={setActiveMainView}
@@ -82,6 +85,7 @@ const AppContent: React.FC<{ data: AppData }> = ({ data }) => {
               onAddOrUpdateLog={addOrUpdateLog}
               onAddOrUpdatePartner={addOrUpdatePartner}
               onDeletePartner={deletePartner}
+              onAddOrUpdateTag={addOrUpdateTag}
               onDeleteLog={deleteLog}
               onToggleSleepLog={toggleSleepLog}
               onCancelOngoingNap={cancelOngoingNap}

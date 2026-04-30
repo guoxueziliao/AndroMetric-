@@ -11,7 +11,7 @@ import ExerciseRecordModal from './ExerciseRecordModal';
 import AlcoholRecordModal from './AlcoholRecordModal';
 import NapRecordModal from './NapRecordModal';
 import { SexRecordModal, MasturbationRecordModal } from '../sex-life';
-import type { LogEntry, PartnerProfile, AlcoholRecord } from '../../domain';
+import type { LogEntry, PartnerProfile, AlcoholRecord, TagEntry } from '../../domain';
 import MorningSection from './MorningSection';
 import SleepSection from './SleepSection';
 import { FaceSelector, MOOD_FACES, STRESS_FACES } from '../../shared/ui';
@@ -24,6 +24,8 @@ interface LogFormProps {
   onDirtyStateChange: (isDirty: boolean) => void;
   logs: LogEntry[];
   partners: PartnerProfile[];
+  userTags: TagEntry[];
+  onAddOrUpdateTag: (tag: TagEntry) => Promise<void>;
 }
 
 type MidTabType = 'life' | 'env' | 'health';
@@ -47,7 +49,7 @@ const QualityScoreRing = ({ score }: { score: number }) => {
     );
 };
 
-const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirtyStateChange, logs, partners }) => {
+const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirtyStateChange, logs, partners, userTags, onAddOrUpdateTag }) => {
     const [log, setLog] = useState<LogEntry>(() => {
         const base = existingLog ? { ...existingLog } : { 
             date: logDate || '', status: 'completed', updatedAt: Date.now(),
@@ -623,7 +625,7 @@ const LogForm: React.FC<LogFormProps> = ({ onSave, existingLog, logDate, onDirty
                     setField('masturbation', exists ? current.map(x => x.id === r.id ? r : x) : [...current, r]);
                     setModalState(s => ({ ...s, mb: false })); 
                 }} 
-                dateStr={log.date} logs={logs} partners={partners} 
+                dateStr={log.date} logs={logs} partners={partners} userTags={userTags} onAddOrUpdateTag={onAddOrUpdateTag}
             />
             <ExerciseRecordModal 
                 isOpen={modalState.ex} 
