@@ -41,6 +41,7 @@ Privacy-first male health tracking PWA. Local-first architecture using Dexie.js 
 | Add new record type | `types.ts` → `LogEntry` interface | All data structures defined here |
 | Database migration | `utils/migration.ts` | Add version upgrade logic |
 | New modal/form | `components/*Modal.tsx` | Copy existing pattern |
+| Daily log form | `features/daily-log/*` | Main record form and morning/sleep/health sections |
 | Stats/analytics | `utils/StatsEngine.ts`, `utils/xpStats.ts` | XP radar, factor analysis |
 | UI state management | `hooks/useLogs.ts` | Main data hook |
 | Dashboard/home | `features/dashboard/*` | Home view, calendar heatmap, timeline entry |
@@ -100,4 +101,4 @@ npm run preview      # Preview production build
 - **PWA:** Service worker auto-updates. Offline functionality via vite-plugin-pwa.
 - **Dexie:** Currently at version 5. Add migrations for schema changes.
 - **Tailwind:** Loaded via CDN in index.html, cached by service worker.
-- **Large Components:** SexRecordModal (880 lines), PartnerManager (761 lines), MasturbationRecordModal (701 lines), LogForm (661 lines) - consider splitting if adding features.
+- **Large Components:** SexRecordModal (880 lines), PartnerManager (761 lines), MasturbationRecordModal (701 lines); `features/daily-log/LogForm.tsx` remains large and should be split before adding major features.

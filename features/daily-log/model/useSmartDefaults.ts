@@ -1,11 +1,11 @@
 import { useMemo, useCallback } from 'react';
-import { LogEntry, HardnessLevel, SleepAttire, SleepTemperature, MorningWoodRetention } from '../types';
+import type { LogEntry } from '../../../domain';
 import {
   analyzeUserPatterns,
   SmartField,
   SmartDefaultResult,
   getSmartDefaultsForDate
-} from '../utils/smartDefaults';
+} from './smartDefaults';
 
 export interface UseSmartDefaultsReturn {
   getSmartDefault: <T>(field: SmartField, dateStr: string) => SmartDefaultResult<T>;

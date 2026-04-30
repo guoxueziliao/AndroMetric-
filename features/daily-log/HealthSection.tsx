@@ -1,8 +1,7 @@
-
-import React, { useState, useEffect } from 'react';
-import { ShieldAlert, Plus, X, Activity, BrainCircuit, Heart, AlertCircle, Info, Settings } from 'lucide-react';
-import { LogEntry } from '../types';
-import { FaceSelector, MOOD_FACES, STRESS_FACES } from './FormControls';
+import React from 'react';
+import { ShieldAlert, Plus, Info, Settings } from 'lucide-react';
+import type { LogEntry } from '../../domain';
+import { FaceSelector, MOOD_FACES, STRESS_FACES } from '../../shared/ui';
 
 interface HealthSectionProps {
     log: Partial<LogEntry>;

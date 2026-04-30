@@ -1,24 +1,22 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { 
     Plus, Heart, Hand, Dumbbell, 
-    StickyNote, Check, Trash2, Clock, MapPin, 
-    Zap, Activity, Sparkles, Sun, Cloud, CloudRain, 
+    StickyNote, Check, Trash2, MapPin,
+    Sparkles, Sun, Cloud, CloudRain,
     Snowflake, Wind, CloudFog, Home, Navigation, Hotel, Plane, 
-    Shirt, Droplets, ShieldAlert, Search, Coffee, Film, BrainCircuit, Edit3, ChevronRight, Beer, RotateCcw, Leaf
+    Shirt, Droplets, ShieldAlert, Search, Coffee, Edit3, Beer, RotateCcw
 } from 'lucide-react';
-import BeverageModal from './BeverageModal';
-import SexRecordModal from './SexRecordModal';
-import MasturbationRecordModal from './MasturbationRecordModal';
-import ExerciseRecordModal from './ExerciseSelectorModal';
-import AlcoholRecordModal from './AlcoholRecordModal';
-import NapRecordModal from './NapRecordModal';
-import { 
-    LogEntry, PartnerProfile, Weather, Location, SleepAttire, AlcoholRecord, ExerciseRecord, SexRecordDetails, MasturbationRecordDetails, NapRecord, CaffeineItem
-} from '../types';
+import BeverageModal from '../../components/BeverageModal';
+import SexRecordModal from '../../components/SexRecordModal';
+import MasturbationRecordModal from '../../components/MasturbationRecordModal';
+import ExerciseRecordModal from '../../components/ExerciseSelectorModal';
+import AlcoholRecordModal from '../../components/AlcoholRecordModal';
+import NapRecordModal from '../../components/NapRecordModal';
+import type { LogEntry, PartnerProfile, AlcoholRecord } from '../../domain';
 import MorningSection from './MorningSection';
 import SleepSection from './SleepSection';
-import { FaceSelector, MOOD_FACES, STRESS_FACES } from './FormControls';
-import { calculateDataQuality, formatDateFriendly } from '../utils/helpers';
+import { FaceSelector, MOOD_FACES, STRESS_FACES } from '../../shared/ui';
+import { calculateDataQuality, formatDateFriendly } from '../../shared/lib';
 
 interface LogFormProps {
   onSave: (log: LogEntry) => void;

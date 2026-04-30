@@ -375,6 +375,12 @@ Provider 只负责装配，不承载业务流程。
 | `components/Dashboard.tsx` | 已迁入 `features/dashboard/Dashboard.tsx`，后续再拆分 |
 | `components/CalendarHeatmap.tsx` | 已迁入 `features/dashboard/CalendarHeatmap.tsx` |
 | `components/GlobalTimeline.tsx` | 已迁入 `features/dashboard/GlobalTimeline.tsx` |
+| `components/LogForm.tsx` | 已迁入 `features/daily-log/LogForm.tsx`，后续再拆分 |
+| `components/MorningSection.tsx` | 已迁入 `features/daily-log/MorningSection.tsx` |
+| `components/SleepSection.tsx` | 已迁入 `features/daily-log/SleepSection.tsx` |
+| `components/HealthSection.tsx` | 已迁入 `features/daily-log/HealthSection.tsx` |
+| `hooks/useSmartDefaults.ts` | 已迁入 `features/daily-log/model/useSmartDefaults.ts` |
+| `utils/smartDefaults.ts` | 已迁入 `features/daily-log/model/smartDefaults.ts` |
 | `app/QuickRecordController.tsx` | 第二阶段迁入 `features/quick-actions/QuickRecordController.tsx` |
 
 ## 禁止事项

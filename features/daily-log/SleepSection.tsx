@@ -1,9 +1,8 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { BedDouble, Leaf, CloudDrizzle, Heart, CloudSun, Clock, Edit2, Trash2, Plus, AlertCircle, Sparkles, MapPin, Thermometer } from 'lucide-react';
-import { SleepRecord, NapRecord, LogEntry, SleepAttire, SleepTemperature } from '../types';
-import DateTimePicker from './DateTimePicker';
-import { RangeSlider } from './FormControls';
-import { useSmartDefaults } from '../hooks/useSmartDefaults';
+import { BedDouble, Leaf, CloudDrizzle, Heart, CloudSun, Clock, Edit2, Trash2, AlertCircle, Sparkles, MapPin, Thermometer } from 'lucide-react';
+import type { SleepRecord, NapRecord, LogEntry, SleepAttire, SleepTemperature } from '../../domain';
+import { DateTimePicker, RangeSlider } from '../../shared/ui';
+import { useSmartDefaults } from './model/useSmartDefaults';
 
 interface SleepSectionProps {
   sleep: SleepRecord;

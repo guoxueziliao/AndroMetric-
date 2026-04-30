@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { SunMedium, Zap, Hourglass, BatteryMedium, Battery, Sparkles } from 'lucide-react';
-import { MorningRecord, LogEntry, HardnessLevel, MorningWoodRetention } from '../types';
-import HardnessSelector from './HardnessSelector';
-import { IconToggleButton } from './FormControls';
-import { useSmartDefaults } from '../hooks/useSmartDefaults';
+import type { MorningRecord, LogEntry, HardnessLevel, MorningWoodRetention } from '../../domain';
+import { HardnessSelector, IconToggleButton } from '../../shared/ui';
+import { useSmartDefaults } from './model/useSmartDefaults';
 
 interface MorningSectionProps {
   morning: MorningRecord;

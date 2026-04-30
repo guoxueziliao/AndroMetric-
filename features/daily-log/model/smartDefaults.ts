@@ -1,4 +1,4 @@
-import { LogEntry, HardnessLevel, SleepAttire, SleepTemperature, MorningWoodRetention } from '../types';
+import type { LogEntry, HardnessLevel, SleepAttire, SleepTemperature, MorningWoodRetention } from '../../../domain';
 
 export type SmartField = 'hardness' | 'retention' | 'sleepQuality' | 'sleepAttire' | 'sleepTemperature' | 'exerciseType';
 
@@ -34,8 +34,6 @@ function calculateWeightedScore(records: { value: number; date: string }[]): num
   if (records.length === 0) return 0;
 
   const now = Date.now();
-  const thirtyDaysAgo = now - 30 * 24 * 60 * 60 * 1000;
-
   let totalWeight = 0;
   let weightedSum = 0;
 

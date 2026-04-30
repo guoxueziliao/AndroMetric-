@@ -6,7 +6,7 @@
 
 ## OVERVIEW
 
-31 legacy React components for forms, modals, charts, and views. Heavy usage of controlled inputs, React Context, and Tailwind styling.
+27 legacy React components for forms, modals, charts, and views. Heavy usage of controlled inputs, React Context, and Tailwind styling.
 
 ---
 
@@ -15,7 +15,6 @@
 | Task | Component | Notes |
 |------|-----------|-------|
 | Add new modal | Copy `Modal.tsx` pattern | Use `isOpen`, `onClose`, `title` props |
-| Form with validation | Reference `LogForm.tsx` | 661 lines, comprehensive example |
 | Partner management | `PartnerManager.tsx` | 761 lines, CRUD operations |
 | Sex record entry | `SexRecordModal.tsx` | 880 lines, multi-step form |
 | Dashboard charts | `HardnessChart.tsx` | Chart.js integration |
@@ -50,13 +49,13 @@
 | SexRecordModal.tsx | 880 | Complex multi-partner flow |
 | PartnerManager.tsx | 761 | Full CRUD + profile fields |
 | MasturbationRecordModal.tsx | 701 | Detailed XP tracking |
-| LogForm.tsx | 661 | Master form aggregating all sections |
 
 ---
 
 ## NOTES
 
 - **Dashboard:** Home view, calendar heatmap, and global timeline live in `features/dashboard`
+- **Daily log:** Main record form and morning/sleep/health sections live in `features/daily-log`
 - **Lazy imports:** App shell lazy-loads StatsView, SexLifeView, and `features/profile/MyView`
 - **Suspense:** Wrap lazy views with `<Suspense fallback={LoadingFallback}>`
 - **Error Boundary:** `ErrorBoundary.tsx` wraps critical components
