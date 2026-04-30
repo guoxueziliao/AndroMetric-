@@ -74,8 +74,6 @@ const MainViewRouter: React.FC<MainViewRouterProps> = ({
         {activeMainView === 'calendar' && (
           <Dashboard
             onEdit={onEdit}
-            onDateClick={onEdit}
-            onNavigateToBackup={() => onMainViewChange('my')}
             onFinishExercise={onFinishExercise}
             onFinishMasturbation={onFinishMasturbation}
             onFinishNap={onFinishNap}

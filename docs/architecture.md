@@ -372,7 +372,9 @@ Provider 只负责装配，不承载业务流程。
 | `components/VersionHistoryModal.tsx` | 已迁入 `features/backup/VersionHistoryModal.tsx` |
 | `components/settings/ThemeSettings.tsx` | 已迁入 `features/settings/ThemeSettings.tsx` |
 | `hooks/useTheme.ts` | 已迁入 `features/settings/useTheme.ts` |
-| `components/Dashboard.tsx` | 迁入 `features/dashboard` 后再拆分 |
+| `components/Dashboard.tsx` | 已迁入 `features/dashboard/Dashboard.tsx`，后续再拆分 |
+| `components/CalendarHeatmap.tsx` | 已迁入 `features/dashboard/CalendarHeatmap.tsx` |
+| `components/GlobalTimeline.tsx` | 已迁入 `features/dashboard/GlobalTimeline.tsx` |
 | `app/QuickRecordController.tsx` | 第二阶段迁入 `features/quick-actions/QuickRecordController.tsx` |
 
 ## 禁止事项

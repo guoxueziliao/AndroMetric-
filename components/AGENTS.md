@@ -6,7 +6,7 @@
 
 ## OVERVIEW
 
-36 React components for forms, modals, charts, and views. Heavy usage of controlled inputs, React Context, and Tailwind styling.
+31 legacy React components for forms, modals, charts, and views. Heavy usage of controlled inputs, React Context, and Tailwind styling.
 
 ---
 
@@ -16,12 +16,10 @@
 |------|-----------|-------|
 | Add new modal | Copy `Modal.tsx` pattern | Use `isOpen`, `onClose`, `title` props |
 | Form with validation | Reference `LogForm.tsx` | 661 lines, comprehensive example |
-| Calendar heatmap | `CalendarHeatmap.tsx` | Uses date-fns patterns |
 | Partner management | `PartnerManager.tsx` | 761 lines, CRUD operations |
 | Sex record entry | `SexRecordModal.tsx` | 880 lines, multi-step form |
 | Dashboard charts | `HardnessChart.tsx` | Chart.js integration |
 | Toast notifications | `Toast.tsx` | Via ToastContext |
-| Global timeline | `GlobalTimeline.tsx` | Timeline visualization |
 
 ---
 
@@ -53,12 +51,12 @@
 | PartnerManager.tsx | 761 | Full CRUD + profile fields |
 | MasturbationRecordModal.tsx | 701 | Detailed XP tracking |
 | LogForm.tsx | 661 | Master form aggregating all sections |
-| Dashboard.tsx | 624 | Main view with calendar + stats |
 
 ---
 
 ## NOTES
 
+- **Dashboard:** Home view, calendar heatmap, and global timeline live in `features/dashboard`
 - **Lazy imports:** App shell lazy-loads StatsView, SexLifeView, and `features/profile/MyView`
 - **Suspense:** Wrap lazy views with `<Suspense fallback={LoadingFallback}>`
 - **Error Boundary:** `ErrorBoundary.tsx` wraps critical components

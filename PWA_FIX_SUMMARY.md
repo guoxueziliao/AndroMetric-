@@ -62,7 +62,7 @@
 
 ### 性能优化（高优先级）
 1. 添加 useCallback 到所有事件处理器
-2. 拆分 Dashboard.tsx（624行）为小组件
+2. 拆分 `features/dashboard/Dashboard.tsx` 为小组件
 3. 优化 useLogs hook 的数据计算
 
 ### PWA 体验优化（中优先级）

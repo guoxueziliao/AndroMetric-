@@ -1,12 +1,20 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { LogEntry } from '../types';
+import type { LogEntry } from '../../domain';
 import { ChevronLeft, ChevronRight, Zap, Dumbbell, Moon, Clock, BatteryWarning, TrendingUp, TrendingDown, Minus, Calendar as CalendarIcon, SunMedium, Hand, Heart, Beer, ShieldAlert, Film, BrainCircuit } from 'lucide-react';
-import { analyzeSleep, calculateDataQuality } from '../utils/helpers';
+import { analyzeSleep, calculateDataQuality } from '../../shared/lib';
 
 interface ActivityCalendarProps {
     logs: LogEntry[];
     onDateClick?: (date: string) => void;
     children?: React.ReactNode;
+}
+
+interface DashItemProps {
+    label: string;
+    value: string | number;
+    sub: React.ReactNode;
+    icon: React.ElementType;
+    colorClass: string;
 }
 
 type FilterType = 'all' | 'morning_wood' | 'sex' | 'masturbation' | 'sick' | 'alcohol' | 'porn' | 'exercise' | 'stress' | 'good_sleep' | 'late_sleep' | 'insufficient_sleep';
@@ -271,7 +279,7 @@ const CalendarHeatmap: React.FC<ActivityCalendarProps> = ({ logs, onDateClick, c
         );
     };
 
-    const DashItem = ({ label, value, sub, icon: Icon, colorClass }: any) => (
+    const DashItem = ({ label, value, sub, icon: Icon, colorClass }: DashItemProps) => (
         <div className="flex flex-col bg-white dark:bg-slate-900 p-3 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm">
             <div className="flex justify-between items-start mb-1">
                 <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{label}</span>

@@ -1,29 +1,22 @@
-
 import React, { useState, useMemo, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { LogEntry, ExerciseRecord, SexRecordDetails, MasturbationRecordDetails, NapRecord, AlcoholRecord } from '../types';
+import type { LogEntry, ExerciseRecord, MasturbationRecordDetails, NapRecord, AlcoholRecord } from '../../domain';
 import CalendarHeatmap from './CalendarHeatmap';
 import { 
-  Moon, Zap, Activity, Hand, HeartPulse, Clock, Dumbbell, Footprints, 
-  Timer, CloudSun, Beer, TrendingUp, ShieldAlert, Edit3, Trash2, 
-  FastForward, Coffee, Bed, ArrowRight, User, Heart, RotateCcw, 
-  MapPin, Sparkles, Shirt, Star, Thermometer, BrainCircuit, Tag, 
-  Film, Smile, AlertTriangle, ChevronRight, ChevronLeft, Calendar, Check, 
-  AlertCircle, Sofa, X, MoreHorizontal, StickyNote
+  Moon, Zap, Activity, Hand, Dumbbell, CloudSun, Beer, ShieldAlert, Edit3,
+  Trash2, Coffee, Bed, ArrowRight, Heart, MapPin, BrainCircuit, Film, Smile,
+  ChevronRight, ChevronLeft, Calendar, Sofa, X, StickyNote
 } from 'lucide-react';
-import Modal from './Modal';
-import SafeDeleteModal from './SafeDeleteModal';
-import { formatTime, calculateSleepDuration, analyzeSleep, formatDateFriendly, LABELS } from '../utils/helpers';
-import { hydrateLog } from '../utils/hydrateLog';
-import { useData } from '../contexts/DataContext';
-import { useToast } from '../contexts/ToastContext';
-import { LogHistory } from './LogHistory';
+import { Modal, SafeDeleteModal } from '../../shared/ui';
+import { formatTime, calculateSleepDuration, analyzeSleep, LABELS } from '../../shared/lib';
+import { hydrateLog } from '../../core/storage';
+import { useData } from '../../contexts/DataContext';
+import { useToast } from '../../contexts/ToastContext';
+import { LogHistory } from '../../components/LogHistory';
 import { GlobalTimeline } from './GlobalTimeline';
 
 interface DashboardProps {
   onEdit: (date: string) => void;
-  onDateClick: (date: string) => void;
-  onNavigateToBackup: () => void;
   onFinishExercise?: (record: ExerciseRecord) => void;
   onFinishMasturbation?: (record: MasturbationRecordDetails) => void;
   onFinishNap?: (record: NapRecord) => void;
@@ -37,8 +30,15 @@ const LOCATION_LABELS: Record<string, string> = { home: '家', partner: '伴侣�
 const MOOD_LABELS: Record<string, string> = { happy: '开心', excited: '兴奋', neutral: '平静', anxious: '焦虑', sad: '低落', angry: '生气' };
 const PORN_LABELS: Record<string, string> = { none: '无', low: '少量', medium: '适量', high: '沉迷' };
 
-const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateToBackup, onFinishExercise, onFinishMasturbation, onFinishNap, onFinishAlcohol }) => {
-  const { logs: rawLogs, deleteLog, toggleNap, cancelOngoingNap, addOrUpdateLog, toggleSleepLog, cancelAlcoholRecord, cancelOngoingExercise, cancelOngoingMasturbation } = useData();
+interface SummarySectionProps {
+  title: string;
+  icon: React.ElementType;
+  children: React.ReactNode;
+  colorClass?: string;
+}
+
+const Dashboard: React.FC<DashboardProps> = ({ onEdit, onFinishExercise, onFinishMasturbation, onFinishNap, onFinishAlcohol }) => {
+  const { logs: rawLogs, deleteLog, cancelOngoingNap, toggleSleepLog, cancelAlcoholRecord, cancelOngoingExercise, cancelOngoingMasturbation } = useData();
   const logs = useMemo(() => Array.isArray(rawLogs) ? rawLogs : [], [rawLogs]);
   const { showToast } = useToast();
 
@@ -132,32 +132,12 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
         case 'alcohol': await cancelAlcoholRecord(); break;
       }
       showToast('记录已取消', 'info');
-    } catch (e) {
+    } catch {
       showToast('取消失败', 'error');
     } finally {
       setTaskToCancel(null);
     }
   }, [taskToCancel, toggleSleepLog, cancelOngoingNap, cancelOngoingMasturbation, cancelOngoingExercise, cancelAlcoholRecord, pendingLog, showToast]);
-
-  const handleEditPendingLog = useCallback(() => {
-    if (pendingLog) onEdit(pendingLog.date);
-  }, [pendingLog, onEdit]);
-
-  const handleFinishNapCallback = useCallback(() => {
-    if (ongoingNap) onFinishNap?.(ongoingNap);
-  }, [ongoingNap, onFinishNap]);
-
-  const handleFinishMasturbationCallback = useCallback(() => {
-    if (ongoingMb) onFinishMasturbation?.(ongoingMb);
-  }, [ongoingMb, onFinishMasturbation]);
-
-  const handleFinishExerciseCallback = useCallback(() => {
-    if (ongoingExercise) onFinishExercise?.(ongoingExercise);
-  }, [ongoingExercise, onFinishExercise]);
-
-  const handleFinishAlcoholCallback = useCallback(() => {
-    if (ongoingAlcohol) onFinishAlcohol?.(ongoingAlcohol);
-  }, [ongoingAlcohol, onFinishAlcohol]);
 
   const diaryDateInfo = useMemo(() => {
     if (!summaryLog) return { main: '', sub: '' };
@@ -168,7 +148,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onEdit, onDateClick, onNavigateTo
     };
   }, [summaryLog]);
 
-  const SummarySection = ({ title, icon: Icon, children, colorClass = "text-slate-400" }: any) => (
+  const SummarySection = ({ title, icon: Icon, children, colorClass = "text-slate-400" }: SummarySectionProps) => (
       <div className="space-y-3">
           <div className="flex items-center gap-2 px-1">
               <Icon size={14} className={colorClass} />
@@ -462,7 +442,7 @@ return (
 
                                     <SummarySection title="活力记录" icon={Activity} colorClass="text-emerald-500">
                                         <div className="space-y-3">
-                                            {summaryLog.exercise?.map((ex, i) => (
+                                            {summaryLog.exercise?.map((ex) => (
                                                 <div key={ex.id} className="bg-slate-50 dark:bg-slate-950 p-4 rounded-[1.5rem] border border-slate-100 dark:border-white/5 flex items-center justify-between">
                                                     <div className="flex items-center gap-4">
                                                         <div className="p-2.5 bg-white dark:bg-slate-800 rounded-2xl text-emerald-500 shadow-sm"><Dumbbell size={20}/></div>

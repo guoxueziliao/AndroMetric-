@@ -1,3 +1,3 @@
-export { default as Dashboard } from '../../components/Dashboard';
-export { default as CalendarHeatmap } from '../../components/CalendarHeatmap';
-export { GlobalTimeline } from '../../components/GlobalTimeline';
+export { default as Dashboard } from './Dashboard';
+export { default as CalendarHeatmap } from './CalendarHeatmap';
+export { GlobalTimeline } from './GlobalTimeline';

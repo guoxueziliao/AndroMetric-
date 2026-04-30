@@ -1,7 +1,6 @@
-
 import React, { useMemo } from 'react';
-import { LogEntry } from '../types';
-import { SunMedium, Moon, Coffee, Beer, Hand, HeartPulse, Dumbbell, Circle, Clock, RotateCcw, Bed } from 'lucide-react';
+import type { LogEntry } from '../../domain';
+import { SunMedium, Moon, Coffee, Beer, Hand, HeartPulse, Dumbbell, Clock, RotateCcw, Bed } from 'lucide-react';
 
 interface GlobalTimelineProps {
     log: LogEntry;
