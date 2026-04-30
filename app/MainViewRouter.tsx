@@ -81,11 +81,12 @@ const MainViewRouter: React.FC<MainViewRouterProps> = ({
           />
         )}
         <Suspense fallback={<LoadingFallback />}>
-          {activeMainView === 'stats' && <StatsView isDarkMode={isDarkMode} />}
+          {activeMainView === 'stats' && <StatsView isDarkMode={isDarkMode} logs={logs} />}
           {activeMainView === 'sexlife' && <SexLifeView />}
           {activeMainView === 'my' && (
             <MyView
               settings={settings}
+              logs={logs}
               onUpdateSettings={onUpdateSettings}
               onShowVersionHistory={onShowVersionHistory}
               onNavigateToLog={onEdit}

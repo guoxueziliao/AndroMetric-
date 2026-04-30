@@ -1,11 +1,11 @@
 import React, { useMemo, useState } from 'react';
-import { useData } from '../../contexts/DataContext';
 import { StatsEngine, METRICS } from './model/StatsEngine';
 import type { MetricId } from './model/StatsEngine';
 import { calculateXpStats } from './model/xpStats';
 import type { DimensionStat } from './model/xpStats';
 import { generateInsights } from './model/insights';
 import type { Insight } from './model/insights';
+import type { LogEntry } from '../../domain';
 import { Activity, Zap, TrendingUp, BrainCircuit, Radar, CheckCircle, ArrowDown, AlertTriangle, Info, Tag, Sparkles } from 'lucide-react';
 import { ErrorBoundary } from '../../shared/ui';
 import { getMasturbationRecommendations } from '../../utils/recommendationEngine';
@@ -39,6 +39,11 @@ const STATS_TABS: { id: StatsTab; label: string }[] = [
     { id: 'behavior', label: '习惯' },
     { id: 'sexual', label: '性爱' }
 ];
+
+interface StatsViewProps {
+    isDarkMode: boolean;
+    logs: LogEntry[];
+}
 
 // --- Sub-Components ---
 
@@ -93,8 +98,7 @@ const InsightCard: React.FC<{ insight: Insight }> = ({ insight }) => {
     );
 };
 
-const StatsView: React.FC<{ isDarkMode: boolean }> = ({ isDarkMode }) => {
-    const { logs: rawLogs } = useData();
+const StatsView: React.FC<StatsViewProps> = ({ isDarkMode, logs: rawLogs }) => {
     const logs = useMemo(() => Array.isArray(rawLogs) ? rawLogs : [], [rawLogs]);
     const [activeTab, setActiveTab] = useState<StatsTab>('overview');
     const [trendComparison] = useState<MetricId>('sleep');

@@ -2,8 +2,7 @@
 import React, { useRef, useState, useEffect, useMemo, lazy, Suspense } from 'react';
 import { Settings, AlertTriangle, Archive, Database, History, Trash2, Smartphone, Moon, Sun, Share2, Pencil, FolderInput, Stethoscope, CheckCircle, Wrench, RotateCcw, ShieldCheck, ChevronRight, AlertCircle, ArrowRight, Tags } from 'lucide-react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import type { AppSettings, Snapshot } from '../../domain';
-import { useData } from '../../contexts/DataContext';
+import type { AppSettings, LogEntry, Snapshot } from '../../domain';
 import { useToast } from '../../contexts/ToastContext';
 import { StorageService, db } from '../../core/storage';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
@@ -16,6 +15,7 @@ const BackupSettings = lazy(() => import('../backup').then((module) => ({ defaul
 
 interface MyViewProps {
   settings: AppSettings;
+  logs: LogEntry[];
   onUpdateSettings: (newSettings: AppSettings) => void;
   onShowVersionHistory: () => void;
   onNavigateToLog: (date: string) => void;
@@ -28,8 +28,7 @@ const StatBox = ({ label, value, colorClass, bgClass }: { label: string, value: 
     </div>
 );
 
-const MyView: React.FC<MyViewProps> = ({ settings, onUpdateSettings, onShowVersionHistory, onNavigateToLog }) => {
-  const { logs: rawLogs } = useData();
+const MyView: React.FC<MyViewProps> = ({ settings, logs: rawLogs, onUpdateSettings, onShowVersionHistory, onNavigateToLog }) => {
   const logs = useMemo(() => Array.isArray(rawLogs) ? rawLogs : [], [rawLogs]);
   const { showToast } = useToast();
   
