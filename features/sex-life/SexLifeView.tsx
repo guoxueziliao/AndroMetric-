@@ -21,10 +21,13 @@ interface TimelineRecord {
     notes?: string;
 }
 
-interface SexLifeViewProps {
+interface SexLifeViewData {
     logs: LogEntry[];
     partners: PartnerProfile[];
     userTags: TagEntry[];
+}
+
+interface SexLifeViewActions {
     onAddOrUpdateLog: (log: LogEntry) => Promise<void>;
     onAddOrUpdatePartner: (partner: PartnerProfile) => Promise<void>;
     onDeletePartner: (id: string) => Promise<void>;
@@ -32,18 +35,31 @@ interface SexLifeViewProps {
     onDeleteTag: (name: string, category: TagType) => Promise<void>;
 }
 
+interface SexLifeViewProps {
+    data: SexLifeViewData;
+    actions: SexLifeViewActions;
+}
+
 const PAGE_SIZE = 20;
 
 const SexLifeView: React.FC<SexLifeViewProps> = ({
-    logs: rawLogs,
-    partners,
-    userTags,
-    onAddOrUpdateLog,
-    onAddOrUpdatePartner,
-    onDeletePartner,
-    onAddOrUpdateTag,
-    onDeleteTag
+    data,
+    actions
 }) => {
+    const {
+        logs: rawLogs,
+        partners,
+        userTags
+    } = data;
+
+    const {
+        onAddOrUpdateLog,
+        onAddOrUpdatePartner,
+        onDeletePartner,
+        onAddOrUpdateTag,
+        onDeleteTag
+    } = actions;
+
     const logs = useMemo(() => Array.isArray(rawLogs) ? rawLogs : [], [rawLogs]);
     
     const [isPartnerManagerOpen, setIsPartnerManagerOpen] = useState(false);

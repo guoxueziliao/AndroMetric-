@@ -136,14 +136,18 @@ const MainViewRouter: React.FC<MainViewRouterProps> = ({
             {activeMainView === 'stats' && <StatsView isDarkMode={isDarkMode} logs={logs} />}
             {activeMainView === 'sexlife' && (
               <SexLifeView
-                logs={logs}
-                partners={partners}
-                userTags={userTags}
-                onAddOrUpdateLog={onAddOrUpdateLog}
-                onAddOrUpdatePartner={onAddOrUpdatePartner}
-                onDeletePartner={onDeletePartner}
-                onAddOrUpdateTag={onAddOrUpdateTag}
-                onDeleteTag={onDeleteTag}
+                data={{
+                  logs,
+                  partners,
+                  userTags
+                }}
+                actions={{
+                  onAddOrUpdateLog,
+                  onAddOrUpdatePartner,
+                  onDeletePartner,
+                  onAddOrUpdateTag,
+                  onDeleteTag
+                }}
               />
             )}
             {activeMainView === 'my' && (
