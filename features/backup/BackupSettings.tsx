@@ -1,95 +1,24 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Folder, Shield, Clock, AlertCircle, CheckCircle, Download } from 'lucide-react';
 import type { LogEntry } from '../../domain';
-import { StorageService, backupService, type BackupMetadata } from '../../core/storage';
+import { useBackupSettings } from './model/useBackupSettings';
 
 interface BackupSettingsProps {
   logs?: LogEntry[];
 }
 
 const BackupSettings: React.FC<BackupSettingsProps> = ({ logs }) => {
-  const [isEnabled, setIsEnabled] = useState(false);
-  const [isReady, setIsReady] = useState(false);
-  const [metadata, setMetadata] = useState<BackupMetadata | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
-
-  useEffect(() => {
-    setIsEnabled(backupService.isAutoBackupEnabled());
-    setIsReady(backupService.isReady());
-    loadMetadata();
-  }, []);
-
-  const loadMetadata = async () => {
-    const meta = await backupService.getMetadata();
-    setMetadata(meta);
-  };
-
-  const handleToggleAutoBackup = async (enabled: boolean) => {
-    setError(null);
-    setSuccessMessage(null);
-
-    if (enabled && !isReady) {
-      setIsLoading(true);
-      const success = await backupService.setupBackupDirectory();
-      setIsLoading(false);
-
-      if (!success) {
-        setError('无法获取目录访问权限。请选择一个文件夹用于存储备份。');
-        return;
-      }
-      setIsReady(true);
-    }
-
-    backupService.setAutoBackupEnabled(enabled);
-    setIsEnabled(enabled);
-    setSuccessMessage(enabled ? '自动备份已启用' : '自动备份已禁用');
-    await loadMetadata();
-
-    setTimeout(() => setSuccessMessage(null), 3000);
-  };
-
-  const handleChangeDirectory = async () => {
-    setError(null);
-    setIsLoading(true);
-    const success = await backupService.setupBackupDirectory();
-    setIsLoading(false);
-
-    if (success) {
-      setIsReady(true);
-      setSuccessMessage('备份目录已更新');
-      await loadMetadata();
-      setTimeout(() => setSuccessMessage(null), 3000);
-    } else {
-      setError('目录更改失败');
-    }
-  };
-
-  const handleManualBackup = async () => {
-    if (!logs) {
-      setError('没有可备份的数据');
-      return;
-    }
-
-    setError(null);
-    setIsLoading(true);
-
-    const partners = await StorageService.partners.queries.all();
-    const tags = await StorageService.tags.getAll();
-
-    const success = await backupService.manualBackup(logs, partners, tags);
-
-    setIsLoading(false);
-
-    if (success) {
-      setSuccessMessage('手动备份成功！');
-      await loadMetadata();
-      setTimeout(() => setSuccessMessage(null), 3000);
-    } else {
-      setError('备份失败，请检查目录权限');
-    }
-  };
+  const {
+    isEnabled,
+    isReady,
+    metadata,
+    isLoading,
+    error,
+    successMessage,
+    onToggleAutoBackup,
+    onChangeDirectory,
+    onManualBackup
+  } = useBackupSettings({ logs });
 
   const formatDate = (timestamp: number | null): string => {
     if (!timestamp) return '从未';
@@ -138,7 +67,7 @@ const BackupSettings: React.FC<BackupSettingsProps> = ({ logs }) => {
             <input
               type="checkbox"
               checked={isEnabled}
-              onChange={(e) => handleToggleAutoBackup(e.target.checked)}
+              onChange={(e) => onToggleAutoBackup(e.target.checked)}
               className="sr-only peer"
               disabled={isLoading}
             />
@@ -152,7 +81,7 @@ const BackupSettings: React.FC<BackupSettingsProps> = ({ logs }) => {
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-medium text-slate-500 dark:text-slate-400">备份目录</span>
                 <button
-                  onClick={handleChangeDirectory}
+                  onClick={onChangeDirectory}
                   disabled={isLoading}
                   className="text-xs text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 font-medium"
                 >
@@ -186,7 +115,7 @@ const BackupSettings: React.FC<BackupSettingsProps> = ({ logs }) => {
             </div>
 
             <button
-              onClick={handleManualBackup}
+              onClick={onManualBackup}
               disabled={isLoading || !logs}
               className="w-full flex items-center justify-center gap-2 py-2.5 bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-300 dark:disabled:bg-slate-700 text-white rounded-xl text-sm font-medium transition-colors"
             >
@@ -201,7 +130,7 @@ const BackupSettings: React.FC<BackupSettingsProps> = ({ logs }) => {
             <AlertCircle className="w-8 h-8 text-amber-500 mx-auto mb-2" />
             <p className="text-sm text-amber-800 dark:text-amber-300 mb-2">需要选择备份目录</p>
             <button
-              onClick={handleChangeDirectory}
+              onClick={onChangeDirectory}
               disabled={isLoading}
               className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-sm font-medium transition-colors"
             >
