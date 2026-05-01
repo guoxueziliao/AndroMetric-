@@ -4,13 +4,21 @@ import type { PartnerProfile, PartnerType, LogEntry } from '../../domain';
 import { Heart, Edit2, Trash2, Plus, ChevronRight, Ruler as RulerIcon, Cigarette, Wine, ThumbsUp, ThumbsDown, BrainCircuit, Flag, Clock } from 'lucide-react';
 import { Modal, SafeDeleteModal } from '../../shared/ui';
 
+interface PartnerManagerData {
+    partners: PartnerProfile[];
+    logs?: LogEntry[];
+}
+
+interface PartnerManagerActions {
+    onSave: (partner: PartnerProfile) => void;
+    onDelete: (id: string) => void;
+}
+
 interface PartnerManagerProps {
     isOpen: boolean;
     onClose: () => void;
-    partners: PartnerProfile[];
-    onSave: (partner: PartnerProfile) => void;
-    onDelete: (id: string) => void;
-    logs?: LogEntry[];
+    data: PartnerManagerData;
+    actions: PartnerManagerActions;
 }
 
 const COLORS = ['bg-pink-500', 'bg-purple-500', 'bg-indigo-500', 'bg-blue-500', 'bg-teal-500', 'bg-rose-500', 'bg-orange-500'];
@@ -51,7 +59,17 @@ const getPartnerCategory = (p: PartnerProfile) => {
     return null;
 };
 
-const PartnerManager: React.FC<PartnerManagerProps> = ({ isOpen, onClose, partners, onSave, onDelete, logs = [] }) => {
+const PartnerManager: React.FC<PartnerManagerProps> = ({ isOpen, onClose, data, actions }) => {
+    const {
+        partners,
+        logs = []
+    } = data;
+
+    const {
+        onSave,
+        onDelete
+    } = actions;
+
     const [view, setView] = useState<'list' | 'detail' | 'edit'>('list');
     const [activePartner, setActivePartner] = useState<PartnerProfile | null>(null);
     const [formData, setFormData] = useState<Partial<PartnerProfile>>({});

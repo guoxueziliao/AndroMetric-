@@ -339,7 +339,18 @@ const SexLifeView: React.FC<SexLifeViewProps> = ({
                 )}
             </div>
             
-            <PartnerManager isOpen={isPartnerManagerOpen} onClose={() => setIsPartnerManagerOpen(false)} partners={partners} onSave={onAddOrUpdatePartner} onDelete={onDeletePartner} logs={logs} />
+            <PartnerManager
+                isOpen={isPartnerManagerOpen}
+                onClose={() => setIsPartnerManagerOpen(false)}
+                data={{
+                    partners,
+                    logs
+                }}
+                actions={{
+                    onSave: onAddOrUpdatePartner,
+                    onDelete: onDeletePartner
+                }}
+            />
             <SexRecordModal
                 isOpen={isSexModalOpen}
                 onClose={() => { setIsSexModalOpen(false); setEditingRecord(null); }}
