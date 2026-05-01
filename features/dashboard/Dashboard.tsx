@@ -1,6 +1,6 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
-import type { LogEntry, ExerciseRecord, MasturbationRecordDetails, NapRecord, AlcoholRecord } from '../../domain';
+import type { LogEntry } from '../../domain';
 import CalendarHeatmap from './CalendarHeatmap';
 import { 
   Moon, Zap, Activity, Hand, Dumbbell, CloudSun, Beer, ShieldAlert, Edit3,
@@ -9,31 +9,14 @@ import {
 } from 'lucide-react';
 import { Modal, SafeDeleteModal } from '../../shared/ui';
 import { formatTime, calculateSleepDuration, analyzeSleep, LABELS } from '../../shared/lib';
-import { hydrateLog } from '../../core/storage';
-import { useToast } from '../../contexts/ToastContext';
 import { LogHistory } from './LogHistory';
 import { GlobalTimeline } from './GlobalTimeline';
-
-interface DashboardActions {
-  onEdit: (date: string) => void;
-  onDeleteLog: (date: string) => Promise<void>;
-  onToggleSleepLog: (pendingLog?: LogEntry) => Promise<void>;
-  onCancelOngoingNap: () => Promise<void>;
-  onCancelAlcoholRecord: () => Promise<void>;
-  onCancelOngoingExercise: () => Promise<void>;
-  onCancelOngoingMasturbation: () => Promise<void>;
-  onFinishExercise?: (record: ExerciseRecord) => void;
-  onFinishMasturbation?: (record: MasturbationRecordDetails) => void;
-  onFinishNap?: (record: NapRecord) => void;
-  onFinishAlcohol?: (record: AlcoholRecord) => void;
-}
+import { useDashboardController, type DashboardActions } from './model/useDashboardController';
 
 interface DashboardProps {
   logs: LogEntry[];
   actions: DashboardActions;
 }
-
-type SummaryTab = 'diary' | 'track' | 'source';
 
 const WEATHER_LABELS: Record<string, string> = { sunny: '晴', cloudy: '多云', rainy: '雨', snowy: '雪', windy: '大风', foggy: '雾' };
 const LOCATION_LABELS: Record<string, string> = { home: '家', partner: '伴侣家', hotel: '酒店', travel: '旅途', other: '其他' };
@@ -53,12 +36,6 @@ const Dashboard: React.FC<DashboardProps> = ({
 }) => {
   const {
     onEdit,
-    onDeleteLog,
-    onToggleSleepLog,
-    onCancelOngoingNap,
-    onCancelAlcoholRecord,
-    onCancelOngoingExercise,
-    onCancelOngoingMasturbation,
     onFinishExercise,
     onFinishMasturbation,
     onFinishNap,
@@ -66,22 +43,35 @@ const Dashboard: React.FC<DashboardProps> = ({
   } = actions;
 
   const logs = useMemo(() => Array.isArray(rawLogs) ? rawLogs : [], [rawLogs]);
-  const { showToast } = useToast();
 
-  const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
-  const [summaryLog, setSummaryLog] = useState<LogEntry | null>(null);
-  const [activeSummaryTab, setActiveSummaryTab] = useState<SummaryTab>('diary');
-  
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [dateToDelete, setDateToDelete] = useState<string | null>(null);
-  const [taskToCancel, setTaskToCancel] = useState<'sleep' | 'nap' | 'mb' | 'exercise' | 'alcohol' | null>(null);
+  const {
+    isSummaryModalOpen,
+    setIsSummaryModalOpen,
+    summaryLog,
+    activeSummaryTab,
+    setActiveSummaryTab,
+    isDeleteDialogOpen,
+    setIsDeleteDialogOpen,
+    dateToDelete,
+    taskToCancel,
+    setTaskToCancel,
+    pendingLog,
+    ongoingExercise,
+    ongoingNap,
+    ongoingMb,
+    ongoingAlcohol,
+    onDateClickForSummary,
+    onNavigateDate,
+    onDeleteRecord,
+    onConfirmDelete,
+    onRequestCancel,
+    onConfirmCancel
+  } = useDashboardController({
+    logs,
+    actions
+  });
 
   const latestLog = useMemo(() => logs.length > 0 ? logs[0] : null, [logs]);
-  const pendingLog = useMemo(() => logs.find(log => log.status === 'pending'), [logs]);
-  const ongoingExercise = useMemo(() => logs.flatMap(l => l.exercise || []).find(e => e.ongoing), [logs]);
-  const ongoingNap = useMemo(() => logs.flatMap(l => l.sleep?.naps || []).find(n => n.ongoing), [logs]);
-  const ongoingMb = useMemo(() => logs.flatMap(l => l.masturbation || []).find(m => m.status === 'inProgress'), [logs]);
-  const ongoingAlcohol = useMemo(() => logs.flatMap(l => l.alcoholRecords || []).find(r => r.ongoing), [logs]);
 
   const last7Days = useMemo(() => {
       const dates = [];
@@ -103,67 +93,6 @@ const Dashboard: React.FC<DashboardProps> = ({
       if (hour < 18) return '下午好';
       return '晚上好';
   }, []);
-
-  const handleDateClickForSummary = useCallback((date: string) => {
-    const log = logs.find(l => l.date === date);
-    if (log) {
-      if (log.status === 'pending') onEdit(log.date);
-      else {
-        setSummaryLog(log);
-        setActiveSummaryTab('diary');
-        setIsSummaryModalOpen(true);
-      }
-    } else {
-      setSummaryLog(hydrateLog({ date }));
-      setActiveSummaryTab('diary');
-      setIsSummaryModalOpen(true);
-    }
-  }, [logs, onEdit]);
-
-  const handleNavigateDate = useCallback((direction: number) => {
-    if (!summaryLog) return;
-    const current = new Date(summaryLog.date + 'T12:00:00');
-    current.setDate(current.getDate() + direction);
-    const targetDateStr = current.toISOString().split('T')[0];
-
-    const existing = logs.find(l => l.date === targetDateStr);
-    setSummaryLog(existing || hydrateLog({ date: targetDateStr }));
-  }, [summaryLog, logs]);
-
-  const handleDeleteRecord = useCallback((date: string) => {
-    setDateToDelete(date);
-    setIsDeleteDialogOpen(true);
-  }, []);
-
-  const confirmDelete = useCallback(async () => {
-    if (dateToDelete) {
-      await onDeleteLog(dateToDelete);
-      setIsSummaryModalOpen(false);
-      showToast('记录已成功删除', 'success');
-    }
-  }, [dateToDelete, onDeleteLog, showToast]);
-
-  const handleRequestCancel = useCallback((type: 'sleep' | 'nap' | 'mb' | 'exercise' | 'alcohol') => {
-    setTaskToCancel(type);
-  }, []);
-
-  const confirmCancel = useCallback(async () => {
-    if (!taskToCancel) return;
-    try {
-      switch(taskToCancel) {
-        case 'sleep': await onToggleSleepLog(pendingLog || undefined); break;
-        case 'nap': await onCancelOngoingNap(); break;
-        case 'mb': await onCancelOngoingMasturbation(); break;
-        case 'exercise': await onCancelOngoingExercise(); break;
-        case 'alcohol': await onCancelAlcoholRecord(); break;
-      }
-      showToast('记录已取消', 'info');
-    } catch {
-      showToast('取消失败', 'error');
-    } finally {
-      setTaskToCancel(null);
-    }
-  }, [taskToCancel, onToggleSleepLog, onCancelOngoingNap, onCancelOngoingMasturbation, onCancelOngoingExercise, onCancelAlcoholRecord, pendingLog, showToast]);
 
   const diaryDateInfo = useMemo(() => {
     if (!summaryLog) return { main: '', sub: '' };
@@ -210,7 +139,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                             </div>
                         </div>
                         <div className="flex items-center gap-2">
-                            <button onClick={() => handleRequestCancel('sleep')} className="p-2 text-white/60 hover:text-white transition-colors"><X size={18}/></button>
+                            <button onClick={() => onRequestCancel('sleep')} className="p-2 text-white/60 hover:text-white transition-colors"><X size={18}/></button>
                             <button onClick={() => onEdit(pendingLog.date)} className="px-5 py-2 bg-white text-emerald-600 rounded-full text-xs font-bold shadow-sm active:scale-95 transition-all">醒了</button>
                         </div>
                     </div>
@@ -225,7 +154,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                             </div>
                         </div>
                         <div className="flex items-center gap-2">
-                            <button onClick={() => handleRequestCancel('nap')} className="p-2 text-white/60 hover:text-white transition-colors"><X size={18}/></button>
+                            <button onClick={() => onRequestCancel('nap')} className="p-2 text-white/60 hover:text-white transition-colors"><X size={18}/></button>
                             <button onClick={() => onFinishNap?.(ongoingNap)} className="px-5 py-2 bg-white text-orange-600 rounded-full text-xs font-bold shadow-sm active:scale-95 transition-all">醒了</button>
                         </div>
                     </div>
@@ -240,7 +169,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                             </div>
                         </div>
                         <div className="flex items-center gap-2">
-                            <button onClick={() => handleRequestCancel('mb')} className="p-2 text-white/60 hover:text-white transition-colors"><X size={18}/></button>
+                            <button onClick={() => onRequestCancel('mb')} className="p-2 text-white/60 hover:text-white transition-colors"><X size={18}/></button>
                             <button onClick={() => onFinishMasturbation?.(ongoingMb)} className="px-5 py-2 bg-white text-blue-600 rounded-full text-xs font-bold shadow-sm active:scale-95 transition-all">收工</button>
                         </div>
                     </div>
@@ -255,7 +184,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                             </div>
                         </div>
                         <div className="flex items-center gap-2">
-                            <button onClick={() => handleRequestCancel('exercise')} className="p-2 text-white/60 hover:text-white transition-colors"><X size={18}/></button>
+                            <button onClick={() => onRequestCancel('exercise')} className="p-2 text-white/60 hover:text-white transition-colors"><X size={18}/></button>
                             <button onClick={() => onFinishExercise?.(ongoingExercise)} className="px-5 py-2 bg-white text-orange-600 rounded-full text-xs font-bold shadow-sm active:scale-95 transition-all">完成</button>
                         </div>
                     </div>
@@ -270,7 +199,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                             </div>
                         </div>
                         <div className="flex items-center gap-2">
-                            <button onClick={() => handleRequestCancel('alcohol')} className="p-2 text-white/60 hover:text-white transition-colors"><X size={18}/></button>
+                            <button onClick={() => onRequestCancel('alcohol')} className="p-2 text-white/60 hover:text-white transition-colors"><X size={18}/></button>
                             <button onClick={() => onFinishAlcohol?.(ongoingAlcohol)} className="px-5 py-2 bg-white text-indigo-600 rounded-full text-xs font-bold shadow-sm active:scale-95 transition-all">结算</button>
                         </div>
                     </div>
@@ -278,7 +207,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             </section>
         )}
 
-<CalendarHeatmap logs={logs} onDateClick={handleDateClickForSummary}>
+<CalendarHeatmap logs={logs} onDateClick={onDateClickForSummary}>
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mt-2">
                 <div className="bg-white dark:bg-slate-900/40 rounded-3xl p-4 shadow-soft border border-slate-100 dark:border-white/5 flex flex-col h-60 transition-colors overflow-hidden">
                     <div className="flex justify-between items-center mb-3 shrink-0">
@@ -352,7 +281,7 @@ return (
         footer={summaryLog && (
             <div className="flex gap-3 w-full px-2 pb-2">
                 <button 
-                    onClick={() => handleDeleteRecord(summaryLog.date)}
+                    onClick={() => onDeleteRecord(summaryLog.date)}
                     className="p-5 bg-red-50 dark:bg-red-900/20 text-red-500 rounded-full hover:bg-red-100 transition-colors active:scale-95"
                     title="删除记录"
                 >
@@ -372,7 +301,7 @@ return (
                 {/* Custom Header from Screenshot */}
                 <div className="flex justify-between items-center pb-2">
                     <button 
-                        onClick={() => handleNavigateDate(-1)}
+                        onClick={() => onNavigateDate(-1)}
                         className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-400 hover:text-brand-accent"
                     >
                         <ChevronLeft size={24} />
@@ -385,7 +314,7 @@ return (
 
                     <div className="flex items-center gap-1">
                         <button 
-                          onClick={() => handleNavigateDate(1)} 
+                          onClick={() => onNavigateDate(1)}
                           className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-400 hover:text-brand-accent"
                         >
                           <ChevronRight size={24} />
@@ -642,7 +571,7 @@ return (
         footer={
             <div className="flex gap-3 w-full">
                 <button onClick={() => setTaskToCancel(null)} className="flex-1 py-3 bg-slate-100 dark:bg-slate-800 rounded-xl font-bold text-slate-600 dark:text-slate-300">保留</button>
-                <button onClick={confirmCancel} className="flex-1 py-3 bg-red-50 text-red-500 rounded-xl font-bold shadow-sm">确认丢弃</button>
+                <button onClick={onConfirmCancel} className="flex-1 py-3 bg-red-50 text-red-500 rounded-xl font-bold shadow-sm">确认丢弃</button>
             </div>
         }
       >
@@ -654,7 +583,7 @@ return (
       <SafeDeleteModal 
         isOpen={isDeleteDialogOpen} 
         onClose={() => setIsDeleteDialogOpen(false)} 
-        onConfirm={confirmDelete}
+        onConfirm={onConfirmDelete}
         message={`确定要删除 ${dateToDelete} 的所有记录吗？删除后将无法找回。`}
       />
     </>
