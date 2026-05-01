@@ -1,10 +1,13 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
-import type { LogEntry, TagEntry, TagType } from '../../domain';
+import React, { useRef } from 'react';
 import { Tag as TagIcon, Edit2, Trash2, X, Check, Activity, ShieldAlert, Stethoscope, Plus, Search, User, Zap, Sparkles, Shirt, Heart } from 'lucide-react';
-import { useToast } from '../../contexts/ToastContext';
-import { validateTag } from '../../shared/lib';
 import { Modal } from '../../shared/ui';
 import TagHealthCheck from './TagHealthCheck';
+import {
+    useTagManagerController,
+    type TagManagerActions,
+    type TagManagerData,
+    type TagManagerTab
+} from './model/useTagManagerController';
 
 interface XpDimension {
     id: string;
@@ -25,23 +28,12 @@ const XP_DIMENSIONS: XpDimension[] = [
 const SYSTEM_EVENTS = ['加班', '吵架', '出差', '聚会', '家庭烦心事', '生病'];
 const SYSTEM_SYMPTOMS = ['头痛', '喉咙痛', '胃不适', '肌肉酸痛', '腹泻', '发烧', '鼻塞', '乏力', '咳嗽'];
 
-interface TagManagerData {
-    logs: LogEntry[];
-    userTags: TagEntry[];
-}
-
-interface TagManagerActions {
-    onAddOrUpdateLog: (log: LogEntry) => Promise<void>;
-    onAddOrUpdateTag: (tag: TagEntry) => Promise<void>;
-    onDeleteTag: (name: string, category: TagType) => Promise<void>;
-}
-
 interface TagManagerProps {
     isOpen: boolean;
     onClose: () => void;
     onSelectTag?: (tag: string) => void;
     initialSearch?: string;
-    defaultTab?: TagType | 'health_check';
+    defaultTab?: TagManagerTab;
     data: TagManagerData;
     actions: TagManagerActions;
 }
@@ -55,60 +47,46 @@ const TagManager: React.FC<TagManagerProps> = ({
     data,
     actions
 }) => {
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
     const {
         logs,
-        userTags
-    } = data;
-
-    const {
-        onAddOrUpdateLog,
-        onAddOrUpdateTag,
-        onDeleteTag
-    } = actions;
-
-    const { showToast } = useToast();
-    const [activeTab, setActiveTab] = useState<TagType | 'health_check'>(defaultTab);
-    const [searchTerm, setSearchTerm] = useState(initialSearch);
-    const [editingTag, setEditingTag] = useState<string | null>(null);
-    const [newTagName, setNewTagName] = useState('');
-    
-    const [isCreating, setIsCreating] = useState(false);
-    const [createInput, setCreateInput] = useState('');
-    const [selectedXpDim, setSelectedXpDim] = useState<string | null>(null);
-
-    const scrollContainerRef = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-        if (isOpen) {
-            setSearchTerm(initialSearch);
-            setIsCreating(false);
-            setCreateInput('');
-            setSelectedXpDim(null);
-            setEditingTag(null);
-        }
-    }, [isOpen, initialSearch]);
-
-    const tagsUsageMap = useMemo(() => {
-        const usage: Record<string, number> = {};
-        logs.forEach(log => {
-            log.masturbation?.forEach(m => {
-                const tags = (m.contentItems?.flatMap(ci => ci.xpTags || []) || []) as string[];
-                tags.forEach(c => { if(c) usage[c] = (usage[c] || 0) + 1; });
-                const legacyTags = (m.assets?.categories || []) as string[];
-                legacyTags.forEach(c => { if(c) usage[c] = (usage[c] || 0) + 1; });
-            });
-            (log.dailyEvents || []).forEach(e => { if(e) usage[e] = (usage[e] || 0) + 1; });
-            (log.health?.symptoms || []).forEach(s => { if(s) usage[s] = (usage[s] || 0) + 1; });
-        });
-        return usage;
-    }, [logs]);
+        userTags,
+        activeTab,
+        setActiveTab,
+        searchTerm,
+        setSearchTerm,
+        editingTag,
+        setEditingTag,
+        newTagName,
+        setNewTagName,
+        isCreating,
+        setIsCreating,
+        createInput,
+        setCreateInput,
+        selectedXpDim,
+        setSelectedXpDim,
+        tagsUsageMap,
+        onCreate,
+        onRename,
+        onDelete,
+        onStartEditingTag,
+        onNavigateToTag
+    } = useTagManagerController({
+        isOpen,
+        initialSearch,
+        defaultTab,
+        data,
+        actions,
+        onSelectTag,
+        onClose
+    });
 
     const renderTagItem = (tag: string, count: number) => (
         <div key={tag} className="flex items-center justify-between p-3 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl group hover:border-brand-accent/50 transition-colors">
             {editingTag === tag ? (
                 <div className="flex-1 flex items-center gap-2">
-                    <input autoFocus className="flex-1 bg-slate-50 dark:bg-slate-800 border border-brand-accent rounded px-2 py-1 text-sm outline-none" value={newTagName} onChange={e => setNewTagName(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleRename()}/>
-                    <button onClick={handleRename} className="p-1.5 bg-green-500 text-white rounded"><Check size={14}/></button>
+                    <input autoFocus className="flex-1 bg-slate-50 dark:bg-slate-800 border border-brand-accent rounded px-2 py-1 text-sm outline-none" value={newTagName} onChange={e => setNewTagName(e.target.value)} onKeyDown={e => e.key === 'Enter' && onRename()}/>
+                    <button onClick={onRename} className="p-1.5 bg-green-500 text-white rounded"><Check size={14}/></button>
                     <button onClick={() => setEditingTag(null)} className="p-1.5 bg-slate-200 dark:bg-slate-700 text-slate-500 rounded"><X size={14}/></button>
                 </div>
             ) : (
@@ -118,88 +96,13 @@ const TagManager: React.FC<TagManagerProps> = ({
                         {count > 0 && <span className="text-[10px] bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded-full text-slate-500">{count}次</span>}
                     </div>
                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onClick={() => { setEditingTag(tag); setNewTagName(tag); }} className="p-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-slate-400 hover:text-blue-500 rounded-lg"><Edit2 size={14}/></button>
-                        <button onClick={() => handleDelete(tag)} className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-400 hover:text-red-500 rounded-lg"><Trash2 size={14}/></button>
+                        <button onClick={() => onStartEditingTag(tag)} className="p-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-slate-400 hover:text-blue-500 rounded-lg"><Edit2 size={14}/></button>
+                        <button onClick={() => onDelete(tag)} className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-400 hover:text-red-500 rounded-lg"><Trash2 size={14}/></button>
                     </div>
                 </>
             )}
         </div>
     );
-
-    const handleCreate = async () => {
-        const tagStr = createInput.trim();
-        if (!tagStr) return;
-        const currentType = activeTab === 'health_check' ? 'xp' : (activeTab as TagType);
-        if (activeTab === 'xp' && !selectedXpDim) {
-            showToast('请先选择一个维度类别', 'error');
-            return;
-        }
-        const exists = userTags.find(t => t.name.toLowerCase() === tagStr.toLowerCase() && t.category === currentType);
-        if (exists) {
-            if (onSelectTag) { onSelectTag(exists.name); onClose(); }
-            else { showToast(`标签 "${exists.name}" 已存在`, 'info'); setIsCreating(false); setCreateInput(''); }
-            return;
-        }
-        const res = validateTag(tagStr, currentType);
-        if (res.level === 'P0') { showToast(`禁止创建: ${res.message}`, 'error'); return; }
-        await onAddOrUpdateTag({ name: tagStr, category: currentType, dimension: activeTab === 'xp' ? selectedXpDim! : undefined, createdAt: Date.now() });
-        if (onSelectTag) { onSelectTag(tagStr); onClose(); }
-        else { showToast(`已添加标签 "${tagStr}"`, 'success'); setSearchTerm(tagStr); setIsCreating(false); setCreateInput(''); setSelectedXpDim(null); }
-    };
-
-    const handleRename = async () => {
-        if (!editingTag || !newTagName.trim() || newTagName === editingTag) { setEditingTag(null); return; }
-        const oldName = editingTag;
-        const newName = newTagName.trim();
-        const oldTag = userTags.find(t => t.name === oldName && t.category === activeTab);
-        if (oldTag) { await onDeleteTag(oldName, activeTab as TagType); await onAddOrUpdateTag({ ...oldTag, name: newName }); }
-        for (const log of logs) {
-            let modified = false;
-            let newLog = { ...log };
-            if (activeTab === 'xp' && newLog.masturbation) {
-                newLog.masturbation = newLog.masturbation.map(m => {
-                    let mMod = false;
-                    if (m.contentItems) {
-                        m.contentItems = m.contentItems.map(ci => {
-                            if (ci.xpTags?.includes(oldName)) { ci.xpTags = Array.from(new Set(ci.xpTags.map(t => t === oldName ? newName : t))); mMod = true; }
-                            return ci;
-                        });
-                    }
-                    if (m.assets?.categories?.includes(oldName)) { m.assets.categories = Array.from(new Set(m.assets.categories.map(c => c === oldName ? newName : c))); mMod = true; }
-                    if (mMod) modified = true;
-                    return m;
-                });
-            }
-            if (modified) await onAddOrUpdateLog(newLog);
-        }
-        showToast('标签已重命名', 'success');
-        setEditingTag(null);
-    };
-
-    const handleDelete = async (tag: string) => {
-        if (!confirm(`确定删除 "${tag}" 吗？`)) return;
-        await onDeleteTag(tag, activeTab as TagType);
-        for (const log of logs) {
-            let modified = false;
-            let newLog = { ...log };
-            if (activeTab === 'xp' && newLog.masturbation) {
-                newLog.masturbation = newLog.masturbation.map(m => {
-                    let mMod = false;
-                    if (m.contentItems) {
-                        m.contentItems = m.contentItems.map(ci => {
-                            if (ci.xpTags?.includes(tag)) { ci.xpTags = ci.xpTags.filter(t => t !== tag); mMod = true; }
-                            return ci;
-                        });
-                    }
-                    if (m.assets?.categories?.includes(tag)) { m.assets.categories = m.assets.categories.filter(c => c !== tag); mMod = true; }
-                    if (mMod) modified = true;
-                    return m;
-                });
-            }
-            if (modified) await onAddOrUpdateLog(newLog);
-        }
-        showToast('标签已移除', 'success');
-    };
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} title={onSelectTag ? "选择或创建标签" : "标签管理"}>
@@ -233,11 +136,11 @@ const TagManager: React.FC<TagManagerProps> = ({
                                 )}
                                 <div className="mb-3">
                                     <label className="text-[11px] font-black text-blue-500 dark:text-blue-400 uppercase tracking-widest block mb-2">{activeTab === 'xp' ? '2. 输入标签名称' : '输入标签名称'}</label>
-                                    <input autoFocus className="w-full bg-white dark:bg-slate-900 border-2 border-blue-100 dark:border-blue-900 rounded-2xl px-4 py-3 text-sm font-bold outline-none focus:border-blue-500" value={createInput} onChange={e => setCreateInput(e.target.value)} placeholder="在此输入标签..." onKeyDown={e => e.key === 'Enter' && handleCreate()}/>
+                                    <input autoFocus className="w-full bg-white dark:bg-slate-900 border-2 border-blue-100 dark:border-blue-900 rounded-2xl px-4 py-3 text-sm font-bold outline-none focus:border-blue-500" value={createInput} onChange={e => setCreateInput(e.target.value)} placeholder="在此输入标签..." onKeyDown={e => e.key === 'Enter' && onCreate()}/>
                                 </div>
                                 <div className="flex gap-3 pt-2">
                                     <button onClick={() => setIsCreating(false)} className="flex-1 py-3 bg-slate-100 dark:bg-slate-800 text-slate-500 font-black text-xs rounded-xl">取消</button>
-                                    <button onClick={handleCreate} disabled={!createInput.trim() || (activeTab === 'xp' && !selectedXpDim)} className="flex-[2] py-3 bg-blue-500 disabled:opacity-50 text-white rounded-xl font-black text-xs">确认创建</button>
+                                    <button onClick={onCreate} disabled={!createInput.trim() || (activeTab === 'xp' && !selectedXpDim)} className="flex-[2] py-3 bg-blue-500 disabled:opacity-50 text-white rounded-xl font-black text-xs">确认创建</button>
                                 </div>
                             </div>
                         ) : (
@@ -254,7 +157,7 @@ const TagManager: React.FC<TagManagerProps> = ({
 
                 <div className="flex-1 overflow-y-auto custom-scrollbar pr-1 pb-10" ref={scrollContainerRef}>
                     {activeTab === 'health_check' ? (
-                        <TagHealthCheck logs={logs} onNavigateToTag={(t, ty) => { setActiveTab(ty); setSearchTerm(t); }} />
+                        <TagHealthCheck logs={logs} onNavigateToTag={onNavigateToTag} />
                     ) : activeTab === 'xp' ? (
                         <div className="space-y-8 pb-10">
                             {XP_DIMENSIONS.map(dim => {

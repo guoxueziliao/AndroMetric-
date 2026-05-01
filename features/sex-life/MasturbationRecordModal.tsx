@@ -2,8 +2,8 @@ import React, { useState, useEffect, useMemo, Suspense, lazy } from 'react';
 import { Check, Clock, Film, PenLine, Plus, Minus, Zap, Edit2, Trash2, MonitorPlay, ChevronDown, LayoutGrid, Activity, ChevronLeft, AlertTriangle, Search, Settings, Droplets, User, BatteryFull, PhoneOff, HeartOff, Flag, Home, Sofa, Monitor, Car, MapPin } from 'lucide-react';
 import type { MasturbationRecordDetails, LogEntry, PartnerProfile, ContentItem, TagEntry, TagType } from '../../domain';
 import { Modal } from '../../shared/ui';
-import { calculateInventory, XP_DIMENSIONS_LIST, validateTag } from '../../shared/lib';
-import { useToast } from '../../contexts/ToastContext';
+import { calculateInventory, XP_DIMENSIONS_LIST } from '../../shared/lib';
+import { useMasturbationTagTools } from './model/useMasturbationTagTools';
 
 const TagManager = lazy(() => import('../tags').then((module) => ({ default: module.TagManager })));
 
@@ -83,7 +83,6 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
         onDeleteTag
     } = actions;
 
-    const { showToast } = useToast();
     const [data, setData] = useState<MasturbationRecordDetails>({
         id: '', startTime: '', duration: 15, status: 'completed', tools: ['手'], contentItems: [],
         edging: 'none', edgingCount: 0, lubricant: '无润滑', useCondom: false, ejaculation: true, orgasmIntensity: 3,
@@ -100,20 +99,13 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
 
     const inventory = useMemo(() => calculateInventory(logs), [logs, isOpen]);
 
-    const tagUsageMap = useMemo(() => {
-        const counts: Record<string, number> = {};
-        if (logs && Array.isArray(logs)) {
-            logs.forEach(log => {
-                log.masturbation?.forEach(m => {
-                    m.contentItems?.forEach(ci => {
-                        ci.xpTags?.forEach(tag => counts[tag] = (counts[tag] || 0) + 1);
-                    });
-                    (m.assets as any)?.categories?.forEach((tag: string) => counts[tag] = (counts[tag] || 0) + 1);
-                });
-            });
-        }
-        return counts;
-    }, [logs]);
+    const {
+        tagUsageMap,
+        createXpTag
+    } = useMasturbationTagTools({
+        logs,
+        onAddOrUpdateTag
+    });
 
     const calculateDurationFromTimes = (start: string, end: string) => {
         if (!start || !end) return 0;
@@ -205,18 +197,8 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
         const tagStr = tagSearch.trim();
         if (!tagStr || !activeTagTab || activeTagTab === '常用') return;
         
-        const res = validateTag(tagStr, 'xp');
-        if (res.level === 'P0') {
-            showToast(`禁止创建: ${res.message}`, 'error');
-            return;
-        }
-
-        await onAddOrUpdateTag({
-            name: tagStr,
-            category: 'xp',
-            dimension: activeTagTab,
-            createdAt: Date.now()
-        });
+        const created = await createXpTag(tagStr, activeTagTab);
+        if (!created) return;
 
         toggleXpTag(tagStr);
         setTagSearch('');
