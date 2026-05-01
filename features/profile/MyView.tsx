@@ -1,14 +1,11 @@
 
-import React, { useRef, useState, useEffect, useMemo, lazy, Suspense } from 'react';
+import React, { useRef, useState, useMemo, lazy, Suspense } from 'react';
 import { Settings, AlertTriangle, Archive, Database, History, Trash2, Smartphone, Moon, Sun, Share2, Pencil, FolderInput, Stethoscope, CheckCircle, Wrench, RotateCcw, ShieldCheck, ChevronRight, AlertCircle, ArrowRight, Tags } from 'lucide-react';
-import { useLiveQuery } from 'dexie-react-hooks';
-import type { AppSettings, LogEntry, Snapshot, TagEntry, TagType } from '../../domain';
-import { useToast } from '../../contexts/ToastContext';
-import { StorageService, db } from '../../core/storage';
+import type { AppSettings, LogEntry, TagEntry, TagType } from '../../domain';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
 import { Modal } from '../../shared/ui';
-import { DataHealthReport } from '../../utils/dataHealthCheck';
 import { InstallButton } from '../pwa';
+import { useProfileMaintenance } from './model/useProfileMaintenance';
 
 const TagManager = lazy(() => import('../tags').then((module) => ({ default: module.TagManager })));
 const BackupSettings = lazy(() => import('../backup').then((module) => ({ default: module.BackupSettings })));
@@ -57,20 +54,6 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
   } = actions;
 
   const logs = useMemo(() => Array.isArray(rawLogs) ? rawLogs : [], [rawLogs]);
-  const { showToast } = useToast();
-  
-  // Queries
-  const snapshots = (useLiveQuery(StorageService.snapshots.queries.all) as Snapshot[]) || [];
-  
-  // Version Metadata Query
-  const dbMeta = useLiveQuery(async () => {
-      const dv = await db.meta.get('dataVersion');
-      const df = await db.meta.get('dataFixVersion');
-      return { 
-          dataVersion: dv?.value || 0, 
-          dataFixVersion: df?.value || 0 
-      };
-  }) || { dataVersion: 0, dataFixVersion: 0 };
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isTagManagerOpen, setIsTagManagerOpen] = useState(false);
@@ -79,10 +62,31 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
   const [tempName, setTempName] = useState(userName);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [importStatus, setImportStatus] = useState<'idle' | 'importing' | 'success' | 'error'>('idle');
-  
-  const [snapshotFeedback, setSnapshotFeedback] = useState('');
   const [isClearDataModalOpen, setIsClearDataModalOpen] = useState(false);
+
+  const {
+    snapshots,
+    dbMeta,
+    healthReport,
+    isRepairing,
+    importStatus,
+    snapshotFeedback,
+    canUseFileSystem,
+    onRunHealthCheck,
+    onRepairData,
+    onExportClick,
+    onFileSystemBackup,
+    onCreateSnapshot,
+    onRestoreSnapshot,
+    onDeleteSnapshot,
+    onFileChange,
+    onClearAllData,
+    onExportAndClear
+  } = useProfileMaintenance({
+    settings,
+    logs,
+    onUpdateSettings
+  });
   
   // Backup Status Check (Replaces persistence check)
   const isBackedUp = useMemo(() => {
@@ -91,29 +95,6 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
       return daysSinceBackup < 7;
   }, [settings.lastExportAt]);
   
-  // Health Check State
-  const [healthReport, setHealthReport] = useState<DataHealthReport | null>(null);
-  const [isRepairing, setIsRepairing] = useState(false);
-
-  // Mobile Detection
-  const [isMobile, setIsMobile] = useState(() => {
-      if (typeof navigator === 'undefined') return false;
-      const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
-      return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
-  });
-
-  useEffect(() => {
-      const checkMobile = () => {
-          const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
-          const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-          const isMobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
-          setIsMobile(isTouch || isMobileUA);
-      };
-      checkMobile();
-      window.addEventListener('resize', checkMobile);
-      return () => window.removeEventListener('resize', checkMobile);
-  }, []);
-
   const stats = useMemo(() => {
       return {
           totalDays: logs.length,
@@ -125,188 +106,22 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
       };
   }, [logs]);
 
-  const handleRunHealthCheck = async () => {
-      const report = await StorageService.runHealthCheck();
-      setHealthReport(report);
-      if (report.issues.length === 0) {
-          showToast(`数据完整，健康评分 ${report.score}`, 'success');
-      } else {
-          showToast(`发现 ${report.issues.length} 个潜在问题，评分 ${report.score}`, 'error');
-      }
-  };
-
-  const handleRepairData = async () => {
-      if (!confirm('系统将自动创建当前数据的备份快照，随后尝试修复数据结构错误。\n\n确定要开始修复吗？')) return;
-      
-      setIsRepairing(true);
-      try {
-          showToast('正在创建安全备份...', 'info');
-          await StorageService.snapshots.create(`系统自动备份 - v${settings.version} 修复前`);
-          const count = await StorageService.repairData();
-          await db.meta.put({ key: 'dataFixVersion', value: 1 });
-          
-          if (count > 0) {
-              showToast(`修复成功: 已修正 ${count} 条记录`, 'success');
-          } else {
-              showToast('扫描完成: 未发现需修复的数据', 'success');
-          }
-          await handleRunHealthCheck();
-      } catch (e: any) {
-          showToast('修复流程中断: ' + e.message, 'error');
-      } finally {
-          setIsRepairing(false);
-      }
-  };
-
-  const handleExportData = async (exportType: 'export' | 'backup') => {
-    if (logs.length === 0) {
-        showToast('没有数据可导出', 'error');
-        return;
-    }
-    const now = new Date();
-    const timestamp = now.toISOString().split('T')[0] + '_' + now.toTimeString().slice(0, 8).replace(/:/g, '-');
-    const filename = exportType === 'backup' ? `硬度日记-应用内备份-${timestamp}.json` : `硬度日记-数据导出-${logs[0]?.date || 'data'}.json`;
-    
-    try {
-        const jsonStr = await StorageService.createSnapshot();
-        const blob = new Blob([jsonStr], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.download = filename;
-        link.href = url;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-        
-        if (exportType === 'backup') {
-             showToast('备份文件已生成', 'success');
-        } else {
-             showToast('导出成功', 'success');
-        }
-    } catch (e: any) {
-        showToast('导出失败: ' + e.message, 'error');
-    }
-  };
-
-  const handleClearAllData = async () => {
-    try {
-      localStorage.removeItem('appSettings');
-      localStorage.removeItem('userName');
-      await StorageService.clearAllData();
-      alert('数据已清除，应用将刷新。');
-      window.location.reload();
-    } catch (e) { showToast('清除失败', 'error'); }
-  };
-
   const handleClearAnyway = () => {
     setIsClearDataModalOpen(false);
-    handleClearAllData();
+    onClearAllData();
   };
 
   const handleExportAndClear = async () => {
-    await handleExportData('backup');
-    setTimeout(() => {
-        handleClearAnyway();
-    }, 500);
+    await onExportAndClear();
+    setIsClearDataModalOpen(false);
   };
 
   const handleImportClick = () => fileInputRef.current?.click();
-
-  const handleExportClick = () => {
-    handleExportData('export');
-    onUpdateSettings({ ...settings, lastExportAt: Date.now() });
-  };
-  
-  const handleFileSystemBackup = async () => {
-      if (isMobile) {
-          alert('手机浏览器对本地文件系统支持有限，请使用"导出为通用 JSON"功能。');
-          return;
-      }
-      
-      if (!('showDirectoryPicker' in window)) { alert('浏览器不支持文件系统访问'); return; }
-      try {
-          const timestamp = new Date().toISOString().split('T')[0] + '_' + new Date().toTimeString().slice(0, 8).replace(/:/g, '-');
-          const filename = `硬度日记-本地备份-${timestamp}.json`;
-          const content = await StorageService.createSnapshot();
-          
-          // @ts-ignore
-          const dirHandle = await window.showDirectoryPicker({ id: 'hardness-diary-backup', mode: 'readwrite', startIn: 'documents' });
-          // @ts-ignore
-          const fileHandle = await dirHandle.getFileHandle(filename, { create: true });
-          // @ts-ignore
-          const writable = await fileHandle.createWritable();
-          await writable.write(content);
-          await writable.close();
-          onUpdateSettings({ ...settings, lastExportAt: Date.now() });
-          alert(`✅ 备份成功！\n文件已保存至: ${filename}`);
-      } catch (error: any) {
-          if (error.name !== 'AbortError') { 
-              console.error('FileSystem Backup Error:', error); 
-              alert('备份失败: ' + error.message + '\n\n建议使用下方的 "导出为通用 JSON" 功能。'); 
-          }
-      }
-  };
-  
-  const handleCreateSnapshot = async () => {
-    try {
-        await StorageService.snapshots.create('手动备份');
-        setSnapshotFeedback('快照已创建');
-        setTimeout(() => setSnapshotFeedback(''), 2000);
-    } catch (e: any) {
-        showToast('创建失败: ' + e.message, 'error');
-    }
-  };
-
-  const handleRestoreSnapshot = async (id: number) => {
-      if (confirm('还原将覆盖当前所有数据。确定要回滚到此版本吗？')) {
-          try {
-              await StorageService.snapshots.restore(id);
-              showToast('回滚成功', 'success');
-          } catch (e: any) {
-              showToast('回滚失败: ' + e.message, 'error');
-          }
-      }
-  };
-
-  const handleDeleteSnapshot = async (id: number) => {
-      if (confirm('删除此还原点？')) {
-          await StorageService.snapshots.delete(id);
-      }
-  };
-  
-
-
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    setImportStatus('importing');
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      const text = e.target?.result;
-       if (typeof text === 'string') {
-          try {
-              await StorageService.restoreSnapshot(text, 'merge');
-              setImportStatus('success'); 
-              showToast('导入成功', 'success');
-              setTimeout(() => setImportStatus('idle'), 2000);
-          } catch (error: any) { 
-              setImportStatus('error'); 
-              showToast(error.message || '导入失败', 'error'); 
-              setTimeout(() => setImportStatus('idle'), 3000); 
-          }
-      }
-    };
-    reader.readAsText(file);
-    event.target.value = '';
-  };
   
   const handleJumpToIssue = (date: string) => {
       setIsSettingsOpen(false);
       onNavigateToLog(date);
   };
-  
-  const canUseFileSystem = 'showDirectoryPicker' in window && !isMobile;
 
   return (
     <>
@@ -411,7 +226,7 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
                       {!healthReport ? (
                           <div className="text-center py-2">
                               <p className="text-sm text-brand-muted mb-3">定期检查数据结构，确保记录完整可用。</p>
-                              <button onClick={handleRunHealthCheck} className="px-4 py-2 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 font-bold rounded-xl text-sm hover:bg-green-100 dark:hover:bg-green-900/40 transition-colors">
+                              <button onClick={onRunHealthCheck} className="px-4 py-2 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 font-bold rounded-xl text-sm hover:bg-green-100 dark:hover:bg-green-900/40 transition-colors">
                                   开始体检
                               </button>
                           </div>
@@ -462,7 +277,7 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
 
                               {healthReport.canRepair && (
                                   <button 
-                                    onClick={handleRepairData} 
+                                    onClick={onRepairData}
                                     disabled={isRepairing}
                                     className="w-full py-2 bg-brand-accent text-white font-bold rounded-xl flex items-center justify-center disabled:opacity-50"
                                   >
@@ -510,7 +325,7 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
               <section>
                   <div className="flex justify-between items-end mb-3">
                       <h3 className="text-xs font-bold text-brand-muted uppercase tracking-wider flex items-center"><Archive size={14} className="mr-1.5 text-blue-500"/> 数据快照</h3>
-                      <button onClick={handleCreateSnapshot} className="text-[10px] bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-2 py-1 rounded font-bold hover:bg-blue-100 dark:hover:bg-blue-900/50">+ 创建快照</button>
+                      <button onClick={onCreateSnapshot} className="text-[10px] bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-2 py-1 rounded font-bold hover:bg-blue-100 dark:hover:bg-blue-900/50">+ 创建快照</button>
                   </div>
                   <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl p-1 max-h-40 overflow-y-auto custom-scrollbar">
                       {snapshots.length === 0 ? (
@@ -523,8 +338,8 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
                                       <div className="text-[10px] text-slate-400">{new Date(snap.timestamp).toLocaleString()} • v{snap.dataVersion}</div>
                                   </div>
                                   <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                      <button onClick={() => handleRestoreSnapshot(snap.id!)} className="p-1.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 rounded-lg" title="还原"><RotateCcw size={14}/></button>
-                                      <button onClick={() => handleDeleteSnapshot(snap.id!)} className="p-1.5 bg-red-50 dark:bg-red-900/30 text-red-600 rounded-lg" title="删除"><Trash2 size={14}/></button>
+                                      <button onClick={() => onRestoreSnapshot(snap.id!)} className="p-1.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 rounded-lg" title="还原"><RotateCcw size={14}/></button>
+                                      <button onClick={() => onDeleteSnapshot(snap.id!)} className="p-1.5 bg-red-50 dark:bg-red-900/30 text-red-600 rounded-lg" title="删除"><Trash2 size={14}/></button>
                                   </div>
                               </div>
                           ))
@@ -537,7 +352,7 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
               <section>
                   <h3 className="text-xs font-bold text-brand-muted uppercase tracking-wider mb-3">迁移与备份</h3>
                   <div className="grid grid-cols-2 gap-3">
-                      <button onClick={handleExportClick} className="flex flex-col items-center justify-center p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl hover:border-brand-accent transition-colors">
+                      <button onClick={onExportClick} className="flex flex-col items-center justify-center p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl hover:border-brand-accent transition-colors">
                           <Share2 size={24} className="text-brand-accent mb-2"/>
                           <span className="text-xs font-bold text-brand-text dark:text-slate-300">导出 JSON</span>
                       </button>
@@ -545,10 +360,10 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
                           {importStatus === 'importing' ? <RotateCcw className="animate-spin text-brand-accent mb-2" size={24}/> : <FolderInput size={24} className="text-brand-accent mb-2"/>}
                           <span className="text-xs font-bold text-brand-text dark:text-slate-300">{importStatus === 'success' ? '导入成功' : '导入 JSON'}</span>
                       </button>
-                      <input type="file" ref={fileInputRef} onChange={handleFileChange} accept=".json" className="hidden" />
+                      <input type="file" ref={fileInputRef} onChange={onFileChange} accept=".json" className="hidden" />
                       
                       {canUseFileSystem && (
-                          <button onClick={handleFileSystemBackup} className="col-span-2 flex items-center justify-center p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700">
+                          <button onClick={onFileSystemBackup} className="col-span-2 flex items-center justify-center p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700">
                               <Archive size={16} className="mr-2"/> 保存到本地文件系统
                           </button>
                       )}
