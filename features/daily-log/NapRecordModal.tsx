@@ -4,11 +4,19 @@ import { Clock, Sparkles, Star, Zap, Check, MapPin, Leaf, Heart, Shirt, Thermome
 import type { NapRecord, SleepLocation } from '../../domain';
 import { HardnessSelector, IconToggleButton, Modal, RangeSlider } from '../../shared/ui';
 
+interface NapRecordModalData {
+    initialData?: NapRecord;
+}
+
+interface NapRecordModalActions {
+    onSave: (record: NapRecord) => void;
+}
+
 interface NapRecordModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSave: (record: NapRecord) => void;
-    initialData?: NapRecord;
+    data: NapRecordModalData;
+    actions: NapRecordModalActions;
 }
 
 const DREAM_TYPES = [
@@ -37,7 +45,10 @@ const PRE_SLEEP_OPTS = [
     {value: 'tired', label: '疲劳'}, {value: 'calm', label: '平静'}, {value: 'energetic', label: '亢奋'}, {value: 'stressed', label: '压力'}, {value: 'other', label: '其他'}
 ];
 
-const NapRecordModal: React.FC<NapRecordModalProps> = ({ isOpen, onClose, onSave, initialData }) => {
+const NapRecordModal: React.FC<NapRecordModalProps> = ({ isOpen, onClose, data, actions }) => {
+    const { initialData } = data;
+    const { onSave } = actions;
+
     const [record, setRecord] = useState<NapRecord>({
         id: '', startTime: '', ongoing: false, duration: 30, quality: 3, hardness: null, hasDream: false, dreamTypes: [], notes: '',
         location: 'home', temperature: 'comfortable', naturalAwakening: true, attire: 'light', withPartner: false, preSleepState: 'calm'

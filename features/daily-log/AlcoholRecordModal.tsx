@@ -4,11 +4,19 @@ import { Modal } from '../../shared/ui';
 import type { AlcoholRecord, AlcoholItem, DrunkLevel } from '../../domain';
 import { DRINK_TYPES, getPrediction, calculatePureAlcohol } from '../../utils/alcoholHelpers';
 
+interface AlcoholRecordModalData {
+    initialData?: AlcoholRecord;
+}
+
+interface AlcoholRecordModalActions {
+    onSave: (record: AlcoholRecord) => void;
+}
+
 interface AlcoholRecordModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSave: (record: AlcoholRecord) => void;
-    initialData?: AlcoholRecord;
+    data: AlcoholRecordModalData;
+    actions: AlcoholRecordModalActions;
 }
 
 const DRUNK_LEVELS: { id: DrunkLevel, label: string, emoji: string }[] = [
@@ -24,7 +32,10 @@ const SCENE_OPTIONS = {
     why: { label: '3. 为什么喝？', icon: Target, options: ['放松', '聚会', '应酬', '助兴', '借酒浇愁', '庆祝'], activeColor: 'bg-emerald-600 border-emerald-600' }
 };
 
-const AlcoholRecordModal: React.FC<AlcoholRecordModalProps> = ({ isOpen, onClose, onSave, initialData }) => {
+const AlcoholRecordModal: React.FC<AlcoholRecordModalProps> = ({ isOpen, onClose, data, actions }) => {
+    const { initialData } = data;
+    const { onSave } = actions;
+
     const [step, setStep] = useState<0 | 1>(0);
     const [selectedItems, setSelectedItems] = useState<Record<string, { count: number, abv: number, vol: number }>>({});
     const [drunkLevel, setDrunkLevel] = useState<DrunkLevel>('none');

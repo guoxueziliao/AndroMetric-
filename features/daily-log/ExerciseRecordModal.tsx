@@ -30,15 +30,31 @@ const FEELING_OPTS: { value: 'great' | 'ok' | 'tired' | 'bad', label: string, ic
     { value: 'bad', label: '身体不适', icon: Frown, color: 'text-red-500' },
 ];
 
+type ExerciseRecordModalMode = 'create' | 'edit' | 'start' | 'finish';
+
+interface ExerciseRecordModalData {
+    initialData?: ExerciseRecord;
+    mode?: ExerciseRecordModalMode;
+}
+
+interface ExerciseRecordModalActions {
+    onSave: (record: ExerciseRecord) => void;
+}
+
 interface ExerciseRecordModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSave: (record: ExerciseRecord) => void;
-    initialData?: ExerciseRecord;
-    mode?: 'create' | 'edit' | 'start' | 'finish';
+    data: ExerciseRecordModalData;
+    actions: ExerciseRecordModalActions;
 }
 
-const ExerciseRecordModal: React.FC<ExerciseRecordModalProps> = ({ isOpen, onClose, onSave, initialData, mode = 'create' }) => {
+const ExerciseRecordModal: React.FC<ExerciseRecordModalProps> = ({ isOpen, onClose, data, actions }) => {
+    const {
+        initialData,
+        mode = 'create'
+    } = data;
+    const { onSave } = actions;
+
     const [searchTerm, setSearchTerm] = useState('');
     const [expandedCategory, setExpandedCategory] = useState<string | null>("步行");
     const [endTime, setEndTime] = useState('');

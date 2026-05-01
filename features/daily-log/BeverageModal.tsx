@@ -4,11 +4,19 @@ import { Clock, Coffee, CupSoda, Leaf, Zap, Plus, Minus, Check, PencilLine, Rota
 import { Modal } from '../../shared/ui';
 import type { CaffeineItem } from '../../domain';
 
+interface BeverageModalData {
+    initialData?: CaffeineItem;
+}
+
+interface BeverageModalActions {
+    onSave: (item: CaffeineItem) => void;
+}
+
 interface BeverageModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSave: (item: CaffeineItem) => void;
-    initialData?: CaffeineItem;
+    data: BeverageModalData;
+    actions: BeverageModalActions;
 }
 
 const CATEGORIES = [
@@ -74,7 +82,10 @@ const CUP_SIZES = [
     { label: '超大杯', vol: 650 },
 ];
 
-const BeverageModal: React.FC<BeverageModalProps> = ({ isOpen, onClose, onSave, initialData }) => {
+const BeverageModal: React.FC<BeverageModalProps> = ({ isOpen, onClose, data, actions }) => {
+    const { initialData } = data;
+    const { onSave } = actions;
+
     const [activeCat, setActiveCat] = useState('coffee');
     const [selectedName, setSelectedName] = useState('拿铁');
     const [volume, setVolume] = useState(480);

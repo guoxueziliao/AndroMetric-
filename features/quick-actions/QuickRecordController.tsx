@@ -210,9 +210,13 @@ const QuickRecordController: React.FC<QuickRecordControllerProps> = ({ data, isE
           setIsExerciseModalOpen(false);
           setExerciseToFinish(null);
         }}
-        onSave={handleSaveExercise}
-        initialData={exerciseToFinish || undefined}
-        mode={exerciseToFinish ? 'finish' : 'start'}
+        data={{
+          initialData: exerciseToFinish || undefined,
+          mode: exerciseToFinish ? 'finish' : 'start'
+        }}
+        actions={{
+          onSave: handleSaveExercise
+        }}
       />
 
       <AlcoholRecordModal
@@ -221,8 +225,12 @@ const QuickRecordController: React.FC<QuickRecordControllerProps> = ({ data, isE
           setIsAlcoholModalOpen(false);
           setAlcToFinish(null);
         }}
-        initialData={alcToFinish || undefined}
-        onSave={(record) => wrapAction(async () => { await saveAlcoholRecord(record); }, '饮酒记录已保存')}
+        data={{
+          initialData: alcToFinish || undefined
+        }}
+        actions={{
+          onSave: (record) => wrapAction(async () => { await saveAlcoholRecord(record); }, '饮酒记录已保存')
+        }}
       />
 
       <NapRecordModal
@@ -231,8 +239,12 @@ const QuickRecordController: React.FC<QuickRecordControllerProps> = ({ data, isE
           setIsNapModalOpen(false);
           setNapToFinish(null);
         }}
-        onSave={handleSaveNap}
-        initialData={napToFinish || undefined}
+        data={{
+          initialData: napToFinish || undefined
+        }}
+        actions={{
+          onSave: handleSaveNap
+        }}
       />
     </>
   );

@@ -621,13 +621,17 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
             <BeverageModal 
                 isOpen={modalState.bev} 
                 onClose={() => { setModalState(s => ({ ...s, bev: false })); setEditTarget(null); }} 
-                initialData={editTarget?.type === 'bev' ? editTarget.data : undefined}
-                onSave={(i) => { 
-                    const current = log.caffeineRecord || { totalCount: 0, items: [] }; 
-                    const exists = current.items.find(x => x.id === i.id);
-                    const newItems = exists ? current.items.map(x => x.id === i.id ? i : x) : [...current.items, i];
-                    setLog(prev => ({ ...prev, caffeineRecord: { totalCount: newItems.length, items: newItems } })); 
-                }} 
+                data={{
+                    initialData: editTarget?.type === 'bev' ? editTarget.data : undefined
+                }}
+                actions={{
+                    onSave: (i) => {
+                        const current = log.caffeineRecord || { totalCount: 0, items: [] };
+                        const exists = current.items.find(x => x.id === i.id);
+                        const newItems = exists ? current.items.map(x => x.id === i.id ? i : x) : [...current.items, i];
+                        setLog(prev => ({ ...prev, caffeineRecord: { totalCount: newItems.length, items: newItems } }));
+                    }
+                }}
             />
             <SexRecordModal 
                 isOpen={modalState.sex} 
@@ -670,28 +674,40 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
             <ExerciseRecordModal 
                 isOpen={modalState.ex} 
                 onClose={() => { setModalState(s => ({ ...s, ex: false })); setEditTarget(null); }} 
-                initialData={editTarget?.type === 'ex' ? editTarget.data : undefined}
-                onSave={(r) => { 
-                    const current = log.exercise || [];
-                    const exists = current.find(x => x.id === r.id);
-                    setField('exercise', exists ? current.map(x => x.id === r.id ? r : x) : [...current, r]);
-                    setModalState(s => ({ ...s, ex: false })); 
-                }} 
+                data={{
+                    initialData: editTarget?.type === 'ex' ? editTarget.data : undefined
+                }}
+                actions={{
+                    onSave: (r) => {
+                        const current = log.exercise || [];
+                        const exists = current.find(x => x.id === r.id);
+                        setField('exercise', exists ? current.map(x => x.id === r.id ? r : x) : [...current, r]);
+                        setModalState(s => ({ ...s, ex: false }));
+                    }
+                }}
             />
             <AlcoholRecordModal 
                 isOpen={modalState.alc} 
                 onClose={() => { setModalState(s => ({ ...s, alc: false })); setEditTarget(null); }} 
-                onSave={handleSaveAlcohol} 
-                initialData={editTarget?.type === 'alc' ? editTarget.data : undefined} 
+                data={{
+                    initialData: editTarget?.type === 'alc' ? editTarget.data : undefined
+                }}
+                actions={{
+                    onSave: handleSaveAlcohol
+                }}
             />
             <NapRecordModal
                 isOpen={modalState.nap}
                 onClose={() => { setModalState(s => ({ ...s, nap: false })); setEditTarget(null); }}
-                initialData={editTarget?.type === 'nap' ? editTarget.data : undefined}
-                onSave={(r) => {
-                    const current = log.sleep?.naps || [];
-                    const exists = current.find(x => x.id === r.id);
-                    handleSleepChange('naps', exists ? current.map(x => x.id === r.id ? r : x) : [...current, r]);
+                data={{
+                    initialData: editTarget?.type === 'nap' ? editTarget.data : undefined
+                }}
+                actions={{
+                    onSave: (r) => {
+                        const current = log.sleep?.naps || [];
+                        const exists = current.find(x => x.id === r.id);
+                        handleSleepChange('naps', exists ? current.map(x => x.id === r.id ? r : x) : [...current, r]);
+                    }
                 }}
             />
         </div>
