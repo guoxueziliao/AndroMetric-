@@ -639,7 +639,11 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
                     setField('sex', exists ? current.map(x => x.id === r.id ? r : x) : [...current, r]);
                     setModalState(s => ({ ...s, sex: false })); 
                 }} 
-                dateStr={log.date} partners={partners} logs={logs} 
+                dateStr={log.date}
+                data={{
+                    partners,
+                    logs
+                }}
             />
             <MasturbationRecordModal 
                 isOpen={modalState.mb} 

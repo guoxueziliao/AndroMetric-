@@ -4,14 +4,18 @@ import { X, ChevronRight, Plus, Trash2, MapPin, ChevronDown, Activity, Shirt, Za
 import type { SexRecordDetails, SexInteraction, SexAction, SexActionType, PartnerProfile, LogEntry } from '../../domain';
 import { getSexRecommendations, type Recommendation } from '../../utils/recommendationEngine';
 
+interface SexRecordModalData {
+  partners?: PartnerProfile[];
+  logs?: LogEntry[];
+}
+
 interface SexRecordModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (details: SexRecordDetails) => void;
   initialData?: SexRecordDetails;
   dateStr: string;
-  partners?: PartnerProfile[];
-  logs?: LogEntry[];
+  data: SexRecordModalData;
 }
 
 // --- Constants (Options) ---
@@ -100,7 +104,12 @@ const TabButton: React.FC<{ active: boolean, onClick: () => void, icon: React.El
     </button>
 );
 
-const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave, initialData, partners = [], logs = [] }) => {
+const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave, initialData, data: modalData }) => {
+  const {
+    partners = [],
+    logs = []
+  } = modalData;
+
   const [data, setData] = useState<SexRecordDetails>({
     id: '',
     startTime: '',

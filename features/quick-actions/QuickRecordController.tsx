@@ -173,8 +173,10 @@ const QuickRecordController: React.FC<QuickRecordControllerProps> = ({ data, isE
           setIsQuickSexModalOpen(false);
         }, '性生活记录已添加')}
         dateStr="现在"
-        logs={logs}
-        partners={partners}
+        data={{
+          logs,
+          partners
+        }}
       />
 
       <MasturbationRecordModal
