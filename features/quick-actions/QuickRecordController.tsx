@@ -190,12 +190,16 @@ const QuickRecordController: React.FC<QuickRecordControllerProps> = ({ data, isE
         }, '自慰记录已完成')}
         dateStr="现在"
         initialData={mbToFinish || undefined}
-        logs={logs}
-        partners={partners}
-        userTags={userTags}
-        onAddOrUpdateLog={addOrUpdateLog}
-        onAddOrUpdateTag={addOrUpdateTag}
-        onDeleteTag={deleteTag}
+        data={{
+          logs,
+          partners,
+          userTags
+        }}
+        actions={{
+          onAddOrUpdateLog: addOrUpdateLog,
+          onAddOrUpdateTag: addOrUpdateTag,
+          onDeleteTag: deleteTag
+        }}
       />
 
       <ExerciseRecordModal

@@ -7,18 +7,26 @@ import { useToast } from '../../contexts/ToastContext';
 
 const TagManager = lazy(() => import('../tags').then((module) => ({ default: module.TagManager })));
 
+interface MasturbationRecordModalData {
+  partners?: PartnerProfile[];
+  logs?: LogEntry[];
+  userTags: TagEntry[];
+}
+
+interface MasturbationRecordModalActions {
+  onAddOrUpdateLog: (log: LogEntry) => Promise<void>;
+  onAddOrUpdateTag: (tag: TagEntry) => Promise<void>;
+  onDeleteTag: (name: string, category: TagType) => Promise<void>;
+}
+
 interface MasturbationRecordModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (details: MasturbationRecordDetails) => void;
   initialData?: MasturbationRecordDetails;
   dateStr: string;
-  partners?: PartnerProfile[];
-  logs?: LogEntry[];
-  userTags: TagEntry[];
-  onAddOrUpdateLog: (log: LogEntry) => Promise<void>;
-  onAddOrUpdateTag: (tag: TagEntry) => Promise<void>;
-  onDeleteTag: (name: string, category: TagType) => Promise<void>;
+  data: MasturbationRecordModalData;
+  actions: MasturbationRecordModalActions;
 }
 
 const CONTENT_TYPES = ['视频', '直播', '图片', '小说', '回忆', '幻想', '音频', '漫画'];
@@ -63,7 +71,18 @@ const POST_MOOD_OPTIONS = ['满足/愉悦', '平静/贤者', '空虚/后悔', '�
 const FATIGUE_OPTIONS = ['精神焕发', '无明显疲劳', '轻微困倦', '身体沉重', '秒睡'];
 const INTERRUPTION_REASONS = ['电话/消息', '有人敲门/进入', '突然没兴致', '身体不适', '环境干扰', '被迫中止'];
 
-const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpen, onClose, onSave, initialData, logs = [], userTags, onAddOrUpdateLog, onAddOrUpdateTag, onDeleteTag }) => {
+const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpen, onClose, onSave, initialData, data: modalData, actions }) => {
+    const {
+        logs = [],
+        userTags
+    } = modalData;
+
+    const {
+        onAddOrUpdateLog,
+        onAddOrUpdateTag,
+        onDeleteTag
+    } = actions;
+
     const { showToast } = useToast();
     const [data, setData] = useState<MasturbationRecordDetails>({
         id: '', startTime: '', duration: 15, status: 'completed', tools: ['手'], contentItems: [],

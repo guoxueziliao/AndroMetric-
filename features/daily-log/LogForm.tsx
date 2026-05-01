@@ -651,7 +651,17 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
                     setField('masturbation', exists ? current.map(x => x.id === r.id ? r : x) : [...current, r]);
                     setModalState(s => ({ ...s, mb: false })); 
                 }} 
-                dateStr={log.date} logs={logs} partners={partners} userTags={userTags} onAddOrUpdateLog={onAddOrUpdateLog} onAddOrUpdateTag={onAddOrUpdateTag} onDeleteTag={onDeleteTag}
+                dateStr={log.date}
+                data={{
+                    logs,
+                    partners,
+                    userTags
+                }}
+                actions={{
+                    onAddOrUpdateLog,
+                    onAddOrUpdateTag,
+                    onDeleteTag
+                }}
             />
             <ExerciseRecordModal 
                 isOpen={modalState.ex} 
