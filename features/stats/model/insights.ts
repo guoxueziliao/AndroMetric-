@@ -2,6 +2,7 @@ import type { LogEntry } from '../../../domain';
 import { StatsEngine } from './StatsEngine';
 import type { MetricId } from './StatsEngine';
 import { analyzeSleep } from '../../../shared/lib';
+import { isFieldUsable } from '../../../utils/dataQuality';
 
 export interface Insight {
     id: string;
@@ -94,7 +95,8 @@ const detectAnomalies = (logs: LogEntry[]): Insight[] => {
         const curr = recent[i];
         const prev = recent[i-1];
         
-        if (curr.morning?.wokeWithErection && prev.morning?.wokeWithErection && 
+        if (curr.morning?.wokeWithErection && prev.morning?.wokeWithErection &&
+            isFieldUsable(curr, 'morning.hardness') && isFieldUsable(prev, 'morning.hardness') &&
             curr.morning?.hardness && prev.morning?.hardness && 
             (prev.morning.hardness - curr.morning.hardness) >= 2) {
             
@@ -102,9 +104,11 @@ const detectAnomalies = (logs: LogEntry[]): Insight[] => {
             /* Fix: Sum up grams from alcoholRecords instead of using non-existent alcoholRecord property */
             const totalAlc = (prev.alcoholRecords && Array.isArray(prev.alcoholRecords)) ? prev.alcoholRecords.reduce((acc, r) => acc + r.totalGrams, 0) : 0;
             if (totalAlc > 40) causes.push(`饮酒 ${totalAlc}g`);
-            if (prev.stressLevel && prev.stressLevel >= 4) causes.push(`高压状态`);
+            if (isFieldUsable(prev, 'stressLevel') && prev.stressLevel && prev.stressLevel >= 4) causes.push(`高压状态`);
             
-            const sleepAnalysis = analyzeSleep(curr.sleep?.startTime, curr.sleep?.endTime);
+            const sleepAnalysis = isFieldUsable(curr, 'sleep.startTime') && isFieldUsable(curr, 'sleep.endTime')
+                ? analyzeSleep(curr.sleep?.startTime, curr.sleep?.endTime)
+                : null;
             if (sleepAnalysis && sleepAnalysis.isInsufficient) causes.push(`睡眠不足`);
 
             if (causes.length > 0) {

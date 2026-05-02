@@ -1,23 +1,22 @@
-import { mock } from 'bun:test';
+import { afterAll, beforeAll, vi } from 'vitest';
 
-// Mock happy-dom globals
-globalThis.document = {
-  createElement: () => ({}),
-  querySelector: () => null,
-  querySelectorAll: () => [],
-} as any;
+const originalConsole = {
+  log: console.log,
+  info: console.info,
+  warn: console.warn,
+};
 
-globalThis.window = {
-  localStorage: {
-    getItem: () => null,
-    setItem: () => {},
-    removeItem: () => {},
-  },
-  location: { reload: () => {} },
-} as any;
+vi.stubGlobal('matchMedia', (query: string) => ({
+  matches: false,
+  media: query,
+  onchange: null,
+  addListener: () => {},
+  removeListener: () => {},
+  addEventListener: () => {},
+  removeEventListener: () => {},
+  dispatchEvent: () => false,
+}));
 
-// Suppress console during tests
-const originalConsole = { ...console };
 beforeAll(() => {
   console.log = () => {};
   console.info = () => {};

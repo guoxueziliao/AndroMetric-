@@ -1,4 +1,5 @@
 import { LogEntry, MasturbationRecordDetails, SexRecordDetails } from '../types';
+import { isFieldUsable } from './dataQuality';
 
 export interface Recommendation {
     type: 'tag' | 'material' | 'position' | 'toy' | 'tool' | 'costume';
@@ -32,7 +33,8 @@ export const getMasturbationRecommendations = (logs: LogEntry[]): Recommendation
         logs.forEach(log => {
             if (log.masturbation && Array.isArray(log.masturbation)) {
                 log.masturbation.forEach(m => {
-                    const rating = m.orgasmIntensity || 3;
+                    if (m.status !== 'completed') return;
+                    const rating = isFieldUsable(log, `masturbation.${m.id}.orgasmIntensity`) ? (m.orgasmIntensity || 3) : 3;
                     const timestamp = new Date((log.date || new Date().toISOString().split('T')[0]) + 'T' + (m.startTime || '00:00')).getTime();
 
                     // Tags
@@ -118,7 +120,7 @@ export const getSexRecommendations = (logs: LogEntry[], currentPartner?: string)
                     let sessionScore = 3;
                     if (s.indicators?.orgasm) sessionScore += 1;
                     if (s.indicators?.partnerOrgasm) sessionScore += 1;
-                    if (s.partnerScore) sessionScore += (s.partnerScore - 3); // Adjust around neutral
+                    if (isFieldUsable(log, `sex.${s.id}.partnerScore`) && s.partnerScore) sessionScore += (s.partnerScore - 3); // Adjust around neutral
 
                     const timestamp = new Date((log.date || new Date().toISOString().split('T')[0]) + 'T' + (s.startTime || '00:00')).getTime();
 

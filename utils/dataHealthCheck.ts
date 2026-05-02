@@ -2,6 +2,7 @@
 import { LogEntry, PartnerProfile, ContentItem } from '../types';
 import { validateLogEntry } from './validators';
 import { validateTag } from './tagValidators';
+import { buildDataQualityForLog, isFieldUsable } from './dataQuality';
 
 // Defined in UI Notice System Spec
 export interface ContentNoticeDef {
@@ -26,6 +27,11 @@ export interface DataHealthReport {
     timestamp: number;
     totalRecords: number;
     score: number; // 0-100
+    scores: {
+        structure: number;
+        completeness: number;
+        analytics: number;
+    };
     issues: HealthIssue[];
     stats: {
         missingSleep: number;
@@ -33,6 +39,12 @@ export interface DataHealthReport {
         nullArrays: number;
         brokenRelations: number;
         missingIds: number;
+        completeness: {
+            trackedFields: number;
+            recordedFields: number;
+            missingFields: number;
+        };
+        analyticsAvailability: Record<string, { usableSamples: number; totalRecords: number }>;
         // New Content Stats
         contentIssues: {
             schemaErrors: number;
@@ -161,6 +173,9 @@ export const checkDataHealth = (logs: LogEntry[], partners: PartnerProfile[]): D
     let nullArrays = 0;
     let brokenRelations = 0;
     let missingIds = 0;
+    let trackedFields = 0;
+    let recordedFields = 0;
+    let missingFields = 0;
     
     const contentStats = {
         schemaErrors: 0,
@@ -169,7 +184,19 @@ export const checkDataHealth = (logs: LogEntry[], partners: PartnerProfile[]): D
         migrationUnconfirmed: 0
     };
 
+    const analyticsAvailability: DataHealthReport['stats']['analyticsAvailability'] = {
+        hardness: { usableSamples: 0, totalRecords: logs.length },
+        sleep: { usableSamples: 0, totalRecords: logs.length },
+        stress: { usableSamples: 0, totalRecords: logs.length },
+        exercise: { usableSamples: 0, totalRecords: logs.length },
+        alcohol: { usableSamples: 0, totalRecords: logs.length },
+        masturbation: { usableSamples: 0, totalRecords: logs.length },
+        sex: { usableSamples: 0, totalRecords: logs.length }
+    };
+
     logs.forEach(log => {
+        const quality = log.dataQuality || buildDataQualityForLog(log, 'migration');
+
         // 1. Schema Validation (Base types)
         const { valid, errors } = validateLogEntry(log);
         if (!valid) {
@@ -257,21 +284,44 @@ export const checkDataHealth = (logs: LogEntry[], partners: PartnerProfile[]): D
                 }
             });
         }
+
+        const qualityEntries = Object.values(quality.fields);
+        trackedFields += qualityEntries.length;
+        recordedFields += qualityEntries.filter(entry => entry.state === 'recorded' || entry.state === 'inferred' || entry.state === 'none').length;
+        missingFields += qualityEntries.filter(entry => entry.state === 'not_recorded' || entry.state === 'unknown' || entry.state === 'defaulted').length;
+
+        if (isFieldUsable(log, 'morning.hardness')) analyticsAvailability.hardness.usableSamples++;
+        if (isFieldUsable(log, 'sleep.startTime') && isFieldUsable(log, 'sleep.endTime')) analyticsAvailability.sleep.usableSamples++;
+        if (isFieldUsable(log, 'stressLevel')) analyticsAvailability.stress.usableSamples++;
+        if (Array.isArray(log.exercise) && log.exercise.length > 0) analyticsAvailability.exercise.usableSamples++;
+        if ((Array.isArray(log.alcoholRecords) && log.alcoholRecords.length > 0) || isFieldUsable(log, 'alcohol')) analyticsAvailability.alcohol.usableSamples++;
+        if (Array.isArray(log.masturbation) && log.masturbation.length > 0) analyticsAvailability.masturbation.usableSamples++;
+        if (Array.isArray(log.sex) && log.sex.length > 0) analyticsAvailability.sex.usableSamples++;
     });
 
-    // Calculate Health Score
-    let rawScore = 100;
+    let structureRawScore = 100;
     issues.forEach(i => {
-        if (i.severity === 'high') rawScore -= 5;
-        else if (i.severity === 'medium') rawScore -= 2;
-        else rawScore -= 0.5;
+        if (i.severity === 'high') structureRawScore -= 5;
+        else if (i.severity === 'medium') structureRawScore -= 2;
+        else structureRawScore -= 0.5;
     });
-    const score = Math.max(0, Math.floor(rawScore));
+    const structureScore = Math.max(0, Math.floor(structureRawScore));
+    const completenessScore = trackedFields === 0 ? 100 : Math.max(0, Math.floor((recordedFields / trackedFields) * 100));
+    const analyticsRatios = Object.values(analyticsAvailability).map(item => (
+        item.totalRecords === 0 ? 1 : item.usableSamples / item.totalRecords
+    ));
+    const analyticsScore = Math.max(0, Math.floor((analyticsRatios.reduce((sum, value) => sum + value, 0) / (analyticsRatios.length || 1)) * 100));
+    const score = Math.round((structureScore + completenessScore + analyticsScore) / 3);
 
     return {
         timestamp: Date.now(),
         totalRecords: logs.length,
         score,
+        scores: {
+            structure: structureScore,
+            completeness: completenessScore,
+            analytics: analyticsScore
+        },
         issues,
         stats: { 
             missingSleep, 
@@ -279,8 +329,14 @@ export const checkDataHealth = (logs: LogEntry[], partners: PartnerProfile[]): D
             nullArrays, 
             brokenRelations, 
             missingIds,
+            completeness: {
+                trackedFields,
+                recordedFields,
+                missingFields
+            },
+            analyticsAvailability,
             contentIssues: contentStats
         },
-        canRepair: issues.some(i => i.hintAction === '系统可自动修复' || (i.type !== 'content' && i.severity === 'high') || i.message.includes('ID'))
+        canRepair: issues.some(i => i.type === 'schema' || i.message.includes('ID'))
     };
 };

@@ -1,6 +1,6 @@
 
 import { db } from '../db';
-import { LogEntry, PartnerProfile, Snapshot, Health, ChangeRecord, TagEntry } from '../types';
+import { LogEntry, PartnerProfile, Snapshot, TagEntry, DataQualitySource } from '../types';
 import { validateLogEntry } from '../utils/validators';
 import { runMigrations, LATEST_VERSION } from '../utils/migration';
 import { pluginManager } from './PluginManager';
@@ -9,6 +9,7 @@ import { hydrateLog } from '../utils/hydrateLog';
 import { checkDataHealth, DataHealthReport } from '../utils/dataHealthCheck';
 import { repairLogUsingHistory } from '../utils/historyRepair';
 import { backupService } from './BackupService';
+import { prepareLogForSave } from '../utils/dataQuality';
 
 export const StorageService = {
     async init() {
@@ -244,10 +245,11 @@ export const StorageService = {
             get: (date: string) => db.logs.get(date)
         },
         get: (date: string) => db.logs.get(date),
-save: async (log: LogEntry) => {
+save: async (log: LogEntry, source: DataQualitySource = 'manual') => {
       const { valid, errors } = validateLogEntry(log);
       if (!valid) throw new Error(errors[0]);
-      const logToSave = hydrateLog({ ...log, updatedAt: Date.now() });
+      const hydratedLog = hydrateLog({ ...log, updatedAt: Date.now() });
+      const logToSave = prepareLogForSave(hydratedLog, source, Date.now());
       await db.logs.put(logToSave);
 
       const allLogs = await db.logs.toArray();

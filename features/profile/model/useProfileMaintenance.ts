@@ -100,17 +100,17 @@ export const useProfileMaintenance = ({
     return !!fileSystemWindow.showDirectoryPicker && !isMobile;
   }, [isMobile]);
 
-  const runHealthCheck = useCallback(async () => {
-    const report = await StorageService.runHealthCheck();
-    setHealthReport(report);
+    const runHealthCheck = useCallback(async () => {
+      const report = await StorageService.runHealthCheck();
+      setHealthReport(report);
 
-    if (report.issues.length === 0) {
-      showToast(`数据完整，健康评分 ${report.score}`, 'success');
-    } else {
-      showToast(`发现 ${report.issues.length} 个潜在问题，评分 ${report.score}`, 'error');
-    }
+      if (report.issues.length === 0) {
+      showToast(`结构 ${report.scores.structure} / 完整度 ${report.scores.completeness} / 分析可用度 ${report.scores.analytics}`, 'success');
+      } else {
+      showToast(`发现 ${report.issues.length} 个结构问题，完整度 ${report.scores.completeness}`, 'error');
+      }
 
-    return report;
+      return report;
   }, [showToast]);
 
   const handleRepairData = useCallback(async () => {

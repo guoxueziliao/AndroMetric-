@@ -1,5 +1,6 @@
 
 import { LogEntry, AlcoholConsumption, PornConsumption, PreSleepState, ExerciseIntensity, SexQuality, IllnessType, StressLevel, HardnessLevel, MorningWoodRetention, Weather, Location, Mood, SleepAttire, ChangeDetail, ExerciseRecord, SexRecordDetails, MasturbationRecordDetails, AlcoholRecord, NapRecord, HistoryCategory, HistoryEventType, SleepLocation, SleepTemperature } from '../types';
+import { isFieldUsable } from './dataQuality';
 
 export const getTodayDateString = (): string => {
     const todayDate = new Date();
@@ -314,23 +315,23 @@ export const calculateInventory = (logs: LogEntry[] = []): string => {
 export const calculateDataQuality = (log: Partial<LogEntry>): number => {
     let score = 0;
     const maxScore = 100;
+    const usable = (path: string) => isFieldUsable(log as LogEntry, path);
     
     // Morning: 20pts
-    if (log.morning?.wokeWithErection !== undefined) score += 10;
-    if (log.morning?.wokeWithErection && log.morning.hardness) score += 10;
-    else if (log.morning?.wokeWithErection === false) score += 10;
+    if (usable('morning.wokeWithErection')) score += 10;
+    if (usable('morning.hardness')) score += 10;
 
     // Sleep: 30pts
-    if (log.sleep?.startTime && log.sleep?.endTime) score += 15;
-    if (log.sleep?.quality) score += 5;
-    if (log.sleep?.hasDream !== undefined) score += 5;
-    if (log.sleep?.environment?.temperature) score += 5;
+    if (usable('sleep.startTime') && usable('sleep.endTime')) score += 15;
+    if (usable('sleep.quality')) score += 5;
+    if (usable('sleep.hasDream')) score += 5;
+    if (usable('sleep.environment.temperature')) score += 5;
 
     // Lifestyle: 20pts
-    if (log.weather) score += 5;
-    if (log.stressLevel) score += 5;
-    if (log.mood) score += 5;
-    if (log.caffeineIntake || (log.caffeineRecord?.totalCount || 0) > 0) score += 5;
+    if (usable('weather')) score += 5;
+    if (usable('stressLevel')) score += 5;
+    if (usable('mood')) score += 5;
+    if (usable('caffeineRecord.totalCount') || (log.caffeineRecord?.totalCount || 0) > 0) score += 5;
 
     // Activities (Bonus up to 30)
     if (log.sex && log.sex.length > 0) score += 10;
@@ -341,7 +342,7 @@ export const calculateDataQuality = (log: Partial<LogEntry>): number => {
     // Health Check Penalty (New in v0.0.6)
     // If Sick is TRUE but Level is Missing -> Penalty
     if (log.health?.isSick) {
-        if (log.health.discomfortLevel) score += 5;
+        if (usable('health.discomfortLevel')) score += 5;
         else score -= 5;
     } else {
         score += 5; // Healthy bonus

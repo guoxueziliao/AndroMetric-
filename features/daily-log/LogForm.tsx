@@ -16,6 +16,7 @@ import MorningSection from './MorningSection';
 import SleepSection from './SleepSection';
 import { FaceSelector, MOOD_FACES, STRESS_FACES } from '../../shared/ui';
 import { calculateDataQuality, formatDateFriendly } from '../../shared/lib';
+import { hydrateLog } from '../../core/storage';
 
 interface LogFormData {
   existingLog: LogEntry | null;
@@ -77,15 +78,7 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
     } = actions;
 
     const [log, setLog] = useState<LogEntry>(() => {
-        const base = existingLog ? { ...existingLog } : { 
-            date: logDate || '', status: 'completed', updatedAt: Date.now(),
-            morning: { id: `m_${Date.now()}`, timestamp: Date.now(), wokeWithErection: true, wokenByErection: false },
-            sleep: { id: `s_${Date.now()}`, quality: 3, naturalAwakening: true, nocturnalEmission: false, withPartner: false, naps: [], hasDream: false, dreamTypes: [], environment: { location: 'home', temperature: 'comfortable' } },
-            exercise: [], sex: [], masturbation: [], dailyEvents: [], tags: [],
-            health: { isSick: false, symptoms: [], medications: [] },
-            changeHistory: [],
-            alcoholRecords: []
-        } as LogEntry;
+        const base = hydrateLog(existingLog ? { ...existingLog } : { date: logDate || '' });
 
         // Defensive: Ensure arrays are actually arrays
         if (!Array.isArray(base.exercise)) base.exercise = [];
@@ -110,7 +103,8 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
                 retention: base.morning?.retention ?? (wokeWithErection ? 'normal' : null),
                 id: base.morning?.id || `m_${Date.now()}`,
                 timestamp: base.morning?.timestamp || Date.now()
-            } as any
+            } as any,
+            touchedPaths: Array.isArray(base.touchedPaths) ? [...base.touchedPaths] : []
         };
     });
 
@@ -123,9 +117,25 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
 
     const markDirty = useCallback(() => onDirtyStateChange(true), [onDirtyStateChange]);
     const qualityScore = useMemo(() => calculateDataQuality(log), [log]);
+    const markPathTouched = useCallback((path: string) => {
+        setLog(prev => ({
+            ...prev,
+            touchedPaths: Array.from(new Set([...(prev.touchedPaths || []), path]))
+        }));
+    }, []);
+    const markPathsTouched = useCallback((paths: string[]) => {
+        setLog(prev => ({
+            ...prev,
+            touchedPaths: Array.from(new Set([...(prev.touchedPaths || []), ...paths]))
+        }));
+    }, []);
 
     const setField = (field: keyof LogEntry, value: any) => {
-        setLog(prev => ({ ...prev, [field]: value }));
+        setLog(prev => ({
+            ...prev,
+            [field]: value,
+            touchedPaths: Array.from(new Set([...(prev.touchedPaths || []), String(field)]))
+        }));
         markDirty();
     };
 
@@ -140,13 +150,21 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
                 newMorning.retention = null;
                 newMorning.wokenByErection = false;
             }
-            return { ...prev, morning: newMorning };
+            return {
+                ...prev,
+                morning: newMorning,
+                touchedPaths: Array.from(new Set([...(prev.touchedPaths || []), `morning.${String(field)}`]))
+            };
         });
         markDirty();
     };
 
     const handleSleepChange = (field: any, value: any) => {
-        setLog(prev => ({ ...prev, sleep: { ...prev.sleep!, [field]: value } }));
+        setLog(prev => ({
+            ...prev,
+            sleep: { ...prev.sleep!, [field]: value },
+            touchedPaths: Array.from(new Set([...(prev.touchedPaths || []), `sleep.${String(field)}`]))
+        }));
         markDirty();
     };
 
@@ -170,12 +188,15 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
         if (field === 'caffeine') {
             const newItems = (log.caffeineRecord?.items || []).filter(i => i.id !== id);
             setLog(prev => ({ ...prev, caffeineRecord: { totalCount: newItems.length, items: newItems } }));
+            markPathsTouched(['caffeineRecord.items', 'caffeineRecord.totalCount']);
         } else if (field === 'alcohol') {
             setLog(prev => ({ ...prev, alcoholRecords: prev.alcoholRecords.filter(r => r.id !== id) }));
+            markPathsTouched(['alcoholRecords', 'alcohol']);
         } else if (field === 'nap') {
             handleSleepChange('naps', (log.sleep?.naps || []).filter(n => n.id !== id));
         } else {
             setLog(prev => ({ ...prev, [field]: (log[field] as any[]).filter(i => i.id !== id) }));
+            markPathTouched(String(field));
         }
         markDirty();
     };
@@ -201,7 +222,8 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
         setLog(prev => ({ 
             ...prev, 
             alcoholRecords: next, 
-            alcohol: level
+            alcohol: level,
+            touchedPaths: Array.from(new Set([...(prev.touchedPaths || []), 'alcoholRecords', 'alcohol']))
         }));
         markDirty();
     };
@@ -466,7 +488,8 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
                                                     discomfortLevel: checked ? (prev.health?.discomfortLevel || 'mild') : undefined,
                                                     symptoms: checked ? (prev.health?.symptoms || []) : [],
                                                     medications: checked ? (prev.health?.medications || []) : []
-                                                } 
+                                                },
+                                                touchedPaths: Array.from(new Set([...(prev.touchedPaths || []), 'health.isSick']))
                                             }));
                                             markDirty();
                                         }} 
@@ -486,7 +509,11 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
                                                     <button
                                                         key={opt.v}
                                                         onClick={() => {
-                                                            setLog(prev => ({ ...prev, health: { ...prev.health!, discomfortLevel: opt.v as any } }));
+                                                            setLog(prev => ({
+                                                                ...prev,
+                                                                health: { ...prev.health!, discomfortLevel: opt.v as any },
+                                                                touchedPaths: Array.from(new Set([...(prev.touchedPaths || []), 'health.discomfortLevel']))
+                                                            }));
                                                             markDirty();
                                                         }}
                                                         className={`flex-1 py-2 text-xs font-black rounded-lg transition-all ${log.health?.discomfortLevel === opt.v ? 'bg-red-500 text-white shadow-md' : 'text-slate-400 hover:bg-red-50 dark:hover:bg-red-900/20'}`}
@@ -509,6 +536,7 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
                                                                 const current = log.health?.symptoms || [];
                                                                 const next = current.includes(s) ? current.filter(x => x !== s) : [...current, s];
                                                                 setLog(prev => ({ ...prev, health: { ...prev.health!, symptoms: next } }));
+                                                                markPathTouched('health.symptoms');
                                                                 markDirty();
                                                             }}
                                                             className={`px-3 py-1.5 rounded-xl text-[10px] font-black border transition-all ${isSelected ? 'bg-red-500 text-white border-red-500 shadow-sm' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-500'}`}
@@ -532,6 +560,7 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
                                                                 const current = log.health?.medications || [];
                                                                 const next = current.includes(m) ? current.filter(x => x !== m) : [...current, m];
                                                                 setLog(prev => ({ ...prev, health: { ...prev.health!, medications: next } }));
+                                                                markPathTouched('health.medications');
                                                                 markDirty();
                                                             }}
                                                             className={`px-3 py-1.5 rounded-xl text-[10px] font-black border transition-all ${isSelected ? 'bg-blue-600 text-white border-blue-600 shadow-sm' : 'bg-slate-100 dark:bg-slate-800 border-transparent text-slate-500'}`}
@@ -629,7 +658,11 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
                         const current = log.caffeineRecord || { totalCount: 0, items: [] };
                         const exists = current.items.find(x => x.id === i.id);
                         const newItems = exists ? current.items.map(x => x.id === i.id ? i : x) : [...current.items, i];
-                        setLog(prev => ({ ...prev, caffeineRecord: { totalCount: newItems.length, items: newItems } }));
+                        setLog(prev => ({
+                            ...prev,
+                            caffeineRecord: { totalCount: newItems.length, items: newItems },
+                            touchedPaths: Array.from(new Set([...(prev.touchedPaths || []), 'caffeineRecord.items', 'caffeineRecord.totalCount']))
+                        }));
                     }
                 }}
             />

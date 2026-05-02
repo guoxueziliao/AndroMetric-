@@ -10,6 +10,16 @@ import { useProfileMaintenance } from './model/useProfileMaintenance';
 const TagManager = lazy(() => import('../tags').then((module) => ({ default: module.TagManager })));
 const BackupSettings = lazy(() => import('../backup').then((module) => ({ default: module.BackupSettings })));
 
+const ANALYTICS_LABELS: Record<string, string> = {
+  hardness: '硬度',
+  sleep: '睡眠',
+  stress: '压力',
+  exercise: '运动',
+  alcohol: '饮酒',
+  masturbation: '自慰',
+  sex: '性爱'
+};
+
 interface MyViewData {
   settings: AppSettings;
   logs: LogEntry[];
@@ -233,12 +243,42 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
                       ) : (
                           <div className="space-y-4 animate-in fade-in">
                               <div className="flex justify-between items-center pb-2 border-b border-slate-100 dark:border-slate-800">
-                                  <span className="text-sm font-medium">健康评分</span>
+                                  <span className="text-sm font-medium">综合评分</span>
                                   <span className={`text-xl font-black ${healthReport.score >= 90 ? 'text-green-500' : healthReport.score >= 60 ? 'text-orange-500' : 'text-red-500'}`}>{healthReport.score}</span>
                               </div>
                               <div className="text-xs space-y-1 text-slate-500">
                                   <div className="flex justify-between"><span>总记录数</span><span>{healthReport.totalRecords}</span></div>
                                   <div className="flex justify-between"><span>发现问题</span><span className={healthReport.issues.length > 0 ? 'text-red-500 font-bold' : 'text-green-500'}>{healthReport.issues.length}</span></div>
+                              </div>
+                              <div className="grid grid-cols-3 gap-2 text-center">
+                                  <div className="rounded-xl bg-slate-50 dark:bg-slate-950/50 p-2 border border-slate-200 dark:border-slate-800">
+                                      <div className="text-[10px] text-slate-400 font-bold">结构</div>
+                                      <div className="text-sm font-black text-slate-700 dark:text-slate-200">{healthReport.scores.structure}</div>
+                                  </div>
+                                  <div className="rounded-xl bg-slate-50 dark:bg-slate-950/50 p-2 border border-slate-200 dark:border-slate-800">
+                                      <div className="text-[10px] text-slate-400 font-bold">完整度</div>
+                                      <div className="text-sm font-black text-slate-700 dark:text-slate-200">{healthReport.scores.completeness}</div>
+                                  </div>
+                                  <div className="rounded-xl bg-slate-50 dark:bg-slate-950/50 p-2 border border-slate-200 dark:border-slate-800">
+                                      <div className="text-[10px] text-slate-400 font-bold">分析可用度</div>
+                                      <div className="text-sm font-black text-slate-700 dark:text-slate-200">{healthReport.scores.analytics}</div>
+                                  </div>
+                              </div>
+                              <div className="text-xs space-y-1 text-slate-500 rounded-xl bg-slate-50 dark:bg-slate-950/50 p-3 border border-slate-200 dark:border-slate-800">
+                                  <div className="flex justify-between"><span>已追踪字段</span><span>{healthReport.stats.completeness.trackedFields}</span></div>
+                                  <div className="flex justify-between"><span>有效字段</span><span>{healthReport.stats.completeness.recordedFields}</span></div>
+                                  <div className="flex justify-between"><span>缺失/默认字段</span><span>{healthReport.stats.completeness.missingFields}</span></div>
+                              </div>
+                              <div className="rounded-xl bg-slate-50 dark:bg-slate-950/50 p-3 border border-slate-200 dark:border-slate-800">
+                                  <h4 className="text-xs font-bold text-slate-500 mb-2">分析样本</h4>
+                                  <div className="space-y-1 text-xs text-slate-500">
+                                      {Object.entries(healthReport.stats.analyticsAvailability).map(([key, item]) => (
+                                          <div key={key} className="flex justify-between">
+                                              <span>{ANALYTICS_LABELS[key] || key}</span>
+                                              <span>{item.usableSamples}/{item.totalRecords}</span>
+                                          </div>
+                                      ))}
+                                  </div>
                               </div>
                               
                               {/* Display Issues List */}

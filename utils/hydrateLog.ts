@@ -1,5 +1,6 @@
 
 import { LogEntry, Health, MorningRecord, SleepRecord, AlcoholRecord } from '../types';
+import { buildDataQualityForLog, markDisplayDefaults } from './dataQuality';
 
 /**
  * HYDRATE LOG (Schema v1.0 Enforcer)
@@ -12,6 +13,7 @@ export const hydrateLog = (raw: any): LogEntry => {
         date: raw.date || new Date().toISOString().split('T')[0],
         status: raw.status || 'completed',
         updatedAt: raw.updatedAt || Date.now(),
+        dataQuality: raw.dataQuality,
         
         // Environment & State
         location: raw.location ?? null,
@@ -157,6 +159,11 @@ export const hydrateLog = (raw: any): LogEntry => {
             ongoing: raw.alcoholRecord.ongoing || false
         });
     }
+
+    log.dataQuality = markDisplayDefaults({
+        ...log,
+        dataQuality: raw.dataQuality || buildDataQualityForLog(log, 'migration')
+    }, raw);
 
     return log;
 };

@@ -1,8 +1,10 @@
 
 import { StoredData, LogEntry, SexRecordDetails, MasturbationRecordDetails, SexInteraction, SexAction, ExerciseRecord, MorningRecord, SleepRecord, ContentItem } from '../types';
+import { buildDataQualityForLog } from './dataQuality';
+import { scrubHistoricalDefaultContamination } from './legacyDataCleanup';
 
 // The latest version of our data structure.
-export const LATEST_VERSION = 39;
+export const LATEST_VERSION = 41;
 
 /**
  * MIGRATION UTILITIES
@@ -311,6 +313,21 @@ function migrateV38toV39(logs: any[]): LogEntry[] {
   });
 }
 
+// V40: Attach field-level data quality metadata for downstream filtering
+function migrateV39toV40(logs: any[]): LogEntry[] {
+  return logs.map((log: LogEntry) => {
+    const normalizedLog = { ...log };
+    normalizedLog.dataQuality = buildDataQualityForLog(normalizedLog, 'migration');
+    delete normalizedLog.touchedPaths;
+    return normalizedLog;
+  });
+}
+
+// V41: Scrub high-confidence historical default contamination from legacy records
+function migrateV40toV41(logs: any[]): LogEntry[] {
+  return logs.map((log: LogEntry) => scrubHistoricalDefaultContamination(log, 'migration').log);
+}
+
 /**
  * REPAIR UTILS
  */
@@ -352,7 +369,9 @@ const MIGRATION_REGISTRY: Record<number, (logs: any[]) => any[]> = {
     36: migrateV35toV36,
     37: migrateV36toV37,
     38: migrateV37toV38,
-  39: migrateV38toV39
+    39: migrateV38toV39,
+    40: migrateV39toV40,
+    41: migrateV40toV41
 };
 
 export function runMigrations(data: any): StoredData {

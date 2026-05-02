@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { StorageService } from '../services/StorageService';
-import { LogEntry, SexRecordDetails, MasturbationRecordDetails, PartnerProfile, ExerciseRecord, NapRecord, ChangeRecord, AlcoholRecord, TagEntry, TagType } from '../types';
+import { LogEntry, SexRecordDetails, MasturbationRecordDetails, PartnerProfile, ExerciseRecord, NapRecord, ChangeRecord, AlcoholRecord, TagEntry, TagType, DataQualitySource } from '../types';
 import { hydrateLog } from '../utils/hydrateLog';
 import { db } from '../db';
 
@@ -47,9 +47,9 @@ export function useLogs() {
         }
     }, []);
 
-    const addOrUpdateLog = useCallback(async (log: LogEntry) => {
+    const addOrUpdateLog = useCallback(async (log: LogEntry, source: DataQualitySource = 'manual') => {
         try {
-            await StorageService.logs.save(log);
+            await StorageService.logs.save(log, source);
         } catch (error: any) {
             console.error('Failed to save log:', error);
             throw new Error(error.message || '保存记录失败，请重试');
@@ -105,7 +105,7 @@ export function useLogs() {
                     ...existingLog,
                     sex: [...(existingLog.sex || []), record],
                     changeHistory: [...(existingLog.changeHistory || []), historyEntry]
-                });
+                }, 'quick');
             } else {
                 const historyEntry: ChangeRecord = { 
                     timestamp: Date.now(), 
@@ -120,7 +120,7 @@ export function useLogs() {
                     sex: [record],
                     changeHistory: [historyEntry],
                 };
-                await addOrUpdateLog(newLog);
+                await addOrUpdateLog(newLog, 'quick');
             }
         } catch (e) { throw e; }
     }, [addOrUpdateLog, getActivityTargetDate]);
@@ -145,7 +145,7 @@ export function useLogs() {
                     ...existingLog,
                     masturbation: newMbList,
                     changeHistory: [...(existingLog.changeHistory || []), historyEntry]
-                });
+                }, 'quick');
             } else {
                 const historyEntry: ChangeRecord = { 
                     timestamp: Date.now(), 
@@ -160,7 +160,7 @@ export function useLogs() {
                     masturbation: [record],
                     changeHistory: [historyEntry],
                 };
-                await addOrUpdateLog(newLog);
+                await addOrUpdateLog(newLog, 'quick');
             }
         } catch (e) { throw e; }
     }, [addOrUpdateLog, getActivityTargetDate]);
@@ -170,7 +170,7 @@ export function useLogs() {
         const logToUpdate = allLogs.find(l => l.masturbation?.some(m => m.status === 'inProgress'));
         if (logToUpdate) {
             const nextMb = logToUpdate.masturbation.filter(m => m.status !== 'inProgress');
-            await addOrUpdateLog({ ...logToUpdate, masturbation: nextMb });
+            await addOrUpdateLog({ ...logToUpdate, masturbation: nextMb }, 'quick');
         }
     }, [addOrUpdateLog]);
 
@@ -195,7 +195,7 @@ export function useLogs() {
                     ...existingLog,
                     exercise: newExercises,
                     changeHistory: [...(existingLog.changeHistory || []), historyEntry]
-                });
+                }, 'quick');
             } else {
                 const historyEntry: ChangeRecord = { timestamp: Date.now(), summary: actionType + ': ' + record.type, details: [{ field: '运动次数', oldValue: '0', newValue: '1', category: 'exercise' }], type: 'quick' };
                 const skeleton = hydrateLog({ date: targetDateStr });
@@ -205,7 +205,7 @@ export function useLogs() {
                     exercise: [record],
                     changeHistory: [historyEntry],
                 };
-                await addOrUpdateLog(newLog);
+                await addOrUpdateLog(newLog, 'quick');
             }
         } catch (e) { throw e; }
     }, [addOrUpdateLog, getActivityTargetDate]);
@@ -215,7 +215,7 @@ export function useLogs() {
         const logToUpdate = allLogs.find(l => l.exercise?.some(e => e.ongoing));
         if (logToUpdate) {
             const nextExercises = logToUpdate.exercise.filter(e => !e.ongoing);
-            await addOrUpdateLog({ ...logToUpdate, exercise: nextExercises });
+            await addOrUpdateLog({ ...logToUpdate, exercise: nextExercises }, 'quick');
         }
     }, [addOrUpdateLog]);
 
@@ -233,7 +233,7 @@ export function useLogs() {
                     ...existingLog,
                     sleep: { ...existingLog.sleep!, naps: newNaps },
                     changeHistory: [...(existingLog.changeHistory || []), historyEntry]
-                });
+                }, 'quick');
             } else {
                 const historyEntry: ChangeRecord = { timestamp: Date.now(), summary: '记录午休', details: [], type: 'quick' };
                 const skeleton = hydrateLog({ date: targetDateStr });
@@ -243,7 +243,7 @@ export function useLogs() {
                     sleep: { ...skeleton.sleep!, naps: [record] },
                     changeHistory: [historyEntry]
                 };
-                await addOrUpdateLog(newLog);
+                await addOrUpdateLog(newLog, 'quick');
             }
         } catch (e) { throw e; }
     }, [addOrUpdateLog, getActivityTargetDate]);
@@ -277,7 +277,7 @@ export function useLogs() {
             await addOrUpdateLog({
                 ...ongoingLog,
                 sleep: { ...ongoingLog.sleep!, naps: nextNaps }
-            });
+            }, 'quick');
         }
     }, [addOrUpdateLog]);
 
@@ -303,7 +303,7 @@ export function useLogs() {
                     alcohol: alcoholLevel,
                     alcoholRecords: nextRecords,
                     changeHistory: [...(existingLog.changeHistory || []), historyEntry]
-                });
+                }, 'quick');
             } else {
                 const alcoholLevel = record.totalGrams > 50 ? 'high' : record.totalGrams > 20 ? 'medium' : record.totalGrams > 0 ? 'low' : 'none';
                 const historyEntry: ChangeRecord = { timestamp: Date.now(), summary: summaryText, details: [], type: 'quick' };
@@ -315,7 +315,7 @@ export function useLogs() {
                     alcoholRecords: [record],
                     changeHistory: [historyEntry]
                 };
-                await addOrUpdateLog(newLog);
+                await addOrUpdateLog(newLog, 'quick');
             }
         } catch (e) { throw e; }
     }, [addOrUpdateLog, getActivityTargetDate]);
@@ -352,7 +352,7 @@ export function useLogs() {
                 ...ongoingLog,
                 alcohol: total > 0 ? (total > 50 ? 'high' : total > 20 ? 'medium' : 'low') : 'none',
                 alcoholRecords: nextRecords
-            });
+            }, 'quick');
         }
     }, [addOrUpdateLog]);
 
@@ -369,7 +369,7 @@ export function useLogs() {
                 updatedAt: Date.now(),
                 changeHistory: [{ timestamp: Date.now(), summary: '开始睡觉', type: 'quick' }]
             };
-            await addOrUpdateLog(newLog);
+            await addOrUpdateLog(newLog, 'quick');
         }
     }, [addOrUpdateLog, deleteLog, getSleepTargetDate]);
 

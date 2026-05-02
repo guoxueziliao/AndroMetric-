@@ -222,6 +222,29 @@ export interface ChangeRecord {
     summary: string;
     details?: ChangeDetail[];
     type: HistoryEventType;
+    fieldPath?: string;
+    operation?: 'set' | 'append' | 'delete' | 'repair';
+    actor?: 'user' | 'system' | 'migration';
+    source?: DataQualitySource;
+    confidence?: DataQualityState;
+}
+
+export type DataQualityState = 'recorded' | 'none' | 'unknown' | 'not_recorded' | 'inferred' | 'defaulted';
+export type DataQualitySource = 'manual' | 'quick' | 'import' | 'migration' | 'repair' | 'display_default';
+
+export interface FieldQuality {
+    state: DataQualityState;
+    source: DataQualitySource;
+    confidence?: number;
+    updatedAt?: number;
+}
+
+export interface DataQuality {
+    version: 1;
+    source: DataQualitySource;
+    partial: boolean;
+    fields: Record<string, FieldQuality>;
+    updatedAt: number;
 }
 
 export type Weather = 'sunny' | 'cloudy' | 'rainy' | 'snowy' | 'windy' | 'foggy';
@@ -249,6 +272,8 @@ export interface LogEntry {
     date: string;
     status: 'completed' | 'pending';
     updatedAt: number;
+    dataQuality?: DataQuality;
+    touchedPaths?: string[];
     morning?: MorningRecord;
     sleep?: SleepRecord;
     location?: Location | null;

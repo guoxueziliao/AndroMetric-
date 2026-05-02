@@ -1,5 +1,6 @@
 import type { LogEntry, UnifiedEvent, EventType } from '../../../domain';
 import { analyzeSleep } from '../../../shared/lib';
+import { isFieldUsable } from '../../../utils/dataQuality';
 
 const createEvent = (
     type: EventType, 
@@ -31,7 +32,7 @@ export const flattenLogsToEvents = (logs: LogEntry[]): UnifiedEvent[] => {
 
         // 1. Morning Wood Event
         const morning = log.morning;
-        if (morning && morning.wokeWithErection && morning.hardness) {
+        if (morning && morning.wokeWithErection && isFieldUsable(log, 'morning.hardness') && typeof morning.hardness === 'number') {
             events.push(createEvent(
                 'morning_wood',
                 log.date,
@@ -44,7 +45,7 @@ export const flattenLogsToEvents = (logs: LogEntry[]): UnifiedEvent[] => {
 
         // 2. Sleep Event
         const sleep = log.sleep;
-        if (sleep && sleep.startTime && sleep.endTime) {
+        if (sleep && isFieldUsable(log, 'sleep.startTime') && isFieldUsable(log, 'sleep.endTime') && sleep.startTime && sleep.endTime) {
             const analysis = analyzeSleep(sleep.startTime, sleep.endTime);
             if (analysis) {
                 const wakeTs = new Date(sleep.endTime).getTime();
@@ -52,7 +53,7 @@ export const flattenLogsToEvents = (logs: LogEntry[]): UnifiedEvent[] => {
                     'sleep',
                     log.date,
                     wakeTs,
-                    { duration: analysis.durationHours, value: sleep.quality || 3 },
+                    { duration: analysis.durationHours, value: isFieldUsable(log, 'sleep.quality') ? (sleep.quality || 3) : undefined },
                     { isLate: analysis.isLate, isGood: !analysis.isInsufficient && !analysis.isLate, withPartner: sleep.withPartner },
                     [sleep.preSleepState || 'calm', sleep.attire || 'light']
                 ));
@@ -146,6 +147,7 @@ export const flattenLogsToEvents = (logs: LogEntry[]): UnifiedEvent[] => {
         // 6. Masturbation Events
         if (log.masturbation && Array.isArray(log.masturbation)) {
             log.masturbation.forEach(m => {
+                if (m.status !== 'completed') return;
                 let ts = dateBase;
                 if (m.startTime) {
                     const [h, m_] = m.startTime.split(':').map(Number);
@@ -168,7 +170,7 @@ export const flattenLogsToEvents = (logs: LogEntry[]): UnifiedEvent[] => {
         }
 
         // 7. Stress Event
-        if (log.stressLevel) {
+        if (isFieldUsable(log, 'stressLevel') && log.stressLevel) {
             events.push(createEvent(
                 'stress',
                 log.date,

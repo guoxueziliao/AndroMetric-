@@ -1,6 +1,7 @@
 
 import { LogEntry } from '../types';
 import { analyzeSleep } from './helpers';
+import { isFieldUsable } from './dataQuality';
 
 // --- Matrix Math Utils ---
 
@@ -132,7 +133,7 @@ export const performRegression = (logs: LogEntry[], daysWindow: number | 'all'):
         const targetLog = logMap.get(nextDateStr);
 
         if (!targetLog) return; // No next day record
-        if (!targetLog.morning?.wokeWithErection || typeof targetLog.morning?.hardness !== 'number') return; // No valid target
+        if (!targetLog.morning?.wokeWithErection || !isFieldUsable(targetLog, 'morning.hardness') || typeof targetLog.morning?.hardness !== 'number') return; // No valid target
 
         // Target: Hardness T+1
         const Y = targetLog.morning.hardness;
@@ -140,15 +141,18 @@ export const performRegression = (logs: LogEntry[], daysWindow: number | 'all'):
         // Predictor 1: Sleep leading into T+1 (Stored in Target Log T+1)
         // Note: Sleep typically happens Night T -> Morning T+1. 
         // Our app stores sleep in the log corresponding to the wake up day.
-        const sleepAnalysis = analyzeSleep(targetLog.sleep?.startTime, targetLog.sleep?.endTime);
-        const sleepHours = sleepAnalysis ? sleepAnalysis.durationHours : 7; // Impute avg if missing? Better to skip? Let's skip if critical data missing.
+        const sleepAnalysis = isFieldUsable(targetLog, 'sleep.startTime') && isFieldUsable(targetLog, 'sleep.endTime')
+            ? analyzeSleep(targetLog.sleep?.startTime, targetLog.sleep?.endTime)
+            : null;
+        if (!sleepAnalysis) return;
+        const sleepHours = sleepAnalysis.durationHours;
         
         // Predictors from Day T (Lifestyle)
         /* Fix: Access total alcohol consumption from alcoholRecords array */
         const alcoholGrams = predLog.alcoholRecords?.reduce((acc, r) => acc + r.totalGrams, 0) || 0;
         const exerciseMins = predLog.exercise ? predLog.exercise.reduce((acc, e) => acc + (e.duration || 0), 0) : 0;
         const mbCount = predLog.masturbation ? predLog.masturbation.length : 0;
-        const stress = predLog.stressLevel || 2; // Default to low stress
+        const stress = isFieldUsable(predLog, 'stressLevel') && predLog.stressLevel ? predLog.stressLevel : 2;
 
         // Construct Row
         Y_raw.push(Y);
