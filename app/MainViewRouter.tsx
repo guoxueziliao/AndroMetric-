@@ -17,7 +17,7 @@ import { LogForm } from '../features/daily-log';
 import type { AppView, MainView } from './viewTypes';
 
 const MyView = lazy(() => import('../features/profile').then((module) => ({ default: module.MyView })));
-const StateView = lazy(() => import('../features/state').then((module) => ({ default: module.StateView })));
+const AnalysisView = lazy(() => import('../features/analysis').then((module) => ({ default: module.AnalysisView })));
 const SexLifeView = lazy(() => import('../features/sex-life').then((module) => ({ default: module.SexLifeView })));
 
 const LoadingFallback = () => (
@@ -133,7 +133,13 @@ const MainViewRouter: React.FC<MainViewRouterProps> = ({
             />
           )}
           <Suspense fallback={<LoadingFallback />}>
-            {activeMainView === 'state' && <StateView isDarkMode={isDarkMode} logs={logs} />}
+            {activeMainView === 'state' && (
+              <AnalysisView
+                isDarkMode={isDarkMode}
+                logs={logs}
+                onNavigate={onMainViewChange}
+              />
+            )}
             {activeMainView === 'sexlife' && (
               <SexLifeView
                 data={{

@@ -61,7 +61,7 @@ const BottomNav: React.FC<BottomNavProps> = ({ activeView, onViewChange }) => {
         />
         <NavItem
           icon={Activity}
-          label="状态"
+          label="分析"
           isActive={activeView === 'state'}
           onClick={() => onViewChange('state')}
         />
