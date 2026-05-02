@@ -94,9 +94,99 @@ export interface SupplementRecord {
 
 export type MenstrualStatus = 'unknown' | 'none' | 'period' | 'fertile_window';
 
-export interface MenstrualRecord {
+export interface MenstrualDailySummary {
+    partnerId?: string | null;
     status: MenstrualStatus;
+    cycleDay?: number | null;
+    predictedPeriod?: boolean;
+    predictedFertileWindow?: boolean;
     notes?: string;
+}
+
+export type MenstrualRecord = MenstrualDailySummary;
+
+export type ReproductiveGoal = 'none' | 'trying_to_conceive' | 'avoid_pregnancy' | 'pregnant' | 'post_loss_recovery';
+export type CycleRegularity = 'unknown' | 'regular' | 'irregular';
+
+export interface ReproductiveProfile {
+    trackingEnabled: boolean;
+    goal: ReproductiveGoal;
+    cycleRegularity: CycleRegularity;
+    typicalCycleLengthDays?: number | null;
+    typicalPeriodLengthDays?: number | null;
+    lastMenstrualPeriodStart?: string | null;
+    pregnancyHistorySummary?: {
+        priorPregnancies?: number | null;
+        priorLosses?: number | null;
+        ectopicHistory?: boolean | null;
+    };
+    riskFlags?: string[];
+}
+
+export type RecordSource = 'manual' | 'imported' | 'derived' | 'legacy';
+export type ConfidenceLevel = 'low' | 'medium' | 'high';
+export type CycleEventKind =
+    | 'period_start'
+    | 'period_end'
+    | 'spotting'
+    | 'flow'
+    | 'cramp'
+    | 'cervical_mucus'
+    | 'ovulation_test'
+    | 'basal_body_temperature'
+    | 'libido'
+    | 'breast_tenderness'
+    | 'intercourse_for_conception';
+
+export interface CycleEvent {
+    id: string;
+    partnerId: string;
+    date: string;
+    kind: CycleEventKind;
+    source: RecordSource;
+    confidence?: ConfidenceLevel;
+    notes?: string;
+    payload?: {
+        flow?: 'light' | 'medium' | 'heavy';
+        crampLevel?: 0 | 1 | 2 | 3 | 4 | 5;
+        cervicalMucus?: 'dry' | 'sticky' | 'creamy' | 'watery' | 'egg_white';
+        ovulationTest?: 'negative' | 'high' | 'peak';
+        basalBodyTemperatureCelsius?: number;
+        libidoLevel?: 1 | 2 | 3 | 4 | 5;
+        intercourseProtected?: boolean;
+    };
+}
+
+export type PregnancyEventKind =
+    | 'pregnancy_test'
+    | 'suspected_pregnancy'
+    | 'bleeding'
+    | 'pain'
+    | 'clinical_visit'
+    | 'ultrasound'
+    | 'hcg_result'
+    | 'pregnancy_outcome';
+
+export interface PregnancyEvent {
+    id: string;
+    partnerId: string;
+    date: string;
+    kind: PregnancyEventKind;
+    source: RecordSource;
+    notes?: string;
+    payload?: {
+        pregnancyTest?: 'negative' | 'faint_positive' | 'positive' | 'invalid';
+        bleedingLevel?: 'light' | 'moderate' | 'heavy';
+        painSeverity?: 0 | 1 | 2 | 3 | 4 | 5;
+        painSide?: 'left' | 'right' | 'bilateral' | 'unknown';
+        withDizziness?: boolean;
+        withShoulderPain?: boolean;
+        visitType?: 'clinic' | 'er' | 'phone';
+        gestationalSacSeen?: boolean;
+        intrauterineConfirmed?: boolean;
+        hcgValue?: number;
+        pregnancyOutcome?: 'ongoing' | 'chemical' | 'early_loss' | 'ectopic' | 'terminated' | 'unknown';
+    };
 }
 
 export interface AlcoholItem {
@@ -317,7 +407,7 @@ export interface LogEntry {
     health?: Health;
     screenTime?: ScreenTimeRecord | null;
     supplements?: SupplementRecord[];
-    menstrual?: MenstrualRecord | null;
+    menstrual?: MenstrualDailySummary | null;
     changeHistory: ChangeRecord[];
 }
 
@@ -361,6 +451,7 @@ export interface PartnerProfile {
     primaryValues?: string;
     petPeeves?: string;
     notes?: string;
+    reproductiveProfile?: ReproductiveProfile;
     milestones: Record<string, string>;
 }
 
@@ -376,6 +467,8 @@ export interface Snapshot {
         logs: LogEntry[];
         partners: PartnerProfile[];
         tags?: TagEntry[];
+        cycleEvents?: CycleEvent[];
+        pregnancyEvents?: PregnancyEvent[];
     };
 }
 
@@ -389,7 +482,21 @@ export interface BackupState {
     isAutoBackupEnabled: boolean;
 }
 
-export type EventType = 'morning_wood' | 'sleep' | 'alcohol' | 'exercise' | 'sex' | 'masturbation' | 'stress' | 'health' | 'screen_time';
+export type EventType =
+    | 'morning_wood'
+    | 'sleep'
+    | 'alcohol'
+    | 'exercise'
+    | 'sex'
+    | 'masturbation'
+    | 'stress'
+    | 'health'
+    | 'screen_time'
+    | 'menstrual'
+    | 'ovulation_test'
+    | 'fertility_window'
+    | 'pregnancy_test'
+    | 'pregnancy_outcome';
 
 export interface UnifiedEvent {
     schemaVersion: number;

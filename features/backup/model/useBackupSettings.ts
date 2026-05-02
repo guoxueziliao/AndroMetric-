@@ -79,7 +79,9 @@ export const useBackupSettings = ({ logs }: UseBackupSettingsParams) => {
 
     const partners = await StorageService.partners.queries.all();
     const tags = await StorageService.tags.getAll();
-    const success = await backupService.manualBackup(logs, partners, tags);
+    const cycleEvents = await StorageService.cycleEvents.queries.all();
+    const pregnancyEvents = await StorageService.pregnancyEvents.queries.all();
+    const success = await backupService.manualBackup(logs, partners, tags, cycleEvents, pregnancyEvents);
 
     setIsLoading(false);
 

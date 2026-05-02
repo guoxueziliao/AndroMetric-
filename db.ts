@@ -1,6 +1,6 @@
 
 import Dexie, { Table } from 'dexie';
-import { LogEntry, PartnerProfile, Snapshot, TagEntry } from './types';
+import { CycleEvent, LogEntry, PartnerProfile, PregnancyEvent, Snapshot, TagEntry } from './types';
 import { runMigrations } from './utils/migration';
 
 export interface MetaEntry {
@@ -19,6 +19,8 @@ export interface SystemLog {
 export type HardnessDiaryDatabase = Dexie & {
   logs: Table<LogEntry, string>;
   partners: Table<PartnerProfile, string>;
+  cycle_events: Table<CycleEvent, string>;
+  pregnancy_events: Table<PregnancyEvent, string>;
   meta: Table<MetaEntry, string>;
   system_logs: Table<SystemLog, number>;
   snapshots: Table<Snapshot, number>;
@@ -26,6 +28,17 @@ export type HardnessDiaryDatabase = Dexie & {
 };
 
 const dbInstance = new Dexie('HardnessDiaryDB') as HardnessDiaryDatabase;
+
+dbInstance.version(6).stores({
+  logs: '&date, status',
+  partners: '&id',
+  cycle_events: '&id, partnerId, date, kind, source',
+  pregnancy_events: '&id, partnerId, date, kind, source',
+  meta: 'key',
+  system_logs: '++id, timestamp, level, action',
+  snapshots: '++id, timestamp',
+  tags: '[name+category], category, dimension'
+});
 
 // Version 5: Add tags table for user-defined tags
 dbInstance.version(5).stores({

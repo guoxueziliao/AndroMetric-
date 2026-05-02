@@ -1,4 +1,4 @@
-import { LogEntry, Snapshot } from '../types';
+import { CycleEvent, LogEntry, PregnancyEvent } from '../types';
 import { fileSystemService, FileSystemService } from './FileSystemService';
 import { Logger } from './LoggerService';
 
@@ -70,7 +70,13 @@ export class BackupService {
     return success;
   }
 
-  async autoBackup(logs: LogEntry[], partners?: unknown[], tags?: unknown[]): Promise<boolean> {
+  async autoBackup(
+    logs: LogEntry[],
+    partners?: unknown[],
+    tags?: unknown[],
+    cycleEvents?: CycleEvent[],
+    pregnancyEvents?: PregnancyEvent[]
+  ): Promise<boolean> {
     if (!this.settings.autoBackupEnabled) {
       return false;
     }
@@ -82,7 +88,7 @@ export class BackupService {
 
     try {
       const filename = this.generateBackupFilename();
-      const data = this.prepareBackupData(logs, partners, tags);
+      const data = this.prepareBackupData(logs, partners, tags, cycleEvents, pregnancyEvents);
 
       const success = await this.fileSystem.writeBackupFile(data, filename);
       if (success) {
@@ -102,7 +108,13 @@ export class BackupService {
     }
   }
 
-  async manualBackup(logs: LogEntry[], partners?: unknown[], tags?: unknown[]): Promise<boolean> {
+  async manualBackup(
+    logs: LogEntry[],
+    partners?: unknown[],
+    tags?: unknown[],
+    cycleEvents?: CycleEvent[],
+    pregnancyEvents?: PregnancyEvent[]
+  ): Promise<boolean> {
     if (!this.fileSystem.isReady()) {
       const setupSuccess = await this.setupBackupDirectory();
       if (!setupSuccess) {
@@ -110,7 +122,7 @@ export class BackupService {
       }
     }
 
-    return this.autoBackup(logs, partners, tags);
+    return this.autoBackup(logs, partners, tags, cycleEvents, pregnancyEvents);
   }
 
   generateBackupFilename(): string {
@@ -121,7 +133,13 @@ export class BackupService {
     return `hardness-diary-backup-${timestamp}.json`;
   }
 
-  private prepareBackupData(logs: LogEntry[], partners?: unknown[], tags?: unknown[]): unknown {
+  private prepareBackupData(
+    logs: LogEntry[],
+    partners?: unknown[],
+    tags?: unknown[],
+    cycleEvents?: CycleEvent[],
+    pregnancyEvents?: PregnancyEvent[]
+  ): unknown {
     return {
       appName: '硬度日记',
       appVersion: '0.0.7',
@@ -129,7 +147,9 @@ export class BackupService {
       data: {
         logs,
         partners: partners || [],
-        tags: tags || []
+        tags: tags || [],
+        cycleEvents: cycleEvents || [],
+        pregnancyEvents: pregnancyEvents || []
       }
     };
   }

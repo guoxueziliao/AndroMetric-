@@ -37,7 +37,11 @@ const SCALAR_FIELD_PATHS = [
     'health.medications',
     'screenTime.totalMinutes',
     'screenTime.notes',
+    'menstrual.partnerId',
     'menstrual.status',
+    'menstrual.cycleDay',
+    'menstrual.predictedPeriod',
+    'menstrual.predictedFertileWindow',
     'menstrual.notes',
     'location',
     'weather',
@@ -361,7 +365,15 @@ const pruneEmptyObjects = (log: LogEntry) => {
     }
 
     const menstrual = log.menstrual as unknown as UnknownRecord | undefined;
-    if (menstrual && !hasFieldValue(menstrual.status) && !hasFieldValue(menstrual.notes)) {
+    if (
+        menstrual
+        && !hasFieldValue(menstrual.partnerId)
+        && !hasFieldValue(menstrual.status)
+        && !hasFieldValue(menstrual.cycleDay)
+        && !hasFieldValue(menstrual.predictedPeriod)
+        && !hasFieldValue(menstrual.predictedFertileWindow)
+        && !hasFieldValue(menstrual.notes)
+    ) {
         delete log.menstrual;
     }
 };

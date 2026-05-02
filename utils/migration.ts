@@ -1,10 +1,10 @@
 
-import { StoredData, LogEntry, SexRecordDetails, MasturbationRecordDetails, SexInteraction, SexAction, ExerciseRecord, MorningRecord, SleepRecord, ContentItem } from '../types';
+import { PartnerProfile, ReproductiveProfile, StoredData, LogEntry, SexRecordDetails, MasturbationRecordDetails, SexInteraction, SexAction, ExerciseRecord, MorningRecord, SleepRecord, ContentItem } from '../types';
 import { buildDataQualityForLog } from './dataQuality';
 import { scrubHistoricalDefaultContamination } from './legacyDataCleanup';
 
 // The latest version of our data structure.
-export const LATEST_VERSION = 42;
+export const LATEST_VERSION = 45;
 
 /**
  * MIGRATION UTILITIES
@@ -338,6 +338,66 @@ function migrateV41toV42(logs: any[]): LogEntry[] {
   }));
 }
 
+const createDefaultReproductiveProfile = (raw?: Partial<ReproductiveProfile> | null): ReproductiveProfile => ({
+  trackingEnabled: raw?.trackingEnabled ?? false,
+  goal: raw?.goal ?? 'none',
+  cycleRegularity: raw?.cycleRegularity ?? 'unknown',
+  typicalCycleLengthDays: raw?.typicalCycleLengthDays ?? null,
+  typicalPeriodLengthDays: raw?.typicalPeriodLengthDays ?? null,
+  lastMenstrualPeriodStart: raw?.lastMenstrualPeriodStart ?? null,
+  pregnancyHistorySummary: {
+    priorPregnancies: raw?.pregnancyHistorySummary?.priorPregnancies ?? null,
+    priorLosses: raw?.pregnancyHistorySummary?.priorLosses ?? null,
+    ectopicHistory: raw?.pregnancyHistorySummary?.ectopicHistory ?? null
+  },
+  riskFlags: Array.isArray(raw?.riskFlags) ? raw!.riskFlags : []
+});
+
+// V43: Prepare logs for partner-linked reproductive summaries
+function migrateV42toV43(logs: any[]): LogEntry[] {
+  return logs.map((log: LogEntry) => ({
+    ...log,
+    menstrual: log.menstrual ? {
+      partnerId: log.menstrual.partnerId ?? null,
+      status: log.menstrual.status ?? 'unknown',
+      cycleDay: log.menstrual.cycleDay ?? null,
+      predictedPeriod: Boolean(log.menstrual.predictedPeriod),
+      predictedFertileWindow: Boolean(log.menstrual.predictedFertileWindow),
+      notes: log.menstrual.notes ?? ''
+    } : null
+  }));
+}
+
+// V44: Normalize menstrual summary shape for P4 compatibility
+function migrateV43toV44(logs: any[]): LogEntry[] {
+  return logs.map((log: LogEntry) => ({
+    ...log,
+    menstrual: log.menstrual ? {
+      partnerId: log.menstrual.partnerId ?? null,
+      status: log.menstrual.status ?? 'unknown',
+      cycleDay: typeof log.menstrual.cycleDay === 'number' ? log.menstrual.cycleDay : null,
+      predictedPeriod: Boolean(log.menstrual.predictedPeriod),
+      predictedFertileWindow: Boolean(log.menstrual.predictedFertileWindow),
+      notes: log.menstrual.notes ?? ''
+    } : null
+  }));
+}
+
+// V45: Fill missing reproductive compatibility fields without generating synthetic cycle data
+function migrateV44toV45(logs: any[]): LogEntry[] {
+  return logs.map((log: LogEntry) => ({
+    ...log,
+    menstrual: log.menstrual ? {
+      partnerId: log.menstrual.partnerId ?? null,
+      status: log.menstrual.status ?? 'unknown',
+      cycleDay: typeof log.menstrual.cycleDay === 'number' ? log.menstrual.cycleDay : null,
+      predictedPeriod: Boolean(log.menstrual.predictedPeriod),
+      predictedFertileWindow: Boolean(log.menstrual.predictedFertileWindow),
+      notes: log.menstrual.notes ?? ''
+    } : null
+  }));
+}
+
 /**
  * REPAIR UTILS
  */
@@ -382,8 +442,29 @@ const MIGRATION_REGISTRY: Record<number, (logs: any[]) => any[]> = {
     39: migrateV38toV39,
     40: migrateV39toV40,
     41: migrateV40toV41,
-    42: migrateV41toV42
+    42: migrateV41toV42,
+    43: migrateV42toV43,
+    44: migrateV43toV44,
+    45: migrateV44toV45
 };
+
+export function runPartnerMigrations(partners: PartnerProfile[], currentVersion: number): PartnerProfile[] {
+  if (!Array.isArray(partners) || partners.length === 0) return [];
+
+  return partners.map((partner) => {
+    if (currentVersion >= 43 && partner.reproductiveProfile) {
+      return {
+        ...partner,
+        reproductiveProfile: createDefaultReproductiveProfile(partner.reproductiveProfile)
+      };
+    }
+
+    return {
+      ...partner,
+      reproductiveProfile: createDefaultReproductiveProfile(partner.reproductiveProfile)
+    };
+  });
+}
 
 export function runMigrations(data: any): StoredData {
   let currentVersion = 1;

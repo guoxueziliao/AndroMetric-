@@ -1,7 +1,8 @@
 import { useCallback, useMemo, useState } from 'react';
-import type { AlcoholRecord, ExerciseRecord, LogEntry, MasturbationRecordDetails, NapRecord } from '../../../domain';
+import type { AlcoholRecord, CycleEvent, ExerciseRecord, LogEntry, MasturbationRecordDetails, NapRecord, PartnerProfile } from '../../../domain';
 import { hydrateLog } from '../../../core/storage';
 import { useToast } from '../../../contexts/ToastContext';
+import { attachMenstrualSummary } from '../../reproductive/model/p4Derivations';
 
 export type SummaryTab = 'diary' | 'track' | 'source';
 export type OngoingTaskType = 'sleep' | 'nap' | 'mb' | 'exercise' | 'alcohol';
@@ -22,11 +23,15 @@ export interface DashboardActions {
 
 interface UseDashboardControllerParams {
   logs: LogEntry[];
+  partners: PartnerProfile[];
+  cycleEvents: CycleEvent[];
   actions: DashboardActions;
 }
 
 export const useDashboardController = ({
   logs,
+  partners,
+  cycleEvents,
   actions
 }: UseDashboardControllerParams) => {
   const {
@@ -62,16 +67,16 @@ export const useDashboardController = ({
         return;
       }
 
-      setSummaryLog(log);
+      setSummaryLog(attachMenstrualSummary(log, partners, cycleEvents));
       setActiveSummaryTab('diary');
       setIsSummaryModalOpen(true);
       return;
     }
 
-    setSummaryLog(hydrateLog({ date }));
+    setSummaryLog(attachMenstrualSummary(hydrateLog({ date }), partners, cycleEvents));
     setActiveSummaryTab('diary');
     setIsSummaryModalOpen(true);
-  }, [logs, onEdit]);
+  }, [cycleEvents, logs, onEdit, partners]);
 
   const handleNavigateDate = useCallback((direction: number) => {
     if (!summaryLog) return;
@@ -81,8 +86,8 @@ export const useDashboardController = ({
     const targetDateStr = current.toISOString().split('T')[0];
     const existing = logs.find(l => l.date === targetDateStr);
 
-    setSummaryLog(existing || hydrateLog({ date: targetDateStr }));
-  }, [logs, summaryLog]);
+    setSummaryLog(attachMenstrualSummary(existing || hydrateLog({ date: targetDateStr }), partners, cycleEvents));
+  }, [cycleEvents, logs, partners, summaryLog]);
 
   const handleDeleteRecord = useCallback((date: string) => {
     setDateToDelete(date);

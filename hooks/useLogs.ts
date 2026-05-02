@@ -2,14 +2,20 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { StorageService } from '../services/StorageService';
-import { LogEntry, SexRecordDetails, MasturbationRecordDetails, PartnerProfile, ExerciseRecord, NapRecord, ChangeRecord, AlcoholRecord, TagEntry, TagType, DataQualitySource } from '../types';
+import { CycleEvent, LogEntry, SexRecordDetails, MasturbationRecordDetails, PartnerProfile, ExerciseRecord, NapRecord, ChangeRecord, AlcoholRecord, PregnancyEvent, TagEntry, TagType, DataQualitySource } from '../types';
 import { hydrateLog } from '../utils/hydrateLog';
 import { db } from '../db';
+import { attachMenstrualSummary } from '../features/reproductive/model/p4Derivations';
 
 export function useLogs() {
     const rawLogs = useLiveQuery(StorageService.logs.queries.allDesc) || [];
-    const logs = useMemo(() => rawLogs.map(hydrateLog), [rawLogs]);
     const partners = useLiveQuery(StorageService.partners.queries.all) || [];
+    const cycleEvents = useLiveQuery(StorageService.cycleEvents.queries.all) || [];
+    const pregnancyEvents = useLiveQuery(StorageService.pregnancyEvents.queries.all) || [];
+    const logs = useMemo(
+        () => rawLogs.map(hydrateLog).map((log) => attachMenstrualSummary(log, partners, cycleEvents)),
+        [cycleEvents, partners, rawLogs]
+    );
     const userTags = useLiveQuery(() => db.tags.toArray()) || [];
     const [isInitializing, setIsInitializing] = useState(true);
 
@@ -44,6 +50,42 @@ export function useLogs() {
         } catch (error) {
             console.error('Failed to delete partner:', error);
             throw new Error('删除伴侣档案失败');
+        }
+    }, []);
+
+    const saveCycleEvent = useCallback(async (event: CycleEvent) => {
+        try {
+            await StorageService.cycleEvents.save(event);
+        } catch (error) {
+            console.error('Failed to save cycle event:', error);
+            throw new Error('保存周期事件失败');
+        }
+    }, []);
+
+    const deleteCycleEvent = useCallback(async (id: string) => {
+        try {
+            await StorageService.cycleEvents.delete(id);
+        } catch (error) {
+            console.error('Failed to delete cycle event:', error);
+            throw new Error('删除周期事件失败');
+        }
+    }, []);
+
+    const savePregnancyEvent = useCallback(async (event: PregnancyEvent) => {
+        try {
+            await StorageService.pregnancyEvents.save(event);
+        } catch (error) {
+            console.error('Failed to save pregnancy event:', error);
+            throw new Error('保存怀孕事件失败');
+        }
+    }, []);
+
+    const deletePregnancyEvent = useCallback(async (id: string) => {
+        try {
+            await StorageService.pregnancyEvents.delete(id);
+        } catch (error) {
+            console.error('Failed to delete pregnancy event:', error);
+            throw new Error('删除怀孕事件失败');
         }
     }, []);
 
@@ -373,15 +415,24 @@ export function useLogs() {
         }
     }, [addOrUpdateLog, deleteLog, getSleepTargetDate]);
 
-    const importLogs = useCallback(async (importedLogs: LogEntry[], importedPartners?: PartnerProfile[]) => {
+    const importLogs = useCallback(async (
+        importedLogs: LogEntry[],
+        importedPartners?: PartnerProfile[],
+        importedCycleEvents?: CycleEvent[],
+        importedPregnancyEvents?: PregnancyEvent[]
+    ) => {
         if (importedLogs.length > 0) await StorageService.logs.bulkImport(importedLogs);
         if (importedPartners && importedPartners.length > 0) await StorageService.partners.bulkImport(importedPartners);
+        if (importedCycleEvents && importedCycleEvents.length > 0) await StorageService.cycleEvents.bulkImport(importedCycleEvents);
+        if (importedPregnancyEvents && importedPregnancyEvents.length > 0) await StorageService.pregnancyEvents.bulkImport(importedPregnancyEvents);
     }, []);
 
     return {
-        logs, partners, userTags, isInitializing,
+        logs, partners, cycleEvents, pregnancyEvents, userTags, isInitializing,
         addOrUpdateLog, deleteLog,
         addOrUpdatePartner, deletePartner,
+        saveCycleEvent, deleteCycleEvent,
+        savePregnancyEvent, deletePregnancyEvent,
         addOrUpdateTag, deleteTag,
         quickAddSex, quickAddMasturbation, cancelOngoingMasturbation,
         saveExercise, cancelOngoingExercise,

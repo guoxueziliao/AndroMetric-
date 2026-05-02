@@ -74,6 +74,23 @@ export const getMenstrualStatusLabel = (status?: MenstrualStatus | null): string
   }
 };
 
+const getMenstrualValue = (log: LogEntry): string => {
+  if (typeof log.menstrual?.cycleDay === 'number' && log.menstrual.status === 'period') {
+    return `第${log.menstrual.cycleDay}天`;
+  }
+  if (log.menstrual?.predictedFertileWindow) return '预计窗口';
+  if (log.menstrual?.predictedPeriod) return '预计月经';
+  return getMenstrualStatusLabel(log.menstrual?.status);
+};
+
+const getMenstrualStatusText = (log: LogEntry): string => {
+  if (log.menstrual?.predictedFertileWindow) return '预计窗口期';
+  if (log.menstrual?.predictedPeriod) return '预计月经';
+  if (typeof log.menstrual?.cycleDay === 'number' && log.menstrual.status === 'period') return `经期第${log.menstrual.cycleDay}天`;
+  if (log.menstrual?.notes?.trim()) return log.menstrual.notes.trim();
+  return '周期摘要';
+};
+
 export const getTakenSupplements = (supplements?: SupplementRecord[]): SupplementRecord[] => (
   Array.isArray(supplements) ? supplements.filter((item) => item.taken && item.name.trim().length > 0) : []
 );
@@ -260,11 +277,14 @@ export const buildTodayTiles = (log: LogEntry): TodayTile[] => {
     {
       key: 'menstrual',
       label: '经期',
-      value: getMenstrualStatusLabel(log.menstrual?.status),
-      status: log.menstrual?.notes?.trim() ? '有备注' : '手动状态',
+      value: getMenstrualValue(log),
+      status: getMenstrualStatusText(log),
       tone: 'violet',
       details: [
         { label: '周期状态', value: getMenstrualStatusLabel(log.menstrual?.status) },
+        { label: '周期日', value: typeof log.menstrual?.cycleDay === 'number' ? `第${log.menstrual.cycleDay}天` : '未记录' },
+        { label: '预测月经', value: log.menstrual?.predictedPeriod ? '是' : '否' },
+        { label: '预测窗口', value: log.menstrual?.predictedFertileWindow ? '是' : '否' },
         { label: '备注', value: log.menstrual?.notes?.trim() || '无' }
       ]
     },

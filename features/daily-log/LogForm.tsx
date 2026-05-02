@@ -592,7 +592,10 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
                             </div>
 
                             <div className="space-y-4 rounded-[1.5rem] border border-slate-100 bg-slate-50/70 p-4 dark:border-white/5 dark:bg-slate-950/40">
-                                <label className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest block">周期状态</label>
+                                <label className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest block">周期摘要（兼容）</label>
+                                <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500">
+                                    建议在首页九宫格的“经期”面板维护周期、备孕和怀孕事件；这里仅保留每日摘要兼容。
+                                </p>
                                 <div className="grid grid-cols-2 gap-2">
                                     {MENSTRUAL_OPTIONS.map((option) => (
                                         <button

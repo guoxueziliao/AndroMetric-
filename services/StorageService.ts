@@ -1,8 +1,8 @@
 
 import { db } from '../db';
-import { LogEntry, PartnerProfile, Snapshot, TagEntry, DataQualitySource } from '../types';
+import { CycleEvent, LogEntry, PartnerProfile, PregnancyEvent, Snapshot, TagEntry, DataQualitySource } from '../types';
 import { validateLogEntry } from '../utils/validators';
-import { runMigrations, LATEST_VERSION } from '../utils/migration';
+import { runMigrations, runPartnerMigrations, LATEST_VERSION } from '../utils/migration';
 import { pluginManager } from './PluginManager';
 import { Logger } from './LoggerService';
 import { hydrateLog } from '../utils/hydrateLog';
@@ -20,15 +20,26 @@ export const StorageService = {
             if (currentDbVersion < LATEST_VERSION) {
                 Logger.info('StorageService:MigrationStart', { from: currentDbVersion, to: LATEST_VERSION });
                 const allLogs = await db.logs.toArray();
+                const allPartners = await db.partners.toArray();
                 if (allLogs.length > 0) {
                     await StorageService.snapshots.create(`系统自动备份: 升级前 (v${currentDbVersion})`);
                     const migrationResult = runMigrations({ version: currentDbVersion || 1, logs: allLogs });
-                    await db.transaction('rw', db.logs, db.meta, async () => {
+                    const migratedPartners = runPartnerMigrations(allPartners, currentDbVersion || 1);
+                    await db.transaction('rw', db.logs, db.partners, db.meta, async () => {
                         await db.logs.clear();
                         await db.logs.bulkPut(migrationResult.logs);
+                        if (allPartners.length > 0) {
+                            await db.partners.clear();
+                            await db.partners.bulkPut(migratedPartners);
+                        }
                         await db.meta.put({ key: 'dataVersion', value: LATEST_VERSION });
                     });
                 } else {
+                    if (allPartners.length > 0) {
+                        const migratedPartners = runPartnerMigrations(allPartners, currentDbVersion || 1);
+                        await db.partners.clear();
+                        await db.partners.bulkPut(migratedPartners);
+                    }
                     await db.meta.put({ key: 'dataVersion', value: LATEST_VERSION });
                 }
             }
@@ -42,6 +53,8 @@ export const StorageService = {
         const logs = await db.logs.toArray();
         const partners = await db.partners.toArray();
         const tags = await db.tags.toArray();
+        const cycleEvents = await db.cycle_events.toArray();
+        const pregnancyEvents = await db.pregnancy_events.toArray();
         
         // 抓取 LocalStorage 中的非数据库设置
         let appSettings = null;
@@ -65,7 +78,9 @@ export const StorageService = {
                 version: LATEST_VERSION,
                 logs: logs,
                 partners: partners,
-                tags: tags
+                tags: tags,
+                cycleEvents,
+                pregnancyEvents
             }
         };
         return JSON.stringify(snapshot, null, 2);
@@ -79,19 +94,26 @@ export const StorageService = {
             // 1. 数据迁移与升级
             const migratedData = runMigrations(data);
             const newLogs = migratedData.logs;
-            const newPartners = data.partners || [];
+            const importVersion = typeof data.version === 'number' ? data.version : LATEST_VERSION;
+            const newPartners = runPartnerMigrations(data.partners || [], importVersion);
             const newTags = data.tags || [];
+            const newCycleEvents = Array.isArray(data.cycleEvents) ? data.cycleEvents : [];
+            const newPregnancyEvents = Array.isArray(data.pregnancyEvents) ? data.pregnancyEvents : [];
 
             // 2. 写入数据库
-            await db.transaction('rw', [db.logs, db.partners, db.tags, db.meta], async () => {
+            await db.transaction('rw', [db.logs, db.partners, db.tags, db.meta, db.cycle_events, db.pregnancy_events], async () => {
                 if (strategy === 'overwrite') {
                     await db.logs.clear();
                     await db.partners.clear();
                     await db.tags.clear();
+                    await db.cycle_events.clear();
+                    await db.pregnancy_events.clear();
                 }
                 await db.logs.bulkPut(newLogs);
                 if (newPartners.length > 0) await db.partners.bulkPut(newPartners);
                 if (newTags.length > 0) await db.tags.bulkPut(newTags);
+                if (newCycleEvents.length > 0) await db.cycle_events.bulkPut(newCycleEvents);
+                if (newPregnancyEvents.length > 0) await db.pregnancy_events.bulkPut(newPregnancyEvents);
                 
                 // 同步数据版本号，避免导入后再次触发 migration
                 await db.meta.put({ key: 'dataVersion', value: LATEST_VERSION });
@@ -155,14 +177,16 @@ export const StorageService = {
      * Clears all data from IndexedDB.
      */
     async clearAllData(): Promise<void> {
-        await db.transaction('rw', [db.logs, db.partners, db.meta, db.system_logs, db.snapshots, db.tags], async () => {
+        await db.transaction('rw', [db.logs, db.partners, db.meta, db.system_logs, db.snapshots, db.tags, db.cycle_events, db.pregnancy_events], async () => {
             await Promise.all([
                 db.logs.clear(),
                 db.partners.clear(),
                 db.meta.clear(),
                 db.system_logs.clear(),
                 db.snapshots.clear(),
-                db.tags.clear()
+                db.tags.clear(),
+                db.cycle_events.clear(),
+                db.pregnancy_events.clear()
             ]);
         });
     },
@@ -183,6 +207,8 @@ export const StorageService = {
             const logs = await db.logs.toArray();
             const partners = await db.partners.toArray();
             const tags = await db.tags.toArray();
+            const cycleEvents = await db.cycle_events.toArray();
+            const pregnancyEvents = await db.pregnancy_events.toArray();
             const meta = await db.meta.get('dataVersion');
             
             // 内部快照也记录设置信息，确保回滚时设置也一致
@@ -197,7 +223,7 @@ export const StorageService = {
                 dataVersion: meta ? meta.value : LATEST_VERSION,
                 appVersion: '0.0.6',
                 description,
-                data: { logs, partners, tags } as any // 快照结构扩展
+                data: { logs, partners, tags, cycleEvents, pregnancyEvents } as any // 快照结构扩展
             };
             // 将设置信息存入快照对象的冗余字段
             (snapshot as any).settings = appSettings;
@@ -208,14 +234,19 @@ export const StorageService = {
             const snapshot = await db.snapshots.get(id);
             if (!snapshot) throw new Error('Snapshot not found');
             const data = snapshot.data as any;
+            const normalizedPartners = runPartnerMigrations(data.partners || [], snapshot.dataVersion || LATEST_VERSION);
             
-            await db.transaction('rw', [db.logs, db.partners, db.tags, db.meta], async () => {
+            await db.transaction('rw', [db.logs, db.partners, db.tags, db.meta, db.cycle_events, db.pregnancy_events], async () => {
                 await db.logs.clear();
                 await db.partners.clear();
                 await db.tags.clear();
+                await db.cycle_events.clear();
+                await db.pregnancy_events.clear();
                 await db.logs.bulkAdd(data.logs);
-                await db.partners.bulkAdd(data.partners);
+                if (normalizedPartners.length > 0) await db.partners.bulkAdd(normalizedPartners);
                 if (data.tags) await db.tags.bulkAdd(data.tags);
+                if (data.cycleEvents) await db.cycle_events.bulkAdd(data.cycleEvents);
+                if (data.pregnancyEvents) await db.pregnancy_events.bulkAdd(data.pregnancyEvents);
                 await db.meta.put({ key: 'dataVersion', value: snapshot.dataVersion });
             });
 
@@ -234,9 +265,85 @@ export const StorageService = {
         queries: {
             all: () => db.partners.toArray()
         },
-        save: (partner: PartnerProfile) => db.partners.put(partner),
+        save: (partner: PartnerProfile) => db.partners.put(runPartnerMigrations([partner], LATEST_VERSION)[0]),
         delete: (id: string) => db.partners.delete(id),
-        bulkImport: (partners: PartnerProfile[]) => db.partners.bulkPut(partners)
+        bulkImport: (partners: PartnerProfile[]) => db.partners.bulkPut(runPartnerMigrations(partners, LATEST_VERSION))
+    },
+
+    cycleEvents: {
+        queries: {
+            all: () => db.cycle_events.orderBy('date').reverse().toArray(),
+            byPartner: (partnerId: string) => db.cycle_events.where('partnerId').equals(partnerId).sortBy('date'),
+            byPartnerInRange: async (partnerId: string, fromDate?: string, toDate?: string) => {
+                const events = await db.cycle_events.where('partnerId').equals(partnerId).toArray();
+                return events
+                    .filter((event) => (!fromDate || event.date >= fromDate) && (!toDate || event.date <= toDate))
+                    .sort((left, right) => left.date.localeCompare(right.date));
+            }
+        },
+        save: async (event: CycleEvent) => {
+            await db.cycle_events.put(event);
+            const allLogs = await db.logs.toArray();
+            pluginManager.notifyDataChange(allLogs);
+            const allPartners = await db.partners.toArray();
+            const allTags = await db.tags.toArray();
+            const allCycleEvents = await db.cycle_events.toArray();
+            const allPregnancyEvents = await db.pregnancy_events.toArray();
+            backupService.autoBackup(allLogs, allPartners, allTags, allCycleEvents, allPregnancyEvents).catch(err => {
+                Logger.warn('StorageService:AutoBackupFailed', err);
+            });
+        },
+        delete: async (id: string) => {
+            await db.cycle_events.delete(id);
+            const allLogs = await db.logs.toArray();
+            pluginManager.notifyDataChange(allLogs);
+            const allPartners = await db.partners.toArray();
+            const allTags = await db.tags.toArray();
+            const allCycleEvents = await db.cycle_events.toArray();
+            const allPregnancyEvents = await db.pregnancy_events.toArray();
+            backupService.autoBackup(allLogs, allPartners, allTags, allCycleEvents, allPregnancyEvents).catch(err => {
+                Logger.warn('StorageService:AutoBackupFailed', err);
+            });
+        },
+        bulkImport: (events: CycleEvent[]) => db.cycle_events.bulkPut(events)
+    },
+
+    pregnancyEvents: {
+        queries: {
+            all: () => db.pregnancy_events.orderBy('date').reverse().toArray(),
+            byPartner: (partnerId: string) => db.pregnancy_events.where('partnerId').equals(partnerId).sortBy('date'),
+            byPartnerInRange: async (partnerId: string, fromDate?: string, toDate?: string) => {
+                const events = await db.pregnancy_events.where('partnerId').equals(partnerId).toArray();
+                return events
+                    .filter((event) => (!fromDate || event.date >= fromDate) && (!toDate || event.date <= toDate))
+                    .sort((left, right) => left.date.localeCompare(right.date));
+            }
+        },
+        save: async (event: PregnancyEvent) => {
+            await db.pregnancy_events.put(event);
+            const allLogs = await db.logs.toArray();
+            pluginManager.notifyDataChange(allLogs);
+            const allPartners = await db.partners.toArray();
+            const allTags = await db.tags.toArray();
+            const allCycleEvents = await db.cycle_events.toArray();
+            const allPregnancyEvents = await db.pregnancy_events.toArray();
+            backupService.autoBackup(allLogs, allPartners, allTags, allCycleEvents, allPregnancyEvents).catch(err => {
+                Logger.warn('StorageService:AutoBackupFailed', err);
+            });
+        },
+        delete: async (id: string) => {
+            await db.pregnancy_events.delete(id);
+            const allLogs = await db.logs.toArray();
+            pluginManager.notifyDataChange(allLogs);
+            const allPartners = await db.partners.toArray();
+            const allTags = await db.tags.toArray();
+            const allCycleEvents = await db.cycle_events.toArray();
+            const allPregnancyEvents = await db.pregnancy_events.toArray();
+            backupService.autoBackup(allLogs, allPartners, allTags, allCycleEvents, allPregnancyEvents).catch(err => {
+                Logger.warn('StorageService:AutoBackupFailed', err);
+            });
+        },
+        bulkImport: (events: PregnancyEvent[]) => db.pregnancy_events.bulkPut(events)
     },
 
     logs: {
@@ -255,7 +362,12 @@ save: async (log: LogEntry, source: DataQualitySource = 'manual') => {
       const allLogs = await db.logs.toArray();
       pluginManager.notifyDataChange(allLogs);
 
-      backupService.autoBackup(allLogs).catch(err => {
+      const allPartners = await db.partners.toArray();
+      const allTags = await db.tags.toArray();
+      const allCycleEvents = await db.cycle_events.toArray();
+      const allPregnancyEvents = await db.pregnancy_events.toArray();
+
+      backupService.autoBackup(allLogs, allPartners, allTags, allCycleEvents, allPregnancyEvents).catch(err => {
         Logger.warn('StorageService:AutoBackupFailed', err);
       });
     },

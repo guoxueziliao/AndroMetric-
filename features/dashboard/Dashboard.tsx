@@ -16,6 +16,9 @@ import TodayGrid from './TodayGrid';
 import WeekOverview from './WeekOverview';
 import { buildTodayTiles, buildWeekSummary, type TodayTileKey } from './model/p1Summary';
 import { hydrateLog } from '../../core/storage';
+import { useData } from '../../contexts/DataContext';
+import { attachMenstrualSummary } from '../reproductive/model/p4Derivations';
+import ReproductivePanel from '../reproductive/ReproductivePanel';
 
 interface DashboardProps {
   logs: LogEntry[];
@@ -47,6 +50,7 @@ const Dashboard: React.FC<DashboardProps> = ({
     onFinishNap,
     onFinishAlcohol
   } = actions;
+  const { partners, cycleEvents } = useData();
 
   const logs = useMemo(() => Array.isArray(rawLogs) ? rawLogs : [], [rawLogs]);
   const [activeView, setActiveView] = useState<DashboardView>('day');
@@ -76,12 +80,17 @@ const Dashboard: React.FC<DashboardProps> = ({
     onConfirmCancel
   } = useDashboardController({
     logs,
+    partners,
+    cycleEvents,
     actions
   });
 
   const latestLog = useMemo(() => logs.length > 0 ? logs[0] : null, [logs]);
   const todayDate = useMemo(() => getTodayDateString(), []);
-  const todayLog = useMemo(() => logs.find((item) => item.date === todayDate) || hydrateLog({ date: todayDate }), [logs, todayDate]);
+  const todayLog = useMemo(
+    () => attachMenstrualSummary(logs.find((item) => item.date === todayDate) || hydrateLog({ date: todayDate }), partners, cycleEvents),
+    [cycleEvents, logs, partners, todayDate]
+  );
   const todayTiles = useMemo(() => buildTodayTiles(todayLog), [todayLog]);
   const selectedTile = useMemo(() => todayTiles.find((item) => item.key === selectedTileKey) || null, [todayTiles, selectedTileKey]);
   const weekSummary = useMemo(() => buildWeekSummary(logs), [logs]);
@@ -335,7 +344,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         isOpen={selectedTile !== null}
         onClose={() => setSelectedTileKey(null)}
         title={selectedTile?.label || ''}
-        footer={
+        footer={selectedTile?.key === 'menstrual' ? null : (
             <button
                 type="button"
                 onClick={() => {
@@ -346,9 +355,11 @@ const Dashboard: React.FC<DashboardProps> = ({
             >
                 编辑今日记录
             </button>
-        }
+        )}
       >
-        {selectedTile && (
+        {selectedTile?.key === 'menstrual' ? (
+            <ReproductivePanel date={todayLog.date} />
+        ) : selectedTile && (
             <div className="space-y-4">
                 <div className="rounded-[1.5rem] border border-slate-100 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900/60">
                     <div className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">{selectedTile.label}</div>
@@ -637,7 +648,17 @@ const Dashboard: React.FC<DashboardProps> = ({
                                                         <div className="flex flex-col">
                                                             <span className="text-[10px] text-violet-400 font-bold uppercase">周期状态</span>
                                                             <span className="text-sm font-black text-violet-700 dark:text-violet-300">
-                                                                {summaryLog.menstrual.status === 'period' ? '经期中' : summaryLog.menstrual.status === 'fertile_window' ? '窗口期' : summaryLog.menstrual.status === 'none' ? '非经期' : '未记录'}
+                                                                {summaryLog.menstrual.predictedPeriod
+                                                                    ? '预计月经'
+                                                                    : summaryLog.menstrual.predictedFertileWindow
+                                                                        ? '预计窗口期'
+                                                                        : summaryLog.menstrual.status === 'period'
+                                                                            ? `经期中${summaryLog.menstrual.cycleDay ? ` · 第${summaryLog.menstrual.cycleDay}天` : ''}`
+                                                                            : summaryLog.menstrual.status === 'fertile_window'
+                                                                                ? '窗口期'
+                                                                                : summaryLog.menstrual.status === 'none'
+                                                                                    ? '非经期'
+                                                                                    : '未记录'}
                                                             </span>
                                                         </div>
                                                     </div>

@@ -86,7 +86,11 @@ export const hydrateLog = (raw: any): LogEntry => {
             notes: item.notes ?? ''
         })) : [],
         menstrual: raw.menstrual ? {
+            partnerId: raw.menstrual.partnerId ?? null,
             status: raw.menstrual.status || 'unknown',
+            cycleDay: typeof raw.menstrual.cycleDay === 'number' ? raw.menstrual.cycleDay : null,
+            predictedPeriod: Boolean(raw.menstrual.predictedPeriod),
+            predictedFertileWindow: Boolean(raw.menstrual.predictedFertileWindow),
             notes: raw.menstrual.notes ?? ''
         } : null,
         

@@ -1,4 +1,4 @@
-import type { LogEntry, UnifiedEvent, EventType } from '../../../domain';
+import type { CycleEvent, LogEntry, PregnancyEvent, UnifiedEvent, EventType } from '../../../domain';
 import { analyzeSleep } from '../../../shared/lib';
 import { isFieldUsable } from '../../../utils/dataQuality';
 import {
@@ -31,7 +31,12 @@ const createEvent = (
     };
 };
 
-export const flattenLogsToEvents = (logs: LogEntry[]): UnifiedEvent[] => {
+export interface EventAdapterOptions {
+    cycleEvents?: CycleEvent[];
+    pregnancyEvents?: PregnancyEvent[];
+}
+
+export const flattenLogsToEvents = (logs: LogEntry[], options: EventAdapterOptions = {}): UnifiedEvent[] => {
     const events: UnifiedEvent[] = [];
 
     logs.forEach(log => {
@@ -297,6 +302,68 @@ export const flattenLogsToEvents = (logs: LogEntry[]): UnifiedEvent[] => {
                 { isGood: log.screenTime.totalMinutes <= 240 },
                 [log.screenTime.source],
                 'screenTime'
+            ));
+        }
+    });
+
+    (options.cycleEvents || []).forEach((event) => {
+        const baseTs = new Date(`${event.date}T12:00:00`).getTime();
+        if (event.kind === 'period_start' || event.kind === 'period_end' || event.kind === 'spotting' || event.kind === 'flow' || event.kind === 'cramp') {
+            events.push(createEvent(
+                'menstrual',
+                event.date,
+                baseTs,
+                {
+                    value: event.kind === 'cramp' ? event.payload?.crampLevel : event.kind === 'flow'
+                        ? (event.payload?.flow === 'heavy' ? 3 : event.payload?.flow === 'medium' ? 2 : 1)
+                        : 1
+                },
+                { isGood: event.kind !== 'cramp' || (event.payload?.crampLevel || 0) <= 2 },
+                [event.kind, `partner:${event.partnerId}`],
+                event.id
+            ));
+        }
+
+        if (event.kind === 'ovulation_test') {
+            events.push(createEvent(
+                'ovulation_test',
+                event.date,
+                baseTs,
+                {
+                    value: event.payload?.ovulationTest === 'peak' ? 3 : event.payload?.ovulationTest === 'high' ? 2 : 1
+                },
+                { isGood: event.payload?.ovulationTest === 'peak' },
+                [event.payload?.ovulationTest || 'negative', `partner:${event.partnerId}`],
+                event.id
+            ));
+        }
+    });
+
+    (options.pregnancyEvents || []).forEach((event) => {
+        const baseTs = new Date(`${event.date}T12:00:00`).getTime();
+        if (event.kind === 'pregnancy_test') {
+            events.push(createEvent(
+                'pregnancy_test',
+                event.date,
+                baseTs,
+                {
+                    value: ['positive', 'faint_positive'].includes(event.payload?.pregnancyTest || '') ? 1 : 0
+                },
+                { isGood: event.payload?.pregnancyTest === 'negative' },
+                [event.payload?.pregnancyTest || 'invalid', `partner:${event.partnerId}`],
+                event.id
+            ));
+        }
+
+        if (event.kind === 'pregnancy_outcome') {
+            events.push(createEvent(
+                'pregnancy_outcome',
+                event.date,
+                baseTs,
+                { value: 1 },
+                { isGood: event.payload?.pregnancyOutcome === 'ongoing' },
+                [event.payload?.pregnancyOutcome || 'unknown', `partner:${event.partnerId}`],
+                event.id
             ));
         }
     });
