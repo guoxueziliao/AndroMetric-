@@ -1,6 +1,6 @@
 
 import React, { useRef, useState, useMemo, lazy, Suspense } from 'react';
-import { Settings, AlertTriangle, Archive, Database, History, Trash2, Smartphone, Moon, Sun, Share2, Pencil, FolderInput, Stethoscope, CheckCircle, Wrench, RotateCcw, ShieldCheck, ChevronRight, AlertCircle, ArrowRight, Tags } from 'lucide-react';
+import { Settings, AlertTriangle, Archive, Database, History, Trash2, Smartphone, Moon, Sun, Share2, Pencil, FolderInput, Stethoscope, CheckCircle, Wrench, RotateCcw, ShieldCheck, ChevronRight, AlertCircle, ArrowRight, Tags, FlaskConical } from 'lucide-react';
 import type { AppSettings, LogEntry, TagEntry, TagType } from '../../domain';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
 import { Modal } from '../../shared/ui';
@@ -9,6 +9,7 @@ import { useProfileMaintenance } from './model/useProfileMaintenance';
 
 const TagManager = lazy(() => import('../tags').then((module) => ({ default: module.TagManager })));
 const BackupSettings = lazy(() => import('../backup').then((module) => ({ default: module.BackupSettings })));
+const SimulationLabPanel = lazy(() => import('../simulation-lab').then((module) => ({ default: module.SimulationLabPanel })));
 
 const ANALYTICS_LABELS: Record<string, string> = {
   hardness: '硬度',
@@ -67,6 +68,7 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isTagManagerOpen, setIsTagManagerOpen] = useState(false);
+  const [isSimulationLabOpen, setIsSimulationLabOpen] = useState(false);
   const [userName, setUserName] = useLocalStorage('userName', 'User');
   const [isEditingName, setIsEditingName] = useState(false);
   const [tempName, setTempName] = useState(userName);
@@ -361,6 +363,24 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
         </button>
       </section>
 
+      <section>
+        <button
+          onClick={() => { setIsSettingsOpen(false); setIsSimulationLabOpen(true); }}
+          className="w-full p-4 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-sm"
+        >
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-sky-100 dark:bg-sky-900/30 text-sky-600 dark:text-sky-400 rounded-xl">
+              <FlaskConical size={20} />
+            </div>
+            <div className="text-left">
+              <h3 className="font-bold text-sm text-brand-text dark:text-slate-200">虚拟回测实验室</h3>
+              <p className="text-xs text-brand-muted dark:text-slate-500">仅供开发验证的合成人群回测工具</p>
+            </div>
+          </div>
+          <ChevronRight size={18} className="text-slate-400" />
+        </button>
+      </section>
+
               {/* 3. Snapshots */}
               <section>
                   <div className="flex justify-between items-end mb-3">
@@ -439,6 +459,17 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
             }}
           />
       </Suspense>
+
+      <Modal
+        isOpen={isSimulationLabOpen}
+        onClose={() => setIsSimulationLabOpen(false)}
+        title="虚拟回测实验室"
+        footer={null}
+      >
+        <Suspense fallback={null}>
+          <SimulationLabPanel />
+        </Suspense>
+      </Modal>
 
       {/* Clear Data Confirmation */}
       <Modal isOpen={isClearDataModalOpen} onClose={() => setIsClearDataModalOpen(false)} title="⚠️ 危险操作" footer={
