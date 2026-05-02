@@ -1,6 +1,13 @@
 import type { LogEntry, UnifiedEvent, EventType } from '../../../domain';
 import { analyzeSleep } from '../../../shared/lib';
 import { isFieldUsable } from '../../../utils/dataQuality';
+import {
+    assessMasturbationFatigue,
+    assessSexFatigue,
+    getTimeBucket,
+    scoreMasturbationRecord,
+    scoreSexRecord
+} from './p3Scoring';
 
 const createEvent = (
     type: EventType, 
@@ -124,21 +131,71 @@ export const flattenLogsToEvents = (logs: LogEntry[]): UnifiedEvent[] => {
                     }
                 }
                 const partners = new Set<string>();
-                if(s.interactions && Array.isArray(s.interactions)) s.interactions.forEach(i => { if(i.partner) partners.add(i.partner); });
-                else if(s.partner) partners.add(s.partner);
+                const positions = new Set<string>();
+                const toys = new Set<string>();
+                const costumes = new Set<string>();
+
+                if (s.interactions && Array.isArray(s.interactions)) {
+                    s.interactions.forEach(i => {
+                        if (i.partner) partners.add(i.partner);
+                        (i.toys || []).forEach(item => toys.add(item));
+                        (i.costumes || []).forEach(item => costumes.add(item));
+                        (i.chain || []).forEach(action => {
+                            if (action.type === 'position' && action.name) positions.add(action.name);
+                        });
+                    });
+                } else if (s.partner) {
+                    partners.add(s.partner);
+                }
+
+                (s.positions || []).forEach(position => positions.add(position));
+
+                const sexScore = scoreSexRecord(log, s);
+                const timeBucket = getTimeBucket(s.startTime);
+                const sleepAnalysis = isFieldUsable(log, 'sleep.startTime') && isFieldUsable(log, 'sleep.endTime')
+                    ? analyzeSleep(log.sleep?.startTime, log.sleep?.endTime)
+                    : null;
+                const alcoholGrams = Array.isArray(log.alcoholRecords)
+                    ? log.alcoholRecords.reduce((sum, item) => sum + item.totalGrams, 0)
+                    : 0;
+                const fatigue = assessSexFatigue({
+                    sleepInsufficient: Boolean(sleepAnalysis?.isInsufficient),
+                    stressLevel: isFieldUsable(log, 'stressLevel') ? (log.stressLevel ?? null) : null,
+                    alcoholGrams,
+                    isSick: Boolean(log.health?.isSick),
+                    timeBucket,
+                    durationMinutes: s.duration,
+                    hasHighIntensityExercise: Array.isArray(log.exercise) && log.exercise.some(ex => ex.intensity === 'high')
+                });
+                const sexTags = [
+                    `time_bucket:${timeBucket}`,
+                    ...Array.from(partners).map(partner => `partner:${partner}`),
+                    ...Array.from(positions).map(position => `position:${position}`),
+                    ...Array.from(toys).map(item => `toy:${item}`),
+                    ...Array.from(costumes).map(item => `costume:${item}`),
+                    `protection:${s.protection || 'unknown'}`,
+                    ...fatigue.reasons.map(reason => `driver:${reason}`)
+                ];
 
                 events.push(createEvent(
                     'sex',
                     log.date,
                     ts,
-                    { duration: s.duration, value: s.partnerScore || 0 },
+                    {
+                        duration: s.duration,
+                        value: s.partnerScore || 0,
+                        score: sexScore.totalScore ?? undefined,
+                        qualityScore: sexScore.qualityScore ?? undefined,
+                        satisfactionScore: sexScore.satisfactionScore ?? undefined,
+                        fatigueCost: fatigue.score
+                    },
                     { 
                         orgasm: s.indicators.orgasm, 
                         ejaculation: s.ejaculation, 
                         withPartner: true,
                         isGood: s.indicators.partnerOrgasm 
                     },
-                    [...Array.from(partners), ...(s.positions || []), s.protection || ''],
+                    sexTags,
                     s.id
                 ));
             });
@@ -157,13 +214,51 @@ export const flattenLogsToEvents = (logs: LogEntry[]): UnifiedEvent[] => {
                         ts = d.getTime();
                     }
                 }
+                const masturbationScore = scoreMasturbationRecord(log, m);
+                const timeBucket = getTimeBucket(m.startTime);
+                const sleepAnalysis = isFieldUsable(log, 'sleep.startTime') && isFieldUsable(log, 'sleep.endTime')
+                    ? analyzeSleep(log.sleep?.startTime, log.sleep?.endTime)
+                    : null;
+                const alcoholGrams = Array.isArray(log.alcoholRecords)
+                    ? log.alcoholRecords.reduce((sum, item) => sum + item.totalGrams, 0)
+                    : 0;
+                const fatigue = assessMasturbationFatigue({
+                    sleepInsufficient: Boolean(sleepAnalysis?.isInsufficient),
+                    stressLevel: isFieldUsable(log, 'stressLevel') ? (log.stressLevel ?? null) : null,
+                    alcoholGrams,
+                    isSick: Boolean(log.health?.isSick),
+                    timeBucket,
+                    durationMinutes: m.duration,
+                    hasHighIntensityExercise: Array.isArray(log.exercise) && log.exercise.some(ex => ex.intensity === 'high'),
+                    energyLevel: isFieldUsable(log, `masturbation.${m.id}.energyLevel`) ? m.energyLevel : null,
+                    energyLevelUsable: isFieldUsable(log, `masturbation.${m.id}.energyLevel`),
+                    fatigueText: isFieldUsable(log, `masturbation.${m.id}.fatigue`) ? m.fatigue : undefined,
+                    postFatigueText: m.postFatigue,
+                    edging: m.edging,
+                    ejaculation: m.ejaculation
+                });
+                const masturbationTags = [
+                    `time_bucket:${timeBucket}`,
+                    ...(m.contentItems || []).flatMap(item => (item.xpTags || []).map(tag => `tag:${tag}`)),
+                    ...(m.assets?.categories || []).map(tag => `tag:${tag}`),
+                    ...(m.tools || []).map(tool => `tool:${tool}`),
+                    ...fatigue.reasons.map(reason => `driver:${reason}`)
+                ];
+
                 events.push(createEvent(
                     'masturbation',
                     log.date,
                     ts,
-                    { duration: m.duration, intensity: m.orgasmIntensity },
+                    {
+                        duration: m.duration,
+                        intensity: m.orgasmIntensity,
+                        score: masturbationScore.totalScore ?? undefined,
+                        qualityScore: masturbationScore.qualityScore ?? undefined,
+                        satisfactionScore: masturbationScore.satisfactionScore ?? undefined,
+                        fatigueCost: fatigue.score
+                    },
                     { ejaculation: m.ejaculation, orgasm: m.orgasmIntensity ? m.orgasmIntensity >= 4 : true },
-                    [...(m.assets?.categories || []), ...(m.tools || [])],
+                    masturbationTags,
                     m.id
                 ));
             });

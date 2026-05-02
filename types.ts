@@ -402,6 +402,10 @@ export interface UnifiedEvent {
         intensity?: number;
         duration?: number;
         amount?: number;
+        score?: number;
+        qualityScore?: number;
+        satisfactionScore?: number;
+        fatigueCost?: number;
     };
     flags: {
         isGood?: boolean;
