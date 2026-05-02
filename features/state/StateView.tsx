@@ -1,9 +1,10 @@
-import React, { useMemo, useState } from 'react';
+import React, { lazy, Suspense, useMemo, useState } from 'react';
 import type { LogEntry } from '../../domain';
 import { Activity, BrainCircuit, ChevronRight, Flag, ShieldAlert, Sparkles, Target, TrendingUp } from 'lucide-react';
 import { ErrorBoundary } from '../../shared/ui';
-import { StatsView } from '../stats';
 import { analyzePersonalState, type AchievableGoal, type ConfidenceLevel, type FactorImpact, type ForecastDay, type StateReason } from './model/PersonalStateEngine';
+
+const StatsView = lazy(() => import('../stats/StatsView'));
 
 type StateTab = 'status' | 'history';
 
@@ -282,7 +283,9 @@ const StateView: React.FC<StateViewProps> = ({ isDarkMode, logs }) => {
           </div>
         ) : (
           <div className="animate-in fade-in slide-in-from-bottom-2">
-            <StatsView isDarkMode={isDarkMode} logs={logs} />
+            <Suspense fallback={<div className="rounded-[1.5rem] border border-dashed border-slate-200 bg-slate-50 p-5 text-sm font-medium text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400">统计加载中...</div>}>
+              <StatsView isDarkMode={isDarkMode} logs={logs} />
+            </Suspense>
           </div>
         )}
       </div>

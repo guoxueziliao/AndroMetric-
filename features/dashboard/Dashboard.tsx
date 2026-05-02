@@ -1,24 +1,24 @@
-import React, { useMemo, useState } from 'react';
-import { motion } from 'framer-motion';
+import React, { lazy, Suspense, useMemo, useState } from 'react';
 import type { LogEntry } from '../../domain';
-import CalendarHeatmap from './CalendarHeatmap';
 import { 
   Moon, Zap, Activity, Hand, Dumbbell, CloudSun, Beer, ShieldAlert, Edit3,
   Trash2, Coffee, Bed, ArrowRight, Heart, MapPin, BrainCircuit, Film, Smile,
   ChevronRight, ChevronLeft, Calendar, Sofa, X, StickyNote
 } from 'lucide-react';
 import { BottomSheet, Modal, SafeDeleteModal } from '../../shared/ui';
-import { formatTime, calculateSleepDuration, analyzeSleep, getTodayDateString, LABELS } from '../../shared/lib';
-import { LogHistory } from './LogHistory';
-import { GlobalTimeline } from './GlobalTimeline';
-import { useDashboardController, type DashboardActions } from './model/useDashboardController';
-import TodayGrid from './TodayGrid';
-import WeekOverview from './WeekOverview';
+import { formatTime, calculateSleepDuration, getTodayDateString, LABELS } from '../../shared/lib';
+import { useDashboardController, type DashboardActions, type SummaryTab } from './model/useDashboardController';
 import { buildTodayTiles, buildWeekSummary, type TodayTileKey } from './model/p1Summary';
 import { hydrateLog } from '../../core/storage';
 import { useData } from '../../contexts/DataContext';
 import { attachMenstrualSummary } from '../reproductive/model/p4Derivations';
-import ReproductivePanel from '../reproductive/ReproductivePanel';
+import DashboardDayView from './DashboardDayView';
+
+const GlobalTimeline = lazy(() => import('./GlobalTimeline').then((module) => ({ default: module.GlobalTimeline })));
+const LogHistory = lazy(() => import('./LogHistory').then((module) => ({ default: module.LogHistory })));
+const ReproductivePanel = lazy(() => import('../reproductive/ReproductivePanel'));
+const DashboardWeekView = lazy(() => import('./DashboardWeekView'));
+const DashboardMonthView = lazy(() => import('./DashboardMonthView'));
 
 interface DashboardProps {
   logs: LogEntry[];
@@ -29,6 +29,7 @@ const WEATHER_LABELS: Record<string, string> = { sunny: '晴', cloudy: '多云',
 const LOCATION_LABELS: Record<string, string> = { home: '家', partner: '伴侣家', hotel: '酒店', travel: '旅途', other: '其他' };
 const MOOD_LABELS: Record<string, string> = { happy: '开心', excited: '兴奋', neutral: '平静', anxious: '焦虑', sad: '低落', angry: '生气' };
 const PORN_LABELS: Record<string, string> = { none: '无', low: '少量', medium: '适量', high: '沉迷' };
+const panelLoadingClass = 'flex items-center justify-center rounded-3xl border border-dashed border-slate-200 bg-white/70 p-4 text-xs font-bold text-slate-400 dark:border-slate-800 dark:bg-slate-900/40 dark:text-slate-500';
 
 interface SummarySectionProps {
   title: string;
@@ -135,6 +136,10 @@ const Dashboard: React.FC<DashboardProps> = ({
               {children}
           </div>
       </div>
+  );
+
+  const inlineLoader = (
+    <div className={panelLoadingClass}>加载中...</div>
   );
 
   return (
@@ -251,92 +256,27 @@ const Dashboard: React.FC<DashboardProps> = ({
         )}
 
         {activeView === 'day' && (
-            <div className="space-y-4">
-                <TodayGrid tiles={todayTiles} onSelect={setSelectedTileKey} />
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-                    <div className="flex h-60 flex-col overflow-hidden rounded-3xl border border-slate-100 bg-white p-4 shadow-soft transition-colors dark:border-white/5 dark:bg-slate-900/40">
-                        <div className="mb-3 flex shrink-0 items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                <div className="rounded-lg bg-blue-50 p-1.5 text-blue-500 dark:bg-blue-500/10"><Moon size={14} fill="currentColor" fillOpacity={0.2}/></div>
-                                <span className="text-[11px] font-black text-slate-800 dark:text-slate-300">7日睡眠流</span>
-                            </div>
-                            {(pendingLog || ongoingNap) && <span className="text-[9px] font-black text-emerald-500 animate-pulse">正在休息</span>}
-                        </div>
-                        <motion.div
-                            className="custom-scrollbar flex-1 space-y-2 overflow-y-auto pr-0.5"
-                            initial="hidden"
-                            animate="visible"
-                            variants={{ visible: { transition: { staggerChildren: 0.05 } } }}
-                        >
-                            {last7Days.map((date, index) => {
-                                const log = logs.find((item) => item.date === date);
-                                const analysis = log?.sleep?.startTime && log?.sleep?.endTime ? analyzeSleep(log.sleep.startTime, log.sleep.endTime) : null;
-                                const nocturnalHours = analysis?.durationHours || 0;
-                                const totalNapMinutes = log?.sleep?.naps?.reduce((acc, item) => acc + (item.duration || 0), 0) || 0;
-                                const napHours = totalNapMinutes / 60;
-                                const totalHours = nocturnalHours + napHours;
-                                const isToday = date === last7Days[0];
-
-                                return (
-                                    <motion.div
-                                        key={date}
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: index * 0.05, duration: 0.3 }}
-                                        className={`flex flex-col gap-1 rounded-xl p-1.5 transition-all ${isToday ? 'border border-blue-100 bg-blue-50/40 dark:border-blue-900/30 dark:bg-blue-900/10' : 'border border-transparent'}`}
-                                    >
-                                        <div className="flex items-center justify-between text-[9px] font-bold text-slate-400">
-                                            <span className="font-mono">{date.split('-').slice(1).join('/')}</span>
-                                            <div className="flex gap-1">
-                                                {analysis?.isLate && <span className="rounded bg-orange-100 px-1 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400">熬夜</span>}
-                                                {analysis?.isInsufficient && <span className="rounded bg-red-100 px-1 text-red-600 dark:bg-red-900/30 dark:text-red-400">不足</span>}
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <div className="flex h-1.5 flex-1 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
-                                                {nocturnalHours > 0 && <div className="h-full bg-blue-500" style={{ width: `${Math.min(100, (nocturnalHours / 12) * 100)}%` }}/>}
-                                                {napHours > 0 && <div className="h-full border-l border-white/20 bg-orange-400" style={{ width: `${Math.min(100, (napHours / 12) * 100)}%` }}/>}
-                                            </div>
-                                            <div className="w-8 text-right text-[10px] font-black tabular-nums text-slate-600 dark:text-slate-300">{totalHours > 0 ? `${totalHours.toFixed(1)}h` : '--'}</div>
-                                        </div>
-                                    </motion.div>
-                                );
-                            })}
-                        </motion.div>
-                    </div>
-
-                    <div className="flex h-60 flex-col rounded-3xl border border-slate-100 bg-white p-5 shadow-soft transition-colors dark:border-white/5 dark:bg-slate-900/40">
-                        <div className="mb-6 flex items-center gap-2">
-                            <div className="rounded-full bg-orange-50 p-2 text-orange-500 dark:bg-orange-500/10"><Activity size={18}/></div>
-                            <span className="text-sm font-bold text-slate-800 dark:text-slate-300">今日活动</span>
-                        </div>
-                        <div className="space-y-4">
-                            <div className="flex items-center justify-between text-sm"><span className="font-bold text-slate-400">运动</span><span className="text-lg font-black text-slate-700 dark:text-slate-200">{todayLog.exercise?.length || 0}次</span></div>
-                            <div className="flex items-center justify-between text-sm"><span className="font-bold text-slate-400">自慰</span><span className="text-lg font-black text-slate-700 dark:text-slate-200">{todayLog.masturbation?.length || 0}次</span></div>
-                            <div className="flex items-center justify-between text-sm"><span className="font-bold text-slate-400">性爱</span><span className="text-lg font-black text-slate-700 dark:text-slate-200">{todayLog.sex?.length || 0}次</span></div>
-                            <div className="flex items-center justify-between text-sm"><span className="font-bold text-slate-400">屏幕时间</span><span className="text-lg font-black text-slate-700 dark:text-slate-200">{todayLog.screenTime?.totalMinutes ? `${Math.round(todayLog.screenTime.totalMinutes / 60)}h` : '--'}</span></div>
-                        </div>
-                    </div>
-
-                    <div className="rounded-3xl border border-slate-100 bg-white p-5 shadow-soft transition-colors dark:border-white/5 dark:bg-slate-900/40">
-                        <div className="mb-4 flex items-center gap-2">
-                            <div className="rounded-full bg-slate-100 p-2 text-slate-500 dark:bg-slate-800"><Calendar size={18}/></div>
-                            <span className="text-sm font-bold text-slate-800 dark:text-slate-300">今日时间线</span>
-                        </div>
-                        <div className="max-h-[180px] overflow-y-auto pr-1">
-                            <GlobalTimeline log={todayLog} allLogs={logs} />
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <DashboardDayView
+                logs={logs}
+                todayLog={todayLog}
+                todayTiles={todayTiles}
+                last7Days={last7Days}
+                pendingLog={pendingLog}
+                ongoingNap={ongoingNap}
+                onSelectTile={setSelectedTileKey}
+            />
         )}
 
         {activeView === 'week' && (
-            <WeekOverview days={weekSummary} onOpenDate={onDateClickForSummary} />
+            <Suspense fallback={inlineLoader}>
+                <DashboardWeekView days={weekSummary} onOpenDate={onDateClickForSummary} />
+            </Suspense>
         )}
 
         {activeView === 'month' && (
-            <CalendarHeatmap logs={logs} onDateClick={onDateClickForSummary} mode="monthOnly" />
+            <Suspense fallback={inlineLoader}>
+                <DashboardMonthView logs={logs} onDateClick={onDateClickForSummary} />
+            </Suspense>
         )}
       </div>
 
@@ -358,7 +298,9 @@ const Dashboard: React.FC<DashboardProps> = ({
         )}
       >
         {selectedTile?.key === 'menstrual' ? (
-            <ReproductivePanel date={todayLog.date} />
+            <Suspense fallback={inlineLoader}>
+                <ReproductivePanel date={todayLog.date} />
+            </Suspense>
         ) : selectedTile && (
             <div className="space-y-4">
                 <div className="rounded-[1.5rem] border border-slate-100 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900/60">
@@ -692,13 +634,17 @@ const Dashboard: React.FC<DashboardProps> = ({
 
                     {activeSummaryTab === 'track' && (
                         <div className="animate-in fade-in slide-in-from-right-4 duration-300">
-                            <GlobalTimeline log={summaryLog} allLogs={logs} />
+                            <Suspense fallback={inlineLoader}>
+                                <GlobalTimeline log={summaryLog} allLogs={logs} />
+                            </Suspense>
                         </div>
                     )}
 
                     {activeSummaryTab === 'source' && (
                         <div className="animate-in fade-in slide-in-from-right-4 duration-300 pt-2">
-                            <LogHistory log={summaryLog} />
+                            <Suspense fallback={inlineLoader}>
+                                <LogHistory log={summaryLog} />
+                            </Suspense>
                         </div>
                     )}
                 </div>

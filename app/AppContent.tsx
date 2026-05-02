@@ -1,5 +1,5 @@
 
-import React, { useMemo, useState } from 'react';
+import React, { lazy, Suspense, useMemo, useState } from 'react';
 import { AppSettings } from '../types';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import Welcome from './Welcome';
@@ -10,7 +10,6 @@ import { Modal } from '../shared/ui';
 import type { AppData } from './AppProviders';
 import { defaultSettings } from './appConfig';
 import InitializationScreen from './InitializationScreen';
-import { QuickRecordController } from '../features/quick-actions';
 import MainViewRouter from './MainViewRouter';
 import { useAppBootstrap } from './useAppBootstrap';
 import { useLogEditor } from './useLogEditor';
@@ -18,6 +17,16 @@ import { useQuickRecordData } from './useQuickRecordData';
 import { useThemeMode } from './useThemeMode';
 import { useWelcomeScreen } from './useWelcomeScreen';
 import type { MainView } from './viewTypes';
+import type { QuickRecordHandlers } from '../features/quick-actions';
+
+const QuickRecordController = lazy(() => import('../features/quick-actions').then((module) => ({ default: module.QuickRecordController })));
+
+const emptyQuickRecordHandlers: QuickRecordHandlers = {
+  onFinishExercise: () => {},
+  onFinishMasturbation: () => {},
+  onFinishNap: () => {},
+  onFinishAlcohol: () => {}
+};
 
 const AppContent: React.FC<{ data: AppData }> = ({ data }) => {
   const {
@@ -109,39 +118,47 @@ const AppContent: React.FC<{ data: AppData }> = ({ data }) => {
     setSettings
   ]);
 
+  const renderAppShell = (quickRecordHandlers: QuickRecordHandlers) => {
+    const mainViewActions = {
+      ...mainViewBaseActions,
+      ...quickRecordHandlers
+    };
+
+    return (
+      <div className="container mx-auto max-w-lg p-4 pb-32">
+        <MainViewRouter
+          view={view}
+          activeMainView={activeMainView}
+          isDarkMode={isDarkMode}
+          data={mainViewData}
+          actions={mainViewActions}
+        />
+
+        <Modal isOpen={isConfirmBackModalOpen} onClose={() => setIsConfirmBackModalOpen(false)} title="未保存的更改" footer={<div className="flex gap-3 w-full"><button onClick={() => setIsConfirmBackModalOpen(false)} className="flex-1 py-3 bg-slate-100 dark:bg-slate-800 rounded-xl">继续编辑</button><button onClick={confirmLeaveForm} className="flex-1 py-3 bg-red-50 text-red-500 rounded-xl font-bold">放弃</button></div>}>
+            <p>您有未保存的更改。确定要离开吗？</p>
+        </Modal>
+
+        <VersionHistoryModal isOpen={isVersionHistoryOpen} onClose={() => setIsVersionHistoryOpen(false)} />
+        <PWAInstallPrompt />
+      </div>
+    );
+  };
+
   if (isInitializing) return <InitializationScreen />;
 
   if (!hasSeenWelcome) return <Welcome onGetStarted={markWelcomeSeen} />;
 
   return (
     <div className={`min-h-screen bg-brand-bg dark:bg-slate-950 text-brand-text dark:text-slate-200 font-sans transition-all duration-500 safe-area-top safe-area-bottom safe-area-left safe-area-right ${isBlurred ? 'blur-md grayscale opacity-50' : ''}`}>
-      <QuickRecordController data={quickRecordData} isEnabled={view === 'dashboard'}>
-        {(quickRecordHandlers) => {
-          const mainViewActions = {
-            ...mainViewBaseActions,
-            ...quickRecordHandlers
-          };
-
-          return (
-            <div className="container mx-auto max-w-lg p-4 pb-32">
-              <MainViewRouter
-                view={view}
-                activeMainView={activeMainView}
-                isDarkMode={isDarkMode}
-                data={mainViewData}
-                actions={mainViewActions}
-              />
-
-              <Modal isOpen={isConfirmBackModalOpen} onClose={() => setIsConfirmBackModalOpen(false)} title="未保存的更改" footer={<div className="flex gap-3 w-full"><button onClick={() => setIsConfirmBackModalOpen(false)} className="flex-1 py-3 bg-slate-100 dark:bg-slate-800 rounded-xl">继续编辑</button><button onClick={confirmLeaveForm} className="flex-1 py-3 bg-red-50 text-red-500 rounded-xl font-bold">放弃</button></div>}>
-                  <p>您有未保存的更改。确定要离开吗？</p>
-              </Modal>
-
-              <VersionHistoryModal isOpen={isVersionHistoryOpen} onClose={() => setIsVersionHistoryOpen(false)} />
-              <PWAInstallPrompt />
-            </div>
-          );
-        }}
-      </QuickRecordController>
+      {view === 'dashboard' ? (
+        <Suspense fallback={renderAppShell(emptyQuickRecordHandlers)}>
+          <QuickRecordController data={quickRecordData} isEnabled>
+            {(quickRecordHandlers) => renderAppShell(quickRecordHandlers)}
+          </QuickRecordController>
+        </Suspense>
+      ) : (
+        renderAppShell(emptyQuickRecordHandlers)
+      )}
     </div>
   );
 };

@@ -2,8 +2,45 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
+const manualChunks = (id: string) => {
+  if (!id.includes('node_modules')) return undefined;
+
+  if (id.includes('/react/') || id.includes('/react-dom/')) {
+    return 'react-vendor';
+  }
+
+  if (id.includes('/dexie/') || id.includes('/dexie-react-hooks/')) {
+    return 'dexie-vendor';
+  }
+
+  if (id.includes('/chart.js/') || id.includes('/react-chartjs-2/')) {
+    return 'chart-vendor';
+  }
+
+  if (id.includes('/framer-motion/')) {
+    return 'motion-vendor';
+  }
+
+  if (id.includes('/lucide-react/')) {
+    return 'icon-vendor';
+  }
+
+  if (id.includes('/marked/')) {
+    return 'markdown-vendor';
+  }
+
+  return 'vendor';
+};
+
 // https://vitejs.dev/config/
 export default defineConfig({
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks
+      }
+    }
+  },
   plugins: [
     react(),
     VitePWA({

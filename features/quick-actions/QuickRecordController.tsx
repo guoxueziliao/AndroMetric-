@@ -1,8 +1,6 @@
-import React, { useMemo, useState } from 'react';
+import React, { lazy, Suspense, useMemo, useState } from 'react';
 import type { AlcoholRecord, ExerciseRecord, MasturbationRecordDetails, NapRecord } from '../../domain';
 import { useToast } from '../../contexts/ToastContext';
-import { MasturbationRecordModal, SexRecordModal } from '../sex-life';
-import { AlcoholRecordModal, ExerciseRecordModal, NapRecordModal } from '../daily-log';
 import { getErrorMessage } from '../../shared/lib';
 import FAB from './FAB';
 import { createMasturbationStartRecord } from './model/createMasturbationStartRecord';
@@ -15,11 +13,25 @@ import {
 } from './model/selectors';
 import type { QuickRecordData, QuickRecordHandlers } from './model/types';
 
+const SexRecordModal = lazy(() => import('../sex-life').then((module) => ({ default: module.SexRecordModal })));
+const MasturbationRecordModal = lazy(() => import('../sex-life').then((module) => ({ default: module.MasturbationRecordModal })));
+const ExerciseRecordModal = lazy(() => import('../daily-log').then((module) => ({ default: module.ExerciseRecordModal })));
+const AlcoholRecordModal = lazy(() => import('../daily-log').then((module) => ({ default: module.AlcoholRecordModal })));
+const NapRecordModal = lazy(() => import('../daily-log').then((module) => ({ default: module.NapRecordModal })));
+
 interface QuickRecordControllerProps {
   data: QuickRecordData;
   isEnabled: boolean;
   children: (handlers: QuickRecordHandlers) => React.ReactNode;
 }
+
+const modalFallback = (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/20 backdrop-blur-[2px]">
+    <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-500 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
+      表单加载中...
+    </div>
+  </div>
+);
 
 const QuickRecordController: React.FC<QuickRecordControllerProps> = ({ data, isEnabled, children }) => {
   const { showToast } = useToast();
@@ -165,87 +177,107 @@ const QuickRecordController: React.FC<QuickRecordControllerProps> = ({ data, isE
         />
       )}
 
-      <SexRecordModal
-        isOpen={isQuickSexModalOpen}
-        onClose={() => setIsQuickSexModalOpen(false)}
-        onSave={(record) => wrapAction(async () => {
-          await quickAddSex(record);
-          setIsQuickSexModalOpen(false);
-        }, '性生活记录已添加')}
-        dateStr="现在"
-        data={{
-          logs,
-          partners
-        }}
-      />
+      {isQuickSexModalOpen && (
+        <Suspense fallback={modalFallback}>
+          <SexRecordModal
+            isOpen={isQuickSexModalOpen}
+            onClose={() => setIsQuickSexModalOpen(false)}
+            onSave={(record) => wrapAction(async () => {
+              await quickAddSex(record);
+              setIsQuickSexModalOpen(false);
+            }, '性生活记录已添加')}
+            dateStr="现在"
+            data={{
+              logs,
+              partners
+            }}
+          />
+        </Suspense>
+      )}
 
-      <MasturbationRecordModal
-        isOpen={isQuickMbModalOpen}
-        onClose={() => {
-          setIsQuickMbModalOpen(false);
-          setMbToFinish(null);
-        }}
-        onSave={(record) => wrapAction(async () => {
-          await quickAddMasturbation(record);
-          setIsQuickMbModalOpen(false);
-          setMbToFinish(null);
-        }, '自慰记录已完成')}
-        dateStr="现在"
-        initialData={mbToFinish || undefined}
-        data={{
-          logs,
-          partners,
-          userTags
-        }}
-        actions={{
-          onAddOrUpdateLog: addOrUpdateLog,
-          onAddOrUpdateTag: addOrUpdateTag,
-          onDeleteTag: deleteTag
-        }}
-      />
+      {isQuickMbModalOpen && (
+        <Suspense fallback={modalFallback}>
+          <MasturbationRecordModal
+            isOpen={isQuickMbModalOpen}
+            onClose={() => {
+              setIsQuickMbModalOpen(false);
+              setMbToFinish(null);
+            }}
+            onSave={(record) => wrapAction(async () => {
+              await quickAddMasturbation(record);
+              setIsQuickMbModalOpen(false);
+              setMbToFinish(null);
+            }, '自慰记录已完成')}
+            dateStr="现在"
+            initialData={mbToFinish || undefined}
+            data={{
+              logs,
+              partners,
+              userTags
+            }}
+            actions={{
+              onAddOrUpdateLog: addOrUpdateLog,
+              onAddOrUpdateTag: addOrUpdateTag,
+              onDeleteTag: deleteTag
+            }}
+          />
+        </Suspense>
+      )}
 
-      <ExerciseRecordModal
-        isOpen={isExerciseModalOpen}
-        onClose={() => {
-          setIsExerciseModalOpen(false);
-          setExerciseToFinish(null);
-        }}
-        data={{
-          initialData: exerciseToFinish || undefined,
-          mode: exerciseToFinish ? 'finish' : 'start'
-        }}
-        actions={{
-          onSave: handleSaveExercise
-        }}
-      />
+      {isExerciseModalOpen && (
+        <Suspense fallback={modalFallback}>
+          <ExerciseRecordModal
+            isOpen={isExerciseModalOpen}
+            onClose={() => {
+              setIsExerciseModalOpen(false);
+              setExerciseToFinish(null);
+            }}
+            data={{
+              initialData: exerciseToFinish || undefined,
+              mode: exerciseToFinish ? 'finish' : 'start'
+            }}
+            actions={{
+              onSave: handleSaveExercise
+            }}
+          />
+        </Suspense>
+      )}
 
-      <AlcoholRecordModal
-        isOpen={isAlcoholModalOpen}
-        onClose={() => {
-          setIsAlcoholModalOpen(false);
-          setAlcToFinish(null);
-        }}
-        data={{
-          initialData: alcToFinish || undefined
-        }}
-        actions={{
-          onSave: (record) => wrapAction(async () => { await saveAlcoholRecord(record); }, '饮酒记录已保存')
-        }}
-      />
+      {isAlcoholModalOpen && (
+        <Suspense fallback={modalFallback}>
+          <AlcoholRecordModal
+            isOpen={isAlcoholModalOpen}
+            onClose={() => {
+              setIsAlcoholModalOpen(false);
+              setAlcToFinish(null);
+            }}
+            data={{
+              initialData: alcToFinish || undefined
+            }}
+            actions={{
+              onSave: (record) => wrapAction(async () => { await saveAlcoholRecord(record); }, '饮酒记录已保存')
+            }}
+          />
+        </Suspense>
+      )}
 
-      <NapRecordModal
-        isOpen={isNapModalOpen}
-        onClose={() => {
-          setIsNapModalOpen(false);
-          setNapToFinish(null);
-        }}
-        data={{
-          initialData: napToFinish || undefined
-        }}
-        actions={{
-          onSave: handleSaveNap
-        }}
-      />
+      {isNapModalOpen && (
+        <Suspense fallback={modalFallback}>
+          <NapRecordModal
+            isOpen={isNapModalOpen}
+            onClose={() => {
+              setIsNapModalOpen(false);
+              setNapToFinish(null);
+            }}
+            data={{
+              initialData: napToFinish || undefined
+            }}
+            actions={{
+              onSave: handleSaveNap
+            }}
+          />
+        </Suspense>
+      )}
     </>
   );
 };

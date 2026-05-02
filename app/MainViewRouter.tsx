@@ -12,13 +12,13 @@ import {
   TagType
 } from '../types';
 import BottomNav from './BottomNav';
-import { Dashboard } from '../features/dashboard';
-import { LogForm } from '../features/daily-log';
+import Dashboard from '../features/dashboard/Dashboard';
 import type { AppView, MainView } from './viewTypes';
 
 const MyView = lazy(() => import('../features/profile').then((module) => ({ default: module.MyView })));
 const AnalysisView = lazy(() => import('../features/analysis').then((module) => ({ default: module.AnalysisView })));
 const SexLifeView = lazy(() => import('../features/sex-life').then((module) => ({ default: module.SexLifeView })));
+const LogForm = lazy(() => import('../features/daily-log').then((module) => ({ default: module.LogForm })));
 
 const LoadingFallback = () => (
   <div className="flex flex-col items-center justify-center h-[50vh] text-brand-muted">
@@ -185,22 +185,24 @@ const MainViewRouter: React.FC<MainViewRouterProps> = ({
             </button>
             <h2 className="text-2xl font-black tracking-tight">{editingLogDate ? '编辑记录' : '新记录'}</h2>
           </div>
-          <LogForm
-            data={{
-              existingLog: editingLog,
-              logDate: editingLogDate,
-              logs,
-              partners,
-              userTags
-            }}
-            actions={{
-              onSave: onSaveLog,
-              onDirtyStateChange,
-              onAddOrUpdateLog,
-              onAddOrUpdateTag,
-              onDeleteTag
-            }}
-          />
+          <Suspense fallback={<LoadingFallback />}>
+            <LogForm
+              data={{
+                existingLog: editingLog,
+                logDate: editingLogDate,
+                logs,
+                partners,
+                userTags
+              }}
+              actions={{
+                onSave: onSaveLog,
+                onDirtyStateChange,
+                onAddOrUpdateLog,
+                onAddOrUpdateTag,
+                onDeleteTag
+              }}
+            />
+          </Suspense>
         </main>
       )}
 

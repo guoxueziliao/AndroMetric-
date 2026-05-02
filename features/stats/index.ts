@@ -1,4 +1,3 @@
-export { default as StatsView } from './StatsView';
 export { default as HardnessChart } from './HardnessChart';
 export { StatsEngine, METRICS } from './model/StatsEngine';
 export type { MetricId, MetricConfig, DataPoint } from './model/StatsEngine';
