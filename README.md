@@ -1,76 +1,81 @@
-# 硬度日记 Hardness Diary
+# Hardness Diary
 
-一个本地优先（Local-First）的男性健康追踪 PWA，用来记录睡眠、晨勃、运动、饮酒、性生活与自慰数据，并把零散记录转成可复盘的时间轴、统计图和长期趋势分析。
+Hardness Diary is a privacy-first, local-first PWA for tracking male health signals and related lifestyle factors. It stores data in IndexedDB via Dexie, runs offline, and focuses on turning fragmented daily inputs into timelines, trends, and practical self-observation.
 
-这不是一个静态 demo，而是一个持续迭代中的真实产品项目。我使用 Codex、OpenCode 等 Agent 工具参与需求拆解、代码修改、构建修复、依赖处理、类型修复与发布验证，把 AI 直接用在工程交付链路里。
+## What It Does
 
-## 在线演示
+- Tracks morning wood, sleep, mood, stress, exercise, alcohol, caffeine, sex, and masturbation logs
+- Organizes records around a physiological day, where entries before `03:00` belong to the previous day
+- Shows dashboard summaries, calendar heatmaps, timelines, and statistical views
+- Supports partner profiles, tag management, backup/version history, and PWA install/update prompts
+- Keeps data on-device by default with JSON export and local recovery workflows
 
-- Demo：待补充
-- GitHub：当前仓库
+## Stack
 
-## 项目亮点
-
-- 本地优先：核心数据存储在浏览器 IndexedDB（Dexie），默认不依赖云端
-- 可离线使用：支持 PWA 安装与离线访问
-- 多维记录：覆盖睡眠、晨勃、饮酒、运动、性爱、自慰、伴侣档案
-- 可复盘分析：提供全局时间轴、统计视图、标签体检、数据质量检查
-- 数据安全：支持 JSON 导出、快照回滚、自动备份
-- 工程完整度：包含数据迁移、严格 TypeScript、构建发布链路和线上部署问题修复
-
-## Agent 在项目中的作用
-
-这个项目里，Agent 不是用来生成一段示例代码，而是直接参与真实开发流程：
-
-- 阅读和理解现有 React + TypeScript + Dexie 代码库
-- 修复空值边界、类型错误、构建失败和依赖缺失
-- 协助补齐自动备份、PWA 交互、数据迁移等功能
-- 配合 GitHub 提交、远端同步和发布验证
-- 在 Vercel 构建失败时定位并修复依赖声明问题
-
-最终的产品判断、功能取舍和代码合并由我完成，Agent 负责提升检索、实现、调试和验证效率。
-
-## 核心能力
-
-- 晨勃与睡眠追踪：记录硬度、维持时间、睡眠起止与梦境信息
-- 生活方式记录：饮酒、咖啡因、运动、压力、心情等影响因子
-- 性生活与自慰日志：支持多伴侣、多阶段互动链、素材与标签记录
-- 全局时间轴：将睡眠、咖啡因、运动、性活动串成可视化生活流
-- 标签系统：支持标签管理、体检、语义校验与偏好统计
-- 统计分析：趋势、相关性、XP 雷达、数据质量评分
-- 数据安全：快照回滚、通用 JSON 导出、本地自动备份
-
-## 技术栈
-
-- React
-- TypeScript
+- React 18
+- TypeScript with `strict: true`
 - Vite
-- Dexie / IndexedDB
-- PWA
+- Dexie + IndexedDB
+- vite-plugin-pwa
 - Chart.js
 - Framer Motion
+- Vitest
 
-## 当前版本
+## Project Structure
 
-当前仓库版本为 `v0.0.7`，正在围绕数据安全、交互体验、统计分析和本地备份能力持续迭代。
+```text
+.
+├── app/                 # App shell, routing, bootstrap, providers
+├── features/            # Domain features such as dashboard, daily log, stats, PWA
+├── shared/              # Shared UI primitives and pure helpers
+├── core/                # Infrastructure and storage adapters
+├── domain/              # Domain-facing exports and rules
+├── services/            # Backup, logging, storage, plugin management
+├── hooks/               # Cross-cutting React hooks
+├── contexts/            # Data and toast contexts
+├── tests/               # Vitest coverage for core flows and model logic
+├── docs/architecture.md # Ongoing architecture/refactor notes
+├── db.ts                # Dexie schema
+└── types.ts             # Main TypeScript data model
+```
 
-## 快速开始
+## Core Areas
+
+- `features/dashboard`: home views, calendar heatmap, global timeline, log history
+- `features/daily-log`: main daily form and lifestyle record modals
+- `features/sex-life`: partner management, sex records, masturbation records
+- `features/stats`: charts, scoring, insights, derived analysis
+- `features/backup`: local backup settings and version history
+- `features/pwa`: install prompt, update prompt, offline UI
+
+## Development
+
+Requirements:
+
+- Node.js `24` from `.nvmrc`
+
+Install and run:
 
 ```bash
 npm install
 npm run dev
 ```
 
-生产构建：
+Build and test:
 
 ```bash
 npm run build
+npm run test
 ```
 
-## 文档入口
+## Engineering Notes
 
-- [用户使用手册](USER_MANUAL.md)
+- Build output is generated into `dist/` and is not treated as source
+- The app is local-first; there is no cloud sync in the current architecture
+- Database schema changes must be paired with migration updates in [`utils/migration.ts`](utils/migration.ts)
+- Large feature work should prefer the current `app/ + features/ + shared/` structure over reviving legacy `components/`
 
-## 为什么做这个项目
+## Documentation
 
-我希望做一个真正有长期使用价值、又能充分体现 Agent 工程协作能力的项目：它既展示产品意识，也展示我把 AI 工具用于真实软件开发、调试、迭代和发布的能力。
+- Architecture notes: [`docs/architecture.md`](docs/architecture.md)
+- Agent guidance for contributors: [`AGENTS.md`](AGENTS.md)
