@@ -1,2 +1,2 @@
 export type AppView = 'dashboard' | 'form';
-export type MainView = 'calendar' | 'stats' | 'sexlife' | 'my';
+export type MainView = 'calendar' | 'state' | 'sexlife' | 'my';

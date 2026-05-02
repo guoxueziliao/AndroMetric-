@@ -1,11 +1,11 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { 
-  Calendar, BarChart3, Heart, User, Settings,
+  Calendar, Activity, Heart, User, Settings,
   ChevronLeft, ChevronRight
 } from 'lucide-react';
 
-export type NavItem = 'calendar' | 'stats' | 'sexlife' | 'my';
+export type NavItem = 'calendar' | 'state' | 'sexlife' | 'my';
 
 interface SidebarNavProps {
   activeItem: NavItem;
@@ -16,7 +16,7 @@ interface SidebarNavProps {
 
 const navItems: { id: NavItem; label: string; icon: typeof Calendar }[] = [
   { id: 'calendar', label: '日历', icon: Calendar },
-  { id: 'stats', label: '统计', icon: BarChart3 },
+  { id: 'state', label: '状态', icon: Activity },
   { id: 'sexlife', label: '性生活', icon: Heart },
   { id: 'my', label: '我的', icon: User },
 ];

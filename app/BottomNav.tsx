@@ -1,8 +1,8 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Calendar, BarChart3, User, HeartHandshake } from 'lucide-react';
+import { Activity, Calendar, User, HeartHandshake } from 'lucide-react';
 
-type ActiveView = 'calendar' | 'stats' | 'sexlife' | 'my';
+type ActiveView = 'calendar' | 'state' | 'sexlife' | 'my';
 
 interface BottomNavProps {
   activeView: ActiveView;
@@ -60,10 +60,10 @@ const BottomNav: React.FC<BottomNavProps> = ({ activeView, onViewChange }) => {
           onClick={() => onViewChange('calendar')}
         />
         <NavItem
-          icon={BarChart3}
-          label="统计"
-          isActive={activeView === 'stats'}
-          onClick={() => onViewChange('stats')}
+          icon={Activity}
+          label="状态"
+          isActive={activeView === 'state'}
+          onClick={() => onViewChange('state')}
         />
         <NavItem
           icon={HeartHandshake}
