@@ -130,13 +130,39 @@ const StatsView: React.FC<StatsViewProps> = ({ isDarkMode, logs: rawLogs }) => {
 
     const stats = useMemo(() => {
         const hardnessSeries = statsEngine.getSeries('hardness');
+        const sleepSeries = statsEngine.getSeries('sleep');
+        const exerciseSeries = statsEngine.getSeries('exercise');
+        const screenTimeSeries = statsEngine.getSeries('screenTime');
+        const healthScoreSeries = statsEngine.getSeries('healthScore');
         const labels = hardnessSeries.map(d => `${new Date(d.date).getMonth() + 1}/${new Date(d.date).getDate()}`);
         const hardnessSMA = statsEngine.getSMA('hardness', 7);
         const comparisonData = statsEngine.getSeries(trendComparison).map(d => d.value);
         const hardnessDist = [0,0,0,0,0];
         displayLogs.forEach(l => { if(l.morning?.wokeWithErection && l.morning.hardness) hardnessDist[l.morning.hardness - 1]++; });
         const avgH = hardnessSeries.reduce((a,b)=>a+b.value,0) / (hardnessSeries.length || 1);
-        return { trends: { labels, hardnessSMA, comparisonData }, kpis: { avgHardness: avgH.toFixed(1), totalActivity: displayLogs.reduce((a,b) => a + (b.sex?.length||0) + (b.masturbation?.length||0), 0) }, hardnessDist };
+        const avgSleep = sleepSeries.length > 0 ? sleepSeries.reduce((sum, item) => sum + item.value, 0) / sleepSeries.length : 0;
+        const avgHealthScore = healthScoreSeries.filter(item => item.value > 0);
+        const avgScreenTime = screenTimeSeries.length > 0 ? screenTimeSeries.reduce((sum, item) => sum + item.value, 0) / screenTimeSeries.length : 0;
+
+        return {
+            trends: {
+                labels,
+                hardnessSMA,
+                comparisonData,
+                sleepSeries: sleepSeries.map(item => item.value),
+                exerciseSeries: exerciseSeries.map(item => item.value),
+                screenTimeSeries: screenTimeSeries.map(item => item.value),
+                healthScoreSeries: healthScoreSeries.map(item => item.value > 0 ? item.value : null)
+            },
+            kpis: {
+                avgHardness: avgH.toFixed(1),
+                totalActivity: displayLogs.reduce((a,b) => a + (b.sex?.length||0) + (b.masturbation?.length||0), 0),
+                avgSleep: avgSleep.toFixed(1),
+                avgScreenTime: avgScreenTime.toFixed(1),
+                avgHealthScore: avgHealthScore.length > 0 ? (avgHealthScore.reduce((sum, item) => sum + item.value, 0) / avgHealthScore.length).toFixed(0) : '--'
+            },
+            hardnessDist
+        };
     }, [displayLogs, trendComparison, statsEngine]);
 
     const comparisonConfig = useMemo(() => {
@@ -162,6 +188,8 @@ const StatsView: React.FC<StatsViewProps> = ({ isDarkMode, logs: rawLogs }) => {
                         <div className="grid grid-cols-2 gap-3">
                             <KPICard label="硬度评分" value={stats.kpis.avgHardness} icon={Zap} colorClass="text-brand-accent dark:text-blue-400"/>
                             <KPICard label="近期活跃" value={stats.kpis.totalActivity} unit="次" icon={Activity} colorClass="text-pink-500 dark:text-pink-400"/>
+                            <KPICard label="平均睡眠" value={stats.kpis.avgSleep} unit="h" icon={TrendingUp} colorClass="text-blue-500 dark:text-blue-400"/>
+                            <KPICard label="健康分" value={stats.kpis.avgHealthScore} unit="分" icon={CheckCircle} colorClass="text-emerald-500 dark:text-emerald-400"/>
                         </div>
                         <ChartCard title="趋势对比分析" icon={TrendingUp} subtext="均线：硬度等级 | 柱状：对比指标">
                             <div className="w-full h-[250px]">
@@ -181,6 +209,49 @@ const StatsView: React.FC<StatsViewProps> = ({ isDarkMode, logs: rawLogs }) => {
                                             y1: { position: 'right', display: true, min: 0, max: comparisonConfig.yMax, grid: {display:false}, ticks: {color: theme.text, font: {size: 10}} } 
                                         } 
                                     } as any} 
+                                />
+                            </div>
+                        </ChartCard>
+                        <ChartCard title="睡眠 / 运动 / 屏幕时间" icon={Activity} subtext="P1 基础统计">
+                            <div className="w-full h-[250px]">
+                                <Bar
+                                    data={{
+                                        labels: stats.trends.labels,
+                                        datasets: [
+                                            { label: '睡眠(h)', data: stats.trends.sleepSeries as any, backgroundColor: 'rgba(59, 130, 246, 0.55)', borderRadius: 4 },
+                                            { label: '运动(min)', data: stats.trends.exerciseSeries as any, backgroundColor: 'rgba(16, 185, 129, 0.55)', borderRadius: 4 },
+                                            { label: '屏幕(h)', data: stats.trends.screenTimeSeries as any, backgroundColor: 'rgba(249, 115, 22, 0.55)', borderRadius: 4 }
+                                        ]
+                                    } as any}
+                                    options={commonOptions as any}
+                                />
+                            </div>
+                        </ChartCard>
+                        <ChartCard title="健康分走势" icon={BrainCircuit} subtext="缺失记录不参与评分">
+                            <div className="w-full h-[250px]">
+                                <Line
+                                    data={{
+                                        labels: stats.trends.labels,
+                                        datasets: [
+                                            {
+                                                label: '健康分',
+                                                data: stats.trends.healthScoreSeries as any,
+                                                borderColor: '#10b981',
+                                                backgroundColor: 'rgba(16, 185, 129, 0.12)',
+                                                borderWidth: 3,
+                                                pointRadius: 3,
+                                                tension: 0.35,
+                                                fill: true
+                                            }
+                                        ]
+                                    } as any}
+                                    options={{
+                                        ...commonOptions,
+                                        scales: {
+                                            ...commonOptions.scales,
+                                            y: { ...commonOptions.scales.y, min: 0, max: 100 }
+                                        }
+                                    } as any}
                                 />
                             </div>
                         </ChartCard>

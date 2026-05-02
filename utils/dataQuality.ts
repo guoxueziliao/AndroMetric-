@@ -35,6 +35,10 @@ const SCALAR_FIELD_PATHS = [
     'health.discomfortLevel',
     'health.symptoms',
     'health.medications',
+    'screenTime.totalMinutes',
+    'screenTime.notes',
+    'menstrual.status',
+    'menstrual.notes',
     'location',
     'weather',
     'mood',
@@ -52,7 +56,8 @@ const ARRAY_ROOT_PATHS = [
     'sex',
     'masturbation',
     'alcoholRecords',
-    'caffeineRecord.items'
+    'caffeineRecord.items',
+    'supplements'
 ] as const;
 
 const DISPLAY_DEFAULT_PATHS = new Set<string>([
@@ -216,6 +221,15 @@ const addArrayItemQualities = (
         source,
         now
     ));
+
+    (log.supplements || []).forEach((record) => addRecordFields(
+        fields,
+        'supplements',
+        record as unknown as UnknownRecord,
+        ['name', 'taken', 'notes'],
+        source,
+        now
+    ));
 };
 
 export const buildDataQualityForLog = (
@@ -274,7 +288,7 @@ const markTouchedPath = (
         fields['morning.wokenByErection'] = fieldQuality('none', source, now);
     }
 
-    if (path === 'exercise' || path === 'sex' || path === 'masturbation' || path === 'alcoholRecords' || path === 'sleep.naps' || path === 'caffeineRecord.items') {
+    if (path === 'exercise' || path === 'sex' || path === 'masturbation' || path === 'alcoholRecords' || path === 'sleep.naps' || path === 'caffeineRecord.items' || path === 'supplements') {
         const generated = buildDataQualityForLog(log, source, now).fields;
         Object.entries(generated).forEach(([generatedPath, quality]) => {
             if (generatedPath === path || generatedPath.startsWith(`${path}.`)) {
@@ -339,6 +353,16 @@ const pruneEmptyObjects = (log: LogEntry) => {
     const health = log.health as unknown as UnknownRecord | undefined;
     if (health && !hasFieldValue(health.isSick) && !hasFieldValue(health.discomfortLevel) && !hasFieldValue(health.symptoms) && !hasFieldValue(health.medications)) {
         delete log.health;
+    }
+
+    const screenTime = log.screenTime as unknown as UnknownRecord | undefined;
+    if (screenTime && !hasFieldValue(screenTime.totalMinutes) && !hasFieldValue(screenTime.notes)) {
+        delete log.screenTime;
+    }
+
+    const menstrual = log.menstrual as unknown as UnknownRecord | undefined;
+    if (menstrual && !hasFieldValue(menstrual.status) && !hasFieldValue(menstrual.notes)) {
+        delete log.menstrual;
     }
 };
 

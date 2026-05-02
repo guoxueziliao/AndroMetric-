@@ -4,7 +4,7 @@ import { buildDataQualityForLog } from './dataQuality';
 import { scrubHistoricalDefaultContamination } from './legacyDataCleanup';
 
 // The latest version of our data structure.
-export const LATEST_VERSION = 41;
+export const LATEST_VERSION = 42;
 
 /**
  * MIGRATION UTILITIES
@@ -328,6 +328,16 @@ function migrateV40toV41(logs: any[]): LogEntry[] {
   return logs.map((log: LogEntry) => scrubHistoricalDefaultContamination(log, 'migration').log);
 }
 
+// V42: Initialize P1 dashboard fields
+function migrateV41toV42(logs: any[]): LogEntry[] {
+  return logs.map((log: LogEntry) => ({
+    ...log,
+    screenTime: log.screenTime ?? null,
+    supplements: Array.isArray(log.supplements) ? log.supplements : [],
+    menstrual: log.menstrual ?? null
+  }));
+}
+
 /**
  * REPAIR UTILS
  */
@@ -371,7 +381,8 @@ const MIGRATION_REGISTRY: Record<number, (logs: any[]) => any[]> = {
     38: migrateV37toV38,
     39: migrateV38toV39,
     40: migrateV39toV40,
-    41: migrateV40toV41
+    41: migrateV40toV41,
+    42: migrateV41toV42
 };
 
 export function runMigrations(data: any): StoredData {

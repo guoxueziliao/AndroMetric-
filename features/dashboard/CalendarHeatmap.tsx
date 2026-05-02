@@ -2,11 +2,13 @@ import React, { useState, useMemo, useRef, useEffect } from 'react';
 import type { LogEntry } from '../../domain';
 import { ChevronLeft, ChevronRight, Zap, Dumbbell, Moon, Clock, BatteryWarning, TrendingUp, TrendingDown, Minus, Calendar as CalendarIcon, SunMedium, Hand, Heart, Beer, ShieldAlert, Film, BrainCircuit } from 'lucide-react';
 import { analyzeSleep, calculateDataQuality } from '../../shared/lib';
+import { type HeatmapMetric, formatMinutes, getHeatmapMetricValue } from './model/p1Summary';
 
 interface ActivityCalendarProps {
     logs: LogEntry[];
     onDateClick?: (date: string) => void;
     children?: React.ReactNode;
+    mode?: 'full' | 'monthOnly';
 }
 
 interface DashItemProps {
@@ -19,6 +21,15 @@ interface DashItemProps {
 
 type FilterType = 'all' | 'morning_wood' | 'sex' | 'masturbation' | 'sick' | 'alcohol' | 'porn' | 'exercise' | 'stress' | 'good_sleep' | 'late_sleep' | 'insufficient_sleep';
 type TimeScope = 'today' | 'week' | 'month' | 'year';
+
+const METRIC_OPTIONS: Array<{ id: HeatmapMetric; label: string }> = [
+    { id: 'healthScore', label: '健康分' },
+    { id: 'hardness', label: '硬度' },
+    { id: 'sleep', label: '睡眠' },
+    { id: 'exercise', label: '运动' },
+    { id: 'sexLoad', label: '性负荷' },
+    { id: 'dataQuality', label: '完整度' }
+];
 
 const FILTERS: { id: FilterType; label: string; icon?: React.ElementType }[] = [
     { id: 'all', label: '全部' },
@@ -72,7 +83,7 @@ const getVisualsForCompleted = (level: number) => {
     }
 };
 
-const CalendarHeatmap: React.FC<ActivityCalendarProps> = ({ logs, onDateClick, children }) => {
+const CalendarHeatmap: React.FC<ActivityCalendarProps> = ({ logs, onDateClick, children, mode = 'full' }) => {
     const [currentDate, setCurrentDate] = useState(() => {
         try {
             const saved = localStorage.getItem('calendar_viewing_month');
@@ -86,6 +97,7 @@ const CalendarHeatmap: React.FC<ActivityCalendarProps> = ({ logs, onDateClick, c
 
     const [activeFilter, setActiveFilter] = useState<FilterType>('all');
     const [activeScope, setActiveScope] = useState<TimeScope>('month');
+    const [activeMetric, setActiveMetric] = useState<HeatmapMetric>('healthScore');
     const touchStart = useRef<number | null>(null);
     const touchEnd = useRef<number | null>(null);
     const minSwipeDistance = 50;
@@ -126,14 +138,16 @@ const CalendarHeatmap: React.FC<ActivityCalendarProps> = ({ logs, onDateClick, c
         }
     };
 
+    const effectiveScope = mode === 'monthOnly' ? 'month' : activeScope;
+
     const calendarDays = useMemo(() => {
         const fullMonthDays = getCalendarDays(currentDate);
         
-        if (activeScope === 'month' || activeScope === 'year') {
+        if (effectiveScope === 'month' || effectiveScope === 'year') {
             return fullMonthDays;
         }
 
-        if (activeScope === 'today' || activeScope === 'week') {
+        if (effectiveScope === 'today' || effectiveScope === 'week') {
             // 获取当前 currentDate 所在周的 7 天
             const startOfWeek = new Date(currentDate);
             const day = startOfWeek.getDay();
@@ -151,7 +165,7 @@ const CalendarHeatmap: React.FC<ActivityCalendarProps> = ({ logs, onDateClick, c
         }
 
         return fullMonthDays;
-    }, [currentDate, activeScope]);
+    }, [currentDate, effectiveScope]);
     
     const dateInfo = useMemo(() => {
         const year = currentDate.getFullYear();
@@ -159,10 +173,10 @@ const CalendarHeatmap: React.FC<ActivityCalendarProps> = ({ logs, onDateClick, c
         const day = String(currentDate.getDate()).padStart(2, '0');
         const weekday = currentDate.toLocaleDateString('zh-CN', { weekday: 'short' });
         return {
-            full: activeScope === 'month' ? `${year}/${month}` : `${year}/${month}/${day}`,
+            full: effectiveScope === 'month' ? `${year}/${month}` : `${year}/${month}/${day}`,
             weekday
         };
-    }, [currentDate, activeScope]);
+    }, [currentDate, effectiveScope]);
 
     const handleScopeChange = (scope: TimeScope) => {
         setActiveScope(scope);
@@ -183,15 +197,70 @@ const CalendarHeatmap: React.FC<ActivityCalendarProps> = ({ logs, onDateClick, c
             if (l) monthLogEntries.push(l);
         }
 
-        const validHardnessLogs = monthLogEntries.filter(l => l.morning?.wokeWithErection && l.morning.hardness);
-        const avgHardness = validHardnessLogs.length ? validHardnessLogs.reduce((a,b) => a + (b.morning?.hardness||0), 0) / validHardnessLogs.length : 0;
-        
-        const morningWoodRate = monthLogEntries.length > 0 ? Math.round((validHardnessLogs.length / monthLogEntries.length) * 100) : 0;
-        const masturbationCount = monthLogEntries.reduce((acc, l) => acc + (l.masturbation?.length || 0), 0);
-        const sexCount = monthLogEntries.reduce((acc, l) => acc + (l.sex?.length || 0), 0);
+        const metricValues = monthLogEntries
+            .map((log) => getHeatmapMetricValue(log, activeMetric))
+            .filter((value): value is number => value !== null);
+        const averageMetric = metricValues.length > 0
+            ? metricValues.reduce((sum, value) => sum + value, 0) / metricValues.length
+            : 0;
+        const totalExercise = monthLogEntries.reduce((sum, log) => sum + (log.exercise || []).reduce((acc, item) => acc + (item.duration || 0), 0), 0);
+        const avgSleep = monthLogEntries
+            .map((log) => analyzeSleep(log.sleep?.startTime, log.sleep?.endTime)?.durationHours || null)
+            .filter((value): value is number => value !== null);
+        const avgScreenMinutes = monthLogEntries
+            .map((log) => log.screenTime?.totalMinutes || null)
+            .filter((value): value is number => value !== null);
 
-        return { avgHardness: avgHardness.toFixed(1), morningWoodRate, masturbationCount, sexCount, trend: 0 };
-    }, [currentDate, logsMap]);
+        return {
+            averageMetric,
+            exerciseMinutes: totalExercise,
+            avgSleepHours: avgSleep.length > 0 ? avgSleep.reduce((sum, value) => sum + value, 0) / avgSleep.length : 0,
+            avgScreenMinutes: avgScreenMinutes.length > 0 ? avgScreenMinutes.reduce((sum, value) => sum + value, 0) / avgScreenMinutes.length : 0
+        };
+    }, [activeMetric, currentDate, logsMap]);
+
+    const getMetricVisuals = (metric: HeatmapMetric, value: number | null) => {
+        if (value === null) {
+            return { bg: 'bg-slate-50 dark:bg-slate-800', border: 'border-slate-200 dark:border-slate-700', text: 'text-slate-400', score: 'text-slate-500', label: '--' };
+        }
+
+        if (metric === 'hardness') {
+            const visuals = getVisualsForCompleted(Math.round(value));
+            return { ...visuals, label: `${Math.round(value)}` };
+        }
+
+        const normalized = metric === 'sleep'
+            ? clampValue(value / 9)
+            : metric === 'exercise'
+                ? clampValue(value / 60)
+                : metric === 'sexLoad'
+                    ? clampValue(value / 4)
+                    : clampValue(value / 100);
+
+        const level = normalized > 0.8 ? 4 : normalized > 0.6 ? 3 : normalized > 0.35 ? 2 : 1;
+
+        if (metric === 'sexLoad') {
+            const tone = level >= 4
+                ? { bg: 'bg-rose-50 dark:bg-rose-900/25', border: 'border-rose-200 dark:border-rose-800', text: 'text-rose-500', score: 'text-rose-600 dark:text-rose-400' }
+                : level === 3
+                    ? { bg: 'bg-orange-50 dark:bg-orange-900/25', border: 'border-orange-200 dark:border-orange-800', text: 'text-orange-500', score: 'text-orange-600 dark:text-orange-400' }
+                    : { bg: 'bg-emerald-50 dark:bg-emerald-900/25', border: 'border-emerald-200 dark:border-emerald-800', text: 'text-emerald-500', score: 'text-emerald-600 dark:text-emerald-400' };
+            return { ...tone, label: value.toFixed(1) };
+        }
+
+        const palette = level >= 4
+            ? { bg: 'bg-emerald-50 dark:bg-emerald-900/25', border: 'border-emerald-200 dark:border-emerald-800', text: 'text-emerald-500', score: 'text-emerald-600 dark:text-emerald-400' }
+            : level === 3
+                ? { bg: 'bg-blue-50 dark:bg-blue-900/25', border: 'border-blue-200 dark:border-blue-800', text: 'text-blue-500', score: 'text-blue-600 dark:text-blue-400' }
+                : level === 2
+                    ? { bg: 'bg-amber-50 dark:bg-amber-900/25', border: 'border-amber-200 dark:border-amber-800', text: 'text-amber-500', score: 'text-amber-600 dark:text-amber-400' }
+                    : { bg: 'bg-slate-50 dark:bg-slate-800', border: 'border-slate-200 dark:border-slate-700', text: 'text-slate-400', score: 'text-slate-500' };
+
+        return {
+            ...palette,
+            label: metric === 'sleep' ? value.toFixed(1) : metric === 'exercise' ? `${Math.round(value)}` : `${Math.round(value)}`
+        };
+    };
 
     const renderCell = (day: Date | null, index: number) => {
         if (!day) return <div key={`empty-${index}`} className="aspect-square"></div>;
@@ -202,6 +271,7 @@ const CalendarHeatmap: React.FC<ActivityCalendarProps> = ({ logs, onDateClick, c
         
         let status: 'empty' | 'draft' | 'completed' = 'empty';
         let qualityScore = 0;
+        const metricValue = getHeatmapMetricValue(log, activeMetric);
         
         let isSick = false;
         let isStressed = false;
@@ -246,8 +316,7 @@ const CalendarHeatmap: React.FC<ActivityCalendarProps> = ({ logs, onDateClick, c
             dateClass = "text-yellow-700 dark:text-yellow-500 font-medium";
             scoreClass = "text-yellow-600/50 dark:text-yellow-500/50 text-[9px]";
         } else if (status === 'completed') {
-            const level = log?.morning?.wokeWithErection ? (log?.morning?.hardness || 3) : 0;
-            const visuals = getVisualsForCompleted(level);
+            const visuals = getMetricVisuals(activeMetric, metricValue);
             containerClass = `${visuals.bg} ${visuals.border}`;
             dateClass = visuals.text;
             scoreClass = `${visuals.score} text-[10px] font-black`;
@@ -273,7 +342,7 @@ const CalendarHeatmap: React.FC<ActivityCalendarProps> = ({ logs, onDateClick, c
                     )}
                 </div>
                 <div className="flex justify-end items-end mr-0.5 mb-0.5">
-                    {status !== 'empty' && <span className={`leading-none ${scoreClass}`}>{qualityScore}</span>}
+                    {status !== 'empty' && <span className={`leading-none ${scoreClass}`}>{metricValue !== null ? getMetricVisuals(activeMetric, metricValue).label : qualityScore}</span>}
                 </div>
             </div>
         );
@@ -309,7 +378,7 @@ const CalendarHeatmap: React.FC<ActivityCalendarProps> = ({ logs, onDateClick, c
                     
                     <div className="relative flex flex-col items-start px-2 min-w-[90px]">
                         <span className="text-[10px] font-bold text-slate-400 leading-tight">
-                            {activeScope === 'month' ? '月度视图' : dateInfo.weekday}
+                            {effectiveScope === 'month' ? '月度视图' : dateInfo.weekday}
                         </span>
                         <div className="flex items-center gap-1.5">
                             <span className="text-sm font-black text-brand-text dark:text-slate-100 tracking-tight">
@@ -335,43 +404,63 @@ const CalendarHeatmap: React.FC<ActivityCalendarProps> = ({ logs, onDateClick, c
                     </button>
                 </div>
                 
-                <div className="flex items-center bg-slate-100 dark:bg-slate-800/80 p-1 rounded-full border border-slate-200 dark:border-slate-700">
-                    {TIME_SCOPES.map(scope => (
+                {mode === 'full' && (
+                    <div className="flex items-center bg-slate-100 dark:bg-slate-800/80 p-1 rounded-full border border-slate-200 dark:border-slate-700">
+                        {TIME_SCOPES.map(scope => (
+                            <button
+                                key={scope.id}
+                                onClick={() => handleScopeChange(scope.id)}
+                                className={`px-2.5 py-1.5 rounded-full text-[10px] font-black transition-all ${
+                                    activeScope === scope.id
+                                    ? 'bg-white dark:bg-slate-700 text-brand-text dark:text-slate-100 shadow-sm scale-105'
+                                    : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+                                }`}
+                            >
+                                {scope.label}
+                            </button>
+                        ))}
+                    </div>
+                )}
+            </div>
+
+            {mode === 'full' ? (
+                <div className="flex gap-2 overflow-x-auto scrollbar-hide px-1 pb-1">
+                    {FILTERS.map(f => {
+                        const isActive = activeFilter === f.id;
+                        const Icon = f.icon;
+                        return (
+                            <button
+                                key={f.id}
+                                onClick={() => setActiveFilter(f.id)}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap border ${
+                                isActive
+                                ? 'bg-brand-accent text-white border-brand-accent shadow-sm'
+                                    : 'bg-white dark:bg-slate-900 text-slate-500 border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800'
+                                }`}
+                            >
+                                {Icon && <Icon size={12}/>}
+                                {f.label}
+                            </button>
+                        );
+                    })}
+                </div>
+            ) : (
+                <div className="flex gap-2 overflow-x-auto scrollbar-hide px-1 pb-1">
+                    {METRIC_OPTIONS.map(option => (
                         <button
-                            key={scope.id}
-                            onClick={() => handleScopeChange(scope.id)}
-                            className={`px-2.5 py-1.5 rounded-full text-[10px] font-black transition-all ${
-                                activeScope === scope.id 
-                                ? 'bg-white dark:bg-slate-700 text-brand-text dark:text-slate-100 shadow-sm scale-105' 
-                                : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+                            key={option.id}
+                            onClick={() => setActiveMetric(option.id)}
+                            className={`rounded-full border px-3 py-1.5 text-xs font-bold whitespace-nowrap transition-all ${
+                                activeMetric === option.id
+                                    ? 'bg-brand-accent text-white border-brand-accent shadow-sm'
+                                    : 'bg-white dark:bg-slate-900 text-slate-500 border-slate-200 dark:border-slate-800'
                             }`}
                         >
-                            {scope.label}
+                            {option.label}
                         </button>
                     ))}
                 </div>
-            </div>
-            
-            <div className="flex gap-2 overflow-x-auto scrollbar-hide px-1 pb-1">
-                {FILTERS.map(f => {
-                    const isActive = activeFilter === f.id;
-                    const Icon = f.icon;
-                    return (
-                        <button
-                            key={f.id}
-                            onClick={() => setActiveFilter(f.id)}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap border ${
-                                isActive 
-                                ? 'bg-brand-accent text-white border-brand-accent shadow-sm' 
-                                : 'bg-white dark:bg-slate-900 text-slate-500 border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800'
-                            }`}
-                        >
-                            {Icon && <Icon size={12}/>}
-                            {f.label}
-                        </button>
-                    );
-                })}
-            </div>
+            )}
             
             <div className="touch-pan-y" onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
                 <div className="grid grid-cols-7 gap-2 mb-3 text-center px-1">
@@ -386,18 +475,20 @@ const CalendarHeatmap: React.FC<ActivityCalendarProps> = ({ logs, onDateClick, c
             
             <div className="grid grid-cols-2 gap-3 mt-4">
                 <DashItem 
-                    label="平均硬度" 
+                    label="月均指标"
                     icon={Zap} 
-                    value={monthlyStats.avgHardness} 
-                    sub={<span className={`flex items-center ${monthlyStats.trend > 0 ? 'text-green-500' : monthlyStats.trend < 0 ? 'text-red-500' : 'text-slate-400'}`}>{monthlyStats.trend > 0 ? <TrendingUp size={10} className="mr-1"/> : monthlyStats.trend < 0 ? <TrendingDown size={10} className="mr-1"/> : <Minus size={10} className="mr-1"/>}稳定</span>} 
+                    value={monthlyStats.averageMetric > 0 ? (activeMetric === 'sleep' ? monthlyStats.averageMetric.toFixed(1) : Math.round(monthlyStats.averageMetric)) : '--'}
+                    sub={<span className="flex items-center text-slate-400">{activeMetric === 'healthScore' ? <TrendingUp size={10} className="mr-1"/> : <Minus size={10} className="mr-1"/>}{METRIC_OPTIONS.find(item => item.id === activeMetric)?.label}</span>}
                     colorClass="text-brand-accent dark:text-blue-400"
                 />
-                <DashItem label="晨勃率" icon={SunMedium} value={`${monthlyStats.morningWoodRate}%`} sub="出现概率" colorClass="text-blue-500 dark:text-blue-400"/>
-                <DashItem label="自慰次数" icon={Hand} value={`${monthlyStats.masturbationCount}次`} sub="周期总计" colorClass="text-purple-500 dark:text-purple-400"/>
-                <DashItem label="性爱次数" icon={Heart} value={`${monthlyStats.sexCount}次`} sub="High Quality" colorClass="text-pink-500 dark:text-pink-400"/>
+                <DashItem label="平均睡眠" icon={Moon} value={monthlyStats.avgSleepHours > 0 ? `${monthlyStats.avgSleepHours.toFixed(1)}h` : '--'} sub="夜间睡眠" colorClass="text-blue-500 dark:text-blue-400"/>
+                <DashItem label="运动总量" icon={Dumbbell} value={monthlyStats.exerciseMinutes > 0 ? `${monthlyStats.exerciseMinutes}分` : '--'} sub="月内累计" colorClass="text-emerald-500 dark:text-emerald-400"/>
+                <DashItem label="屏幕时间" icon={BrainCircuit} value={monthlyStats.avgScreenMinutes > 0 ? formatMinutes(Math.round(monthlyStats.avgScreenMinutes)) : '--'} sub="日均时长" colorClass="text-purple-500 dark:text-purple-400"/>
             </div>
         </div>
     );
 };
 
 export default React.memo(CalendarHeatmap);
+
+const clampValue = (value: number) => Math.min(1, Math.max(0, value));

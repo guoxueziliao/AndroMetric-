@@ -192,6 +192,18 @@ export const flattenLogsToEvents = (logs: LogEntry[]): UnifiedEvent[] => {
                 [log.health.illnessType || 'sick']
             ));
         }
+
+        if (log.screenTime && typeof log.screenTime.totalMinutes === 'number' && log.screenTime.totalMinutes > 0) {
+            events.push(createEvent(
+                'screen_time',
+                log.date,
+                dateBase,
+                { duration: log.screenTime.totalMinutes / 60, value: log.screenTime.totalMinutes },
+                { isGood: log.screenTime.totalMinutes <= 240 },
+                [log.screenTime.source],
+                'screenTime'
+            ));
+        }
     });
 
     return events.sort((a, b) => a.timestamp - b.timestamp);

@@ -79,6 +79,26 @@ export interface Health {
     medications: string[];
 }
 
+export interface ScreenTimeRecord {
+    totalMinutes: number;
+    source: 'manual' | 'imported';
+    notes?: string;
+}
+
+export interface SupplementRecord {
+    id: string;
+    name: string;
+    taken: boolean;
+    notes?: string;
+}
+
+export type MenstrualStatus = 'unknown' | 'none' | 'period' | 'fertile_window';
+
+export interface MenstrualRecord {
+    status: MenstrualStatus;
+    notes?: string;
+}
+
 export interface AlcoholItem {
     key: string;
     name: string;
@@ -295,6 +315,9 @@ export interface LogEntry {
     sex: SexRecordDetails[];
     masturbation: MasturbationRecordDetails[];
     health?: Health;
+    screenTime?: ScreenTimeRecord | null;
+    supplements?: SupplementRecord[];
+    menstrual?: MenstrualRecord | null;
     changeHistory: ChangeRecord[];
 }
 
@@ -366,7 +389,7 @@ export interface BackupState {
     isAutoBackupEnabled: boolean;
 }
 
-export type EventType = 'morning_wood' | 'sleep' | 'alcohol' | 'exercise' | 'sex' | 'masturbation' | 'stress' | 'health';
+export type EventType = 'morning_wood' | 'sleep' | 'alcohol' | 'exercise' | 'sex' | 'masturbation' | 'stress' | 'health' | 'screen_time';
 
 export interface UnifiedEvent {
     schemaVersion: number;

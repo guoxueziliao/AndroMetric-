@@ -1,10 +1,11 @@
 import type { LogEntry, UnifiedEvent } from '../../../domain';
 import { flattenLogsToEvents } from './eventAdapter';
+import { calculateHealthScore } from '../../dashboard/model/p1Summary';
 
 // --- Types ---
 
 // We map the old Metric IDs to the new Event types for compatibility
-export type MetricId = 'hardness' | 'sleep' | 'alcohol' | 'stress' | 'exercise' | 'masturbation' | 'sexLoad';
+export type MetricId = 'hardness' | 'sleep' | 'alcohol' | 'stress' | 'exercise' | 'masturbation' | 'sexLoad' | 'screenTime' | 'healthScore';
 
 export interface MetricConfig {
     id: MetricId;
@@ -102,6 +103,26 @@ export const METRICS: Record<MetricId, MetricConfig> = {
         aggregator: 'sum',
         highThreshold: 1.5,
         impactShift: 1
+    },
+    screenTime: {
+        id: 'screenTime',
+        label: '屏幕时间',
+        unit: 'h',
+        filter: e => e.type === 'screen_time',
+        getValue: e => e.metrics.duration || 0,
+        aggregator: 'max',
+        highThreshold: 4,
+        impactShift: 0
+    },
+    healthScore: {
+        id: 'healthScore',
+        label: '健康分',
+        unit: '分',
+        filter: () => false,
+        getValue: () => 0,
+        aggregator: 'max',
+        highThreshold: 75,
+        impactShift: 0
     }
 };
 
@@ -111,14 +132,21 @@ export class StatsEngine {
     private events: UnifiedEvent[];
     private dateMap: Map<string, UnifiedEvent[]>; // Date -> Events[]
     private sortedDates: string[];
+    private logMap: Map<string, LogEntry>;
 
     constructor(logs: LogEntry[]) {
         // 1. Adapter Step: Convert legacy logs to normalized events
         this.events = flattenLogsToEvents(logs);
+        this.logMap = new Map();
         
         // 2. Indexing
         this.dateMap = new Map();
         const datesSet = new Set<string>();
+
+        logs.forEach(log => {
+            this.logMap.set(log.date, log);
+            datesSet.add(log.date);
+        });
 
         this.events.forEach(e => {
             if (!this.dateMap.has(e.dateStr)) {
@@ -138,6 +166,18 @@ export class StatsEngine {
     getSeries(metricId: MetricId): DataPoint[] {
         const config = METRICS[metricId];
         if (!config) return [];
+
+        if (metricId === 'healthScore') {
+            return this.sortedDates.map(date => {
+                const log = this.logMap.get(date);
+                const score = log ? calculateHealthScore(log).score : null;
+                return {
+                    date,
+                    value: score ?? 0,
+                    timestamp: new Date(date).getTime()
+                };
+            });
+        }
 
         return this.sortedDates.map(date => {
             const dayEvents = this.dateMap.get(date) || [];

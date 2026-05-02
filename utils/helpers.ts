@@ -332,12 +332,15 @@ export const calculateDataQuality = (log: Partial<LogEntry>): number => {
     if (usable('stressLevel')) score += 5;
     if (usable('mood')) score += 5;
     if (usable('caffeineRecord.totalCount') || (log.caffeineRecord?.totalCount || 0) > 0) score += 5;
+    if (usable('screenTime.totalMinutes')) score += 5;
+    if (usable('menstrual.status')) score += 5;
 
     // Activities (Bonus up to 30)
     if (log.sex && log.sex.length > 0) score += 10;
     if (log.masturbation && log.masturbation.length > 0) score += 10;
     if (log.exercise && log.exercise.length > 0) score += 10;
     if (log.alcoholRecords && log.alcoholRecords.length > 0) score += 5;
+    if (log.supplements && log.supplements.some(item => item.taken)) score += 5;
     
     // Health Check Penalty (New in v0.0.6)
     // If Sick is TRUE but Level is Missing -> Penalty

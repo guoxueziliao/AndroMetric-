@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import type { LogEntry } from '../../domain';
 import CalendarHeatmap from './CalendarHeatmap';
@@ -7,11 +7,15 @@ import {
   Trash2, Coffee, Bed, ArrowRight, Heart, MapPin, BrainCircuit, Film, Smile,
   ChevronRight, ChevronLeft, Calendar, Sofa, X, StickyNote
 } from 'lucide-react';
-import { Modal, SafeDeleteModal } from '../../shared/ui';
-import { formatTime, calculateSleepDuration, analyzeSleep, LABELS } from '../../shared/lib';
+import { BottomSheet, Modal, SafeDeleteModal } from '../../shared/ui';
+import { formatTime, calculateSleepDuration, analyzeSleep, getTodayDateString, LABELS } from '../../shared/lib';
 import { LogHistory } from './LogHistory';
 import { GlobalTimeline } from './GlobalTimeline';
 import { useDashboardController, type DashboardActions } from './model/useDashboardController';
+import TodayGrid from './TodayGrid';
+import WeekOverview from './WeekOverview';
+import { buildTodayTiles, buildWeekSummary, type TodayTileKey } from './model/p1Summary';
+import { hydrateLog } from '../../core/storage';
 
 interface DashboardProps {
   logs: LogEntry[];
@@ -30,6 +34,8 @@ interface SummarySectionProps {
   colorClass?: string;
 }
 
+type DashboardView = 'day' | 'week' | 'month';
+
 const Dashboard: React.FC<DashboardProps> = ({
   logs: rawLogs,
   actions
@@ -43,6 +49,8 @@ const Dashboard: React.FC<DashboardProps> = ({
   } = actions;
 
   const logs = useMemo(() => Array.isArray(rawLogs) ? rawLogs : [], [rawLogs]);
+  const [activeView, setActiveView] = useState<DashboardView>('day');
+  const [selectedTileKey, setSelectedTileKey] = useState<TodayTileKey | null>(null);
 
   const {
     isSummaryModalOpen,
@@ -72,6 +80,11 @@ const Dashboard: React.FC<DashboardProps> = ({
   });
 
   const latestLog = useMemo(() => logs.length > 0 ? logs[0] : null, [logs]);
+  const todayDate = useMemo(() => getTodayDateString(), []);
+  const todayLog = useMemo(() => logs.find((item) => item.date === todayDate) || hydrateLog({ date: todayDate }), [logs, todayDate]);
+  const todayTiles = useMemo(() => buildTodayTiles(todayLog), [todayLog]);
+  const selectedTile = useMemo(() => todayTiles.find((item) => item.key === selectedTileKey) || null, [todayTiles, selectedTileKey]);
+  const weekSummary = useMemo(() => buildWeekSummary(logs), [logs]);
 
   const last7Days = useMemo(() => {
       const dates = [];
@@ -124,6 +137,27 @@ const Dashboard: React.FC<DashboardProps> = ({
                 <h1 className="text-3xl font-black tracking-tight dark:text-slate-100">{greeting}</h1>
                 <p className="text-brand-muted text-sm font-medium">今天感觉如何？</p>
             </div>
+        </div>
+
+        <div className="flex rounded-2xl border border-slate-200 bg-slate-100 p-1 dark:border-slate-800 dark:bg-slate-900/60">
+            {[
+                { id: 'day', label: '日视图' },
+                { id: 'week', label: '周视图' },
+                { id: 'month', label: '月视图' }
+            ].map((item) => (
+                <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => setActiveView(item.id as DashboardView)}
+                    className={`flex-1 rounded-xl px-3 py-2 text-xs font-black transition-all ${
+                        activeView === item.id
+                            ? 'bg-white text-brand-accent shadow-sm dark:bg-slate-800'
+                            : 'text-slate-500 dark:text-slate-400'
+                    }`}
+                >
+                    {item.label}
+                </button>
+            ))}
         </div>
 
         {/* Ongoing Tasks Banners */}
@@ -207,72 +241,131 @@ const Dashboard: React.FC<DashboardProps> = ({
             </section>
         )}
 
-<CalendarHeatmap logs={logs} onDateClick={onDateClickForSummary}>
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mt-2">
-                <div className="bg-white dark:bg-slate-900/40 rounded-3xl p-4 shadow-soft border border-slate-100 dark:border-white/5 flex flex-col h-60 transition-colors overflow-hidden">
-                    <div className="flex justify-between items-center mb-3 shrink-0">
-                        <div className="flex items-center gap-2">
-                            <div className="p-1.5 bg-blue-50 dark:bg-blue-500/10 rounded-lg text-blue-500"><Moon size={14} fill="currentColor" fillOpacity={0.2}/></div>
-                            <span className="text-[11px] font-black text-slate-800 dark:text-slate-300">7日睡眠流</span>
+        {activeView === 'day' && (
+            <div className="space-y-4">
+                <TodayGrid tiles={todayTiles} onSelect={setSelectedTileKey} />
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+                    <div className="flex h-60 flex-col overflow-hidden rounded-3xl border border-slate-100 bg-white p-4 shadow-soft transition-colors dark:border-white/5 dark:bg-slate-900/40">
+                        <div className="mb-3 flex shrink-0 items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <div className="rounded-lg bg-blue-50 p-1.5 text-blue-500 dark:bg-blue-500/10"><Moon size={14} fill="currentColor" fillOpacity={0.2}/></div>
+                                <span className="text-[11px] font-black text-slate-800 dark:text-slate-300">7日睡眠流</span>
+                            </div>
+                            {(pendingLog || ongoingNap) && <span className="text-[9px] font-black text-emerald-500 animate-pulse">正在休息</span>}
                         </div>
-                        {(pendingLog || ongoingNap) && <span className="text-[9px] font-black text-emerald-500 animate-pulse">正在休息</span>}
-                    </div>
-<motion.div 
-        className="flex-1 overflow-y-auto custom-scrollbar pr-0.5 space-y-2"
-        initial="hidden"
-        animate="visible"
-        variants={{
-          visible: { transition: { staggerChildren: 0.05 } }
-        }}
-      >
-      {last7Days.map((date, index) => {
-                            const log = logs.find(l => l.date === date);
-                            const analysis = log?.sleep?.startTime && log?.sleep?.endTime ? analyzeSleep(log.sleep.startTime, log.sleep.endTime) : null;
-                            const nocturnalHours = analysis?.durationHours || 0;
-                            const totalNapMinutes = log?.sleep?.naps?.reduce((acc, n) => acc + (n.duration || 0), 0) || 0;
-                            const napHours = totalNapMinutes / 60;
-                            const totalHours = nocturnalHours + napHours;
-                            const isToday = date === last7Days[0];
-return (
-      <motion.div 
-        key={date}
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: index * 0.05, duration: 0.3 }}
-        className={`flex flex-col gap-1 p-1.5 rounded-xl transition-all ${isToday ? 'bg-blue-50/40 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/30' : 'border border-transparent'}`}
-      >
-                                    <div className="flex justify-between items-center text-[9px] font-bold text-slate-400">
-                                        <span className="font-mono">{date.split('-').slice(1).join('/')}</span>
-                                        <div className="flex gap-1">
-                                            {analysis?.isLate && <span className="px-1 bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 rounded">熬夜</span>}
-                                            {analysis?.isInsufficient && <span className="px-1 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded">不足</span>}
+                        <motion.div
+                            className="custom-scrollbar flex-1 space-y-2 overflow-y-auto pr-0.5"
+                            initial="hidden"
+                            animate="visible"
+                            variants={{ visible: { transition: { staggerChildren: 0.05 } } }}
+                        >
+                            {last7Days.map((date, index) => {
+                                const log = logs.find((item) => item.date === date);
+                                const analysis = log?.sleep?.startTime && log?.sleep?.endTime ? analyzeSleep(log.sleep.startTime, log.sleep.endTime) : null;
+                                const nocturnalHours = analysis?.durationHours || 0;
+                                const totalNapMinutes = log?.sleep?.naps?.reduce((acc, item) => acc + (item.duration || 0), 0) || 0;
+                                const napHours = totalNapMinutes / 60;
+                                const totalHours = nocturnalHours + napHours;
+                                const isToday = date === last7Days[0];
+
+                                return (
+                                    <motion.div
+                                        key={date}
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: index * 0.05, duration: 0.3 }}
+                                        className={`flex flex-col gap-1 rounded-xl p-1.5 transition-all ${isToday ? 'border border-blue-100 bg-blue-50/40 dark:border-blue-900/30 dark:bg-blue-900/10' : 'border border-transparent'}`}
+                                    >
+                                        <div className="flex items-center justify-between text-[9px] font-bold text-slate-400">
+                                            <span className="font-mono">{date.split('-').slice(1).join('/')}</span>
+                                            <div className="flex gap-1">
+                                                {analysis?.isLate && <span className="rounded bg-orange-100 px-1 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400">熬夜</span>}
+                                                {analysis?.isInsufficient && <span className="rounded bg-red-100 px-1 text-red-600 dark:bg-red-900/30 dark:text-red-400">不足</span>}
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <div className="flex-1 h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full flex overflow-hidden">
-                                            {nocturnalHours > 0 && <div className="bg-blue-500 h-full" style={{ width: `${Math.min(100, (nocturnalHours / 12) * 100)}%` }}/>}
-                                            {napHours > 0 && <div className="bg-orange-400 h-full border-l border-white/20" style={{ width: `${Math.min(100, (napHours / 12) * 100)}%` }}/>}
+                                        <div className="flex items-center gap-2">
+                                            <div className="flex h-1.5 flex-1 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                                                {nocturnalHours > 0 && <div className="h-full bg-blue-500" style={{ width: `${Math.min(100, (nocturnalHours / 12) * 100)}%` }}/>}
+                                                {napHours > 0 && <div className="h-full border-l border-white/20 bg-orange-400" style={{ width: `${Math.min(100, (napHours / 12) * 100)}%` }}/>}
+                                            </div>
+                                            <div className="w-8 text-right text-[10px] font-black tabular-nums text-slate-600 dark:text-slate-300">{totalHours > 0 ? `${totalHours.toFixed(1)}h` : '--'}</div>
                                         </div>
-                                        <div className="text-[10px] font-black text-slate-600 dark:text-slate-300 w-8 text-right tabular-nums">{totalHours > 0 ? `${totalHours.toFixed(1)}h` : '--'}</div>
-                                    </div>
-</motion.div>
-      );
-      })}
-      </motion.div>
+                                    </motion.div>
+                                );
+                            })}
+                        </motion.div>
                     </div>
-                <div className="bg-white dark:bg-slate-900/40 rounded-3xl p-5 shadow-soft border border-slate-100 dark:border-white/5 flex flex-col h-60 transition-colors">
-                    <div className="flex items-center gap-2 mb-6">
-                        <div className="p-2 bg-orange-50 dark:bg-orange-500/10 rounded-full text-orange-500"><Activity size={18}/></div>
-                        <span className="text-sm font-bold text-slate-800 dark:text-slate-300">活跃</span>
+
+                    <div className="flex h-60 flex-col rounded-3xl border border-slate-100 bg-white p-5 shadow-soft transition-colors dark:border-white/5 dark:bg-slate-900/40">
+                        <div className="mb-6 flex items-center gap-2">
+                            <div className="rounded-full bg-orange-50 p-2 text-orange-500 dark:bg-orange-500/10"><Activity size={18}/></div>
+                            <span className="text-sm font-bold text-slate-800 dark:text-slate-300">今日活动</span>
+                        </div>
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between text-sm"><span className="font-bold text-slate-400">运动</span><span className="text-lg font-black text-slate-700 dark:text-slate-200">{todayLog.exercise?.length || 0}次</span></div>
+                            <div className="flex items-center justify-between text-sm"><span className="font-bold text-slate-400">自慰</span><span className="text-lg font-black text-slate-700 dark:text-slate-200">{todayLog.masturbation?.length || 0}次</span></div>
+                            <div className="flex items-center justify-between text-sm"><span className="font-bold text-slate-400">性爱</span><span className="text-lg font-black text-slate-700 dark:text-slate-200">{todayLog.sex?.length || 0}次</span></div>
+                            <div className="flex items-center justify-between text-sm"><span className="font-bold text-slate-400">屏幕时间</span><span className="text-lg font-black text-slate-700 dark:text-slate-200">{todayLog.screenTime?.totalMinutes ? `${Math.round(todayLog.screenTime.totalMinutes / 60)}h` : '--'}</span></div>
+                        </div>
                     </div>
-                    <div className="space-y-4">
-                        <div className="flex items-center justify-between text-sm"><span className="text-slate-400 font-bold">运动</span><span className="font-black text-slate-700 dark:text-slate-200 text-lg">{latestLog?.exercise?.length || 0}次</span></div>
-                        <div className="flex items-center justify-between text-sm"><span className="text-slate-400 font-bold">自慰</span><span className="font-black text-slate-700 dark:text-slate-200 text-lg">{latestLog?.masturbation?.length || 0}次</span></div>
+
+                    <div className="rounded-3xl border border-slate-100 bg-white p-5 shadow-soft transition-colors dark:border-white/5 dark:bg-slate-900/40">
+                        <div className="mb-4 flex items-center gap-2">
+                            <div className="rounded-full bg-slate-100 p-2 text-slate-500 dark:bg-slate-800"><Calendar size={18}/></div>
+                            <span className="text-sm font-bold text-slate-800 dark:text-slate-300">今日时间线</span>
+                        </div>
+                        <div className="max-h-[180px] overflow-y-auto pr-1">
+                            <GlobalTimeline log={todayLog} allLogs={logs} />
+                        </div>
                     </div>
                 </div>
             </div>
-        </CalendarHeatmap>
+        )}
+
+        {activeView === 'week' && (
+            <WeekOverview days={weekSummary} onOpenDate={onDateClickForSummary} />
+        )}
+
+        {activeView === 'month' && (
+            <CalendarHeatmap logs={logs} onDateClick={onDateClickForSummary} mode="monthOnly" />
+        )}
       </div>
+
+      <BottomSheet
+        isOpen={selectedTile !== null}
+        onClose={() => setSelectedTileKey(null)}
+        title={selectedTile?.label || ''}
+        footer={
+            <button
+                type="button"
+                onClick={() => {
+                    setSelectedTileKey(null);
+                    onEdit(todayLog.date);
+                }}
+                className="w-full rounded-2xl bg-slate-900 py-3 text-sm font-black text-white shadow-sm transition-all active:scale-[0.98] dark:bg-white dark:text-slate-900"
+            >
+                编辑今日记录
+            </button>
+        }
+      >
+        {selectedTile && (
+            <div className="space-y-4">
+                <div className="rounded-[1.5rem] border border-slate-100 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900/60">
+                    <div className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">{selectedTile.label}</div>
+                    <div className="mt-2 text-3xl font-black text-slate-900 dark:text-slate-100">{selectedTile.value}</div>
+                    <div className="mt-2 text-sm font-bold text-slate-500 dark:text-slate-400">{selectedTile.status}</div>
+                </div>
+                <div className="space-y-2">
+                    {selectedTile.details.map((detail) => (
+                        <div key={`${selectedTile.key}-${detail.label}`} className="flex items-center justify-between rounded-2xl border border-slate-100 bg-white px-4 py-3 text-sm dark:border-slate-800 dark:bg-slate-900">
+                            <span className="font-bold text-slate-400">{detail.label}</span>
+                            <span className="text-right font-black text-slate-800 dark:text-slate-100">{detail.value}</span>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        )}
+      </BottomSheet>
       
       <Modal 
         isOpen={isSummaryModalOpen} 
@@ -471,6 +564,12 @@ return (
                                                         <span className="text-sm font-black text-slate-700 dark:text-slate-200">看片: {PORN_LABELS[summaryLog.pornConsumption] || summaryLog.pornConsumption}</span>
                                                     </div>
                                                 )}
+                                                {summaryLog.screenTime?.totalMinutes ? (
+                                                    <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-950 p-3 rounded-2xl border border-slate-100 dark:border-white/5">
+                                                        <BrainCircuit size={18} className="text-orange-500"/>
+                                                        <span className="text-sm font-black text-slate-700 dark:text-slate-200">屏幕时间: {Math.round(summaryLog.screenTime.totalMinutes / 60)}h</span>
+                                                    </div>
+                                                ) : null}
                                             </div>
                                             {summaryLog.caffeineRecord?.items && summaryLog.caffeineRecord.items.length > 0 && (
                                                 <div className="mt-3 space-y-2">
@@ -488,7 +587,7 @@ return (
                                         </SummarySection>
                                     )}
 
-                                    {(summaryLog.mood || summaryLog.stressLevel || summaryLog.health?.isSick) && (
+                                    {(summaryLog.mood || summaryLog.stressLevel || summaryLog.health?.isSick || (summaryLog.supplements && summaryLog.supplements.length > 0) || summaryLog.menstrual) && (
                                         <SummarySection title="健康与情绪" icon={Smile} colorClass="text-purple-500">
                                             <div className="flex flex-wrap gap-3">
                                                 {summaryLog.mood && (
@@ -517,6 +616,28 @@ return (
                                                             <span className="text-sm font-black text-red-700 dark:text-red-400">
                                                                 {summaryLog.health.discomfortLevel === 'mild' ? '轻微' : summaryLog.health.discomfortLevel === 'moderate' ? '明显' : '很难受'}
                                                                 {summaryLog.health.symptoms?.length ? ` · ${summaryLog.health.symptoms.join(', ')}` : ''}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                {summaryLog.supplements && summaryLog.supplements.length > 0 && (
+                                                    <div className="flex items-center gap-2 bg-emerald-50 dark:bg-emerald-900/20 p-3 rounded-2xl border border-emerald-100 dark:border-emerald-900/30 w-full">
+                                                        <Coffee size={18} className="text-emerald-500"/>
+                                                        <div className="flex flex-col">
+                                                            <span className="text-[10px] text-emerald-400 font-bold uppercase">补剂</span>
+                                                            <span className="text-sm font-black text-emerald-700 dark:text-emerald-300">
+                                                                {summaryLog.supplements.map(item => item.name).join('、')}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                {summaryLog.menstrual && (
+                                                    <div className="flex items-center gap-2 bg-violet-50 dark:bg-violet-900/20 p-3 rounded-2xl border border-violet-100 dark:border-violet-900/30 w-full">
+                                                        <Calendar size={18} className="text-violet-500"/>
+                                                        <div className="flex flex-col">
+                                                            <span className="text-[10px] text-violet-400 font-bold uppercase">周期状态</span>
+                                                            <span className="text-sm font-black text-violet-700 dark:text-violet-300">
+                                                                {summaryLog.menstrual.status === 'period' ? '经期中' : summaryLog.menstrual.status === 'fertile_window' ? '窗口期' : summaryLog.menstrual.status === 'none' ? '非经期' : '未记录'}
                                                             </span>
                                                         </div>
                                                     </div>

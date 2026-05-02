@@ -41,6 +41,14 @@ interface LogFormProps {
 
 type MidTabType = 'life' | 'env' | 'health';
 
+const SUPPLEMENT_OPTIONS = ['维生素D', '锌', '镁', '鱼油', '辅酶Q10', '益生菌'];
+const MENSTRUAL_OPTIONS = [
+    { id: 'unknown', label: '未记录' },
+    { id: 'none', label: '非经期' },
+    { id: 'period', label: '经期中' },
+    { id: 'fertile_window', label: '窗口期' }
+] as const;
+
 // 顶部评分圆环组件
 const QualityScoreRing = ({ score }: { score: number }) => {
     const radius = 18;
@@ -228,6 +236,73 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
         markDirty();
     };
 
+    const setScreenTimeMinutes = (totalMinutes: number | null) => {
+        setLog(prev => ({
+            ...prev,
+            screenTime: totalMinutes && totalMinutes > 0 ? {
+                totalMinutes,
+                source: prev.screenTime?.source || 'manual',
+                notes: prev.screenTime?.notes || ''
+            } : null,
+            touchedPaths: Array.from(new Set([...(prev.touchedPaths || []), 'screenTime.totalMinutes']))
+        }));
+        markDirty();
+    };
+
+    const setScreenTimeNotes = (notes: string) => {
+        setLog(prev => ({
+            ...prev,
+            screenTime: {
+                totalMinutes: prev.screenTime?.totalMinutes || 0,
+                source: prev.screenTime?.source || 'manual',
+                notes
+            },
+            touchedPaths: Array.from(new Set([...(prev.touchedPaths || []), 'screenTime.notes']))
+        }));
+        markDirty();
+    };
+
+    const toggleSupplement = (name: string) => {
+        setLog(prev => {
+            const current = Array.isArray(prev.supplements) ? [...prev.supplements] : [];
+            const existing = current.find(item => item.name === name);
+            const next = existing
+                ? current.filter(item => item.name !== name)
+                : [...current, { id: `supp_${Date.now()}_${name}`, name, taken: true, notes: '' }];
+
+            return {
+                ...prev,
+                supplements: next,
+                touchedPaths: Array.from(new Set([...(prev.touchedPaths || []), 'supplements']))
+            };
+        });
+        markDirty();
+    };
+
+    const setMenstrualStatus = (status: 'unknown' | 'none' | 'period' | 'fertile_window') => {
+        setLog(prev => ({
+            ...prev,
+            menstrual: status === 'unknown' ? { status, notes: prev.menstrual?.notes || '' } : {
+                status,
+                notes: prev.menstrual?.notes || ''
+            },
+            touchedPaths: Array.from(new Set([...(prev.touchedPaths || []), 'menstrual.status']))
+        }));
+        markDirty();
+    };
+
+    const setMenstrualNotes = (notes: string) => {
+        setLog(prev => ({
+            ...prev,
+            menstrual: {
+                status: prev.menstrual?.status || 'unknown',
+                notes
+            },
+            touchedPaths: Array.from(new Set([...(prev.touchedPaths || []), 'menstrual.notes']))
+        }));
+        markDirty();
+    };
+
     return (
         <div className="space-y-6">
             <div className="bg-white dark:bg-slate-900 rounded-[2rem] p-6 shadow-soft border border-slate-100 dark:border-white/5 flex justify-between items-center">
@@ -325,6 +400,31 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
                                         </div>
                                     ))}
                                     {(!log.caffeineRecord || log.caffeineRecord.items.length === 0) && <p className="text-[11px] text-slate-300 italic pl-1">未记录饮品</p>}
+                                </div>
+                            </div>
+
+                            <div className="space-y-3">
+                                <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">屏幕使用时间</label>
+                                <div className="rounded-[1.5rem] border border-slate-100 bg-slate-50 p-4 dark:border-white/5 dark:bg-slate-900/50">
+                                    <div className="flex items-center gap-3">
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            step="10"
+                                            value={log.screenTime?.totalMinutes || ''}
+                                            onChange={(event) => setScreenTimeMinutes(event.target.value ? Number(event.target.value) : null)}
+                                            placeholder="总分钟"
+                                            className="w-28 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-black text-slate-800 outline-none transition-all focus:border-brand-accent dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                                        />
+                                        <span className="text-xs font-bold text-slate-400">分钟 / 手动录入</span>
+                                    </div>
+                                    <textarea
+                                        value={log.screenTime?.notes || ''}
+                                        onChange={(event) => setScreenTimeNotes(event.target.value)}
+                                        rows={2}
+                                        placeholder="备注（可选）"
+                                        className="mt-3 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs font-bold text-slate-700 outline-none transition-all focus:border-brand-accent dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                                    />
                                 </div>
                             </div>
 
@@ -466,6 +566,56 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
                             <div className="space-y-4">
                                 <label className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest block">压力等级</label>
                                 <FaceSelector options={STRESS_FACES} value={log.stressLevel || null} onChange={v => setField('stressLevel', v)} />
+                            </div>
+
+                            <div className="space-y-4">
+                                <label className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest block">补剂</label>
+                                <div className="flex flex-wrap gap-2">
+                                    {SUPPLEMENT_OPTIONS.map((name) => {
+                                        const selected = (log.supplements || []).some(item => item.name === name && item.taken);
+                                        return (
+                                            <button
+                                                key={name}
+                                                type="button"
+                                                onClick={() => toggleSupplement(name)}
+                                                className={`rounded-xl border px-3 py-2 text-[11px] font-black transition-all ${
+                                                    selected
+                                                        ? 'border-emerald-500 bg-emerald-50 text-emerald-700 shadow-sm dark:border-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
+                                                        : 'border-slate-200 bg-white text-slate-500 dark:border-slate-700 dark:bg-slate-900'
+                                                }`}
+                                            >
+                                                {name}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            <div className="space-y-4 rounded-[1.5rem] border border-slate-100 bg-slate-50/70 p-4 dark:border-white/5 dark:bg-slate-950/40">
+                                <label className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest block">周期状态</label>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {MENSTRUAL_OPTIONS.map((option) => (
+                                        <button
+                                            key={option.id}
+                                            type="button"
+                                            onClick={() => setMenstrualStatus(option.id)}
+                                            className={`rounded-2xl border px-3 py-3 text-xs font-black transition-all ${
+                                                (log.menstrual?.status || 'unknown') === option.id
+                                                    ? 'border-violet-500 bg-violet-50 text-violet-700 shadow-sm dark:border-violet-700 dark:bg-violet-900/30 dark:text-violet-300'
+                                                    : 'border-slate-200 bg-white text-slate-500 dark:border-slate-700 dark:bg-slate-900'
+                                            }`}
+                                        >
+                                            {option.label}
+                                        </button>
+                                    ))}
+                                </div>
+                                <textarea
+                                    value={log.menstrual?.notes || ''}
+                                    onChange={(event) => setMenstrualNotes(event.target.value)}
+                                    rows={2}
+                                    placeholder="周期备注（可选）"
+                                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs font-bold text-slate-700 outline-none transition-all focus:border-brand-accent dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                                />
                             </div>
                             
                             <div className={`mt-6 rounded-[1.5rem] border transition-all duration-300 overflow-hidden ${log.health?.isSick ? 'bg-red-50/50 dark:bg-red-900/10 border-red-200 dark:border-red-900/30' : 'bg-slate-50/50 dark:bg-slate-950/50 border-slate-100 dark:border-slate-800'}`}>

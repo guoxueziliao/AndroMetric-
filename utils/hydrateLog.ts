@@ -74,6 +74,21 @@ export const hydrateLog = (raw: any): LogEntry => {
         
         // New Alcohol Array Support
         alcoholRecords: Array.isArray(raw.alcoholRecords) ? raw.alcoholRecords : [],
+        screenTime: raw.screenTime ? {
+            totalMinutes: raw.screenTime.totalMinutes ?? 0,
+            source: raw.screenTime.source || 'manual',
+            notes: raw.screenTime.notes ?? ''
+        } : null,
+        supplements: Array.isArray(raw.supplements) ? raw.supplements.map((item: any) => ({
+            id: item.id || `supp_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+            name: item.name || '',
+            taken: item.taken !== false,
+            notes: item.notes ?? ''
+        })) : [],
+        menstrual: raw.menstrual ? {
+            status: raw.menstrual.status || 'unknown',
+            notes: raw.menstrual.notes ?? ''
+        } : null,
         
         changeHistory: Array.isArray(raw.changeHistory) ? raw.changeHistory : [],
     };
