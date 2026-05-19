@@ -160,7 +160,7 @@ const AppContent: React.FC<{ data: AppData }> = ({ data }) => {
   if (!hasSeenWelcome) return <Welcome onGetStarted={markWelcomeSeen} />;
 
   return (
-    <div className={`min-h-screen bg-brand-bg dark:bg-slate-950 text-brand-text dark:text-slate-200 font-sans transition-all duration-500 safe-area-top safe-area-bottom safe-area-left safe-area-right ${isBlurred ? 'blur-md grayscale opacity-50' : ''}`}>
+    <div className={`min-h-screen bg-brand-bg dark:bg-slate-950 text-brand-text dark:text-slate-200 font-sans transition-all duration-500 safe-area-top safe-area-bottom safe-area-left safe-area-right ${(isBlurred || settings.privacyMode) ? 'blur-md grayscale opacity-50' : ''}`}>
       {view === 'dashboard' ? (
         <Suspense fallback={renderAppShell(emptyQuickRecordHandlers)}>
           <QuickRecordController data={quickRecordData} isEnabled>

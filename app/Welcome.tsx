@@ -23,7 +23,7 @@ const Welcome: React.FC<WelcomeProps> = ({ onGetStarted }) => {
         <div className="min-h-screen bg-brand-bg dark:bg-slate-950 text-brand-text flex flex-col items-center justify-center p-6 text-center animate-fade-in">
             <main className="max-w-md w-full">
                 <Flame size={64} className="mx-auto text-brand-accent mb-4" />
-                <h1 className="text-4xl font-bold text-brand-accent mb-2">Welcome to Hardness Diary</h1>
+                <h1 className="text-4xl font-bold text-brand-accent mb-2">欢迎使用 硬度日记</h1>
                 <p className="text-brand-muted mb-8">专为您打造的、科学的男性健康指标追踪工具。</p>
 
                 <div className="space-y-6 text-left mb-10">
@@ -40,7 +40,7 @@ const Welcome: React.FC<WelcomeProps> = ({ onGetStarted }) => {
                     <FeatureCard
                         icon={BrainCircuit}
                         title="发现洞察"
-                        description="利用统计图表与因子分析，揭示身体活力背后的深层联系。"
+                        description="图表与趋势帮助你看见睡眠、运动、酒精等因素与晨勃硬度之间的关系。"
                     />
                 </div>
                 

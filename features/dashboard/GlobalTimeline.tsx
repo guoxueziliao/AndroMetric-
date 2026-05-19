@@ -188,7 +188,7 @@ export const GlobalTimeline: React.FC<GlobalTimelineProps> = ({ log, allLogs }) 
     return (
         <div className="mt-6 border-t border-slate-100 dark:border-slate-800 pt-6">
             <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] mb-6 flex items-center">
-                <Clock size={14} className="mr-2"/> PHYSIOLOGICAL CYCLE
+                <Clock size={14} className="mr-2"/> 生理日时间线
             </h3>
             <div className="relative pl-5 border-l-2 border-slate-100 dark:border-slate-800 space-y-6">
                 {events.map((e, i) => (

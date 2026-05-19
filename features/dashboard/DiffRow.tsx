@@ -28,7 +28,7 @@ export const DiffRow: React.FC<DiffRowProps> = ({ diff }) => {
             {/* Field Label */}
             <div className="flex items-center gap-1.5 shrink-0 mr-4">
                 <div className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-600"></div>
-                <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider truncate max-w-[100px]" title={field}>
+                <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 truncate max-w-[140px]" title={field}>
                     {field || '未知字段'}
                 </span>
             </div>

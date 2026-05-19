@@ -1,4 +1,4 @@
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense, lazy, useRef } from 'react';
 import { AlertTriangle, ChevronLeft, Plus, Search, Settings, User } from 'lucide-react';
 import type { ContentItem, LogEntry, TagEntry, TagType } from '../../domain';
 import { Modal } from '../../shared/ui';
@@ -48,6 +48,12 @@ const MasturbationContentItemEditor: React.FC<MasturbationContentItemEditorProps
   onAddOrUpdateTag,
   onDeleteTag
 }) => {
+  const typePickerRef = useRef<HTMLDivElement>(null);
+
+  const scrollToTypePicker = () => {
+    typePickerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
   return (
     <Modal isOpen={!!editingItem} onClose={onClose} title="编辑素材详情">
       {editingItem && (
@@ -66,13 +72,13 @@ const MasturbationContentItemEditor: React.FC<MasturbationContentItemEditorProps
                       <div className="text-[10px] text-amber-600/70 dark:text-amber-400/50">分类统计失效</div>
                     </div>
                   </div>
-                  <button className="text-[10px] font-black text-amber-700 border border-amber-200 px-2 py-1 rounded bg-white">去选择</button>
+                  <button onClick={scrollToTypePicker} className="text-[10px] font-black text-amber-700 border border-amber-200 px-2 py-1 rounded bg-white">去选择</button>
                 </div>
               )}
             </div>
           </div>
           <div className="flex-1 overflow-y-auto custom-scrollbar p-5 space-y-6">
-            <div className="space-y-3">
+            <div ref={typePickerRef} className="space-y-3 scroll-mt-4">
               <label className="text-xs font-black text-slate-400 uppercase tracking-widest">素材类型 (必选)</label>
               <div className="grid grid-cols-4 gap-2">
                 {CONTENT_TYPES.map(t => (

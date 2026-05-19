@@ -52,54 +52,48 @@ export const PWAInstallPrompt: React.FC = () => {
     updateApp();
   };
 
-  if (isInstalled) {
-    return (
-      <>
-        {isOffline && (
-          <div className="fixed top-0 left-0 right-0 bg-amber-500 text-white text-center py-2 text-sm z-50 flex items-center justify-center gap-2">
-            <WifiOff size={16} />
-            <span>离线模式 - 数据将在联网后同步</span>
-          </div>
-        )}
-
-        <Modal
-          isOpen={showUpdatePrompt}
-          onClose={() => setShowUpdatePrompt(false)}
-          title="发现新版本"
-          footer={
-            <div className="flex gap-3 w-full">
-              <button
-                onClick={() => setShowUpdatePrompt(false)}
-                className="flex-1 py-3 bg-slate-100 dark:bg-slate-800 rounded-xl"
-              >
-                稍后更新
-              </button>
-              <button
-                onClick={handleUpdate}
-                className="flex-1 py-3 bg-blue-500 text-white rounded-xl font-bold flex items-center justify-center gap-2"
-              >
-                <RefreshCw size={18} />
-                立即更新
-              </button>
-            </div>
-          }
-        >
-          <div className="flex flex-col items-center gap-4 py-4">
-            <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
-              <RefreshCw size={32} className="text-blue-600 dark:text-blue-400" />
-            </div>
-            <p className="text-center text-slate-600 dark:text-slate-400">
-              新版本已准备就绪，更新后将获得更好的体验和功能。
-            </p>
-          </div>
-        </Modal>
-      </>
-    );
-  }
-
   return (
     <>
-      {showInstallPrompt && (
+      {isInstalled && isOffline && (
+        <div className="fixed top-0 left-0 right-0 bg-amber-500 text-white text-center py-2 text-sm z-50 flex items-center justify-center gap-2">
+          <WifiOff size={16} />
+          <span>离线模式 - 数据将在联网后同步</span>
+        </div>
+      )}
+
+      <Modal
+        isOpen={showUpdatePrompt}
+        onClose={() => setShowUpdatePrompt(false)}
+        title="发现新版本"
+        footer={
+          <div className="flex gap-3 w-full">
+            <button
+              onClick={() => setShowUpdatePrompt(false)}
+              className="flex-1 py-3 bg-slate-100 dark:bg-slate-800 rounded-xl"
+            >
+              稍后更新
+            </button>
+            <button
+              onClick={handleUpdate}
+              className="flex-1 py-3 bg-blue-500 text-white rounded-xl font-bold flex items-center justify-center gap-2"
+            >
+              <RefreshCw size={18} />
+              立即更新
+            </button>
+          </div>
+        }
+      >
+        <div className="flex flex-col items-center gap-4 py-4">
+          <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+            <RefreshCw size={32} className="text-blue-600 dark:text-blue-400" />
+          </div>
+          <p className="text-center text-slate-600 dark:text-slate-400">
+            新版本已准备就绪，更新后将获得更好的体验和功能。
+          </p>
+        </div>
+      </Modal>
+
+      {!isInstalled && showInstallPrompt && (
         <div className="fixed bottom-24 left-4 right-4 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-4 z-50 animate-in slide-in-from-bottom duration-300">
           <div className="flex items-start gap-4">
             <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center flex-shrink-0">
@@ -110,13 +104,14 @@ export const PWAInstallPrompt: React.FC = () => {
                 <h3 className="font-bold text-slate-900 dark:text-white">添加到主屏幕</h3>
                 <button
                   onClick={handleDismiss}
+                  aria-label="关闭安装提示"
                   className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
                 >
                   <X size={18} className="text-slate-400" />
                 </button>
               </div>
               <p className="text-sm text-slate-600 dark:text-slate-400 mb-3">
-                将"硬度日记"安装到主屏幕，随时随地快速记录，享受原生应用体验。
+                将&ldquo;硬度日记&rdquo;安装到主屏幕，随时随地快速记录，享受原生应用体验。
               </p>
               <div className="flex gap-2">
                 <button

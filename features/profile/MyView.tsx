@@ -181,8 +181,8 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
                 <div className="flex items-center space-x-3">
                     <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-xl"><Database size={20}/></div>
                     <div className="text-left">
-                        <h3 className="font-bold text-brand-text dark:text-slate-200">数据维护 & 备份</h3>
-                        <p className="text-xs text-brand-muted dark:text-slate-500">体检 / 修复 / 导入导出</p>
+                        <h3 className="font-bold text-brand-text dark:text-slate-200">设置与数据</h3>
+                        <p className="text-xs text-brand-muted dark:text-slate-500">外观 / 隐私 / 体检 / 备份 / 导入导出</p>
                     </div>
                 </div>
                 <div className="flex items-center text-slate-400 text-xs">
@@ -228,6 +228,27 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
                           </button>
                       ))}
                   </div>
+              </section>
+
+              {/* 1b. Privacy Mode */}
+              <section>
+                  <h3 className="text-xs font-bold text-brand-muted uppercase tracking-wider mb-3">隐私</h3>
+                  <label className="flex items-center justify-between p-3 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl cursor-pointer">
+                      <div>
+                          <p className="text-sm font-bold text-brand-text dark:text-slate-200">隐私模糊</p>
+                          <p className="text-xs text-brand-muted dark:text-slate-500 mt-0.5">界面整体模糊 + 灰阶,适合在他人附近浏览</p>
+                      </div>
+                      <span className="relative inline-flex items-center">
+                          <input
+                              type="checkbox"
+                              checked={!!settings.privacyMode}
+                              onChange={(e) => onUpdateSettings({ ...settings, privacyMode: e.target.checked })}
+                              className="sr-only peer"
+                          />
+                          <span className="w-11 h-6 bg-slate-200 dark:bg-slate-700 rounded-full peer peer-checked:bg-brand-accent transition-colors"></span>
+                          <span className="absolute left-0.5 top-0.5 w-5 h-5 bg-white rounded-full transition-transform peer-checked:translate-x-5"></span>
+                      </span>
+                  </label>
               </section>
 
               {/* 2. Health Check & Repair */}

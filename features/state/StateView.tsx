@@ -20,6 +20,13 @@ const confidenceClass: Record<ConfidenceLevel, string> = {
   high: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
 };
 
+const confidenceLabel: Record<ConfidenceLevel, string> = {
+  none: '无',
+  low: '低',
+  medium: '中',
+  high: '高'
+};
+
 const stateToneClass: Record<string, string> = {
   peak_ready: 'from-emerald-500 via-lime-500 to-cyan-500',
   stable: 'from-sky-500 via-blue-500 to-indigo-500',
@@ -71,7 +78,7 @@ const FactorList: React.FC<{ title: string; factors: FactorImpact[]; positive: b
           </div>
           <div className="mt-3 flex items-center justify-between text-[11px] font-bold opacity-75">
             <span>样本 {factor.sampleSize}</span>
-            <span className={`rounded-full px-2 py-1 ${confidenceClass[factor.confidence]}`}>{factor.confidence}</span>
+            <span className={`rounded-full px-2 py-1 ${confidenceClass[factor.confidence]}`}>{confidenceLabel[factor.confidence]}</span>
           </div>
         </article>
       ))}
@@ -109,7 +116,7 @@ const ForecastCard: React.FC<{ day: ForecastDay }> = ({ day }) => (
     </div>
     <div className="mt-4 flex items-center justify-between text-[11px] font-bold text-slate-400">
       <span>预测置信度</span>
-      <span className={`rounded-full px-2 py-1 ${confidenceClass[day.confidence]}`}>{day.confidence}</span>
+      <span className={`rounded-full px-2 py-1 ${confidenceClass[day.confidence]}`}>{confidenceLabel[day.confidence]}</span>
     </div>
   </article>
 );
@@ -174,7 +181,7 @@ const StateView: React.FC<StateViewProps> = ({ isDarkMode, logs }) => {
         <div className="flex items-center justify-between px-1">
           <h2 className="text-2xl font-bold text-brand-text dark:text-slate-100">状态</h2>
           <span className={`rounded-full px-3 py-1 text-[11px] font-black ${confidenceClass[result.confidence.level]}`}>
-            {result.confidence.level} confidence
+            置信度 {confidenceLabel[result.confidence.level]}
           </span>
         </div>
 
