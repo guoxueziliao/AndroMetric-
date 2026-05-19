@@ -40,7 +40,7 @@ app  →  features  →  shared/ui, core/storage  →  shared/lib, domain
 ```
 
 - `app/` — Application composition only: `AppProviders`, `AppContent`, `MainViewRouter`, `BottomNav`/`SidebarNav`, `Welcome`, bootstrap and editor hooks. No business logic, no Dexie queries, no statistics.
-- `features/<domain>/` — Business modules (`dashboard`, `daily-log`, `quick-actions`, `sex-life`, `stats`, `tags`, `backup`, `settings`, `pwa`, `profile`, `reproductive`, `simulation-lab`, `state`). Each feature exposes a stable entry; other features must not deep-import its internals.
+- `features/<domain>/` — Business modules (`dashboard`, `daily-log`, `quick-actions`, `sex-life`, `stats`, `tags`, `backup`, `pwa`, `profile`, `reproductive`, `simulation-lab`, `state`). Each feature exposes a stable entry; other features must not deep-import its internals.
 - `shared/ui/` — Pure presentational primitives (Modal, Toast, DateTimePicker, FormControls, HardnessSelector, SafeDeleteModal, ErrorBoundary, NoticeSystem, AnimatedButton/Page). Receives data via props only. Must NOT consume narrow contexts or `StorageService`.
 - `shared/lib/` — Pure functions only. No React, no Dexie, no DOM. Includes the physiological-day target-date helpers (`getActivityTargetDate`, `getSleepTargetDate`).
 - `core/storage/` — Dexie instance, repository layer, migrations, backup/file-system/logger services, backup-handle persistence. May depend on `domain`. No React, no UI strings.

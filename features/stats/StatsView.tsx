@@ -141,7 +141,11 @@ const InsightCard: React.FC<{ insight: Insight }> = ({ insight }) => {
 const StatsView: React.FC<StatsViewProps> = ({ isDarkMode, logs: rawLogs }) => {
     const logs = useMemo(() => Array.isArray(rawLogs) ? rawLogs : [], [rawLogs]);
     const [activeTab, setActiveTab] = useState<StatsTab>('overview');
-    const [trendComparison] = useState<MetricId>('sleep');
+    const [trendComparison, setTrendComparison] = useState<MetricId>('sleep');
+
+    const comparisonOptions = useMemo<readonly MetricId[]>(() => (
+        ['sleep', 'exercise', 'alcohol', 'stress', 'screenTime']
+    ), []);
 
     const displayLogs = useMemo(() => {
         return [...logs].filter(l => l.status === 'completed' && !isNaN(new Date(l.date).getTime()))
@@ -284,6 +288,27 @@ const StatsView: React.FC<StatsViewProps> = ({ isDarkMode, logs: rawLogs }) => {
                             <KPICard label="健康分" value={stats.kpis.avgHealthScore} unit="分" icon={CheckCircle} colorClass="text-emerald-500 dark:text-emerald-400"/>
                         </div>
                         <ChartCard title="趋势对比分析" icon={TrendingUp} subtext="均线：硬度等级 | 柱状：对比指标">
+                            <div className="flex flex-wrap gap-1.5 mb-3" role="tablist" aria-label="对比指标">
+                                {comparisonOptions.map(metricId => {
+                                    const isActive = trendComparison === metricId;
+                                    return (
+                                        <button
+                                            key={metricId}
+                                            type="button"
+                                            role="tab"
+                                            aria-selected={isActive}
+                                            onClick={() => setTrendComparison(metricId)}
+                                            className={`min-h-[44px] px-3 text-xs font-bold rounded-xl transition-colors ${
+                                                isActive
+                                                    ? 'bg-brand-accent text-white shadow-sm'
+                                                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                                            }`}
+                                        >
+                                            {METRICS[metricId].label}
+                                        </button>
+                                    );
+                                })}
+                            </div>
                             <div className="w-full h-[250px]">
                                 <Line 
                                     data={{

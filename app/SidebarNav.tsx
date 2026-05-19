@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { 
-  Calendar, Activity, Heart, User, Settings,
+import {
+  Calendar, Activity, Heart, User,
   ChevronLeft, ChevronRight
 } from 'lucide-react';
 
@@ -21,8 +21,8 @@ const navItems: { id: NavItem; label: string; icon: typeof Calendar }[] = [
   { id: 'my', label: '我的', icon: User },
 ];
 
-const SidebarNav: React.FC<SidebarNavProps> = ({ 
-  activeItem, 
+const SidebarNav: React.FC<SidebarNavProps> = ({
+  activeItem,
   onNavigate,
   isCollapsed,
   onToggleCollapse
@@ -46,6 +46,7 @@ const SidebarNav: React.FC<SidebarNavProps> = ({
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={onToggleCollapse}
+          aria-label={isCollapsed ? '展开侧栏' : '收起侧栏'}
           className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
         >
           {isCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
@@ -75,36 +76,19 @@ const SidebarNav: React.FC<SidebarNavProps> = ({
               >
                 {item.label}
               </motion.span>
-      {isActive && (
-              <motion.div
-                layoutId="activeIndicator"
-                className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-white rounded-r-full"
-                initial={{ opacity: 0, scaleY: 0 }}
-                animate={{ opacity: 1, scaleY: 1 }}
-                transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-              />
-            )}
+              {isActive && (
+                <motion.div
+                  layoutId="sidebarActiveIndicator"
+                  className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-white rounded-r-full"
+                  initial={{ opacity: 0, scaleY: 0 }}
+                  animate={{ opacity: 1, scaleY: 1 }}
+                  transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                />
+              )}
             </motion.button>
           );
         })}
       </nav>
-
-      {/* Footer */}
-      <div className="p-4 border-t border-slate-100 dark:border-slate-800">
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-        >
-          <Settings size={22} />
-          <motion.span
-            animate={{ opacity: isCollapsed ? 0 : 1 }}
-            className="font-bold whitespace-nowrap overflow-hidden"
-          >
-            设置
-          </motion.span>
-        </motion.button>
-      </div>
     </motion.aside>
   );
 };

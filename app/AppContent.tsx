@@ -1,4 +1,3 @@
-
 import React, { lazy, Suspense, useMemo, useState } from 'react';
 import { AppSettings } from '../types';
 import { useLocalStorage } from '../hooks/useLocalStorage';
@@ -11,6 +10,7 @@ import type { AppData } from './AppProviders';
 import { defaultSettings } from './appConfig';
 import InitializationScreen from './InitializationScreen';
 import MainViewRouter from './MainViewRouter';
+import SidebarNav from './SidebarNav';
 import { useAppBootstrap } from './useAppBootstrap';
 import { useLogEditor } from './useLogEditor';
 import { useQuickRecordData } from './useQuickRecordData';
@@ -56,6 +56,7 @@ const AppContent: React.FC<{ data: AppData }> = ({ data }) => {
 
   const [activeMainView, setActiveMainView] = useState<MainView>('calendar');
   const [isVersionHistoryOpen, setIsVersionHistoryOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useLocalStorage('sidebarCollapsed', false);
 
   const safeLogs = useMemo(() => (Array.isArray(logs) ? logs : []), [logs]);
   const {
@@ -125,22 +126,32 @@ const AppContent: React.FC<{ data: AppData }> = ({ data }) => {
     };
 
     return (
-      <div className="container mx-auto max-w-lg p-4 pb-32">
-        <MainViewRouter
-          view={view}
-          activeMainView={activeMainView}
-          isDarkMode={isDarkMode}
-          data={mainViewData}
-          actions={mainViewActions}
-        />
+      <>
+        {view === 'dashboard' && (
+          <SidebarNav
+            activeItem={activeMainView}
+            onNavigate={setActiveMainView}
+            isCollapsed={isSidebarCollapsed}
+            onToggleCollapse={() => setIsSidebarCollapsed((prev) => !prev)}
+          />
+        )}
+        <div className={`container mx-auto max-w-lg p-4 pb-32 transition-[padding] duration-300 ${view === 'dashboard' ? (isSidebarCollapsed ? 'lg:pl-24' : 'lg:pl-[260px]') : ''}`}>
+          <MainViewRouter
+            view={view}
+            activeMainView={activeMainView}
+            isDarkMode={isDarkMode}
+            data={mainViewData}
+            actions={mainViewActions}
+          />
 
-        <Modal isOpen={isConfirmBackModalOpen} onClose={() => setIsConfirmBackModalOpen(false)} title="未保存的更改" footer={<div className="flex gap-3 w-full"><button onClick={() => setIsConfirmBackModalOpen(false)} className="flex-1 py-3 bg-slate-100 dark:bg-slate-800 rounded-xl">继续编辑</button><button onClick={confirmLeaveForm} className="flex-1 py-3 bg-red-50 text-red-500 rounded-xl font-bold">放弃</button></div>}>
-            <p>您有未保存的更改。确定要离开吗？</p>
-        </Modal>
+          <Modal isOpen={isConfirmBackModalOpen} onClose={() => setIsConfirmBackModalOpen(false)} title="未保存的更改" footer={<div className="flex gap-3 w-full"><button onClick={() => setIsConfirmBackModalOpen(false)} className="flex-1 py-3 bg-slate-100 dark:bg-slate-800 rounded-xl">继续编辑</button><button onClick={confirmLeaveForm} className="flex-1 py-3 bg-red-50 text-red-500 rounded-xl font-bold">放弃</button></div>}>
+              <p>您有未保存的更改。确定要离开吗？</p>
+          </Modal>
 
-        <VersionHistoryModal isOpen={isVersionHistoryOpen} onClose={() => setIsVersionHistoryOpen(false)} />
-        <PWAInstallPrompt />
-      </div>
+          <VersionHistoryModal isOpen={isVersionHistoryOpen} onClose={() => setIsVersionHistoryOpen(false)} />
+          <PWAInstallPrompt />
+        </div>
+      </>
     );
   };
 

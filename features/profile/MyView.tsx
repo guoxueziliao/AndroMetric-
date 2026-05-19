@@ -69,6 +69,7 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isTagManagerOpen, setIsTagManagerOpen] = useState(false);
   const [isSimulationLabOpen, setIsSimulationLabOpen] = useState(false);
+  const isDevMode = typeof window !== 'undefined' && window.localStorage?.getItem('devMode') === '1';
   const [userName, setUserName] = useLocalStorage('userName', 'User');
   const [isEditingName, setIsEditingName] = useState(false);
   const [tempName, setTempName] = useState(userName);
@@ -363,8 +364,9 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
         </button>
       </section>
 
-      <section>
-        <button
+      {isDevMode && (
+        <section>
+          <button
           onClick={() => { setIsSettingsOpen(false); setIsSimulationLabOpen(true); }}
           className="w-full p-4 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-sm"
         >
@@ -379,7 +381,8 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
           </div>
           <ChevronRight size={18} className="text-slate-400" />
         </button>
-      </section>
+        </section>
+      )}
 
               {/* 3. Snapshots */}
               <section>

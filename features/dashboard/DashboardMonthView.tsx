@@ -16,7 +16,7 @@ const inlineLoader = (
 
 const DashboardMonthView: React.FC<DashboardMonthViewProps> = ({ logs, onDateClick }) => (
   <Suspense fallback={inlineLoader}>
-    <CalendarHeatmap logs={logs} onDateClick={onDateClick} mode="monthOnly" />
+    <CalendarHeatmap logs={logs} onDateClick={onDateClick} />
   </Suspense>
 );
 
