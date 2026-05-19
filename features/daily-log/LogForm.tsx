@@ -18,6 +18,8 @@ import { FaceSelector, MOOD_FACES, STRESS_FACES } from '../../shared/ui';
 import { formatDateFriendly } from '../../shared/lib';
 import { calculateDataQuality } from '../../domain';
 import { hydrateLog } from '../../core/storage';
+import { MENSTRUAL_OPTIONS, SUPPLEMENT_OPTIONS, type MidTabType } from './model/logFormData';
+import QualityScoreRing from './QualityScoreRing';
 
 interface LogFormData {
   existingLog: LogEntry | null;
@@ -39,35 +41,6 @@ interface LogFormProps {
   data: LogFormData;
   actions: LogFormActions;
 }
-
-type MidTabType = 'life' | 'env' | 'health';
-
-const SUPPLEMENT_OPTIONS = ['维生素D', '锌', '镁', '鱼油', '辅酶Q10', '益生菌'];
-const MENSTRUAL_OPTIONS = [
-    { id: 'unknown', label: '未记录' },
-    { id: 'none', label: '非经期' },
-    { id: 'period', label: '经期中' },
-    { id: 'fertile_window', label: '窗口期' }
-] as const;
-
-// 顶部评分圆环组件
-const QualityScoreRing = ({ score }: { score: number }) => {
-    const radius = 18;
-    const circumference = 2 * Math.PI * radius;
-    const offset = circumference - (score / 100) * circumference;
-    return (
-        <div className="relative flex items-center justify-center w-16 h-16">
-            <svg className="w-full h-full transform -rotate-90">
-                <circle cx="32" cy="32" r={radius} stroke="currentColor" strokeWidth="4" fill="transparent" className="text-slate-100 dark:text-slate-800" />
-                <circle cx="32" cy="32" r={radius} stroke="currentColor" strokeWidth="4" fill="transparent" strokeDasharray={circumference} strokeDashoffset={offset} strokeLinecap="round" className="text-orange-500 transition-all duration-1000 ease-out" />
-            </svg>
-            <div className="absolute flex flex-col items-center">
-                <span className="text-[9px] font-black text-slate-400 leading-none uppercase">质量</span>
-                <span className="text-sm font-black text-slate-800 dark:text-slate-100 leading-none mt-0.5">{score}</span>
-            </div>
-        </div>
-    );
-};
 
 const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
     const {
