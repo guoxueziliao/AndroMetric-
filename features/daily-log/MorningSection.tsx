@@ -94,14 +94,27 @@ const MorningSection: React.FC<MorningSectionProps> = ({ morning, onChange, logs
         </div>
       )}
 
-      <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-800 p-4 rounded-2xl mb-4">
-        <label className="font-bold text-sm text-brand-text dark:text-slate-200">有晨勃吗？</label>
-        <input
-          type="checkbox"
-          className="toggle-checkbox"
-          checked={morning.wokeWithErection === true}
-          onChange={(e) => onChange('wokeWithErection', e.target.checked)}
-        />
+      <div className="space-y-2 mb-4">
+        <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider pl-1">有晨勃吗？</label>
+        <div className="grid grid-cols-3 gap-2">
+          {[
+            { value: true, label: '有', cls: 'bg-amber-500 text-white border-amber-500' },
+            { value: false, label: '没有', cls: 'bg-slate-600 text-white border-slate-600' },
+            { value: null, label: '未记录', cls: 'bg-slate-200 dark:bg-slate-700 text-slate-500 border-slate-200 dark:border-slate-700' },
+          ].map(opt => {
+            const isSel = morning.wokeWithErection === opt.value;
+            return (
+              <button
+                key={String(opt.value)}
+                type="button"
+                onClick={() => onChange('wokeWithErection', opt.value)}
+                className={`min-h-[44px] py-2 rounded-xl text-sm font-black border-2 transition-all ${isSel ? opt.cls + ' shadow-md' : 'bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-400'}`}
+              >
+                {opt.label}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {morning.wokeWithErection && (

@@ -57,7 +57,7 @@ export const toggleNap = async (
     startTime: nowStr,
     ongoing: true,
     duration: 0,
-    quality: 3
+    quality: null
   };
   await saveNap(newNap, targetDate, saveLog);
   return null;
@@ -68,9 +68,11 @@ export const cancelOngoingNap = async (saveLog: SaveLog): Promise<void> => {
   const ongoingLog = allLogs.find(l => l.sleep?.naps?.some(n => n.ongoing));
   if (ongoingLog) {
     const nextNaps = ongoingLog.sleep!.naps.filter(n => !n.ongoing);
+    const historyEntry: ChangeRecord = { timestamp: Date.now(), summary: '取消午休', details: [], type: 'quick' };
     await saveLog({
       ...ongoingLog,
-      sleep: { ...ongoingLog.sleep!, naps: nextNaps }
+      sleep: { ...ongoingLog.sleep!, naps: nextNaps },
+      changeHistory: [...(ongoingLog.changeHistory || []), historyEntry]
     }, 'quick');
   }
 };

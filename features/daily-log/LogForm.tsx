@@ -89,15 +89,15 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
         if (base.sleep && !Array.isArray(base.sleep.naps)) base.sleep.naps = [];
 
         // Ensure morning state is fully initialized with defaults
-        // This fixes the bug where "wokeWithErection" appears ON by default but saves as undefined
-        const wokeWithErection = base.morning?.wokeWithErection ?? true;
+        // Post-0.0.8: preserve nullable signal (未记录) rather than forcing wokeWithErection=true
+        const wokeWithErection = base.morning?.wokeWithErection ?? null;
         return {
             ...base,
             morning: {
                 ...base.morning,
                 wokeWithErection,
-                hardness: base.morning?.hardness ?? (wokeWithErection ? 3 : null),
-                retention: base.morning?.retention ?? (wokeWithErection ? 'normal' : null),
+                hardness: base.morning?.hardness ?? null,
+                retention: base.morning?.retention ?? null,
                 id: base.morning?.id || `m_${Date.now()}`,
                 timestamp: base.morning?.timestamp || Date.now()
             } as any,
