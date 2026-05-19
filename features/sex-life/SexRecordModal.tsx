@@ -17,6 +17,7 @@ import {
 } from './model/sexModalData';
 import { Card, Chip, TabButton } from './SexModalPrimitives';
 import { ConfirmModal } from '../../shared/ui';
+import { analyzeUserPatterns } from '../daily-log/model/smartDefaults';
 
 interface SexRecordModalData {
   partners?: PartnerProfile[];
@@ -62,6 +63,7 @@ const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave
   const [pendingDeleteInteraction, setPendingDeleteInteraction] = useState<string | null>(null);
   const [isAddPartnerOpen, setIsAddPartnerOpen] = useState(false);
   const [newPartnerName, setNewPartnerName] = useState('');
+  const [smartPartnerApplied, setSmartPartnerApplied] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   
   // Sorting logic based on history
@@ -124,27 +126,32 @@ const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave
                      id: `init-${Date.now()}`,
                      partner: initialData.partner || '',
                      location: initialData.location || '',
-                     role: '', costumes: [], toys: [], chain: [] 
+                     role: '', costumes: [], toys: [], chain: []
                  }];
             }
             let loc = initialData.ejaculationLocation || '';
             let swallowed = initialData.semenSwallowed || false;
             if (loc === '口中/吞精') { loc = '口中'; swallowed = true; }
 
-            setData({ 
-                ...initialData, 
-                interactions: loadedInteractions, 
-                ejaculationLocation: loc, 
-                semenSwallowed: swallowed, 
+            setData({
+                ...initialData,
+                interactions: loadedInteractions,
+                ejaculationLocation: loc,
+                semenSwallowed: swallowed,
                 state: initialData.state || '',
                 partnerScore: initialData.partnerScore || 0
             });
+            setSmartPartnerApplied(false);
         } else {
             const firstId = Date.now().toString();
+            const smartPartner = analyzeUserPatterns(logs, 'lastSexPartner');
+            const useSmart = smartPartner.value && typeof smartPartner.value === 'string' && smartPartner.confidence > 0.5
+                && partners.some(p => p.name === smartPartner.value);
+            const initialPartner = useSmart ? (smartPartner.value as string) : '';
             setData({
                 id: Date.now().toString(),
                 startTime: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false }),
-                interactions: [{ id: firstId, partner: '', location: '', role: '', costumes: [], toys: [], chain: [] }],
+                interactions: [{ id: firstId, partner: initialPartner, location: '', role: '', costumes: [], toys: [], chain: [] }],
                 duration: 20,
                 protection: '无保护措施',
                 state: '',
@@ -157,9 +164,10 @@ const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave
                 mood: 'happy',
                 notes: '',
             });
+            setSmartPartnerApplied(!!useSmart);
         }
     }
-  }, [initialData, isOpen]);
+  }, [initialData, isOpen, logs, partners]);
 
   const handleSave = () => {
       onSave(data);
@@ -199,6 +207,7 @@ const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave
 
   const updateActive = (field: keyof SexInteraction, value: any) => {
       if (!editingInteractionId) return;
+      if (field === 'partner') setSmartPartnerApplied(false);
       setData(prev => ({
           ...prev,
           interactions: prev.interactions.map(i => i.id === editingInteractionId ? { ...i, [field]: value } : i)
@@ -549,6 +558,16 @@ const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave
                              <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2">
                                 <div>
                                     <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 block">选择伴侣</label>
+                                    {smartPartnerApplied && activeInteraction.partner && (
+                                        <div className="mb-3 flex items-center justify-between gap-2 rounded-2xl border border-pink-200 bg-pink-50 px-4 py-2 text-[11px] font-bold text-pink-700 dark:border-pink-900/50 dark:bg-pink-900/20 dark:text-pink-300">
+                                            <span className="flex items-center gap-1.5"><Sparkles size={12}/> 智能默认 · {activeInteraction.partner} · 可换</span>
+                                            <button
+                                                type="button"
+                                                onClick={() => updateActive('partner', '')}
+                                                className="rounded-full px-2 py-0.5 text-[10px] font-black text-pink-600 underline-offset-2 hover:underline dark:text-pink-400"
+                                            >清除</button>
+                                        </div>
+                                    )}
                                     <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2 -mx-1 px-1">
                                         {partners.map(p => {
                                             const isActive = activeInteraction.partner === p.name;

@@ -2,7 +2,8 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Search, ChevronDown, ChevronUp, Check, Clock, PenLine, Play, Flag, Footprints, Smile, Frown, Meh, Zap, TrendingUp, Sparkles, Target, Flame } from 'lucide-react';
 import { Modal } from '../../shared/ui';
-import type { ExerciseRecord, ExerciseIntensity } from '../../domain';
+import type { ExerciseRecord, ExerciseIntensity, LogEntry } from '../../domain';
+import { analyzeUserPatterns } from './model/smartDefaults';
 
 const EXERCISE_CATEGORIES = [
   { name: "步行", items: ["日常步行", "户外步行", "室内步行", "徒步", "遛狗", "城市散步", "负重步行"] },
@@ -35,6 +36,7 @@ type ExerciseRecordModalMode = 'create' | 'edit' | 'start' | 'finish';
 interface ExerciseRecordModalData {
     initialData?: ExerciseRecord;
     mode?: ExerciseRecordModalMode;
+    logs?: LogEntry[];
 }
 
 interface ExerciseRecordModalActions {
@@ -51,13 +53,15 @@ interface ExerciseRecordModalProps {
 const ExerciseRecordModal: React.FC<ExerciseRecordModalProps> = ({ isOpen, onClose, data, actions }) => {
     const {
         initialData,
-        mode = 'create'
+        mode = 'create',
+        logs
     } = data;
     const { onSave } = actions;
 
     const [searchTerm, setSearchTerm] = useState('');
     const [expandedCategory, setExpandedCategory] = useState<string | null>("步行");
     const [endTime, setEndTime] = useState('');
+    const [smartTypeApplied, setSmartTypeApplied] = useState(false);
     const [record, setRecord] = useState<ExerciseRecord>({
         id: '', type: '', startTime: '', duration: 30, intensity: 'medium', bodyParts: [], steps: undefined, notes: '', feeling: 'ok'
     });
@@ -70,17 +74,28 @@ const ExerciseRecordModal: React.FC<ExerciseRecordModalProps> = ({ isOpen, onClo
                 const [h, m] = (initialData.startTime || '00:00').split(':').map(Number);
                 const d = new Date(); d.setHours(h); d.setMinutes(m + (initialData.duration || 0));
                 setEndTime(d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false }));
+                setSmartTypeApplied(false);
             } else {
                 const now = new Date();
                 const nowStr = now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false });
                 const endD = new Date(now); endD.setMinutes(now.getMinutes() + 30);
+                const DAYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const;
+                const todayDow = DAYS[now.getDay()];
+                const smartType = logs ? analyzeUserPatterns(logs, 'exerciseType', todayDow) : { value: null, confidence: 0, sampleSize: 0 };
+                const useSmart = smartType.value && typeof smartType.value === 'string' && smartType.confidence > 0.5;
+                const initialType = useSmart ? (smartType.value as string) : '';
                 setRecord({
-                    id: Date.now().toString(), type: '', startTime: nowStr, duration: 30, intensity: 'medium', bodyParts: [], steps: undefined, notes: '', feeling: 'ok'
+                    id: Date.now().toString(), type: initialType, startTime: nowStr, duration: 30, intensity: 'medium', bodyParts: [], steps: undefined, notes: '', feeling: 'ok'
                 });
                 setEndTime(endD.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false }));
+                setSmartTypeApplied(!!useSmart);
+                if (useSmart) {
+                    const cat = EXERCISE_CATEGORIES.find(c => c.items.includes(initialType));
+                    if (cat) setExpandedCategory(cat.name);
+                }
             }
         }
-    }, [isOpen, initialData]);
+    }, [isOpen, initialData, logs]);
 
     const handleEndTimeChange = (newEndTime: string) => {
         setEndTime(newEndTime);
@@ -178,6 +193,16 @@ const ExerciseRecordModal: React.FC<ExerciseRecordModalProps> = ({ isOpen, onClo
 
                 {!isFinishMode && (
                     <div className="space-y-4">
+                        {smartTypeApplied && record.type && (
+                            <div className="flex items-center justify-between gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-[11px] font-bold text-emerald-700 dark:border-emerald-900/50 dark:bg-emerald-900/20 dark:text-emerald-300">
+                                <span className="flex items-center gap-1.5"><Sparkles size={12}/> 智能默认 · {record.type} · 可换</span>
+                                <button
+                                    type="button"
+                                    onClick={() => { setRecord(r => ({ ...r, type: '' })); setSmartTypeApplied(false); }}
+                                    className="rounded-full px-2 py-0.5 text-[10px] font-black text-emerald-600 underline-offset-2 hover:underline dark:text-emerald-400"
+                                >清除</button>
+                            </div>
+                        )}
                         <div className="relative group">
                             <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-500 transition-colors" size={20} />
                             <input 
@@ -199,7 +224,7 @@ const ExerciseRecordModal: React.FC<ExerciseRecordModalProps> = ({ isOpen, onClo
                                         {isExpanded && (
                                             <div className="grid grid-cols-2 gap-3 animate-in fade-in slide-in-from-top-1 duration-300">
                                                 {cat.items.map(item => (
-                                                    <button key={item} onClick={() => setRecord({...record, type: item})} className={`p-4 rounded-3xl text-[13px] font-bold text-left transition-all flex items-center justify-between border-2 ${record.type === item ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 shadow-md shadow-emerald-500/10' : 'border-transparent bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50'}`}>
+                                                    <button key={item} onClick={() => { setRecord({...record, type: item}); setSmartTypeApplied(false); }} className={`p-4 rounded-3xl text-[13px] font-bold text-left transition-all flex items-center justify-between border-2 ${record.type === item ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 shadow-md shadow-emerald-500/10' : 'border-transparent bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50'}`}>
                                                         <span className="truncate pr-2">{item}</span>
                                                         {record.type === item && <div className="w-4 h-4 bg-emerald-500 rounded-full flex items-center justify-center"><Check size={10} className="text-white" strokeWidth={4}/></div>}
                                                     </button>

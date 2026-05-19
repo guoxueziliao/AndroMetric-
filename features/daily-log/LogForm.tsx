@@ -875,11 +875,12 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
                     onDeleteTag
                 }}
             />
-            <ExerciseRecordModal 
-                isOpen={modalState.ex} 
-                onClose={() => { setModalState(s => ({ ...s, ex: false })); setEditTarget(null); }} 
+            <ExerciseRecordModal
+                isOpen={modalState.ex}
+                onClose={() => { setModalState(s => ({ ...s, ex: false })); setEditTarget(null); }}
                 data={{
-                    initialData: editTarget?.type === 'ex' ? editTarget.data : undefined
+                    initialData: editTarget?.type === 'ex' ? editTarget.data : undefined,
+                    logs
                 }}
                 actions={{
                     onSave: (r) => {
