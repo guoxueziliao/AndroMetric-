@@ -98,6 +98,17 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
     // 编辑中的单项数据
     const [editTarget, setEditTarget] = useState<{ type: string, data: any } | null>(null);
     const [pendingRemoval, setPendingRemoval] = useState<{ field: 'sex' | 'masturbation' | 'exercise' | 'caffeine' | 'alcohol' | 'nap', id: string } | null>(null);
+    const [isSaving, setIsSaving] = useState(false);
+
+    const performSave = async (status: 'pending' | 'completed') => {
+        if (isSaving) return;
+        setIsSaving(true);
+        try {
+            await onSave({ ...log, status });
+        } finally {
+            setIsSaving(false);
+        }
+    };
 
     const markDirty = useCallback(() => onDirtyStateChange(true), [onDirtyStateChange]);
     const qualityScore = useMemo(() => calculateDataQuality(log), [log]);
@@ -768,18 +779,24 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
             <div className="sticky bottom-20 z-20 -mx-4 mt-4 px-4 pt-3 pb-3 bg-brand-bg/90 dark:bg-slate-950/90 backdrop-blur-md border-t border-slate-200/60 dark:border-slate-800/60 flex gap-3">
                 <button
                     type="button"
-                    onClick={() => { onSave({ ...log, status: 'pending' }); }}
-                    className="flex-1 min-h-[48px] py-3 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 font-bold text-sm rounded-2xl shadow-soft border border-slate-100 dark:border-white/5 active:scale-[0.98] transition-all"
+                    onClick={() => performSave('pending')}
+                    disabled={isSaving}
+                    className="flex-1 min-h-[48px] py-3 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 font-bold text-sm rounded-2xl shadow-soft border border-slate-100 dark:border-white/5 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     保存草稿
                 </button>
                 <button
                     type="button"
-                    onClick={() => { onSave({ ...log, status: 'completed' }); }}
-                    className="flex-[2] min-h-[48px] py-3 bg-brand-accent text-white font-bold text-sm rounded-2xl shadow-xl shadow-blue-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                    onClick={() => performSave('completed')}
+                    disabled={isSaving}
+                    className="flex-[2] min-h-[48px] py-3 bg-brand-accent text-white font-bold text-sm rounded-2xl shadow-xl shadow-blue-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                    <Check size={20} strokeWidth={3} />
-                    完成记录
+                    {isSaving ? (
+                        <RotateCcw size={18} className="animate-spin" />
+                    ) : (
+                        <Check size={20} strokeWidth={3} />
+                    )}
+                    {isSaving ? '保存中...' : '完成记录'}
                 </button>
             </div>
 

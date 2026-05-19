@@ -176,6 +176,18 @@ const Dashboard: React.FC<DashboardProps> = ({
         </div>
 
         {/* Ongoing Tasks Banners */}
+        {logs.length === 0 && (
+            <section className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-3xl p-6 border border-blue-100 dark:border-blue-900/40 animate-in fade-in">
+                <h2 className="text-base font-black text-brand-text dark:text-slate-100 mb-1">还没有任何记录</h2>
+                <p className="text-sm text-brand-muted dark:text-slate-400 mb-4 leading-relaxed">
+                    点击右下角的 <span className="inline-flex items-center justify-center w-6 h-6 bg-brand-accent text-white rounded-full font-black text-xs mx-0.5">+</span> 按钮开始第一条快记 ——
+                    睡眠、运动、饮品、性事件都可以从这里录入。
+                </p>
+                <p className="text-xs text-brand-muted dark:text-slate-500">
+                    或者在底部"日历"里直接点今天,写完整日记。
+                </p>
+            </section>
+        )}
         {(ongoingNap || ongoingExercise || ongoingMb || pendingLog || ongoingAlcohol) && (
             <section className="space-y-3 animate-in fade-in slide-in-from-top-4 duration-500">
                 {pendingLog && (
