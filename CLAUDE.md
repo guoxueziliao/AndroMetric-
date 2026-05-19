@@ -40,16 +40,23 @@ app  →  features  →  shared/ui, core/storage  →  shared/lib, domain
 ```
 
 - `app/` — Application composition only: `AppProviders`, `AppContent`, `MainViewRouter`, `BottomNav`/`SidebarNav`, `Welcome`, bootstrap and editor hooks. No business logic, no Dexie queries, no statistics.
-- `features/<domain>/` — Business modules (`dashboard`, `daily-log`, `quick-actions`, `sex-life`, `stats`, `tags`, `backup`, `settings`, `pwa`, `analysis`, `profile`, `reproductive`, `simulation-lab`, `state`). Each feature exposes a stable entry; other features must not deep-import its internals.
-- `shared/ui/` — Pure presentational primitives (Modal, Toast, DateTimePicker, FormControls, HardnessSelector, SafeDeleteModal, ErrorBoundary, NoticeSystem, AnimatedButton/Page). Receives data via props only. Must NOT call `useData()` or `StorageService`.
-- `shared/lib/` — Pure functions only. No React, no Dexie, no DOM.
-- `core/storage/` — Dexie instance, repository layer, migrations, backup/file-system/logger services. May depend on `domain`. No React, no UI strings.
+- `features/<domain>/` — Business modules (`dashboard`, `daily-log`, `quick-actions`, `sex-life`, `stats`, `tags`, `backup`, `settings`, `pwa`, `profile`, `reproductive`, `simulation-lab`, `state`). Each feature exposes a stable entry; other features must not deep-import its internals.
+- `shared/ui/` — Pure presentational primitives (Modal, Toast, DateTimePicker, FormControls, HardnessSelector, SafeDeleteModal, ErrorBoundary, NoticeSystem, AnimatedButton/Page). Receives data via props only. Must NOT consume narrow contexts or `StorageService`.
+- `shared/lib/` — Pure functions only. No React, no Dexie, no DOM. Includes the physiological-day target-date helpers (`getActivityTargetDate`, `getSleepTargetDate`).
+- `core/storage/` — Dexie instance, repository layer, migrations, backup/file-system/logger services, backup-handle persistence. May depend on `domain`. No React, no UI strings.
 - `domain/` — Core types and business rules (`LogEntry`, `MorningRecord`, tag types, physiological-day rule). No React, no Dexie, no DOM/window/localStorage.
+
+**Data wiring:**
+
+- `app/AppProviders.tsx` runs `useLogs()` once and exposes its result both as a render-prop `data` argument (used by prop-drilling features) and through three narrow contexts in `contexts/`:
+  - `LogQueryContext` — `{ logs, isInitializing }`
+  - `PartnerContext` — `partners` plus CRUD
+  - `ReproductiveContext` — `cycleEvents` / `pregnancyEvents` plus CRUD
+- Per-activity write logic lives in `features/quick-actions/model/useCases/{sex,masturbation,exercise,nap,alcohol,sleep}.ts` as plain async functions; `useLogs()` only owns the live queries, the error-wrapped storage writers, and the `useCallback` bindings that inject `saveLog`/`deleteLog` into the use cases.
+- Phase-2 narrow contexts that the architecture doc names but that have no current consumer (LogCommand, QuickAction, Tag, Settings) are intentionally NOT built — add one when a real caller needs it, rather than ship dead infrastructure.
 
 **Legacy paths that still exist and are being migrated:**
 
-- `contexts/DataContext.tsx` — kept as a compatibility facade exposing `useData()`. New code should use narrow contexts / feature hooks instead; the facade is the eventual deletion target.
-- `hooks/useLogs.ts` — being decomposed into query hooks + use-case commands; same migration intent as `DataContext`.
 - `utils/helpers.ts` — slated to split into `shared/lib` (pure helpers) and `domain/rules` (business rules); currently still at the repo root.
 
 **Moved into the new layered structure (root paths are now re-export shims):**
