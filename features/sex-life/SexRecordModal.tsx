@@ -3,6 +3,19 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { X, ChevronRight, Plus, Trash2, MapPin, ChevronDown, Activity, Shirt, Zap, ArrowRight, Sparkles, Droplets, Flame, User, GripHorizontal, LayoutGrid, Tag, GripVertical, Star } from 'lucide-react';
 import type { SexRecordDetails, SexInteraction, SexAction, SexActionType, PartnerProfile, LogEntry } from '../../domain';
 import { getSexRecommendations, type Recommendation } from '../../utils/recommendationEngine';
+import {
+  ACT_OPTIONS,
+  COSTUME_OPTIONS,
+  EJACULATION_LOCATIONS,
+  LOCATION_GROUPS,
+  POSITION_OPTIONS,
+  POST_SEX_OPTIONS,
+  PROTECTION_OPTIONS,
+  ROLE_OPTIONS,
+  STATE_OPTIONS,
+  TOY_OPTIONS
+} from './model/sexModalData';
+import { Card, Chip, TabButton } from './SexModalPrimitives';
 
 interface SexRecordModalData {
   partners?: PartnerProfile[];
@@ -17,92 +30,6 @@ interface SexRecordModalProps {
   dateStr: string;
   data: SexRecordModalData;
 }
-
-// --- Constants (Options) ---
-
-const ACT_OPTIONS = [
-  '亲吻', '舌吻', '爱抚', '种草莓', '手交', '口交', '乳交', '足交', '腿交', '指交', 
-  '冰火', '漫游', '69', '毒龙', '肛交', '深喉', '颜骑', '吞精', '窒息', 'SP', '双龙', '其他'
-];
-
-const POSITION_OPTIONS = [
-  '传教士', '女上位', '后入式', '侧卧式', '勺子式', '站立式', '站立后入', '抱起来操', 
-  '火车便当', '坐式', '观音坐莲', '反向骑乘', '剪刀式', '蝴蝶式', 'M字开腿', '趴着式', 
-  '椅子式', '桌边式', '壁咚', '镜前', '倒立', '69式'
-];
-
-const PROTECTION_OPTIONS = ['无保护措施', '避孕套', '避孕药', '体外射精', '其他'];
-
-const LOCATION_GROUPS = {
-    '居家': ['卧室', '客厅', '浴室', '厨房', '阳台', '沙发', '书桌'],
-    '刺激': ['车震', '野战', '影院', '楼梯', '公共场所'],
-    '出行': ['酒店', '民宿', '帐篷', '其他']
-};
-
-const STATE_OPTIONS = ['清醒', '微醺', '醉酒', '疲惫', '亢奋', '药物', 'High'];
-
-const ROLE_OPTIONS = [
-    '夫妻', '情侣', '炮友', '前任', '人妻', '朋友妻', '未亡人', '师生', 
-    '医护', '上下级', '女仆', 'JK', '辣妹', 'NTR', '路人', '其他'
-];
-
-const COSTUME_OPTIONS = [
-    '护士', 'OL', '空姐', '女仆', 'JK', '女警', '旗袍', '汉服', '和服', '兔女郎', '泳衣', '瑜伽裤',
-    '黑丝', '白丝', '肉丝', '渔网', '吊带袜', '裸腿', '开档', '胶衣', '高跟鞋', '眼镜', '项圈', '兽耳'
-];
-
-const TOY_OPTIONS = [
-    '假阴茎', '炮机', '肛塞', '拉珠', '跳蛋', '按摩棒', '飞机杯', '吮吸器', 
-    '眼罩', '口球', '手铐', '鞭子', '夹子', '润滑液', '热油', '冰块'
-];
-
-const POST_SEX_OPTIONS = [
-    '鸳鸯浴', '清洗', '排尿', '拥抱', '聊天', '按摩', '喂食', '秒睡', '事后烟', '玩手机', '贤者模式'
-];
-
-const EJACULATION_LOCATIONS = [
-  '阴道内', '肛门内', '颜射', '口中', '胸部', '腹部', '臀部', '背部', '腿/脚', '手中', '体外'
-];
-
-// --- Visual Components ---
-
-const Card: React.FC<{ children: React.ReactNode, className?: string, onClick?: () => void }> = ({ children, className = '', onClick }) => (
-    <div 
-        onClick={onClick}
-        className={`bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm rounded-2xl ${className}`}
-    >
-        {children}
-    </div>
-);
-
-const Chip: React.FC<{ label: string, active: boolean, onClick: () => void, color?: string }> = ({ label, active, onClick, color: _color = 'blue' }) => {
-    // Reverted to clean slate theme
-    return (
-        <button
-            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onClick(); }}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 active:scale-95 whitespace-nowrap border ${
-                active 
-                ? 'bg-brand-accent text-white border-brand-accent shadow-sm' 
-                : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-brand-accent/50'
-            }`}
-        >
-            {label}
-        </button>
-    );
-};
-
-const TabButton: React.FC<{ active: boolean, onClick: () => void, icon: React.ElementType, label: string }> = ({ active, onClick, icon: Icon, label }) => (
-    <button 
-        onClick={onClick}
-        className={`flex flex-col items-center justify-center py-2 px-1 rounded-xl transition-all flex-1 relative
-            ${active ? 'text-brand-accent bg-blue-50 dark:bg-slate-800' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
-    >
-        <div className={`p-2 rounded-full mb-1`}>
-            <Icon size={18} />
-        </div>
-        <span className="text-[10px] font-bold">{label}</span>
-    </button>
-);
 
 const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave, initialData, data: modalData }) => {
   const {
