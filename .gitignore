@@ -2,3 +2,7 @@ node_modules
 dist
 dev-dist
 .sisyphus
+
+# Windows NTFS Alternate Data Stream metadata; created when files are
+# touched from Windows side of WSL. Has no content, never useful.
+*:Zone.Identifier
