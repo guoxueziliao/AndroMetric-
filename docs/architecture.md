@@ -2,25 +2,25 @@
 
 本文是硬度日记后续重构的主架构依据。目标不是一次性重写项目，而是在保持现有功能、交互和 IndexedDB 数据结构不变的前提下，逐步建立清晰的模块边界，让后续开发更容易定位、扩展和测试。
 
-## 当前状态(2026-05-19)
+## 当前状态(0.0.7 — 2026-05-19)
 
-**Phase 1 + Phase 2 已基本落地。** 本文下方的"目标目录结构""依赖方向""数据流""Context 拆分策略"现在描述的就是**当前代码状态**,不再是未来计划。具体已完成的迁移:
+**0.0.7 已发布。** Phase 1 + Phase 2 早已落地,本次 0.0.7 主线是 UI/UX 可用性修复(7 刀)。本文下方"目标目录结构""依赖方向""数据流""Context 拆分策略"描述的就是**当前代码状态**,不再是未来计划。
 
-- ✅ `domain/types/` 拥有真正的内容(9 个文件,从 `types.ts` 拆分而来),根 `types.ts` 现在只是 re-export。
-- ✅ `domain/rules/` 拥有 `historyEventType`、`dataQuality` 两条规则。
-- ✅ `core/storage/` 拥有 `db.ts`、`StorageService.ts`、`migration.ts`、`backupHandleStorage.ts`;旧的根路径都是 shim。
-- ✅ `shared/lib/` 拥有 `dates`、`labels`、`logPresentation`、`targetDate`、`errors` 等模块。
-- ✅ `features/quick-actions/model/useCases/` 拥有 6 个按活动域拆分的 use case 模块,`hooks/useLogs.ts` 由 444 行降至 231 行,只剩 live queries + 写入包装 + use case 绑定。
-- ✅ `DataContext` 已删除,替换为 3 个窄 context:`LogQueryContext`、`PartnerContext`、`ReproductiveContext`(其余 `LogCommandContext`、`QuickActionContext`、`TagContext`、`SettingsContext` 暂未建,等真正出现消费者再加,不预留死代码)。
-- ✅ `features/analysis/` 已删除,`AnalysisView` 迁入 `features/state/`。
-- ✅ 大型组件保守拆分完成:`PartnerManager` 778→166、`MasturbationRecordModal` 715→554、`SexRecordModal` 889→816、`LogForm` 904→877。激进的 state-hook 拆分被刻意推迟(详见 [memory `project-large-components-conservative-split`](../../.claude/projects/-home-fan-AndroMetric-/memory/project_large_components_conservative_split.md))。
-- ✅ 备份目录句柄改存 IndexedDB,关闭浏览器后无需重新选择文件夹。
-- ✅ `package.json` 新增 `typecheck` 脚本,`tsc --noEmit` 零错误。
+### 0.0.7 完成清单(刀 1a → 刀 7)
+- **刀 1a 清死代码 + 合并视图嵌套**:删除 `HardnessChart` / `ThemeSettings` / `useTheme` 色彩部分 / `AnalysisView` / `CalendarHeatmap` full mode (~400 行);`SidebarNav` 接入 lg+;BottomNav 命名/icon 统一;SimulationLabPanel 改 dev flag (`localStorage.devMode === '1'`);StatsView trendComparison setter 暴露(S0-12)。
+- **刀 1b 死控件 + 文案本地化**:ContentItem "去选择" 按钮、PWA 更新对未安装用户也显示、`settings.privacyMode` 真正接通、Welcome 中文标题、GlobalTimeline 中文标题、confidence labels 中文化、DiffRow 字段标签去 CJK 不适用样式。
+- **刀 2 触屏可用性**:5 处 hover-only 控件全改 visible 或 long-press;HardnessSelector / CalendarHeatmap / BottomNav / StatsView tabs / DateTimePicker 触控目标 ≥44px;SexRecordModal action-chain HTML5 drag → chevron up/down(触屏可用);FAB 6 按钮改 2 列 grid + 中文 label + aria-label。
+- **刀 3 数据真实性**:删除 SexRecordModal "通宵硬仗" 自动注入、修复 Masturbation "其他具体地点" 自清空、`wokeWithErection` 默认 `null` 不再伪造、`createMasturbationStartRecord` 不再预填 20+ 字段。新增 `shared/ui/ConfirmModal` 替换所有 `window.confirm/alert`(LogForm/SexRecordModal/NoticeSystem/PartnerEditForm/useProfileMaintenance/Dashboard/PartnerManager)。SafeDeleteModal 强度倒置修复:单条删除一步,"清除所有数据" 二步(必须打字解锁)。
+- **刀 4 时间输入统一**:BeverageModal/Alcohol 加可编辑时间输入(原先无 UI);MasturbationRecordModal duration ↔ endTime 双向同步;DateTimePicker 加快捷预设(现在 / -1h / -2h / 昨晚 22:00)。
+- **刀 5 部分完成**:删除 `HealthSection.tsx` + 补 "腹泻" 到 LogForm 症状列表;LogForm 保存按钮 sticky bottom。`<SleepFieldsBlock>` 拆出、`<LogItemCard>` 统一、性活动 hoist、touchedPaths 集中 → 推迟到 0.0.8 后续 PR。
+- **刀 6 空态 + 保存反馈**:Dashboard 首次空态引导卡片 + 指向 FAB;StatsView 数据 < 3 条时显示 "数据不足" 卡片;LogForm save 加 loading/disable/spinner;Toast 堆叠 + Modal vs BottomSheet 规则 → 推迟。
+- **刀 7 ReproductivePanel 本地化 + 日期补录**:`event.kind` 中文映射 (CYCLE_KIND_LABELS / PREGNANCY_KIND_LABELS);加事件日期 input 支持补录历史;Trash buttons 触控目标 44px。SexLifeView "伴侣周期" 入口、严重度选择器 → 推迟。
 
-**还没做的:**
+### 仍未做的(0.0.8+)
 
-- `utils/` 下仍有部分文件(`dataQuality.ts`、`hydrateLog.ts`、`validators.ts`、`historyRepair.ts`、`legacyDataCleanup.ts`、`recommendationEngine.ts`、`regression.ts`、`alcoholHelpers.ts`、`tagValidators.ts`、`dataHealthCheck.ts`、`constants.ts`)等待按其性质迁入 `domain/rules` 或 `shared/lib`。`utils/helpers.ts` 已是 shim,`utils/migration.ts` 也是。
-- 三个大组件(`MasturbationRecordModal` 554、`SexRecordModal` 816、`LogForm` 877)的 state 仍与 JSX 紧耦合,进一步瘦身需要把 useState/useCallback 提到自定义 hook —— 风险偏高,需要先有具体痛点再做。
+- `utils/` 下仍有 `dataQuality.ts`、`hydrateLog.ts`、`validators.ts`、`historyRepair.ts`、`legacyDataCleanup.ts`、`recommendationEngine.ts`、`regression.ts`、`alcoholHelpers.ts`、`tagValidators.ts`、`dataHealthCheck.ts`、`constants.ts` 等待迁入 `domain/rules` 或 `shared/lib`。`utils/helpers.ts` 和 `utils/migration.ts` 已是 shim。
+- 三个大组件(`MasturbationRecordModal` 554、`SexRecordModal` 870+、`LogForm` 880+)state-hook 提取需要先有具体痛点。
+- Sleep+Nap section 共享、性活动 hoist、LogItemCard 统一、Toast 堆叠、ongoing banner 整合、SexLifeView 周期入口、严重度选择器 → 排入 0.0.8 路线图。
 
 下面的 Phase 1 / Phase 2 步骤、迁移映射、禁止事项保持原样作为历史参考,不再是 TODO。
 
