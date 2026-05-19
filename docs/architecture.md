@@ -2,25 +2,33 @@
 
 本文是硬度日记后续重构的主架构依据。目标不是一次性重写项目，而是在保持现有功能、交互和 IndexedDB 数据结构不变的前提下，逐步建立清晰的模块边界，让后续开发更容易定位、扩展和测试。
 
-## 当前状态(0.0.7 — 2026-05-19)
+## 当前状态(0.0.8 — 2026-05-19)
 
-**0.0.7 已发布。** Phase 1 + Phase 2 早已落地,本次 0.0.7 主线是 UI/UX 可用性修复(7 刀)。本文下方"目标目录结构""依赖方向""数据流""Context 拆分策略"描述的就是**当前代码状态**,不再是未来计划。
+**0.0.8 已发布。** 主题:**B 数据可信度 + C 输入摩擦降低**。6 刀按 audit + 0.0.7 推迟项合并去重落地。
 
-### 0.0.7 完成清单(刀 1a → 刀 7)
-- **刀 1a 清死代码 + 合并视图嵌套**:删除 `HardnessChart` / `ThemeSettings` / `useTheme` 色彩部分 / `AnalysisView` / `CalendarHeatmap` full mode (~400 行);`SidebarNav` 接入 lg+;BottomNav 命名/icon 统一;SimulationLabPanel 改 dev flag (`localStorage.devMode === '1'`);StatsView trendComparison setter 暴露(S0-12)。
-- **刀 1b 死控件 + 文案本地化**:ContentItem "去选择" 按钮、PWA 更新对未安装用户也显示、`settings.privacyMode` 真正接通、Welcome 中文标题、GlobalTimeline 中文标题、confidence labels 中文化、DiffRow 字段标签去 CJK 不适用样式。
-- **刀 2 触屏可用性**:5 处 hover-only 控件全改 visible 或 long-press;HardnessSelector / CalendarHeatmap / BottomNav / StatsView tabs / DateTimePicker 触控目标 ≥44px;SexRecordModal action-chain HTML5 drag → chevron up/down(触屏可用);FAB 6 按钮改 2 列 grid + 中文 label + aria-label。
-- **刀 3 数据真实性**:删除 SexRecordModal "通宵硬仗" 自动注入、修复 Masturbation "其他具体地点" 自清空、`wokeWithErection` 默认 `null` 不再伪造、`createMasturbationStartRecord` 不再预填 20+ 字段。新增 `shared/ui/ConfirmModal` 替换所有 `window.confirm/alert`(LogForm/SexRecordModal/NoticeSystem/PartnerEditForm/useProfileMaintenance/Dashboard/PartnerManager)。SafeDeleteModal 强度倒置修复:单条删除一步,"清除所有数据" 二步(必须打字解锁)。
-- **刀 4 时间输入统一**:BeverageModal/Alcohol 加可编辑时间输入(原先无 UI);MasturbationRecordModal duration ↔ endTime 双向同步;DateTimePicker 加快捷预设(现在 / -1h / -2h / 昨晚 22:00)。
-- **刀 5 部分完成**:删除 `HealthSection.tsx` + 补 "腹泻" 到 LogForm 症状列表;LogForm 保存按钮 sticky bottom。`<SleepFieldsBlock>` 拆出、`<LogItemCard>` 统一、性活动 hoist、touchedPaths 集中 → 推迟到 0.0.8 后续 PR。
-- **刀 6 空态 + 保存反馈**:Dashboard 首次空态引导卡片 + 指向 FAB;StatsView 数据 < 3 条时显示 "数据不足" 卡片;LogForm save 加 loading/disable/spinner;Toast 堆叠 + Modal vs BottomSheet 规则 → 推迟。
-- **刀 7 ReproductivePanel 本地化 + 日期补录**:`event.kind` 中文映射 (CYCLE_KIND_LABELS / PREGNANCY_KIND_LABELS);加事件日期 input 支持补录历史;Trash buttons 触控目标 44px。SexLifeView "伴侣周期" 入口、严重度选择器 → 推迟。
+### 0.0.8 完成清单(刀 1 → 刀 6)
 
-### 仍未做的(0.0.8+)
+- **刀 1 默认值不再说谎**:`hydrateLog` 的 `satisfactionLevel / orgasmIntensity / sleep.quality / sleep.environment` 默认改为 `null`(配套 `domain/types` 字段放宽到 `| null`)。`MasturbationRecordModal` 与 `NapRecordModal` fresh-open 不再伪造中间值(stressLevel/energyLevel/satisfaction/orgasm/location/attire/preSleepState 等)。`SexRecordModal addInteraction` 不再静默 copy 上一段的 partner/location/role/costumes。UI 渲染 null 时显示 "未设/未评/未选" 提示。新增 V46 轻量 migration:把疑似历史推断填入的 `masturbation.{id}.{satisfactionLevel,orgasmIntensity,stressLevel,energyLevel} === 3` 在 `dataQuality.fields` 里降级为 `defaulted`(不删值,stats 自动通过 `isFieldUsable` 跳过)。
+- **刀 2 DrinkModal 软合并**:`AlcoholRecordModal` + `BeverageModal` 顶部加 tab "饮酒 / 提神饮品",点击切换关闭当前、打开另一个(单 modal 互斥)。Alcohol scene 默认空字符串 + step 0 加 "直接保存" 按钮(B-005, C-001)。BeverageModal 时间输入加快捷预设 现在/-1h/-2h/-4h(C-008)。编辑现有记录时不显示切换以避免丢输入。
+- **刀 3 性活动模态减摩擦**:`SexRecordModal` 伴侣选择条加 "+ 新建" 内联弹层,只填名字即可创建并自动选中,无需跳到 PartnerManager(C-006)。action chain 在 0.0.7 已经是垂直列表(C-009 复核完成)。MasturbationRecordModal 折叠到 Accordion(C-002)留到 0.0.9 单独做。
+- **刀 4 智能默认值扩展**:`smartDefaults.ts` 新增 `lastAlcoholType / lastBeverageType / lastMasturbationLocation / lastSexPartner` 4 个分析器(mode + confidence)。`MasturbationRecordModal` fresh-open 按 `lastMasturbationLocation` 预填 location,label 显示 "智能默认 · 可换" 徽章,用户改动后徽章消失。`BeverageModal` fresh-open 跳到用户最常用饮品(类目 + 名称 + 标准容量)而不是固定咖啡/拿铁/480ml。
+- **刀 5 显式无记录 + edit 保留**:`MorningSection` 把"有晨勃"二态 checkbox 改成三态按钮组 有/没有/未记录,可以明确录入"今天没有晨勃"(C-007)。`LogForm hydrate` 不再强制 `wokeWithErection=true / hardness=3 / retention='normal'`,保留 null。`nap.ts toggleNap` 新建午休的 `quality` 改为 `null`,`cancelOngoingNap` 现在追加 `取消午休` 到 `changeHistory`(B-009)。
+- **刀 6 推迟项消化**:`ReproductivePanel` 把硬编码的 痛经/月经流量/孕期出血/单侧腹痛 按钮换成严重度选择器(痛经 1-4 / 月经 light·medium·heavy / 孕期出血 light·moderate·heavy / 腹痛 3 侧 × 4 级矩阵)。`SexLifeView` 顶部加 "伴侣周期" 折叠入口,内联懒加载 `ReproductivePanel`(deferred #8)。`Dashboard` 5 个进行中横幅整合为单一 data-driven map,多于一个时显示 `进行中 (N)` group header(deferred #7)。
 
-- `utils/` 下仍有 `dataQuality.ts`、`hydrateLog.ts`、`validators.ts`、`historyRepair.ts`、`legacyDataCleanup.ts`、`recommendationEngine.ts`、`regression.ts`、`alcoholHelpers.ts`、`tagValidators.ts`、`dataHealthCheck.ts`、`constants.ts` 等待迁入 `domain/rules` 或 `shared/lib`。`utils/helpers.ts` 和 `utils/migration.ts` 已是 shim。
-- 三个大组件(`MasturbationRecordModal` 554、`SexRecordModal` 870+、`LogForm` 880+)state-hook 提取需要先有具体痛点。
-- Sleep+Nap section 共享、性活动 hoist、LogItemCard 统一、Toast 堆叠、ongoing banner 整合、SexLifeView 周期入口、严重度选择器 → 排入 0.0.8 路线图。
+### 0.0.8 推迟到 0.0.9 的
+
+- C-002 `MasturbationRecordModal` 字段折叠 Accordion(风险偏高,memory 中"保守拆"原则,单独做)
+- Sleep+Nap `<SleepFieldsBlock>` 共享、`<LogItemCard>` 统一、`touchedPaths` 集中(纯 refactor,不直接服务 B+C)
+- Toast 堆叠 / Modal vs BottomSheet 规则(0.0.9 含视觉前置)
+
+### Floor stats at v0.0.8
+
+- typecheck: 0 errors
+- lint: 0 errors, ~201 warnings
+- vitest: 20/20
+- bundle: ~1.16 MiB precache, 27 entries
+- LATEST_VERSION: 46
+- IndexedDB version: 6 (unchanged from 0.0.7)
 
 下面的 Phase 1 / Phase 2 步骤、迁移映射、禁止事项保持原样作为历史参考,不再是 TODO。
 
