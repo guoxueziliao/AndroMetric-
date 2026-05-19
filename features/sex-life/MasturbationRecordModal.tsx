@@ -1,11 +1,22 @@
-import React, { useState, useEffect, useMemo, Suspense, lazy } from 'react';
-import { Check, Clock, Film, PenLine, Plus, Minus, Zap, Edit2, Trash2, MonitorPlay, ChevronDown, LayoutGrid, Activity, ChevronLeft, AlertTriangle, Search, Settings, Droplets, User, BatteryFull, PhoneOff, HeartOff, Flag, Home, Sofa, Monitor, Car, MapPin } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Check, Clock, Film, PenLine, Plus, Minus, Zap, Edit2, Trash2, MonitorPlay, ChevronDown, LayoutGrid, Activity, Droplets, BatteryFull, PhoneOff, HeartOff, Flag, MapPin } from 'lucide-react';
 import type { MasturbationRecordDetails, LogEntry, PartnerProfile, ContentItem, TagEntry, TagType } from '../../domain';
 import { Modal } from '../../shared/ui';
-import { calculateInventory, XP_DIMENSIONS_LIST } from '../../shared/lib';
+import { calculateInventory } from '../../shared/lib';
 import { useMasturbationTagTools } from './model/useMasturbationTagTools';
-
-const TagManager = lazy(() => import('../tags').then((module) => ({ default: module.TagManager })));
+import {
+  FORCE_LEVELS,
+  FATIGUE_OPTIONS,
+  INTERRUPTION_REASONS,
+  LOCATION_OPTIONS,
+  LUBRICANT_OPTIONS,
+  ORGASM_LABELS,
+  POST_MOOD_OPTIONS,
+  SATISFACTION_LEVELS,
+  TOOL_OPTIONS,
+  calculateDurationFromTimes
+} from './model/masturbationModalData';
+import MasturbationContentItemEditor from './MasturbationContentItemEditor';
 
 interface MasturbationRecordModalData {
   partners?: PartnerProfile[];
@@ -28,48 +39,6 @@ interface MasturbationRecordModalProps {
   data: MasturbationRecordModalData;
   actions: MasturbationRecordModalActions;
 }
-
-const CONTENT_TYPES = ['视频', '直播', '图片', '小说', '回忆', '幻想', '音频', '漫画'];
-const PLATFORMS = ['Telegram', 'ONE', 'Pornhub', 'Twitter', 'Xvideos', 'OnlyFans', 'Jable', 'TikTok', '微信/QQ', '本地硬盘', '91', 'MissAV'];
-const TOOL_OPTIONS = ['手', '润滑液', '飞机杯', '名器/倒模', '电动玩具', '前列腺按摩器', '枕头'];
-const LUBRICANT_OPTIONS = ['无润滑', '水基润滑液', '硅基润滑液', '油基润滑液', '人体分泌', '唾液', '其他'];
-
-const LOCATION_OPTIONS = [
-    { id: '卧室/床上', icon: Home },
-    { id: '书桌/电脑前', icon: Monitor },
-    { id: '浴室/卫生间', icon: Droplets },
-    { id: '客厅/沙发', icon: Sofa },
-    { id: '车内', icon: Car },
-    { id: '酒店/外出', icon: MapPin },
-];
-
-const FORCE_LEVELS = [
-    { lvl: 1, label: '滞留', desc: '几乎没出来，黏在根部' },
-    { lvl: 2, label: '流出', desc: '缓缓流出，一张纸轻松搞定' },
-    { lvl: 3, label: '喷射', desc: '有明显的喷射节奏' },
-    { lvl: 4, label: '汹涌', desc: '量大浓厚，纸巾完全湿透' },
-    { lvl: 5, label: '爆发', desc: '极强冲力，射穿或喷射极远' },
-];
-
-const ORGASM_LABELS: Record<number, { label: string, color: string }> = {
-    1: { label: '无感', color: 'text-slate-400' },
-    2: { label: '一般', color: 'text-blue-400' },
-    3: { label: '舒服', color: 'text-amber-500' },
-    4: { label: '很爽', color: 'text-orange-500' },
-    5: { label: '极致', color: 'text-pink-500' },
-};
-
-const SATISFACTION_LEVELS = [
-    { lvl: 1, label: '毫无感觉', desc: '还是憋得慌', color: 'bg-slate-400' },
-    { lvl: 2, label: '解压一般', desc: '完成了任务', color: 'bg-blue-300' },
-    { lvl: 3, label: '基本达标', desc: '不怎么想了', color: 'bg-blue-400' },
-    { lvl: 4, label: '非常舒爽', desc: '完全放松', color: 'bg-blue-500' },
-    { lvl: 5, label: '灵魂升华', desc: '彻底清空，大贤者模式', color: 'bg-indigo-600' },
-];
-
-const POST_MOOD_OPTIONS = ['满足/愉悦', '平静/贤者', '空虚/后悔', '焦虑/负罪', '恶心/厌恶'];
-const FATIGUE_OPTIONS = ['精神焕发', '无明显疲劳', '轻微困倦', '身体沉重', '秒睡'];
-const INTERRUPTION_REASONS = ['电话/消息', '有人敲门/进入', '突然没兴致', '身体不适', '环境干扰', '被迫中止'];
 
 const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpen, onClose, onSave, initialData, data: modalData, actions }) => {
     const {
@@ -107,16 +76,6 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
         onAddOrUpdateTag
     });
 
-    const calculateDurationFromTimes = (start: string, end: string) => {
-        if (!start || !end) return 0;
-        const [h1, m1] = start.split(':').map(Number);
-        const [h2, m2] = end.split(':').map(Number);
-        if (isNaN(h1) || isNaN(h2)) return 0;
-        let diff = (h2 * 60 + m2) - (h1 * 60 + m1);
-        if (diff < 0) diff += 24 * 60; // 跨天处理
-        return diff;
-    };
-
     const handleStartTimeChange = (newStart: string) => {
         const newDuration = calculateDurationFromTimes(newStart, endTime);
         setData(prev => ({ ...prev, startTime: newStart, duration: newDuration }));
@@ -132,16 +91,14 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
         if (isOpen) {
             const now = new Date();
             const nowStr = now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false });
-            
+
             if (initialData) {
                 let calculatedEndTime = nowStr;
                 let calculatedDuration = initialData.duration || 0;
 
-                // 如果是正在进行的快速记录，自动计算从开始到现在的时间
                 if (initialData.status === 'inProgress' && initialData.startTime) {
                     calculatedDuration = calculateDurationFromTimes(initialData.startTime, nowStr);
                 } else if (initialData.startTime && initialData.duration) {
-                    // 如果是已有记录，根据时长推算结束时间
                     const [h, m] = initialData.startTime.split(':').map(Number);
                     const d = new Date(); d.setHours(h); d.setMinutes(m + initialData.duration);
                     calculatedEndTime = d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false });
@@ -196,7 +153,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
     const handleQuickCreateTag = async () => {
         const tagStr = tagSearch.trim();
         if (!tagStr || !activeTagTab || activeTagTab === '常用') return;
-        
+
         const created = await createXpTag(tagStr, activeTagTab);
         if (!created) return;
 
@@ -212,8 +169,8 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
 
     const displayTags = useMemo(() => {
         const xpTagsOnly = userTags.filter(t => t.category === 'xp');
-        let pool = [];
-        
+        let pool: string[] = [];
+
         if (tagSearch) {
             pool = xpTagsOnly
                 .filter(t => t.name.toLowerCase().includes(tagSearch.toLowerCase()))
@@ -229,7 +186,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
             } else {
                 pool = xpTagsOnly
                     .filter(t => t.dimension === activeTagTab)
-                    .sort((a,b) => (tagUsageMap[b.name]||0) - (tagUsageMap[a.name]||0))
+                    .sort((a, b) => (tagUsageMap[b.name] || 0) - (tagUsageMap[a.name] || 0))
                     .map(t => t.name);
             }
         }
@@ -240,10 +197,19 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
 
     const orgasmLabelInfo = ORGASM_LABELS[data.orgasmIntensity || 3] || ORGASM_LABELS[3];
 
+    const handleSaveEditingItem = () => {
+        if (!editingItem) return;
+        const nextItems = data.contentItems.find(i => i.id === editingItem.id)
+            ? data.contentItems.map(i => i.id === editingItem.id ? editingItem : i)
+            : [...data.contentItems, editingItem];
+        updateData({ contentItems: nextItems });
+        setEditingItem(null);
+    };
+
     return (
-        <Modal 
-            isOpen={isOpen} 
-            onClose={onClose} 
+        <Modal
+            isOpen={isOpen}
+            onClose={onClose}
             title={initialData ? "编辑自慰记录" : "记录施法"}
             footer={
                 <button onClick={handleSave} className="w-full py-4 bg-brand-accent text-white font-black rounded-2xl shadow-xl flex items-center justify-center gap-2 active:scale-95 transition-all">
@@ -252,7 +218,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
             }
         >
             <div className="space-y-6 pb-10 animate-in fade-in duration-300">
-                
+
                 {/* 0. Inventory Header */}
                 <div className="flex justify-between items-center px-1">
                     <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
@@ -262,7 +228,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                     <span className="text-sm font-black text-slate-800 dark:text-slate-100">{inventory}</span>
                 </div>
 
-                {/* 1. Time Grid - 自动时长逻辑核心 */}
+                {/* 1. Time Grid */}
                 <div className="space-y-3">
                     <div className="grid grid-cols-2 gap-3">
                         <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 flex flex-col gap-2 transition-all focus-within:border-brand-accent/50">
@@ -274,8 +240,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                             <input type="time" value={endTime} onChange={e => handleEndTimeChange(e.target.value)} className="bg-transparent text-xl font-mono font-bold text-slate-800 dark:text-slate-100 outline-none w-full"/>
                         </div>
                     </div>
-                    
-                    {/* 时长微调与展示 */}
+
                     <div className="bg-blue-50 dark:bg-blue-900/10 p-4 rounded-2xl border border-blue-100 dark:border-blue-900/30 flex items-center justify-between shadow-inner">
                         <div className="flex flex-col">
                             <span className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest">持续时长 (分钟)</span>
@@ -298,7 +263,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                         </div>
                         <span className="text-[10px] font-bold bg-slate-200 dark:bg-slate-800 text-slate-500 px-1.5 rounded-full">{data.contentItems.length}</span>
                     </div>
-                    
+
                     <div className="space-y-2">
                         {data.contentItems.map(item => (
                             <div key={item.id} className="bg-white dark:bg-slate-800 p-3 rounded-2xl border border-slate-100 dark:border-slate-700 flex items-center justify-between group shadow-sm">
@@ -307,7 +272,6 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                                     <div>
                                         <div className="text-xs font-black text-slate-700 dark:text-slate-200">{item.title || item.type}</div>
                                         <div className="text-[9px] text-slate-400 font-bold">{item.platform}</div>
-                                        {/* 素材关联标签预览 */}
                                         {item.xpTags && item.xpTags.length > 0 && (
                                             <div className="flex flex-wrap gap-1 mt-1">
                                                 {item.xpTags.map(tag => (
@@ -325,7 +289,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                                 </div>
                             </div>
                         ))}
-                        <button 
+                        <button
                             onClick={() => setEditingItem({ id: Math.random().toString(36).substr(2, 9), actors: [], xpTags: [], type: '', platform: '', title: '' })}
                             className="w-full py-8 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl flex flex-col items-center justify-center gap-2 group hover:border-brand-accent/50 transition-all bg-white dark:bg-slate-900/40"
                         >
@@ -341,7 +305,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                     </div>
                 </div>
 
-                {/* 3. Location Section - 新增模块 */}
+                {/* 3. Location */}
                 <div className="space-y-4">
                     <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest px-1 flex items-center gap-2">
                         <MapPin size={12} className="text-slate-400" /> 地点 (LOCATION)
@@ -350,8 +314,8 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                         {LOCATION_OPTIONS.map(loc => {
                             const isSel = data.location === loc.id;
                             return (
-                                <button 
-                                    key={loc.id} 
+                                <button
+                                    key={loc.id}
                                     onClick={() => updateData({location: loc.id})}
                                     className={`flex flex-col items-center justify-center py-4 px-1 rounded-2xl border-2 transition-all active:scale-95 ${isSel ? 'border-brand-accent bg-blue-50 dark:bg-blue-900/20 text-brand-accent shadow-md' : 'border-transparent bg-slate-50 dark:bg-slate-800 text-slate-500 hover:bg-slate-100'}`}
                                 >
@@ -361,11 +325,10 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                             );
                         })}
                     </div>
-                    {/* 自定义地点输入 */}
                     <div className="relative group">
                         <div className="absolute left-3 top-3 text-slate-300"><Edit2 size={12}/></div>
-                        <input 
-                            placeholder="其他具体地点描述..." 
+                        <input
+                            placeholder="其他具体地点描述..."
                             value={LOCATION_OPTIONS.some(o => o.id === data.location) ? '' : data.location}
                             onChange={e => updateData({location: e.target.value})}
                             className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 pl-8 text-[11px] font-bold outline-none focus:border-brand-accent transition-all"
@@ -373,7 +336,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                     </div>
                 </div>
 
-                {/* 4. Tools & Lubricant Row */}
+                {/* 4. Tools & Lubricant */}
                 <div className="space-y-4">
                     <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest px-1">辅助工具 (TOOLS)</label>
                     <div className="flex flex-wrap gap-2">
@@ -400,7 +363,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                     </div>
                 </div>
 
-                {/* 5. Edging Box */}
+                {/* 5. Edging */}
                 <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-3xl border border-slate-200 dark:border-slate-800 flex items-center justify-between shadow-sm">
                     <div className="flex items-center gap-3">
                         <div className="p-2 bg-purple-50 dark:bg-purple-900/20 text-purple-600 rounded-xl"><Activity size={20}/></div>
@@ -416,7 +379,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                     </div>
                 </div>
 
-                {/* 6. Interruption Section */}
+                {/* 6. Interruption */}
                 <div className={`bg-slate-50 dark:bg-slate-900 p-5 rounded-[2.5rem] border transition-all ${data.interrupted ? 'border-orange-200 dark:border-orange-900/30' : 'border-slate-200 dark:border-slate-800'}`}>
                     <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-3">
@@ -428,11 +391,11 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                                 <div className="text-[10px] text-slate-400 font-bold">意外状况或心不在焉</div>
                             </div>
                         </div>
-                        <input 
-                            type="checkbox" 
-                            className="toggle-checkbox" 
-                            checked={data.interrupted} 
-                            onChange={e => updateData({interrupted: e.target.checked, interruptionReasons: e.target.checked ? data.interruptionReasons : []})} 
+                        <input
+                            type="checkbox"
+                            className="toggle-checkbox"
+                            checked={data.interrupted}
+                            onChange={e => updateData({interrupted: e.target.checked, interruptionReasons: e.target.checked ? data.interruptionReasons : []})}
                         />
                     </div>
                     {data.interrupted && (
@@ -442,8 +405,8 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                                 {INTERRUPTION_REASONS.map(reason => {
                                     const isSel = data.interruptionReasons?.includes(reason);
                                     return (
-                                        <button 
-                                            key={reason} 
+                                        <button
+                                            key={reason}
                                             onClick={() => toggleInterruptionReason(reason)}
                                             className={`px-3 py-1.5 rounded-xl text-[10px] font-bold border transition-all ${isSel ? 'bg-orange-500 text-white border-orange-600' : 'bg-white dark:bg-slate-900 text-slate-500 border-slate-200 dark:border-slate-700'}`}
                                         >
@@ -456,18 +419,18 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                     )}
                 </div>
 
-                {/* 7. End Result Card - 改进二选一模式 */}
+                {/* 7. End Result */}
                 <div className="bg-slate-50 dark:bg-slate-900 p-5 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 space-y-6">
                     <div className="flex flex-col gap-4 border-b border-slate-200 dark:border-slate-800 pb-5">
                         <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">最终结局</span>
                         <div className="flex p-1 bg-slate-200 dark:bg-slate-800 rounded-2xl">
-                            <button 
+                            <button
                                 onClick={() => updateData({ejaculation: true, volumeForceLevel: data.volumeForceLevel || 3})}
                                 className={`flex-1 py-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 ${data.ejaculation ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500'}`}
                             >
                                 <Droplets size={14} className={data.ejaculation ? 'animate-pulse' : ''}/> 已射精
                             </button>
-                            <button 
+                            <button
                                 onClick={() => updateData({ejaculation: false})}
                                 className={`flex-1 py-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 ${!data.ejaculation ? 'bg-slate-600 text-white shadow-lg' : 'text-slate-500'}`}
                             >
@@ -505,7 +468,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                     </div>
                 </div>
 
-                {/* 8. Sage Mode Section */}
+                {/* 8. Sage Mode */}
                 <div className="bg-slate-50 dark:bg-slate-900 p-5 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 space-y-6">
                     <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500">
                         <Zap size={16} />
@@ -533,7 +496,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                     </div>
                 </div>
 
-                {/* 9. Satisfaction Energy Tank */}
+                {/* 9. Satisfaction */}
                 <div className="bg-slate-50 dark:bg-slate-900 p-5 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 space-y-6">
                     <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500">
                         <BatteryFull size={16} className="text-brand-accent"/>
@@ -564,150 +527,26 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                 </div>
             </div>
 
-            {/* 素材编辑子弹窗 */}
-            <Modal isOpen={!!editingItem} onClose={() => setEditingItem(null)} title="编辑素材详情">
-                 {editingItem && (
-                     <div className="flex flex-col h-[75vh] -mx-4 -mt-4 bg-white dark:bg-slate-950 overflow-hidden">
-                         <div className="flex-none p-4 border-b border-slate-100 dark:border-slate-800">
-                             <button onClick={() => setEditingItem(null)} className="flex items-center gap-1 text-slate-400 hover:text-brand-accent text-sm font-bold mb-4">
-                                <ChevronLeft size={18} /> 返回
-                             </button>
-                             <div className="space-y-2">
-                                 {!editingItem.type && (
-                                     <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-900/30 rounded-lg p-3 flex items-center justify-between">
-                                         <div className="flex items-start gap-2">
-                                             <AlertTriangle size={16} className="text-amber-500 mt-0.5" />
-                                             <div>
-                                                 <div className="text-xs font-black text-amber-700 dark:text-amber-400">未选择素材类型</div>
-                                                 <div className="text-[10px] text-amber-600/70 dark:text-amber-400/50">分类统计失效</div>
-                                             </div>
-                                         </div>
-                                         <button className="text-[10px] font-black text-amber-700 border border-amber-200 px-2 py-1 rounded bg-white">去选择</button>
-                                     </div>
-                                 )}
-                             </div>
-                         </div>
-                         <div className="flex-1 overflow-y-auto custom-scrollbar p-5 space-y-6">
-                             <div className="space-y-3">
-                                 <label className="text-xs font-black text-slate-400 uppercase tracking-widest">素材类型 (必选)</label>
-                                 <div className="grid grid-cols-4 gap-2">
-                                     {CONTENT_TYPES.map(t => (
-                                         <button key={t} onClick={() => setEditingItem({...editingItem, type: t})} className={`py-2.5 rounded-xl text-xs font-bold transition-all border ${editingItem.type === t ? 'bg-brand-accent text-white border-brand-accent shadow-sm' : 'bg-slate-50 dark:bg-slate-900 text-slate-500 border-slate-200 dark:border-slate-700'}`}>
-                                             {t}
-                                         </button>
-                                     ))}
-                                 </div>
-                             </div>
-                             {!['回忆', '幻想'].includes(editingItem.type || '') && (
-                                 <div className="space-y-3">
-                                     <label className="text-xs font-black text-slate-400 uppercase tracking-widest">来源平台</label>
-                                     <div className="grid grid-cols-3 gap-2">
-                                         {PLATFORMS.map(p => (
-                                             <button key={p} onClick={() => setEditingItem({...editingItem, platform: p})} className={`py-2 rounded-xl text-[11px] font-bold transition-all border ${editingItem.platform === p ? 'bg-slate-800 text-white dark:bg-white dark:text-slate-900 border-slate-800' : 'bg-slate-50 dark:bg-slate-900 text-slate-500 border-slate-200 dark:border-slate-700'}`}>
-                                                 {p}
-                                             </button>
-                                         ))}
-                                     </div>
-                                 </div>
-                             )}
-                             <div className="space-y-4">
-                                 <div className="space-y-2">
-                                     <label className="text-xs font-black text-slate-400 uppercase tracking-widest">标题 / 编号</label>
-                                     <div className="relative group">
-                                         <div className="absolute left-3 top-3.5 text-slate-300 font-bold">#</div>
-                                         <input value={editingItem.title || ''} onChange={e => setEditingItem({...editingItem, title: e.target.value})} placeholder="输入标题、编号或链接..." className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl py-3 pl-8 pr-4 text-sm font-bold outline-none focus:ring-2 focus:ring-brand-accent/20 transition-all" />
-                                     </div>
-                                 </div>
-                                 <div className="space-y-2">
-                                     <label className="text-xs font-black text-slate-400 uppercase tracking-widest">主演 / 角色</label>
-                                     <div className="relative group">
-                                         <User size={16} className="absolute left-3 top-3.5 text-slate-300" />
-                                         <input value={editingItem.actors?.join(' ') || ''} onChange={e => setEditingItem({...editingItem, actors: e.target.value.split(/\s+/)})} placeholder="多个演员用空格分隔..." className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl py-3 pl-9 pr-4 text-sm font-bold outline-none focus:ring-2 focus:ring-brand-accent/20 transition-all" />
-                                     </div>
-                                 </div>
-                             </div>
-                             <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
-                                 <div className="flex justify-between items-center mb-4">
-                                     <label className="text-xs font-black text-slate-400 uppercase tracking-widest">XP 标签 ({editingItem.xpTags?.length || 0})</label>
-                                     <button onClick={() => setIsTagManagerOpen(true)} className="p-1.5 bg-blue-50 dark:bg-blue-900/30 text-brand-accent rounded-lg flex items-center gap-1 text-[10px] font-black"><Settings size={12}/> 管理</button>
-                                 </div>
-
-                                 <div className="mb-4">
-                                    <div className="relative group">
-                                        <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-brand-accent transition-colors" />
-                                        <input 
-                                            value={tagSearch}
-                                            onChange={e => setTagSearch(e.target.value)}
-                                            placeholder="搜索或输入新标签..."
-                                            className="w-full bg-slate-50 dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl py-3 pl-11 pr-12 text-sm font-bold outline-none focus:ring-2 focus:ring-brand-accent/20 focus:border-brand-accent transition-all"
-                                        />
-                                        {tagSearch.trim() && !displayTags.includes(tagSearch.trim()) && activeTagTab !== '常用' && (
-                                            <button 
-                                                onClick={handleQuickCreateTag}
-                                                className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-brand-accent text-white rounded-xl shadow-sm animate-in fade-in zoom-in duration-200"
-                                                title="作为新标签创建"
-                                            >
-                                                <Plus size={16} strokeWidth={3} />
-                                            </button>
-                                        )}
-                                    </div>
-                                 </div>
-
-                                 <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-1 mb-4 border-b border-slate-100 dark:border-slate-800">
-                                     {['常用', ...XP_DIMENSIONS_LIST].map(tab => (
-                                         <button key={tab} onClick={() => { setActiveTagTab(tab); setTagSearch(''); }} className={`pb-2 px-1 text-xs font-black transition-all relative whitespace-nowrap ${activeTagTab === tab ? 'text-brand-accent' : 'text-slate-400'}`}>
-                                             {tab}
-                                             {activeTagTab === tab && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-brand-accent rounded-full"></div>}
-                                         </button>
-                                     ))}
-                                 </div>
-
-                                 <div className="flex flex-wrap gap-2 max-h-[250px] overflow-y-auto custom-scrollbar">
-                                     {displayTags.length > 0 ? (
-                                         displayTags.map(tag => {
-                                            const isSel = editingItem.xpTags?.includes(tag);
-                                            return (
-                                                <button key={tag} onClick={() => toggleXpTag(tag)} className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${isSel ? 'bg-blue-500 text-white border-blue-600 shadow-sm' : 'bg-white dark:bg-slate-900 text-slate-500 border-slate-200 dark:border-slate-700'}`}>
-                                                    {tag.replace(/^#/, '')}
-                                                </button>
-                                            );
-                                         })
-                                     ) : (
-                                         <div className="w-full text-center py-6 text-slate-400 text-xs italic">
-                                             {tagSearch ? '未找到匹配标签' : '该维度暂无标签，请先创建'}
-                                         </div>
-                                     )}
-                                 </div>
-                             </div>
-                         </div>
-                         <div className="flex-none p-5 bg-white dark:bg-slate-950 border-t border-slate-100 dark:border-slate-800">
-                             <button onClick={() => {
-                                    const nextItems = data.contentItems.find(i => i.id === editingItem.id) 
-                                        ? data.contentItems.map(i => i.id === editingItem.id ? editingItem : i)
-                                        : [...data.contentItems, editingItem];
-                                    updateData({contentItems: nextItems});
-                                    setEditingItem(null);
-                                }} className="w-full py-4 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-[1.5rem] font-black text-sm shadow-xl active:scale-[0.98] transition-all">保存素材信息</button>
-                         </div>
-                     </div>
-                 )}
-            </Modal>
-            
-            <Suspense fallback={null}>
-                <TagManager
-                    isOpen={isTagManagerOpen}
-                    onClose={() => setIsTagManagerOpen(false)}
-                    data={{
-                        logs,
-                        userTags
-                    }}
-                    actions={{
-                        onAddOrUpdateLog,
-                        onAddOrUpdateTag,
-                        onDeleteTag
-                    }}
-                />
-            </Suspense>
+            <MasturbationContentItemEditor
+                editingItem={editingItem}
+                setEditingItem={setEditingItem}
+                onClose={() => setEditingItem(null)}
+                onSave={handleSaveEditingItem}
+                tagSearch={tagSearch}
+                setTagSearch={setTagSearch}
+                activeTagTab={activeTagTab}
+                setActiveTagTab={setActiveTagTab}
+                displayTags={displayTags}
+                toggleXpTag={toggleXpTag}
+                onQuickCreateTag={handleQuickCreateTag}
+                isTagManagerOpen={isTagManagerOpen}
+                setIsTagManagerOpen={setIsTagManagerOpen}
+                logs={logs}
+                userTags={userTags}
+                onAddOrUpdateLog={onAddOrUpdateLog}
+                onAddOrUpdateTag={onAddOrUpdateTag}
+                onDeleteTag={onDeleteTag}
+            />
         </Modal>
     );
 };
