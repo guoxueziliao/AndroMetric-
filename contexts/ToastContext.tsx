@@ -1,6 +1,13 @@
 
 import React, { createContext, useContext, useState, useCallback } from 'react';
-import { Toast, type ToastType } from '../shared/ui';
+import { AnimatePresence } from 'framer-motion';
+import { Toast, ToastStack, type ToastType } from '../shared/ui';
+
+interface ToastEntry {
+    id: string;
+    msg: string;
+    type: ToastType;
+}
 
 interface ToastContextType {
     showToast: (message: string, type: ToastType) => void;
@@ -8,28 +15,36 @@ interface ToastContextType {
 
 const ToastContext = createContext<ToastContextType | undefined>(undefined);
 
+let toastIdCounter = 0;
+const nextToastId = () => `toast-${Date.now()}-${++toastIdCounter}`;
+
 export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const [toast, setToast] = useState<{ msg: string, type: ToastType, visible: boolean }>({ 
-        msg: '', type: 'info', visible: false 
-    });
+    const [toasts, setToasts] = useState<ToastEntry[]>([]);
 
     const showToast = useCallback((message: string, type: ToastType) => {
-        setToast({ msg: message, type, visible: true });
+        const id = nextToastId();
+        setToasts(prev => [...prev, { id, msg: message, type }]);
     }, []);
 
-    const hideToast = useCallback(() => {
-        setToast(prev => ({ ...prev, visible: false }));
+    const dismissToast = useCallback((id: string) => {
+        setToasts(prev => prev.filter(t => t.id !== id));
     }, []);
 
     return (
         <ToastContext.Provider value={{ showToast }}>
             {children}
-            <Toast 
-                message={toast.msg} 
-                type={toast.type} 
-                isVisible={toast.visible} 
-                onClose={hideToast} 
-            />
+            <ToastStack>
+                <AnimatePresence>
+                    {toasts.map(t => (
+                        <Toast
+                            key={t.id}
+                            message={t.msg}
+                            type={t.type}
+                            onClose={() => dismissToast(t.id)}
+                        />
+                    ))}
+                </AnimatePresence>
+            </ToastStack>
         </ToastContext.Provider>
     );
 };

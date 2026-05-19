@@ -1,6 +1,6 @@
 export { default as Modal } from './Modal';
 export { default as BottomSheet } from './BottomSheet';
-export { default as Toast } from './Toast';
+export { default as Toast, ToastStack } from './Toast';
 export type { ToastType } from './Toast';
 export { default as DateTimePicker } from './DateTimePicker';
 export * from './FormControls';

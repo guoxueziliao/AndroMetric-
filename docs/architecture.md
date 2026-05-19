@@ -2,33 +2,32 @@
 
 本文是硬度日记后续重构的主架构依据。目标不是一次性重写项目，而是在保持现有功能、交互和 IndexedDB 数据结构不变的前提下，逐步建立清晰的模块边界，让后续开发更容易定位、扩展和测试。
 
-## 当前状态(0.0.8 — 2026-05-19)
+## 当前状态(0.0.9 — 2026-05-19)
 
-**0.0.8 已发布。** 主题:**B 数据可信度 + C 输入摩擦降低**。6 刀按 audit + 0.0.7 推迟项合并去重落地。
+**0.0.9 已发布。** 主题:**A 数据洞察 + 推迟项消化 + RecordCard refactor**。6 刀按 audit + 0.0.8 推迟项合并去重落地。
 
-### 0.0.8 完成清单(刀 1 → 刀 6)
+### 0.0.9 完成清单(刀 1 → 刀 6)
 
-- **刀 1 默认值不再说谎**:`hydrateLog` 的 `satisfactionLevel / orgasmIntensity / sleep.quality / sleep.environment` 默认改为 `null`(配套 `domain/types` 字段放宽到 `| null`)。`MasturbationRecordModal` 与 `NapRecordModal` fresh-open 不再伪造中间值(stressLevel/energyLevel/satisfaction/orgasm/location/attire/preSleepState 等)。`SexRecordModal addInteraction` 不再静默 copy 上一段的 partner/location/role/costumes。UI 渲染 null 时显示 "未设/未评/未选" 提示。新增 V46 轻量 migration:把疑似历史推断填入的 `masturbation.{id}.{satisfactionLevel,orgasmIntensity,stressLevel,energyLevel} === 3` 在 `dataQuality.fields` 里降级为 `defaulted`(不删值,stats 自动通过 `isFieldUsable` 跳过)。
-- **刀 2 DrinkModal 软合并**:`AlcoholRecordModal` + `BeverageModal` 顶部加 tab "饮酒 / 提神饮品",点击切换关闭当前、打开另一个(单 modal 互斥)。Alcohol scene 默认空字符串 + step 0 加 "直接保存" 按钮(B-005, C-001)。BeverageModal 时间输入加快捷预设 现在/-1h/-2h/-4h(C-008)。编辑现有记录时不显示切换以避免丢输入。
-- **刀 3 性活动模态减摩擦**:`SexRecordModal` 伴侣选择条加 "+ 新建" 内联弹层,只填名字即可创建并自动选中,无需跳到 PartnerManager(C-006)。action chain 在 0.0.7 已经是垂直列表(C-009 复核完成)。MasturbationRecordModal 折叠到 Accordion(C-002)留到 0.0.9 单独做。
-- **刀 4 智能默认值扩展**:`smartDefaults.ts` 新增 `lastAlcoholType / lastBeverageType / lastMasturbationLocation / lastSexPartner` 4 个分析器(mode + confidence)。`MasturbationRecordModal` fresh-open 按 `lastMasturbationLocation` 预填 location,label 显示 "智能默认 · 可换" 徽章,用户改动后徽章消失。`BeverageModal` fresh-open 跳到用户最常用饮品(类目 + 名称 + 标准容量)而不是固定咖啡/拿铁/480ml。
-- **刀 5 显式无记录 + edit 保留**:`MorningSection` 把"有晨勃"二态 checkbox 改成三态按钮组 有/没有/未记录,可以明确录入"今天没有晨勃"(C-007)。`LogForm hydrate` 不再强制 `wokeWithErection=true / hardness=3 / retention='normal'`,保留 null。`nap.ts toggleNap` 新建午休的 `quality` 改为 `null`,`cancelOngoingNap` 现在追加 `取消午休` 到 `changeHistory`(B-009)。
-- **刀 6 推迟项消化**:`ReproductivePanel` 把硬编码的 痛经/月经流量/孕期出血/单侧腹痛 按钮换成严重度选择器(痛经 1-4 / 月经 light·medium·heavy / 孕期出血 light·moderate·heavy / 腹痛 3 侧 × 4 级矩阵)。`SexLifeView` 顶部加 "伴侣周期" 折叠入口,内联懒加载 `ReproductivePanel`(deferred #8)。`Dashboard` 5 个进行中横幅整合为单一 data-driven map,多于一个时显示 `进行中 (N)` group header(deferred #7)。
+- **刀 1 Insight 补渲染**:`generateInsights()` 返回 4 类(correlations/anomalies/loops/xp)合并按 score 排序,StatsView 之前 `.slice(0,3)` 会把 score=8 的 anomalies 经常挤出榜外。新增 `category` 字段到 `Insight` 接口,StatsView 按类分组渲染(相关性/异常事件/行为模式/偏好趋势),每类最多 3 条,空类不显示。
+- **刀 2 Dashboard 趋势化**:新增 `features/dashboard/TrendsPanel.tsx`,挂在 DashboardDayView 三列网格的第一格。读 `StatsEngine.getSMA(metric, 7)`,对硬度/睡眠/屏幕/自慰频次/运动 5 项分别显示当前 7 日均线 + 与上一个 7 日窗口的 delta(箭头 + 数值,绿涨红跌灰平)。`StatsEngine.getSMA()` 之前只有 StatsView 在用。
+- **刀 3 Impact + XP 维度可视化**:新增 `features/dashboard/ImpactFindings.tsx`,跑 5 个因子(睡眠/饮酒/压力/运动/性活动负荷)对硬度的 `analyzeImpact`,按 |diff| 取前 2 显示;StatsView 性维度 tab 雷达图下面加"维度详情"卡,6 个维度水平 bar + 记录数/标签出现次数/独立标签数三元组(之前 `xpStats.dimensionStats` 只有 `recordCount` 进了雷达)。
+- **刀 4 smart defaults 接线**:ExerciseRecordModal 接受 `logs` prop,fresh-open 时按今日 dow 调 `analyzeUserPatterns('exerciseType')`,confidence > 0.5 时预填 type 并展开对应分类;SexRecordModal 首段 interaction 的 partner 用 `lastSexPartner` 预填(还得 partners 列表里有对应人才生效)。两个 modal 都加"智能默认 · {value} · 可换"徽章 + 一键清除。两个分析器在 0.0.8 已存在,这刀只补接线。
+- **刀 5 RecordCard 抽取 + 性活动 hoist**:新增 `shared/ui/RecordCard.tsx`(slot API,6 个 tone),LogForm 自慰/性爱卡片用它替换原生 div;`MidTabType` 加 `'sex'`,默认 tab 从 'life' 改为 'sex',顺序变成 性活动 / 生活 / 环境 / 健康,性活动块从 'life' tab 末尾抽出来变成独立 tab。
+- **刀 6 Toast 堆叠 + docs**:Toast.tsx 去掉自身定位(`fixed top-6 left-1/2`),改成 relative 渲染;新增 `ToastStack` 容器,ToastContext 内部维护 `toasts: Array<{id, msg, type}>`,多 toast 在 stack 内 AnimatePresence + framer-motion layout 自然纵向堆叠,各自 timer 独立。`showToast` API 不变。
 
-### 0.0.8 推迟到 0.0.9 的
+### 0.0.9 推迟到 0.1.0+ 的
 
-- C-002 `MasturbationRecordModal` 字段折叠 Accordion(风险偏高,memory 中"保守拆"原则,单独做)
-- Sleep+Nap `<SleepFieldsBlock>` 共享、`<LogItemCard>` 统一、`touchedPaths` 集中(纯 refactor,不直接服务 B+C)
-- Toast 堆叠 / Modal vs BottomSheet 规则(0.0.9 含视觉前置)
+- C-002 `MasturbationRecordModal` 字段折叠 Accordion(583 LOC + 9 hooks,state-hook 拆解超出"保守拆"边界,留到 MasturbationRecordModal 真正需要再做时一次性做)
+- SleepFieldsBlock 共享 / LogItemCard 进一步统一(LogHistory / Dashboard 还有未迁移到 RecordCard 的卡片)/ touchedPaths 集中 / Modal vs BottomSheet ruleset
+- 0.1.0 = D 隐私 + F PWA(应用锁、Service Worker 缓存策略、安装/更新提示)
 
-### Floor stats at v0.0.8
+### Floor stats at v0.0.9
 
 - typecheck: 0 errors
-- lint: 0 errors, ~201 warnings
+- lint: 0 errors
 - vitest: 20/20
-- bundle: ~1.16 MiB precache, 27 entries
-- LATEST_VERSION: 46
-- IndexedDB version: 6 (unchanged from 0.0.7)
+- LATEST_VERSION: 46 (unchanged from 0.0.8)
+- IndexedDB version: 6 (unchanged)
 
 下面的 Phase 1 / Phase 2 步骤、迁移映射、禁止事项保持原样作为历史参考,不再是 TODO。
 
