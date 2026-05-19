@@ -504,7 +504,7 @@ const StatsView: React.FC<StatsViewProps> = ({ isDarkMode, logs: rawLogs }) => {
 
                         <ChartCard title="偏好雷达 (XP维度)" icon={Radar}>
                             <div className="w-full h-[300px] flex items-center justify-center">
-                                <RadarChart 
+                                <RadarChart
                                     data={{
                                         labels: ['角色', '身体', '装扮', '玩法', '剧情', '风格'],
                                         datasets: [{
@@ -519,15 +519,51 @@ const StatsView: React.FC<StatsViewProps> = ({ isDarkMode, logs: rawLogs }) => {
                                             ],
                                             backgroundColor: 'rgba(236, 72, 153, 0.2)', borderColor: '#ec4899', pointBackgroundColor: '#ec4899',
                                         }]
-                                    } as any} 
-                                    options={{ 
-                                        ...commonOptions, 
-                                        scales: { 
-                                            r: { angleLines: { color: theme.grid }, grid: { color: theme.grid }, pointLabels: { color: theme.text, font: { size: 11, weight: 'bold' } }, ticks: { display: false, backdropColor: 'transparent' } } 
-                                        } 
-                                    } as any} 
+                                    } as any}
+                                    options={{
+                                        ...commonOptions,
+                                        scales: {
+                                            r: { angleLines: { color: theme.grid }, grid: { color: theme.grid }, pointLabels: { color: theme.text, font: { size: 11, weight: 'bold' } }, ticks: { display: false, backdropColor: 'transparent' } }
+                                        }
+                                    } as any}
                                 />
                             </div>
+                        </ChartCard>
+                        <ChartCard title="维度详情" icon={Radar} subtext="记录数 / 标签出现次数 / 独立标签数">
+                            {(() => {
+                                const dims: string[] = ['角色', '身体', '装扮', '玩法', '剧情', '风格'];
+                                const rows = dims
+                                    .map(d => ({ name: d, stat: xpStats.dimensionStats[d] as DimensionStat | undefined }))
+                                    .filter((r): r is { name: string; stat: DimensionStat } => !!r.stat);
+                                const maxRecord = Math.max(1, ...rows.map(r => r.stat.recordCount));
+                                if (rows.every(r => r.stat.recordCount === 0)) {
+                                    return (
+                                        <div className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 px-4 py-6 text-center text-xs font-medium text-slate-400 w-full">
+                                            尚未录入带维度标签的记录
+                                        </div>
+                                    );
+                                }
+                                return (
+                                    <div className="w-full space-y-3">
+                                        {rows.map(r => {
+                                            const pct = (r.stat.recordCount / maxRecord) * 100;
+                                            return (
+                                                <div key={r.name} className="space-y-1">
+                                                    <div className="flex items-center justify-between text-[11px]">
+                                                        <span className="font-bold text-slate-600 dark:text-slate-300">{r.name}</span>
+                                                        <span className="font-mono tabular-nums text-slate-400">
+                                                            {r.stat.recordCount} 记录 · {r.stat.tagCount} 标签 · {r.stat.uniqueTags} 独立
+                                                        </span>
+                                                    </div>
+                                                    <div className="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                                                        <div className="h-full bg-gradient-to-r from-pink-400 to-fuchsia-500" style={{ width: `${pct}%` }} />
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                );
+                            })()}
                         </ChartCard>
                         <ChartCard title="高频偏好 Top 10" icon={Tag} subtext="按记录去重统计">
                             <div className="w-full h-[300px]">

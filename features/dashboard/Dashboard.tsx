@@ -14,6 +14,7 @@ import { usePartners } from '../../contexts/PartnerContext';
 import { useReproductive } from '../../contexts/ReproductiveContext';
 import { attachMenstrualSummary } from '../reproductive/model/p4Derivations';
 import DashboardDayView from './DashboardDayView';
+import ImpactFindings from './ImpactFindings';
 
 const GlobalTimeline = lazy(() => import('./GlobalTimeline').then((module) => ({ default: module.GlobalTimeline })));
 const LogHistory = lazy(() => import('./LogHistory').then((module) => ({ default: module.LogHistory })));
@@ -259,15 +260,18 @@ const Dashboard: React.FC<DashboardProps> = ({
         })()}
 
         {activeView === 'day' && (
-            <DashboardDayView
-                logs={logs}
-                todayLog={todayLog}
-                todayTiles={todayTiles}
-                last7Days={last7Days}
-                pendingLog={pendingLog ?? null}
-                ongoingNap={ongoingNap ?? null}
-                onSelectTile={setSelectedTileKey}
-            />
+            <>
+                <ImpactFindings logs={logs} />
+                <DashboardDayView
+                    logs={logs}
+                    todayLog={todayLog}
+                    todayTiles={todayTiles}
+                    last7Days={last7Days}
+                    pendingLog={pendingLog ?? null}
+                    ongoingNap={ongoingNap ?? null}
+                    onSelectTile={setSelectedTileKey}
+                />
+            </>
         )}
 
         {activeView === 'week' && (
