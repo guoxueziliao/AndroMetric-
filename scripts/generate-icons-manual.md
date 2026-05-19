@@ -117,6 +117,6 @@ splash.png         - iOS 启动画面（可选）
 - ✅ manifest.json 已配置
 - ✅ index.html 已添加 manifest 链接
 - ✅ usePWA hook 已增强
-- ⚠️ 图标目录为空（需要生成）
+- ✅ `public/icon-192x192.png`、`public/icon-512x512.png`、`public/icons/icon-192x192.png`、`public/icons/icon-512x512.png` 已就位
 
-下一步：请使用在线工具生成图标，然后提交到仓库。
+需要更换图标时按照前面的方案重新生成即可。

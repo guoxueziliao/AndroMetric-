@@ -2,6 +2,28 @@
 
 本文是硬度日记后续重构的主架构依据。目标不是一次性重写项目，而是在保持现有功能、交互和 IndexedDB 数据结构不变的前提下，逐步建立清晰的模块边界，让后续开发更容易定位、扩展和测试。
 
+## 当前状态(2026-05-19)
+
+**Phase 1 + Phase 2 已基本落地。** 本文下方的"目标目录结构""依赖方向""数据流""Context 拆分策略"现在描述的就是**当前代码状态**,不再是未来计划。具体已完成的迁移:
+
+- ✅ `domain/types/` 拥有真正的内容(9 个文件,从 `types.ts` 拆分而来),根 `types.ts` 现在只是 re-export。
+- ✅ `domain/rules/` 拥有 `historyEventType`、`dataQuality` 两条规则。
+- ✅ `core/storage/` 拥有 `db.ts`、`StorageService.ts`、`migration.ts`、`backupHandleStorage.ts`;旧的根路径都是 shim。
+- ✅ `shared/lib/` 拥有 `dates`、`labels`、`logPresentation`、`targetDate`、`errors` 等模块。
+- ✅ `features/quick-actions/model/useCases/` 拥有 6 个按活动域拆分的 use case 模块,`hooks/useLogs.ts` 由 444 行降至 231 行,只剩 live queries + 写入包装 + use case 绑定。
+- ✅ `DataContext` 已删除,替换为 3 个窄 context:`LogQueryContext`、`PartnerContext`、`ReproductiveContext`(其余 `LogCommandContext`、`QuickActionContext`、`TagContext`、`SettingsContext` 暂未建,等真正出现消费者再加,不预留死代码)。
+- ✅ `features/analysis/` 已删除,`AnalysisView` 迁入 `features/state/`。
+- ✅ 大型组件保守拆分完成:`PartnerManager` 778→166、`MasturbationRecordModal` 715→554、`SexRecordModal` 889→816、`LogForm` 904→877。激进的 state-hook 拆分被刻意推迟(详见 [memory `project-large-components-conservative-split`](../../.claude/projects/-home-fan-AndroMetric-/memory/project_large_components_conservative_split.md))。
+- ✅ 备份目录句柄改存 IndexedDB,关闭浏览器后无需重新选择文件夹。
+- ✅ `package.json` 新增 `typecheck` 脚本,`tsc --noEmit` 零错误。
+
+**还没做的:**
+
+- `utils/` 下仍有部分文件(`dataQuality.ts`、`hydrateLog.ts`、`validators.ts`、`historyRepair.ts`、`legacyDataCleanup.ts`、`recommendationEngine.ts`、`regression.ts`、`alcoholHelpers.ts`、`tagValidators.ts`、`dataHealthCheck.ts`、`constants.ts`)等待按其性质迁入 `domain/rules` 或 `shared/lib`。`utils/helpers.ts` 已是 shim,`utils/migration.ts` 也是。
+- 三个大组件(`MasturbationRecordModal` 554、`SexRecordModal` 816、`LogForm` 877)的 state 仍与 JSX 紧耦合,进一步瘦身需要把 useState/useCallback 提到自定义 hook —— 风险偏高,需要先有具体痛点再做。
+
+下面的 Phase 1 / Phase 2 步骤、迁移映射、禁止事项保持原样作为历史参考,不再是 TODO。
+
 ## 设计目标
 
 - 降低 `App.tsx`、`useLogs.ts`、`DataContext`、大型页面组件之间的耦合。

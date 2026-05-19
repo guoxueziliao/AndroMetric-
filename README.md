@@ -25,18 +25,23 @@ Hardness Diary is a privacy-first, local-first PWA for tracking male health sign
 
 ```text
 .
-├── app/                 # App shell, routing, bootstrap, providers
-├── features/            # Domain features such as dashboard, daily log, stats, PWA
-├── shared/              # Shared UI primitives and pure helpers
-├── core/                # Infrastructure and storage adapters
-├── domain/              # Domain-facing exports and rules
-├── services/            # Backup, logging, storage, plugin management
-├── hooks/               # Cross-cutting React hooks
-├── contexts/            # Data and toast contexts
+├── app/                 # App shell, providers, main view router, bootstrap
+├── features/            # Domain features (dashboard, daily-log, sex-life,
+│                        # stats, tags, backup, settings, pwa, profile,
+│                        # reproductive, simulation-lab, state, quick-actions)
+├── shared/              # shared/ui primitives, shared/lib pure helpers
+├── core/                # core/storage: Dexie, repositories, migrations,
+│                        # backup-handle persistence
+├── domain/              # domain/types (LogEntry etc.) + domain/rules
+├── services/            # Backup, file system, logger, plugin manager
+├── hooks/               # Cross-cutting React hooks (useLogs facade)
+├── contexts/            # Narrow contexts: LogQueryContext, PartnerContext,
+│                        # ReproductiveContext (plus ToastContext)
+├── utils/               # Mixed legacy utils awaiting further migration
 ├── tests/               # Vitest coverage for core flows and model logic
-├── docs/architecture.md # Ongoing architecture/refactor notes
-├── db.ts                # Dexie schema
-└── types.ts             # Main TypeScript data model
+├── docs/architecture.md # Architecture rationale and migration history
+├── db.ts                # Re-export shim → core/storage/db
+└── types.ts             # Re-export shim → domain/types
 ```
 
 ## Core Areas
@@ -45,6 +50,7 @@ Hardness Diary is a privacy-first, local-first PWA for tracking male health sign
 - `features/daily-log`: main daily form and lifestyle record modals
 - `features/sex-life`: partner management, sex records, masturbation records
 - `features/stats`: charts, scoring, insights, derived analysis
+- `features/state`: personal-state engine + Analysis Hub
 - `features/backup`: local backup settings and version history
 - `features/pwa`: install prompt, update prompt, offline UI
 
@@ -61,19 +67,22 @@ npm install
 npm run dev
 ```
 
-Build and test:
+Build, test, and typecheck:
 
 ```bash
 npm run build
 npm run test
+npm run typecheck
 ```
 
 ## Engineering Notes
 
-- Build output is generated into `dist/` and is not treated as source
-- The app is local-first; there is no cloud sync in the current architecture
-- Database schema changes must be paired with migration updates in [`utils/migration.ts`](utils/migration.ts)
-- Large feature work should prefer the current `app/ + features/ + shared/` structure over reviving legacy `components/`
+- Build output is generated into `dist/` and is not treated as source.
+- The app is local-first; there is no cloud sync, no backend.
+- Database schema changes must be paired with a migration step in
+  [`core/storage/migration.ts`](core/storage/migration.ts).
+- New components belong inside a `features/<domain>/` module or in
+  `shared/ui` — there is no top-level `components/` directory.
 
 ## Documentation
 
