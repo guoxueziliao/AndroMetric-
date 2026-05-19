@@ -4,6 +4,7 @@ import type { MasturbationRecordDetails, LogEntry, PartnerProfile, ContentItem, 
 import { Modal } from '../../shared/ui';
 import { calculateInventory } from '../../shared/lib';
 import { useMasturbationTagTools } from './model/useMasturbationTagTools';
+import { analyzeUserPatterns } from '../daily-log/model/smartDefaults';
 import {
   FORCE_LEVELS,
   FATIGUE_OPTIONS,
@@ -66,6 +67,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
     const [activeTagTab, setActiveTagTab] = useState<string>('常用');
     const [tagSearch, setTagSearch] = useState('');
     const [isTagManagerOpen, setIsTagManagerOpen] = useState(false);
+    const [smartLocationApplied, setSmartLocationApplied] = useState(false);
 
     const inventory = useMemo(() => calculateInventory(logs), [logs, isOpen]);
 
@@ -131,6 +133,11 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                 });
                 setEndTime(calculatedEndTime);
             } else {
+                const lastLocResult = analyzeUserPatterns(logs, 'lastMasturbationLocation');
+                const smartLocation = (lastLocResult.value && lastLocResult.confidence > 0.5)
+                    ? (lastLocResult.value as string)
+                    : undefined;
+                setSmartLocationApplied(!!smartLocation);
                 setData({
                     id: Date.now().toString(),
                     startTime: nowStr,
@@ -139,14 +146,17 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                     orgasmIntensity: null,
                     satisfactionLevel: null,
                     mood: 'neutral', stressLevel: null, energyLevel: null, interrupted: false, interruptionReasons: [], notes: '',
-                    volumeForceLevel: undefined, postMood: undefined, fatigue: undefined, location: undefined
+                    volumeForceLevel: undefined, postMood: undefined, fatigue: undefined, location: smartLocation
                 });
                 setEndTime(nowStr);
             }
         }
     }, [isOpen, initialData]);
 
-    const updateData = (fields: Partial<MasturbationRecordDetails>) => setData(prev => ({ ...prev, ...fields }));
+    const updateData = (fields: Partial<MasturbationRecordDetails>) => {
+        if ('location' in fields) setSmartLocationApplied(false);
+        setData(prev => ({ ...prev, ...fields }));
+    };
 
     const handleSave = () => {
         onSave({ ...data, status: 'completed' });
@@ -319,6 +329,9 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                 <div className="space-y-4">
                     <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest px-1 flex items-center gap-2">
                         <MapPin size={12} className="text-slate-400" /> 地点 (LOCATION)
+                        {smartLocationApplied && (
+                            <span className="text-[9px] font-bold text-brand-accent bg-brand-accent/10 px-1.5 py-0.5 rounded normal-case tracking-normal">智能默认 · 可换</span>
+                        )}
                     </label>
                     <div className="grid grid-cols-3 gap-2">
                         {LOCATION_OPTIONS.map(loc => {

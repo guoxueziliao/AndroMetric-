@@ -1,11 +1,12 @@
-
 import React, { useState, useEffect } from 'react';
 import { Clock, Coffee, CupSoda, Leaf, Zap, Plus, Minus, Check, PencilLine, RotateCcw, Info } from 'lucide-react';
 import { Modal } from '../../shared/ui';
-import type { CaffeineItem } from '../../domain';
+import type { CaffeineItem, LogEntry } from '../../domain';
+import { analyzeUserPatterns } from './model/smartDefaults';
 
 interface BeverageModalData {
     initialData?: CaffeineItem;
+    logs?: LogEntry[];
 }
 
 interface BeverageModalActions {
@@ -84,7 +85,7 @@ const CUP_SIZES = [
 ];
 
 const BeverageModal: React.FC<BeverageModalProps> = ({ isOpen, onClose, data, actions, onSwitchToOther }) => {
-    const { initialData } = data;
+    const { initialData, logs = [] } = data;
     const { onSave } = actions;
 
     const [activeCat, setActiveCat] = useState('coffee');
@@ -115,9 +116,25 @@ const BeverageModal: React.FC<BeverageModalProps> = ({ isOpen, onClose, data, ac
             } else {
                 const now = new Date();
                 setTime(now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false }));
-                setActiveCat('coffee');
-                setSelectedName('拿铁');
-                setVolume(480);
+                const lastBev = analyzeUserPatterns(logs, 'lastBeverageType');
+                const smartName = (lastBev.value && lastBev.confidence > 0.5) ? (lastBev.value as string) : null;
+                let preCat = 'coffee';
+                let preName = '拿铁';
+                let preVol = 480;
+                if (smartName) {
+                    for (const catId of Object.keys(MENU_DATA)) {
+                        const found = MENU_DATA[catId].find(i => i.name === smartName);
+                        if (found) {
+                            preCat = catId;
+                            preName = found.name;
+                            preVol = found.vol;
+                            break;
+                        }
+                    }
+                }
+                setActiveCat(preCat);
+                setSelectedName(preName);
+                setVolume(preVol);
                 setCustomName('');
                 setIsDailyMode(false);
             }

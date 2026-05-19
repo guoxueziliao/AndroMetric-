@@ -1,6 +1,16 @@
 import type { LogEntry, HardnessLevel, SleepAttire, SleepTemperature, MorningWoodRetention } from '../../../domain';
 
-export type SmartField = 'hardness' | 'retention' | 'sleepQuality' | 'sleepAttire' | 'sleepTemperature' | 'exerciseType';
+export type SmartField =
+  | 'hardness'
+  | 'retention'
+  | 'sleepQuality'
+  | 'sleepAttire'
+  | 'sleepTemperature'
+  | 'exerciseType'
+  | 'lastAlcoholType'
+  | 'lastBeverageType'
+  | 'lastMasturbationLocation'
+  | 'lastSexPartner';
 
 export interface SmartDefaultResult<T> {
   value: T | null;
@@ -84,6 +94,14 @@ export function analyzeUserPatterns(
       return analyzeSleepTemperature(dayFilteredLogs, targetDayOfWeek);
     case 'exerciseType':
       return analyzeExerciseType(dayFilteredLogs, targetDayOfWeek);
+    case 'lastAlcoholType':
+      return analyzeLastAlcoholType(dayFilteredLogs);
+    case 'lastBeverageType':
+      return analyzeLastBeverageType(dayFilteredLogs);
+    case 'lastMasturbationLocation':
+      return analyzeLastMasturbationLocation(dayFilteredLogs);
+    case 'lastSexPartner':
+      return analyzeLastSexPartner(dayFilteredLogs);
     default:
       return { value: null, confidence: 0, reason: 'Unknown field type' };
   }
@@ -298,6 +316,87 @@ function analyzeExerciseType(logs: LogEntry[], dayOfWeek?: string): SmartDefault
   };
 }
 
+function modeOf<T extends string | number>(items: T[]): { value: T | null; count: number } {
+  if (items.length === 0) return { value: null, count: 0 };
+  const dist = new Map<T, number>();
+  for (const v of items) dist.set(v, (dist.get(v) || 0) + 1);
+  let bestVal: T | null = null;
+  let bestCount = 0;
+  for (const [v, c] of dist) {
+    if (c > bestCount) { bestVal = v; bestCount = c; }
+  }
+  return { value: bestVal, count: bestCount };
+}
+
+function analyzeLastAlcoholType(logs: LogEntry[]): SmartDefaultResult<string> {
+  const values: string[] = [];
+  for (const log of logs) {
+    for (const rec of log.alcoholRecords || []) {
+      for (const item of rec.items || []) {
+        if (item.key) values.push(item.key);
+      }
+    }
+  }
+  if (values.length < 2) return { value: null, confidence: 0, reason: 'Insufficient alcohol type data' };
+  const { value, count } = modeOf(values);
+  return {
+    value,
+    confidence: Math.min(0.7, count / 5),
+    reason: `Most-used alcohol type: ${value} (${count}/${values.length})`
+  };
+}
+
+function analyzeLastBeverageType(logs: LogEntry[]): SmartDefaultResult<string> {
+  const values: string[] = [];
+  for (const log of logs) {
+    for (const item of log.caffeineRecord?.items || []) {
+      if (item.name) values.push(item.name);
+    }
+  }
+  if (values.length < 2) return { value: null, confidence: 0, reason: 'Insufficient beverage data' };
+  const { value, count } = modeOf(values);
+  return {
+    value,
+    confidence: Math.min(0.7, count / 5),
+    reason: `Most-used beverage: ${value} (${count}/${values.length})`
+  };
+}
+
+function analyzeLastMasturbationLocation(logs: LogEntry[]): SmartDefaultResult<string> {
+  const values: string[] = [];
+  for (const log of logs) {
+    for (const m of log.masturbation || []) {
+      if (m.location) values.push(m.location);
+    }
+  }
+  if (values.length < 2) return { value: null, confidence: 0, reason: 'Insufficient masturbation location data' };
+  const { value, count } = modeOf(values);
+  return {
+    value,
+    confidence: Math.min(0.7, count / 5),
+    reason: `Most-common masturbation location: ${value}`
+  };
+}
+
+function analyzeLastSexPartner(logs: LogEntry[]): SmartDefaultResult<string> {
+  const recentLogs = [...logs].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 7);
+  const values: string[] = [];
+  for (const log of recentLogs) {
+    for (const rec of log.sex || []) {
+      for (const interaction of rec.interactions || []) {
+        if (interaction.partner) values.push(interaction.partner);
+      }
+    }
+  }
+  if (values.length < 1) return { value: null, confidence: 0, reason: 'No recent sex partner data' };
+  const { value, count } = modeOf(values);
+  return {
+    value,
+    confidence: Math.min(0.8, count / 3),
+    reason: `Most-recent sex partner (7-day window): ${value}`
+  };
+}
+
 export function getSmartDefaultsForDate(
   logs: LogEntry[],
   dateStr: string
@@ -311,5 +410,9 @@ export function getSmartDefaultsForDate(
     sleepAttire: analyzeUserPatterns(logs, 'sleepAttire', dayOfWeek),
     sleepTemperature: analyzeUserPatterns(logs, 'sleepTemperature', dayOfWeek),
     exerciseType: analyzeUserPatterns(logs, 'exerciseType', dayOfWeek),
+    lastAlcoholType: analyzeUserPatterns(logs, 'lastAlcoholType'),
+    lastBeverageType: analyzeUserPatterns(logs, 'lastBeverageType'),
+    lastMasturbationLocation: analyzeUserPatterns(logs, 'lastMasturbationLocation'),
+    lastSexPartner: analyzeUserPatterns(logs, 'lastSexPartner'),
   };
 }

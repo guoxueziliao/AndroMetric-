@@ -820,7 +820,8 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
                 onClose={() => { setModalState(s => ({ ...s, bev: false })); setEditTarget(null); }}
                 onSwitchToOther={editTarget ? undefined : () => setModalState(s => ({ ...s, bev: false, alc: true }))}
                 data={{
-                    initialData: editTarget?.type === 'bev' ? editTarget.data : undefined
+                    initialData: editTarget?.type === 'bev' ? editTarget.data : undefined,
+                    logs
                 }}
                 actions={{
                     onSave: (i) => {
