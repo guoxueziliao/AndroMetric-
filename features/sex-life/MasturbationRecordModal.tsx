@@ -87,6 +87,20 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
         setData(prev => ({ ...prev, duration: newDuration }));
     };
 
+    const handleDurationChange = (newDuration: number) => {
+        const safeDuration = Math.max(0, newDuration);
+        if (!data.startTime) {
+            setData(prev => ({ ...prev, duration: safeDuration }));
+            return;
+        }
+        const [h, m] = data.startTime.split(':').map(Number);
+        const base = new Date();
+        base.setHours(h, m + safeDuration, 0, 0);
+        const newEnd = base.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false });
+        setEndTime(newEnd);
+        setData(prev => ({ ...prev, duration: safeDuration }));
+    };
+
     useEffect(() => {
         if (isOpen) {
             const now = new Date();
@@ -247,9 +261,9 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                             <div className="text-xs text-blue-400 font-bold mt-0.5">根据起止时间自动计算</div>
                         </div>
                         <div className="flex items-center gap-4 bg-white dark:bg-slate-800 p-1.5 rounded-xl border border-blue-200 dark:border-blue-900/50 shadow-sm">
-                            <button onClick={() => updateData({duration: Math.max(0, data.duration - 1)})} className="p-1.5 text-slate-400 hover:text-red-500 transition-colors"><Minus size={18} strokeWidth={3}/></button>
+                            <button onClick={() => handleDurationChange(data.duration - 1)} aria-label="减少 1 分钟" className="min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors"><Minus size={18} strokeWidth={3}/></button>
                             <span className="text-xl font-black text-slate-800 dark:text-slate-100 tabular-nums min-w-[2rem] text-center">{data.duration}</span>
-                            <button onClick={() => updateData({duration: data.duration + 1})} className="p-1.5 text-blue-600 hover:text-blue-500 transition-colors"><Plus size={18} strokeWidth={3}/></button>
+                            <button onClick={() => handleDurationChange(data.duration + 1)} aria-label="增加 1 分钟" className="min-w-[44px] min-h-[44px] flex items-center justify-center text-blue-600 hover:text-blue-500 transition-colors"><Plus size={18} strokeWidth={3}/></button>
                         </div>
                     </div>
                 </div>

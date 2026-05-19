@@ -39,7 +39,7 @@ const AlcoholRecordModal: React.FC<AlcoholRecordModalProps> = ({ isOpen, onClose
     const [step, setStep] = useState<0 | 1>(0);
     const [selectedItems, setSelectedItems] = useState<Record<string, { count: number, abv: number, vol: number }>>({});
     const [drunkLevel, setDrunkLevel] = useState<DrunkLevel>('none');
-    const [time, setTime] = useState<string>('20:00');
+    const [time, setTime] = useState<string>(() => new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false }));
     const [duration, setDuration] = useState(60);
     const [mode, setMode] = useState<'sip' | 'session'>('sip');
     const [drinkWhere, setDrinkWhere] = useState('家');
@@ -55,7 +55,7 @@ const AlcoholRecordModal: React.FC<AlcoholRecordModalProps> = ({ isOpen, onClose
                 initialData.items.forEach(i => map[i.key] = { count: i.count, abv: i.abv, vol: i.volume });
                 setSelectedItems(map);
                 setDrunkLevel(initialData.drunkLevel || 'none');
-                setTime(initialData.time || '20:00');
+                setTime(initialData.time || new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false }));
                 setDuration(initialData.durationMinutes || 60);
                 setMode(initialData.ongoing || initialData.startTime ? 'session' : 'sip');
                 if (initialData.alcoholScene) {
@@ -146,7 +146,13 @@ const AlcoholRecordModal: React.FC<AlcoholRecordModalProps> = ({ isOpen, onClose
                         <div className="text-right">
                             <div className="text-[10px] text-slate-400 dark:text-slate-500 font-black uppercase mb-1">预测状态</div>
                             <div className="text-3xl font-black text-amber-500">{prediction.predicted}级</div>
-                            <div className="text-[10px] text-slate-400 dark:text-slate-600 font-mono">{time} - {mode === 'session' ? '持续' : '小酌'}</div>
+                            <input
+                                type="time"
+                                value={time}
+                                onChange={e => setTime(e.target.value)}
+                                aria-label="饮酒时间"
+                                className="bg-transparent text-[11px] text-slate-500 dark:text-slate-400 font-mono font-bold outline-none text-right min-h-[32px] cursor-pointer"
+                            />
                         </div>
                     </div>
                 </div>

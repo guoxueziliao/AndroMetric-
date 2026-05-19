@@ -88,13 +88,6 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({ label, value, onChange,
         onChange(date.toISOString());
         setIsModalOpen(false);
     }
-    
-    const handleSetToNow = () => {
-        const now = new Date();
-        const parts = getDateTimeParts(now.toISOString());
-        setTempDate(parts.date);
-        setTempTime(parts.time);
-    }
 
     return (
         <div>
@@ -123,9 +116,28 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({ label, value, onChange,
                         <input type="date" value={tempDate} onChange={(e) => setTempDate(e.target.value)} className="bg-slate-50 border border-slate-300 rounded-md p-3 min-h-[44px] focus:ring-brand-accent focus:border-brand-accent"/>
                         <input type="time" value={tempTime} onChange={(e) => setTempTime(e.target.value)} className="bg-slate-50 border border-slate-300 rounded-md p-3 min-h-[44px] focus:ring-brand-accent focus:border-brand-accent"/>
                     </div>
-                    <button type="button" onClick={handleSetToNow} className="w-full min-h-[44px] flex items-center justify-center gap-2 bg-slate-100 dark:bg-slate-800 rounded-md p-2 text-sm font-bold text-brand-muted hover:bg-slate-200">
-                        <Clock size={16}/> 设为现在
-                    </button>
+                    <div className="grid grid-cols-2 gap-2">
+                        {[
+                            { label: '现在', getDate: () => new Date() },
+                            { label: '-1 小时', getDate: () => { const d = new Date(); d.setHours(d.getHours() - 1); return d; } },
+                            { label: '-2 小时', getDate: () => { const d = new Date(); d.setHours(d.getHours() - 2); return d; } },
+                            { label: '昨晚 22:00', getDate: () => { const d = new Date(); d.setDate(d.getDate() - 1); d.setHours(22, 0, 0, 0); return d; } },
+                        ].map(preset => (
+                            <button
+                                key={preset.label}
+                                type="button"
+                                onClick={() => {
+                                    const d = preset.getDate();
+                                    const parts = getDateTimeParts(d.toISOString());
+                                    setTempDate(parts.date);
+                                    setTempTime(parts.time);
+                                }}
+                                className="min-h-[44px] flex items-center justify-center gap-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-md text-xs font-bold text-brand-muted"
+                            >
+                                <Clock size={14}/> {preset.label}
+                            </button>
+                        ))}
+                    </div>
                     {quickOptions && quickOptions.length > 0 && (
                         <div>
                             <p className="text-xs text-brand-muted mb-2">快捷选项:</p>

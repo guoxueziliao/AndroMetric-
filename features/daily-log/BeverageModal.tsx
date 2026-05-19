@@ -292,6 +292,18 @@ const BeverageModal: React.FC<BeverageModalProps> = ({ isOpen, onClose, data, ac
 
                 {/* 底部容量选择/日常模式确认区 */}
                 <div className="px-6 py-6 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 space-y-6 shrink-0">
+                    {!isDailyMode && (
+                        <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-800 rounded-2xl px-4 py-3 border border-slate-100 dark:border-slate-700">
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1"><Clock size={12}/> 时间</span>
+                            <input
+                                type="time"
+                                value={time}
+                                onChange={e => setTime(e.target.value)}
+                                aria-label="饮品时间"
+                                className="bg-transparent text-base font-mono font-bold text-slate-800 dark:text-slate-100 outline-none text-right min-h-[44px]"
+                            />
+                        </div>
+                    )}
                     {!isDailyMode ? (
                         <div className="animate-in slide-in-from-bottom-2 duration-300 space-y-6">
                             <div className="flex items-center justify-between">
