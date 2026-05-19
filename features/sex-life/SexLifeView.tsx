@@ -361,6 +361,16 @@ const SexLifeView: React.FC<SexLifeViewProps> = ({
                     partners,
                     logs
                 }}
+                onAddPartner={async (name: string) => {
+                    const colors = ['bg-pink-500', 'bg-purple-500', 'bg-blue-500', 'bg-emerald-500', 'bg-amber-500', 'bg-rose-500'];
+                    const newPartner = {
+                        id: `partner_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+                        name,
+                        avatarColor: colors[partners.length % colors.length]
+                    } as PartnerProfile;
+                    await onAddOrUpdatePartner(newPartner);
+                    return newPartner;
+                }}
             />
             <MasturbationRecordModal
                 isOpen={isMbModalOpen}

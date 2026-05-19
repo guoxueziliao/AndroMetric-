@@ -198,7 +198,8 @@ const MainViewRouter: React.FC<MainViewRouterProps> = ({
                 onDirtyStateChange,
                 onAddOrUpdateLog,
                 onAddOrUpdateTag,
-                onDeleteTag
+                onDeleteTag,
+                onAddOrUpdatePartner
               }}
             />
           </Suspense>

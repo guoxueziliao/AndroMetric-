@@ -30,9 +30,10 @@ interface SexRecordModalProps {
   initialData?: SexRecordDetails;
   dateStr: string;
   data: SexRecordModalData;
+  onAddPartner?: (name: string) => Promise<PartnerProfile | null>;
 }
 
-const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave, initialData, data: modalData }) => {
+const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave, initialData, data: modalData, onAddPartner }) => {
   const {
     partners = [],
     logs = []
@@ -59,6 +60,8 @@ const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave
   const [activeTab, setActiveTab] = useState<'context' | 'action' | 'props'>('action');
   const [isGlobalPanelOpen, setIsGlobalPanelOpen] = useState(false);
   const [pendingDeleteInteraction, setPendingDeleteInteraction] = useState<string | null>(null);
+  const [isAddPartnerOpen, setIsAddPartnerOpen] = useState(false);
+  const [newPartnerName, setNewPartnerName] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
   
   // Sorting logic based on history
@@ -564,12 +567,25 @@ const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave
                                         })}
                                         {/* Manual Input Fallback */}
                                         <div className="w-[1px] h-14 bg-slate-200 dark:bg-slate-800 mx-2"></div>
+                                        {onAddPartner && (
+                                            <button
+                                                type="button"
+                                                onClick={() => setIsAddPartnerOpen(true)}
+                                                className="flex-shrink-0 flex flex-col items-center gap-2 opacity-90 hover:opacity-100"
+                                                aria-label="新增伴侣"
+                                            >
+                                                <div className="w-14 h-14 rounded-full bg-blue-50 dark:bg-blue-900/30 border-2 border-dashed border-brand-accent flex items-center justify-center">
+                                                    <Plus size={22} className="text-brand-accent" strokeWidth={3}/>
+                                                </div>
+                                                <span className="text-[10px] font-bold text-brand-accent">新建</span>
+                                            </button>
+                                        )}
                                         <div className="flex flex-col items-center justify-center gap-2">
                                             <div className="w-14 h-14 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 flex items-center justify-center">
                                                 <User size={20} className="text-slate-400"/>
                                             </div>
-                                            <input 
-                                                placeholder="临时伴侣" 
+                                            <input
+                                                placeholder="临时伴侣"
                                                 value={activeInteraction.partner}
                                                 onChange={e => updateActive('partner', e.target.value)}
                                                 className="bg-transparent border-b border-slate-300 dark:border-slate-700 text-center text-xs w-16 focus:border-brand-accent outline-none text-brand-text dark:text-slate-300 pb-1"
@@ -812,6 +828,53 @@ const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave
             message="确定删除此阶段吗?该阶段的所有动作、伴侣选择都会丢失。"
             confirmLabel="删除"
         />
+        {isAddPartnerOpen && (
+            <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => { setIsAddPartnerOpen(false); setNewPartnerName(''); }}>
+                <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-sm p-5 space-y-4" onClick={e => e.stopPropagation()}>
+                    <div>
+                        <h3 className="text-base font-black text-brand-text dark:text-slate-100">新建伴侣</h3>
+                        <p className="text-[11px] text-slate-400 font-bold mt-1">仅保存名字,详细资料可稍后在「我的」-「伴侣管理」补充</p>
+                    </div>
+                    <input
+                        autoFocus
+                        value={newPartnerName}
+                        onChange={e => setNewPartnerName(e.target.value)}
+                        placeholder="名字 / 称呼"
+                        className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm font-bold outline-none focus:border-brand-accent transition-colors"
+                        onKeyDown={e => {
+                            if (e.key === 'Enter' && newPartnerName.trim() && onAddPartner) {
+                                onAddPartner(newPartnerName.trim()).then(p => {
+                                    if (p) updateActive('partner', p.name);
+                                    setNewPartnerName('');
+                                    setIsAddPartnerOpen(false);
+                                });
+                            }
+                        }}
+                    />
+                    <div className="flex gap-2">
+                        <button
+                            onClick={() => { setIsAddPartnerOpen(false); setNewPartnerName(''); }}
+                            className="flex-1 min-h-[44px] py-2 bg-slate-100 dark:bg-slate-800 text-slate-500 font-bold rounded-xl"
+                        >
+                            取消
+                        </button>
+                        <button
+                            disabled={!newPartnerName.trim() || !onAddPartner}
+                            onClick={async () => {
+                                if (!onAddPartner || !newPartnerName.trim()) return;
+                                const p = await onAddPartner(newPartnerName.trim());
+                                if (p) updateActive('partner', p.name);
+                                setNewPartnerName('');
+                                setIsAddPartnerOpen(false);
+                            }}
+                            className="flex-[2] min-h-[44px] py-2 bg-brand-accent text-white font-black rounded-xl disabled:opacity-50"
+                        >
+                            添加并选择
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )}
     </div>
   );
 };

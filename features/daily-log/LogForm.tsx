@@ -36,6 +36,7 @@ interface LogFormActions {
   onAddOrUpdateLog: (log: LogEntry) => Promise<void>;
   onAddOrUpdateTag: (tag: TagEntry) => Promise<void>;
   onDeleteTag: (name: string, category: TagType) => Promise<void>;
+  onAddOrUpdatePartner?: (partner: PartnerProfile) => Promise<void>;
 }
 
 interface LogFormProps {
@@ -57,8 +58,21 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
         onDirtyStateChange,
         onAddOrUpdateLog,
         onAddOrUpdateTag,
-        onDeleteTag
+        onDeleteTag,
+        onAddOrUpdatePartner
     } = actions;
+
+    const handleAddPartnerByName = useCallback(async (name: string): Promise<PartnerProfile | null> => {
+        if (!onAddOrUpdatePartner) return null;
+        const colors = ['bg-pink-500', 'bg-purple-500', 'bg-blue-500', 'bg-emerald-500', 'bg-amber-500', 'bg-rose-500'];
+        const newPartner: PartnerProfile = {
+            id: `partner_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+            name,
+            avatarColor: colors[partners.length % colors.length]
+        } as PartnerProfile;
+        await onAddOrUpdatePartner(newPartner);
+        return newPartner;
+    }, [onAddOrUpdatePartner, partners.length]);
 
     const [log, setLog] = useState<LogEntry>(() => {
         const base = hydrateLog(existingLog ? { ...existingLog } : { date: logDate || '' });
@@ -821,21 +835,22 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
                     }
                 }}
             />
-            <SexRecordModal 
-                isOpen={modalState.sex} 
-                onClose={() => { setModalState(s => ({ ...s, sex: false })); setEditTarget(null); }} 
+            <SexRecordModal
+                isOpen={modalState.sex}
+                onClose={() => { setModalState(s => ({ ...s, sex: false })); setEditTarget(null); }}
                 initialData={editTarget?.type === 'sex' ? editTarget.data : undefined}
-                onSave={(r) => { 
+                onSave={(r) => {
                     const current = log.sex || [];
                     const exists = current.find(x => x.id === r.id);
                     setField('sex', exists ? current.map(x => x.id === r.id ? r : x) : [...current, r]);
-                    setModalState(s => ({ ...s, sex: false })); 
-                }} 
+                    setModalState(s => ({ ...s, sex: false }));
+                }}
                 dateStr={log.date}
                 data={{
                     partners,
                     logs
                 }}
+                onAddPartner={onAddOrUpdatePartner ? handleAddPartnerByName : undefined}
             />
             <MasturbationRecordModal 
                 isOpen={modalState.mb} 
