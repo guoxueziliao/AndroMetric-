@@ -11,12 +11,14 @@ const BackupSettings: React.FC<BackupSettingsProps> = ({ logs }) => {
   const {
     isEnabled,
     isReady,
+    needsReauthorization,
     metadata,
     isLoading,
     error,
     successMessage,
     onToggleAutoBackup,
     onChangeDirectory,
+    onReauthorize,
     onManualBackup
   } = useBackupSettings({ logs });
 
@@ -125,7 +127,31 @@ const BackupSettings: React.FC<BackupSettingsProps> = ({ logs }) => {
           </div>
         )}
 
-        {!isReady && isEnabled && (
+        {!isReady && needsReauthorization && (
+          <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-900/30 rounded-xl text-center">
+            <AlertCircle className="w-8 h-8 text-amber-500 mx-auto mb-2" />
+            <p className="text-sm text-amber-800 dark:text-amber-300 mb-1">已记住备份目录，但授权已失效</p>
+            <p className="text-xs text-amber-700 dark:text-amber-400 mb-3">浏览器关闭后系统需要重新确认访问权限</p>
+            <div className="flex gap-2 justify-center">
+              <button
+                onClick={onReauthorize}
+                disabled={isLoading}
+                className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-sm font-medium transition-colors"
+              >
+                重新授权
+              </button>
+              <button
+                onClick={onChangeDirectory}
+                disabled={isLoading}
+                className="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 text-slate-700 dark:text-slate-300 rounded-lg text-sm font-medium transition-colors"
+              >
+                改选目录
+              </button>
+            </div>
+          </div>
+        )}
+
+        {!isReady && !needsReauthorization && isEnabled && (
           <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-900/30 rounded-xl text-center">
             <AlertCircle className="w-8 h-8 text-amber-500 mx-auto mb-2" />
             <p className="text-sm text-amber-800 dark:text-amber-300 mb-2">需要选择备份目录</p>

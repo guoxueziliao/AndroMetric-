@@ -1,5 +1,12 @@
 import { Logger } from './LoggerService';
 
+type FsPermissionState = 'granted' | 'prompt' | 'denied';
+
+interface PermissionAwareHandle {
+  queryPermission(options?: { mode?: 'read' | 'readwrite' }): Promise<FsPermissionState>;
+  requestPermission(options?: { mode?: 'read' | 'readwrite' }): Promise<FsPermissionState>;
+}
+
 export interface BackupFile {
   name: string;
   handle: FileSystemFileHandle;
@@ -30,7 +37,7 @@ export class FileSystemService {
         return false;
       }
 
-      const handle = await window.showDirectoryPicker({
+      const handle = await (window as unknown as { showDirectoryPicker: (opts: { mode: 'readwrite' }) => Promise<FileSystemDirectoryHandle> }).showDirectoryPicker({
         mode: 'readwrite'
       });
 
@@ -49,9 +56,32 @@ export class FileSystemService {
     }
   }
 
+  /**
+   * Silently checks a previously-saved handle's permission state without
+   * triggering a prompt. Safe to call from app startup (no user gesture).
+   * Stores the handle internally so subsequent operations can reuse it.
+   * Returns the permission status; only 'granted' makes the service ready.
+   */
+  async restoreFromHandle(handle: FileSystemDirectoryHandle): Promise<FsPermissionState> {
+    this.directoryHandle = handle;
+    try {
+      const status = await (handle as unknown as PermissionAwareHandle).queryPermission({ mode: 'readwrite' });
+      if (status === 'granted') {
+        this.isInitialized = true;
+        Logger.info('FileSystemService:RestoredFromHandle', { directory: handle.name });
+      } else {
+        Logger.info('FileSystemService:RestoreNeedsReauth', { directory: handle.name, status });
+      }
+      return status;
+    } catch (err) {
+      Logger.error('FileSystemService:QueryPermissionFailed', err);
+      return 'denied';
+    }
+  }
+
   async reinitializeFromHandle(handle: FileSystemDirectoryHandle): Promise<boolean> {
     try {
-      const permission = await handle.requestPermission({ mode: 'readwrite' });
+      const permission = await (handle as unknown as PermissionAwareHandle).requestPermission({ mode: 'readwrite' });
       if (permission !== 'granted') {
         return false;
       }
@@ -66,7 +96,7 @@ export class FileSystemService {
 
   async writeBackupFile(data: unknown, filename: string): Promise<boolean> {
     if (!this.isInitialized || !this.directoryHandle) {
-      Logger.error('FileSystemService:NotInitialized');
+      Logger.error('FileSystemService:NotInitialized', { filename });
       return false;
     }
 
@@ -110,9 +140,9 @@ export class FileSystemService {
     const files: BackupFile[] = [];
 
     try {
-      for await (const [name, handle] of this.directoryHandle.entries()) {
+      for await (const [name, handle] of (this.directoryHandle as unknown as AsyncIterable<[string, FileSystemHandle]>)) {
         if (handle.kind === 'file' && name.startsWith('hardness-diary-backup')) {
-          const file = await handle.getFile();
+          const file = await (handle as FileSystemFileHandle).getFile();
           files.push({
             name,
             handle: handle as FileSystemFileHandle,
@@ -130,7 +160,7 @@ export class FileSystemService {
     }
   }
 
-  async cleanupOldBackups(config: RetentionConfig = DEFAULT_RETENTION): Promise<number> {
+  async cleanupOldBackups(_config: RetentionConfig = DEFAULT_RETENTION): Promise<number> {
     if (!this.isInitialized || !this.directoryHandle) {
       return 0;
     }
@@ -146,7 +176,7 @@ export class FileSystemService {
       return age <= 12 * 7 * 24 * 60 * 60 * 1000;
     });
     const weeklyGroups = this.groupByWeek(weeklyFiles);
-    for (const [weekKey, weekFiles] of weeklyGroups) {
+    for (const [, weekFiles] of weeklyGroups) {
       weekFiles.slice(1).forEach(f => filesToDelete.add(f.name));
     }
 
@@ -155,7 +185,7 @@ export class FileSystemService {
       return age > 12 * 7 * 24 * 60 * 60 * 1000 && age <= 12 * 30 * 24 * 60 * 60 * 1000;
     });
     const monthlyGroups = this.groupByMonth(monthlyFiles);
-    for (const [monthKey, monthFiles] of monthlyGroups) {
+    for (const [, monthFiles] of monthlyGroups) {
       monthFiles.slice(1).forEach(f => filesToDelete.add(f.name));
     }
 

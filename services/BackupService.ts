@@ -1,6 +1,11 @@
 import { CycleEvent, LogEntry, PregnancyEvent } from '../types';
 import { fileSystemService, FileSystemService } from './FileSystemService';
 import { Logger } from './LoggerService';
+import {
+  loadBackupDirectoryHandle,
+  saveBackupDirectoryHandle,
+  clearBackupDirectoryHandle
+} from '../core/storage/backupHandleStorage';
 
 export interface BackupMetadata {
   lastBackupAt: number | null;
@@ -9,9 +14,14 @@ export interface BackupMetadata {
   directoryName: string | null;
 }
 
+export interface BackupStatus {
+  isReady: boolean;
+  needsReauthorization: boolean;
+  directoryName: string | null;
+}
+
 export interface BackupSettings {
   autoBackupEnabled: boolean;
-  directoryHandle?: FileSystemDirectoryHandle;
   lastBackupAt?: number;
 }
 
@@ -20,18 +30,24 @@ const BACKUP_SETTINGS_KEY = 'hardnessDiary_backupSettings';
 export class BackupService {
   private fileSystem: FileSystemService;
   private settings: BackupSettings;
+  private initPromise: Promise<void> | null = null;
+  private needsReauthorization = false;
 
   constructor(fileSystem: FileSystemService = fileSystemService) {
     this.fileSystem = fileSystem;
     this.settings = this.loadSettings();
-    this.initializeFromSavedHandle();
   }
 
   private loadSettings(): BackupSettings {
     try {
       const saved = localStorage.getItem(BACKUP_SETTINGS_KEY);
       if (saved) {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved) as Partial<BackupSettings> & { directoryHandle?: unknown };
+        // Older versions persisted a (always-undefined) directoryHandle here; ignore that field.
+        return {
+          autoBackupEnabled: Boolean(parsed.autoBackupEnabled),
+          lastBackupAt: parsed.lastBackupAt
+        };
       }
     } catch (e) {
       Logger.error('BackupService:LoadSettingsFailed', e);
@@ -41,33 +57,82 @@ export class BackupService {
 
   private saveSettings(): void {
     try {
-      const settingsToSave = {
-        ...this.settings,
-        directoryHandle: undefined
-      };
-      localStorage.setItem(BACKUP_SETTINGS_KEY, JSON.stringify(settingsToSave));
+      localStorage.setItem(BACKUP_SETTINGS_KEY, JSON.stringify(this.settings));
     } catch (e) {
       Logger.error('BackupService:SaveSettingsFailed', e);
     }
   }
 
-  private async initializeFromSavedHandle(): Promise<void> {
-    if (this.settings.directoryHandle) {
-      const success = await this.fileSystem.reinitializeFromHandle(this.settings.directoryHandle);
-      if (success) {
-        Logger.info('BackupService:ReinitializedFromSavedHandle');
+  /**
+   * Restore previously-saved directory handle from IndexedDB and check whether
+   * its permission still holds. Safe to call multiple times — work is cached
+   * by initPromise. Bootstrap and UI both call this; second call is a no-op.
+   */
+  initialize(): Promise<void> {
+    if (!this.initPromise) {
+      this.initPromise = this.doInitialize();
+    }
+    return this.initPromise;
+  }
+
+  private async doInitialize(): Promise<void> {
+    try {
+      const handle = await loadBackupDirectoryHandle();
+      if (!handle) return;
+
+      const status = await this.fileSystem.restoreFromHandle(handle);
+      if (status === 'granted') {
+        Logger.info('BackupService:RestoredSilently');
+      } else {
+        this.needsReauthorization = true;
+        Logger.info('BackupService:NeedsReauthorization', { status });
       }
+    } catch (err) {
+      Logger.error('BackupService:InitializeFailed', err);
     }
   }
 
   async setupBackupDirectory(): Promise<boolean> {
     const success = await this.fileSystem.requestPermission();
     if (success) {
-      this.settings.directoryHandle = this.fileSystem.getDirectoryHandle() || undefined;
-      this.saveSettings();
+      const handle = this.fileSystem.getDirectoryHandle();
+      if (handle) {
+        await saveBackupDirectoryHandle(handle);
+      }
+      this.needsReauthorization = false;
       Logger.info('BackupService:DirectorySetupComplete');
     }
     return success;
+  }
+
+  /**
+   * Re-grant permission against a previously-saved handle. Must be called from
+   * a user gesture (button click), since it uses requestPermission().
+   */
+  async reauthorize(): Promise<boolean> {
+    const handle = await loadBackupDirectoryHandle();
+    if (!handle) {
+      this.needsReauthorization = false;
+      return false;
+    }
+
+    const success = await this.fileSystem.reinitializeFromHandle(handle);
+    if (success) {
+      this.needsReauthorization = false;
+      Logger.info('BackupService:Reauthorized');
+    } else {
+      Logger.warn('BackupService:ReauthorizationFailed');
+    }
+    return success;
+  }
+
+  /**
+   * Forget the saved handle entirely. Used when the user changes directories
+   * or the stored handle is no longer valid.
+   */
+  async forgetDirectory(): Promise<void> {
+    await clearBackupDirectoryHandle();
+    this.needsReauthorization = false;
   }
 
   async autoBackup(
@@ -187,6 +252,22 @@ export class BackupService {
 
   isReady(): boolean {
     return this.fileSystem.isReady();
+  }
+
+  /**
+   * Whether a directory handle is stored but its permission has lapsed. The
+   * UI should show a single-click "重新授权" affordance when this is true.
+   */
+  getNeedsReauthorization(): boolean {
+    return this.needsReauthorization;
+  }
+
+  getStatus(): BackupStatus {
+    return {
+      isReady: this.fileSystem.isReady(),
+      needsReauthorization: this.needsReauthorization,
+      directoryName: this.fileSystem.getDirectoryName()
+    };
   }
 
   async listBackups(): Promise<{ name: string; date: Date; size: number }[]> {
