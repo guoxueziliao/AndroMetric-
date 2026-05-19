@@ -17,6 +17,7 @@ interface BeverageModalProps {
     onClose: () => void;
     data: BeverageModalData;
     actions: BeverageModalActions;
+    onSwitchToOther?: () => void;
 }
 
 const CATEGORIES = [
@@ -82,7 +83,7 @@ const CUP_SIZES = [
     { label: '超大杯', vol: 650 },
 ];
 
-const BeverageModal: React.FC<BeverageModalProps> = ({ isOpen, onClose, data, actions }) => {
+const BeverageModal: React.FC<BeverageModalProps> = ({ isOpen, onClose, data, actions, onSwitchToOther }) => {
     const { initialData } = data;
     const { onSave } = actions;
 
@@ -148,6 +149,12 @@ const BeverageModal: React.FC<BeverageModalProps> = ({ isOpen, onClose, data, ac
     return (
         <Modal isOpen={isOpen} onClose={onClose} title={initialData ? "修改记录" : "记录提神饮品"}>
             <div className="flex flex-col h-[75vh] -mx-4 -mb-4">
+                {onSwitchToOther && (
+                    <div className="flex p-1 mx-4 mt-3 bg-slate-100 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shrink-0">
+                        <button onClick={onSwitchToOther} className="flex-1 py-2 text-xs font-black rounded-xl text-slate-400 dark:text-slate-500 transition-colors">饮酒</button>
+                        <button className="flex-1 py-2 text-xs font-black rounded-xl bg-white dark:bg-slate-900 text-orange-500 shadow-md">提神饮品</button>
+                    </div>
+                )}
                 {/* 顶部预览卡片 */}
                 <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 shrink-0">
                     <div className={`transition-all duration-300 rounded-2xl p-4 flex items-center justify-between shadow-sm border ${
@@ -293,15 +300,37 @@ const BeverageModal: React.FC<BeverageModalProps> = ({ isOpen, onClose, data, ac
                 {/* 底部容量选择/日常模式确认区 */}
                 <div className="px-6 py-6 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 space-y-6 shrink-0">
                     {!isDailyMode && (
-                        <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-800 rounded-2xl px-4 py-3 border border-slate-100 dark:border-slate-700">
-                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1"><Clock size={12}/> 时间</span>
-                            <input
-                                type="time"
-                                value={time}
-                                onChange={e => setTime(e.target.value)}
-                                aria-label="饮品时间"
-                                className="bg-transparent text-base font-mono font-bold text-slate-800 dark:text-slate-100 outline-none text-right min-h-[44px]"
-                            />
+                        <div className="space-y-2">
+                            <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-800 rounded-2xl px-4 py-3 border border-slate-100 dark:border-slate-700">
+                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1"><Clock size={12}/> 时间</span>
+                                <input
+                                    type="time"
+                                    value={time}
+                                    onChange={e => setTime(e.target.value)}
+                                    aria-label="饮品时间"
+                                    className="bg-transparent text-base font-mono font-bold text-slate-800 dark:text-slate-100 outline-none text-right min-h-[44px]"
+                                />
+                            </div>
+                            <div className="grid grid-cols-4 gap-2">
+                                {[
+                                    { label: '现在', shift: 0 },
+                                    { label: '-1h', shift: -60 },
+                                    { label: '-2h', shift: -120 },
+                                    { label: '-4h', shift: -240 },
+                                ].map(p => (
+                                    <button
+                                        key={p.label}
+                                        onClick={() => {
+                                            const d = new Date();
+                                            d.setMinutes(d.getMinutes() + p.shift);
+                                            setTime(d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false }));
+                                        }}
+                                        className="py-1.5 text-[10px] font-bold rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-orange-100 dark:hover:bg-orange-900/30 hover:text-orange-600 transition-colors min-h-[36px]"
+                                    >
+                                        {p.label}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
                     )}
                     {!isDailyMode ? (

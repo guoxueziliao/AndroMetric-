@@ -801,9 +801,10 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
             </div>
 
             {/* 弹窗集合 */}
-            <BeverageModal 
-                isOpen={modalState.bev} 
-                onClose={() => { setModalState(s => ({ ...s, bev: false })); setEditTarget(null); }} 
+            <BeverageModal
+                isOpen={modalState.bev}
+                onClose={() => { setModalState(s => ({ ...s, bev: false })); setEditTarget(null); }}
+                onSwitchToOther={editTarget ? undefined : () => setModalState(s => ({ ...s, bev: false, alc: true }))}
                 data={{
                     initialData: editTarget?.type === 'bev' ? editTarget.data : undefined
                 }}
@@ -873,9 +874,10 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
                     }
                 }}
             />
-            <AlcoholRecordModal 
-                isOpen={modalState.alc} 
-                onClose={() => { setModalState(s => ({ ...s, alc: false })); setEditTarget(null); }} 
+            <AlcoholRecordModal
+                isOpen={modalState.alc}
+                onClose={() => { setModalState(s => ({ ...s, alc: false })); setEditTarget(null); }}
+                onSwitchToOther={editTarget ? undefined : () => setModalState(s => ({ ...s, alc: false, bev: true }))}
                 data={{
                     initialData: editTarget?.type === 'alc' ? editTarget.data : undefined
                 }}

@@ -17,6 +17,7 @@ interface AlcoholRecordModalProps {
     onClose: () => void;
     data: AlcoholRecordModalData;
     actions: AlcoholRecordModalActions;
+    onSwitchToOther?: () => void;
 }
 
 const DRUNK_LEVELS: { id: DrunkLevel, label: string, emoji: string }[] = [
@@ -32,7 +33,7 @@ const SCENE_OPTIONS = {
     why: { label: '3. 为什么喝？', icon: Target, options: ['放松', '聚会', '应酬', '助兴', '借酒浇愁', '庆祝'], activeColor: 'bg-emerald-600 border-emerald-600' }
 };
 
-const AlcoholRecordModal: React.FC<AlcoholRecordModalProps> = ({ isOpen, onClose, data, actions }) => {
+const AlcoholRecordModal: React.FC<AlcoholRecordModalProps> = ({ isOpen, onClose, data, actions, onSwitchToOther }) => {
     const { initialData } = data;
     const { onSave } = actions;
 
@@ -63,7 +64,7 @@ const AlcoholRecordModal: React.FC<AlcoholRecordModalProps> = ({ isOpen, onClose
                     if (parts.length >= 3) { setDrinkWhere(parts[0]); setDrinkWith(parts[1]); setDrinkWhy(parts[2]); }
                 }
             } else {
-                setSelectedItems({}); setDrunkLevel('none'); setDrinkWhere('家'); setDrinkWith('独自'); setDrinkWhy('放松');
+                setSelectedItems({}); setDrunkLevel('none'); setDrinkWhere(''); setDrinkWith(''); setDrinkWhy('');
                 setTime(new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false }));
                 setMode('sip');
             }
@@ -94,13 +95,14 @@ const AlcoholRecordModal: React.FC<AlcoholRecordModalProps> = ({ isOpen, onClose
             volume: val.vol, abv: val.abv, count: val.count, pureAlcohol: calculatePureAlcohol(val.vol, val.abv)
         }));
         const isLate = parseInt(time.split(':')[0]) < 5;
-        onSave({ 
+        const sceneStr = [drinkWhere, drinkWith, drinkWhy].filter(Boolean).join(' | ');
+        onSave({
             id: initialData?.id || Date.now().toString(),
-            totalGrams, 
-            durationMinutes: mode === 'sip' ? 10 : duration, 
-            items, isLate, drunkLevel, 
-            alcoholScene: `${drinkWhere} | ${drinkWith} | ${drinkWhy}`, 
-            time, ongoing: false 
+            totalGrams,
+            durationMinutes: mode === 'sip' ? 10 : duration,
+            items, isLate, drunkLevel,
+            alcoholScene: sceneStr,
+            time, ongoing: false
         });
         onClose();
     };
@@ -115,9 +117,14 @@ const AlcoholRecordModal: React.FC<AlcoholRecordModalProps> = ({ isOpen, onClose
             footer={
                 <div className="w-full">
                     {step === 0 ? (
-                        <button onClick={() => setStep(1)} disabled={totalGrams === 0} className="w-full py-4 bg-amber-500 disabled:opacity-50 text-white font-black rounded-2xl shadow-xl flex items-center justify-center active:scale-95 transition-all">
-                            下一步：总结场景 <ChevronRight size={20} className="ml-2" />
-                        </button>
+                        <div className="flex gap-3">
+                            <button onClick={() => setStep(1)} disabled={totalGrams === 0} className="flex-[2] py-4 bg-amber-500 disabled:opacity-50 text-white font-black rounded-2xl shadow-xl flex items-center justify-center active:scale-95 transition-all">
+                                下一步：总结场景 <ChevronRight size={20} className="ml-2" />
+                            </button>
+                            <button onClick={handleSave} disabled={totalGrams === 0} className="flex-1 py-4 bg-slate-100 dark:bg-slate-800 disabled:opacity-50 text-slate-700 dark:text-slate-300 font-bold rounded-2xl">
+                                直接保存
+                            </button>
+                        </div>
                     ) : (
                         <div className="flex gap-3">
                             <button onClick={() => setStep(0)} className="flex-1 py-4 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-bold rounded-2xl">修改饮品</button>
@@ -128,7 +135,12 @@ const AlcoholRecordModal: React.FC<AlcoholRecordModalProps> = ({ isOpen, onClose
             }
         >
             <div className="h-[75vh] flex flex-col -mx-4 -mt-4 bg-white dark:bg-[#0a0f1d] overflow-hidden">
-                
+                {onSwitchToOther && (
+                    <div className="flex p-1 mx-4 mt-3 bg-slate-100 dark:bg-[#111827] rounded-2xl border border-slate-200 dark:border-white/5 shrink-0">
+                        <button className="flex-1 py-2 text-xs font-black rounded-xl bg-white dark:bg-[#1e293b] text-amber-500 shadow-md">饮酒</button>
+                        <button onClick={onSwitchToOther} className="flex-1 py-2 text-xs font-black rounded-xl text-slate-400 dark:text-slate-500 transition-colors">提神饮品</button>
+                    </div>
+                )}
                 <div className="px-6 py-6 bg-slate-50 dark:bg-[#0f172a] border-b border-slate-100 dark:border-white/5 relative shrink-0">
                     <div className="relative z-10 flex justify-between items-center">
                         <div className="flex items-center gap-4">
