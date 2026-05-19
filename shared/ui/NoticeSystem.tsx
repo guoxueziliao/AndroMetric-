@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { AlertCircle, AlertTriangle, Info, ChevronDown, ChevronUp } from 'lucide-react';
+import ConfirmModal from './ConfirmModal';
 
 export type NoticeLevel = 'error' | 'warn' | 'info';
 
@@ -59,14 +60,14 @@ export const InlineNotice: React.FC<{
 }> = ({ item, compact = true, className = '' }) => {
     const conf = LEVEL_CONFIG[item.level];
     const Icon = conf.icon;
+    const [pendingClick, setPendingClick] = useState<React.MouseEvent | null>(null);
 
     const handleClick = (e: React.MouseEvent) => {
         e.stopPropagation();
         if (item.action) {
             if (item.action.confirm) {
-                if (window.confirm(`${item.action.confirm.title}\n\n${item.action.confirm.message}`)) {
-                    item.action.onAction(e);
-                }
+                e.persist();
+                setPendingClick(e);
             } else {
                 item.action.onAction(e);
             }
@@ -82,11 +83,11 @@ export const InlineNotice: React.FC<{
                     <span className={`text-xs font-semibold ${conf.color} leading-5`}>{item.title}</span>
                     {item.action && (
                         /* Spec: action text-[11px] bold */
-                        <button 
+                        <button
                             onClick={handleClick}
                             className={`flex-shrink-0 px-2 py-0.5 rounded-md text-[11px] font-bold transition-colors whitespace-nowrap ${
-                                item.action.intent === 'primary' 
-                                ? 'bg-brand-accent text-white hover:bg-brand-accent/90 shadow-sm' 
+                                item.action.intent === 'primary'
+                                ? 'bg-brand-accent text-white hover:bg-brand-accent/90 shadow-sm'
                                 : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
                             }`}
                         >
@@ -101,6 +102,18 @@ export const InlineNotice: React.FC<{
                     </p>
                 )}
             </div>
+            {item.action?.confirm && (
+                <ConfirmModal
+                    isOpen={!!pendingClick}
+                    onClose={() => setPendingClick(null)}
+                    onConfirm={() => {
+                        if (pendingClick && item.action) item.action.onAction(pendingClick);
+                        setPendingClick(null);
+                    }}
+                    title={item.action.confirm.title}
+                    message={item.action.confirm.message}
+                />
+            )}
         </div>
     );
 };

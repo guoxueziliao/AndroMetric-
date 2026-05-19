@@ -5,7 +5,7 @@ import {
   Trash2, Coffee, Bed, ArrowRight, Heart, MapPin, BrainCircuit, Film, Smile,
   ChevronRight, ChevronLeft, Calendar, Sofa, X, StickyNote
 } from 'lucide-react';
-import { BottomSheet, Modal, SafeDeleteModal } from '../../shared/ui';
+import { BottomSheet, Modal, ConfirmModal } from '../../shared/ui';
 import { formatTime, calculateSleepDuration, getTodayDateString, LABELS } from '../../shared/lib';
 import { useDashboardController, type DashboardActions, type SummaryTab } from './model/useDashboardController';
 import { buildTodayTiles, buildWeekSummary, type TodayTileKey } from './model/p1Summary';
@@ -669,11 +669,13 @@ const Dashboard: React.FC<DashboardProps> = ({
         </p>
       </Modal>
 
-      <SafeDeleteModal 
-        isOpen={isDeleteDialogOpen} 
-        onClose={() => setIsDeleteDialogOpen(false)} 
+      <ConfirmModal
+        isOpen={isDeleteDialogOpen}
+        onClose={() => setIsDeleteDialogOpen(false)}
         onConfirm={onConfirmDelete}
-        message={`确定要删除 ${dateToDelete} 的所有记录吗？删除后将无法找回。`}
+        title="删除当日记录"
+        message={`确定要删除 ${dateToDelete} 的所有记录吗?删除后将无法找回。`}
+        confirmLabel="删除"
       />
     </>
   );

@@ -329,7 +329,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                         <div className="absolute left-3 top-3 text-slate-300"><Edit2 size={12}/></div>
                         <input
                             placeholder="其他具体地点描述..."
-                            value={LOCATION_OPTIONS.some(o => o.id === data.location) ? '' : data.location}
+                            value={data.location || ''}
                             onChange={e => updateData({location: e.target.value})}
                             className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 pl-8 text-[11px] font-bold outline-none focus:border-brand-accent transition-all"
                         />

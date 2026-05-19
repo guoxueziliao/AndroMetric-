@@ -76,6 +76,8 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isClearDataModalOpen, setIsClearDataModalOpen] = useState(false);
+  const [clearDataConfirmText, setClearDataConfirmText] = useState('');
+  const canConfirmClearData = clearDataConfirmText === '删除';
 
   const {
     snapshots,
@@ -120,13 +122,17 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
   }, [logs]);
 
   const handleClearAnyway = () => {
+    if (!canConfirmClearData) return;
     setIsClearDataModalOpen(false);
+    setClearDataConfirmText('');
     onClearAllData();
   };
 
   const handleExportAndClear = async () => {
+    if (!canConfirmClearData) return;
     await onExportAndClear();
     setIsClearDataModalOpen(false);
+    setClearDataConfirmText('');
   };
 
   const handleImportClick = () => fileInputRef.current?.click();
@@ -496,16 +502,30 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
       </Modal>
 
       {/* Clear Data Confirmation */}
-      <Modal isOpen={isClearDataModalOpen} onClose={() => setIsClearDataModalOpen(false)} title="⚠️ 危险操作" footer={
+      <Modal isOpen={isClearDataModalOpen} onClose={() => { setIsClearDataModalOpen(false); setClearDataConfirmText(''); }} title="⚠️ 危险操作" footer={
           <div className="flex flex-col w-full gap-2">
-              <button onClick={handleExportAndClear} className="w-full py-3 bg-brand-accent text-white font-bold rounded-xl">先备份，再清除 (推荐)</button>
-              <button onClick={handleClearAnyway} className="w-full py-3 bg-transparent text-slate-400 font-medium text-xs hover:text-red-500">不备份，直接清除</button>
+              <button onClick={handleExportAndClear} disabled={!canConfirmClearData} className="w-full min-h-[44px] py-3 bg-brand-accent text-white font-bold rounded-xl disabled:opacity-40 disabled:cursor-not-allowed">先备份，再清除 (推荐)</button>
+              <button onClick={handleClearAnyway} disabled={!canConfirmClearData} className="w-full min-h-[44px] py-3 bg-transparent text-slate-400 font-medium text-xs hover:text-red-500 disabled:opacity-40 disabled:cursor-not-allowed">不备份，直接清除</button>
           </div>
       }>
-          <div className="text-center py-4">
-              <AlertTriangle size={48} className="mx-auto text-red-500 mb-4" />
-              <p className="text-sm text-brand-text dark:text-slate-200 font-bold mb-2">您确定要清除所有数据吗？</p>
-              <p className="text-xs text-brand-muted">此操作将删除所有日志、设置及伴侣档案，且<span className="text-red-500 font-bold">无法撤销</span>。</p>
+          <div className="text-center py-4 space-y-4">
+              <AlertTriangle size={48} className="mx-auto text-red-500" />
+              <div>
+                <p className="text-sm text-brand-text dark:text-slate-200 font-bold mb-1">您确定要清除所有数据吗？</p>
+                <p className="text-xs text-brand-muted">此操作将删除所有日志、设置及伴侣档案，且<span className="text-red-500 font-bold">无法撤销</span>。</p>
+              </div>
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-3 rounded-lg text-left">
+                  <label className="block text-xs font-bold text-red-600 dark:text-red-400 mb-1">
+                      请输入 "删除" 以解锁操作
+                  </label>
+                  <input
+                      type="text"
+                      value={clearDataConfirmText}
+                      onChange={e => setClearDataConfirmText(e.target.value)}
+                      placeholder="删除"
+                      className="w-full min-h-[44px] bg-white dark:bg-slate-900 border border-red-300 dark:border-red-700 rounded p-2 text-sm outline-none focus:ring-2 focus:ring-red-500"
+                  />
+              </div>
           </div>
       </Modal>
     </>

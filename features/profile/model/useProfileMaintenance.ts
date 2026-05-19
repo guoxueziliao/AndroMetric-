@@ -171,8 +171,8 @@ export const useProfileMaintenance = ({
       localStorage.removeItem('appSettings');
       localStorage.removeItem('userName');
       await StorageService.clearAllData();
-      alert('数据已清除，应用将刷新。');
-      window.location.reload();
+      showToast('数据已清除,应用即将刷新', 'success');
+      setTimeout(() => window.location.reload(), 1200);
     } catch {
       showToast('清除失败', 'error');
     }
@@ -194,12 +194,12 @@ export const useProfileMaintenance = ({
     const fileSystemWindow = window as WindowWithFileSystemAccess;
 
     if (isMobile) {
-      alert('手机浏览器对本地文件系统支持有限，请使用"导出为通用 JSON"功能。');
+      showToast('手机浏览器对本地文件系统支持有限,请使用"导出为通用 JSON"', 'error');
       return;
     }
 
     if (!fileSystemWindow.showDirectoryPicker) {
-      alert('浏览器不支持文件系统访问');
+      showToast('浏览器不支持文件系统访问', 'error');
       return;
     }
 
@@ -218,15 +218,15 @@ export const useProfileMaintenance = ({
       await writable.write(content);
       await writable.close();
       onUpdateSettings({ ...settings, lastExportAt: Date.now() });
-      alert(`✅ 备份成功！\n文件已保存至: ${filename}`);
+      showToast(`备份成功: ${filename}`, 'success');
     } catch (error) {
       if (!isAbortError(error)) {
         const message = getErrorMessage(error, '未知错误');
         console.error('FileSystem Backup Error:', error);
-        alert(`备份失败: ${message}\n\n建议使用下方的 "导出为通用 JSON" 功能。`);
+        showToast(`备份失败: ${message}`, 'error');
       }
     }
-  }, [isMobile, onUpdateSettings, settings]);
+  }, [isMobile, onUpdateSettings, settings, showToast]);
 
   const handleCreateSnapshot = useCallback(async () => {
     try {

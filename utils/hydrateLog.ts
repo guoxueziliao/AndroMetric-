@@ -114,13 +114,13 @@ export const hydrateLog = (raw: any): LogEntry => {
     }
 
     // 2. Domain Object: MorningRecord
-    const wokeWithErection = raw.morning?.wokeWithErection ?? raw.wokeWithErection ?? true;
+    const wokeWithErection = raw.morning?.wokeWithErection ?? raw.wokeWithErection ?? null;
     const defaultMorning: MorningRecord = {
         id: raw.morning?.id || `mr_${log.date}_${Date.now()}`,
         timestamp: raw.morning?.timestamp || Date.now(),
         wokeWithErection,
-        hardness: raw.morning?.hardness ?? raw.hardness ?? (wokeWithErection ? 3 : null),
-        retention: raw.morning?.retention ?? raw.retention ?? (wokeWithErection ? 'normal' : null),
+        hardness: raw.morning?.hardness ?? raw.hardness ?? null,
+        retention: raw.morning?.retention ?? raw.retention ?? null,
         wokenByErection: raw.morning?.wokenByErection ?? raw.wokenByErection ?? false,
         durationImpression: raw.morning?.durationImpression ?? raw.durationImpression ?? null
     };

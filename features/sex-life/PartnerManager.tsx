@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import type { LogEntry, PartnerProfile } from '../../domain';
-import { Modal, SafeDeleteModal } from '../../shared/ui';
+import { Modal, ConfirmModal } from '../../shared/ui';
+import { useToast } from '../../contexts/ToastContext';
 import PartnerList from './PartnerList';
 import PartnerDetail from './PartnerDetail';
 import PartnerEditForm from './PartnerEditForm';
@@ -32,6 +33,7 @@ type View = 'list' | 'detail' | 'edit';
 const PartnerManager: React.FC<PartnerManagerProps> = ({ isOpen, onClose, data, actions }) => {
   const { partners, logs = [] } = data;
   const { onSave, onDelete } = actions;
+  const { showToast } = useToast();
 
   const [view, setView] = useState<View>('list');
   const [activePartner, setActivePartner] = useState<PartnerProfile | null>(null);
@@ -78,8 +80,8 @@ const PartnerManager: React.FC<PartnerManagerProps> = ({ isOpen, onClose, data, 
   };
 
   const handleSubmit = () => {
-    if (!formData.name) {
-      alert('请输入名字');
+    if (!formData.name?.trim()) {
+      showToast('请输入伴侣名字', 'error');
       return;
     }
     onSave(formData as PartnerProfile);
@@ -153,11 +155,13 @@ const PartnerManager: React.FC<PartnerManagerProps> = ({ isOpen, onClose, data, 
         )}
       </div>
 
-      <SafeDeleteModal
+      <ConfirmModal
         isOpen={!!deleteId}
         onClose={() => setDeleteId(null)}
         onConfirm={handleConfirmDelete}
-        message="确定删除此伴侣档案吗？这将不会删除已关联的历史日记，但会移除档案关联。"
+        title="删除伴侣档案"
+        message="确定删除此伴侣档案吗?这将不会删除已关联的历史日记,但会移除档案关联。"
+        confirmLabel="删除"
       />
     </Modal>
   );

@@ -1,11 +1,12 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import { 
-    Plus, Heart, Hand, Dumbbell, 
+import {
+    Plus, Heart, Hand, Dumbbell,
     StickyNote, Check, Trash2, MapPin,
     Sparkles, Sun, Cloud, CloudRain,
-    Snowflake, Wind, CloudFog, Home, Navigation, Hotel, Plane, 
+    Snowflake, Wind, CloudFog, Home, Navigation, Hotel, Plane,
     Shirt, Droplets, ShieldAlert, Search, Coffee, Edit3, Beer, RotateCcw
 } from 'lucide-react';
+import { ConfirmModal } from '../../shared/ui';
 import BeverageModal from './BeverageModal';
 import ExerciseRecordModal from './ExerciseRecordModal';
 import AlcoholRecordModal from './AlcoholRecordModal';
@@ -96,6 +97,7 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
     
     // 编辑中的单项数据
     const [editTarget, setEditTarget] = useState<{ type: string, data: any } | null>(null);
+    const [pendingRemoval, setPendingRemoval] = useState<{ field: 'sex' | 'masturbation' | 'exercise' | 'caffeine' | 'alcohol' | 'nap', id: string } | null>(null);
 
     const markDirty = useCallback(() => onDirtyStateChange(true), [onDirtyStateChange]);
     const qualityScore = useMemo(() => calculateDataQuality(log), [log]);
@@ -155,18 +157,23 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
         setModalState(s => ({ ...s, [type]: true }));
     };
 
-    const removeItem = (field: 'sex' | 'masturbation' | 'exercise' | 'caffeine' | 'alcohol' | 'nap', id: string) => {
-        const fieldNameMap = {
-            'sex': '性爱记录',
-            'masturbation': '自慰记录',
-            'exercise': '运动记录',
-            'caffeine': '提神饮品',
-            'alcohol': '饮酒记录',
-            'nap': '午休记录'
-        };
-        
-        if (!window.confirm(`确定要删除这条${fieldNameMap[field]}吗？`)) return;
+    type RemovableField = 'sex' | 'masturbation' | 'exercise' | 'caffeine' | 'alcohol' | 'nap';
+    const fieldNameMap: Record<RemovableField, string> = {
+        'sex': '性爱记录',
+        'masturbation': '自慰记录',
+        'exercise': '运动记录',
+        'caffeine': '提神饮品',
+        'alcohol': '饮酒记录',
+        'nap': '午休记录'
+    };
 
+    const removeItem = (field: RemovableField, id: string) => {
+        setPendingRemoval({ field, id });
+    };
+
+    const confirmRemoval = () => {
+        if (!pendingRemoval) return;
+        const { field, id } = pendingRemoval;
         if (field === 'caffeine') {
             const newItems = (log.caffeineRecord?.items || []).filter(i => i.id !== id);
             setLog(prev => ({ ...prev, caffeineRecord: { totalCount: newItems.length, items: newItems } }));
@@ -181,6 +188,7 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
             markPathTouched(String(field));
         }
         markDirty();
+        setPendingRemoval(null);
     };
 
     const handleCreateEventTag = () => {
@@ -869,6 +877,15 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
                         handleSleepChange('naps', exists ? current.map(x => x.id === r.id ? r : x) : [...current, r]);
                     }
                 }}
+            />
+
+            <ConfirmModal
+                isOpen={!!pendingRemoval}
+                onClose={() => setPendingRemoval(null)}
+                onConfirm={confirmRemoval}
+                title="删除记录"
+                message={pendingRemoval ? `确定要删除这条${fieldNameMap[pendingRemoval.field]}吗?` : ''}
+                confirmLabel="删除"
             />
         </div>
     );

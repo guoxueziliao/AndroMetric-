@@ -16,6 +16,7 @@ import {
   TOY_OPTIONS
 } from './model/sexModalData';
 import { Card, Chip, TabButton } from './SexModalPrimitives';
+import { ConfirmModal } from '../../shared/ui';
 
 interface SexRecordModalData {
   partners?: PartnerProfile[];
@@ -57,6 +58,7 @@ const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave
   const [editingInteractionId, setEditingInteractionId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'context' | 'action' | 'props'>('action');
   const [isGlobalPanelOpen, setIsGlobalPanelOpen] = useState(false);
+  const [pendingDeleteInteraction, setPendingDeleteInteraction] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   
   // Sorting logic based on history
@@ -156,19 +158,9 @@ const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave
     }
   }, [initialData, isOpen]);
 
-  const handleSave = () => { 
-      let finalData = { ...data };
-      if (data.startTime) {
-          const [h] = data.startTime.split(':').map(Number);
-          if (h >= 3 && h < 6) {
-              const tag = '通宵硬仗';
-              if (!finalData.notes?.includes(tag)) {
-                  finalData.notes = (finalData.notes ? finalData.notes + ' ' : '') + tag;
-              }
-          }
-      }
-      onSave(finalData); 
-      onClose(); 
+  const handleSave = () => {
+      onSave(data);
+      onClose();
   };
 
   const addInteraction = () => {
@@ -193,10 +185,14 @@ const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave
   const removeInteraction = (id: string, e: React.MouseEvent) => {
       e.stopPropagation();
       if (data.interactions.length <= 1) return;
-      if (confirm('确定删除此阶段吗？')) {
-          setData(prev => ({ ...prev, interactions: prev.interactions.filter(i => i.id !== id) }));
-          if (editingInteractionId === id) setEditingInteractionId(null);
-      }
+      setPendingDeleteInteraction(id);
+  };
+
+  const confirmRemoveInteraction = () => {
+      if (!pendingDeleteInteraction) return;
+      setData(prev => ({ ...prev, interactions: prev.interactions.filter(i => i.id !== pendingDeleteInteraction) }));
+      if (editingInteractionId === pendingDeleteInteraction) setEditingInteractionId(null);
+      setPendingDeleteInteraction(null);
   };
 
   const updateActive = (field: keyof SexInteraction, value: any) => {
@@ -809,6 +805,14 @@ const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave
                  </div>
              )}
         </div>
+        <ConfirmModal
+            isOpen={!!pendingDeleteInteraction}
+            onClose={() => setPendingDeleteInteraction(null)}
+            onConfirm={confirmRemoveInteraction}
+            title="删除阶段"
+            message="确定删除此阶段吗?该阶段的所有动作、伴侣选择都会丢失。"
+            confirmLabel="删除"
+        />
     </div>
   );
 };

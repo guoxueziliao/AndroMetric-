@@ -6,6 +6,7 @@ export { default as DateTimePicker } from './DateTimePicker';
 export * from './FormControls';
 export { default as HardnessSelector } from './HardnessSelector';
 export { default as SafeDeleteModal } from './SafeDeleteModal';
+export { default as ConfirmModal } from './ConfirmModal';
 export { default as ErrorBoundary } from './ErrorBoundary';
 export { default as AnimatedButton } from './AnimatedButton';
 export { default as AnimatedPage, AnimatedPresence } from './AnimatedPage';
