@@ -16,7 +16,7 @@ import Dashboard from '../features/dashboard/Dashboard';
 import type { AppView, MainView } from './viewTypes';
 
 const MyView = lazy(() => import('../features/profile').then((module) => ({ default: module.MyView })));
-const AnalysisView = lazy(() => import('../features/analysis').then((module) => ({ default: module.AnalysisView })));
+const AnalysisView = lazy(() => import('../features/state').then((module) => ({ default: module.AnalysisView })));
 const SexLifeView = lazy(() => import('../features/sex-life').then((module) => ({ default: module.SexLifeView })));
 const LogForm = lazy(() => import('../features/daily-log').then((module) => ({ default: module.LogForm })));
 

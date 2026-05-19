@@ -1,6 +1,6 @@
 import React from 'react';
 import { Activity, CalendarDays, ChevronRight, FlaskConical, HeartPulse } from 'lucide-react';
-import { StateView } from '../state';
+import StateView from './StateView';
 import type { LogEntry } from '../../domain';
 
 type AnalysisDestination = 'calendar' | 'my';
