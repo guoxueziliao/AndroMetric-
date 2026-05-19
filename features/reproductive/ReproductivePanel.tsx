@@ -18,7 +18,6 @@ import {
 interface ReproductivePanelProps {
   date: string;
 }
-
 const GOAL_OPTIONS: Array<{ value: ReproductiveGoal; label: string }> = [
   { value: 'none', label: '仅记录' },
   { value: 'trying_to_conceive', label: '共同备孕' },
@@ -26,6 +25,24 @@ const GOAL_OPTIONS: Array<{ value: ReproductiveGoal; label: string }> = [
   { value: 'pregnant', label: '已怀孕' },
   { value: 'post_loss_recovery', label: '恢复期' }
 ];
+
+const CYCLE_KIND_LABELS: Record<string, string> = {
+  period_start: '月经开始',
+  period_end: '月经结束',
+  ovulation_test: '排卵检测',
+  flow: '经量记录',
+  cramp: '痛经',
+  spotting: '点滴出血',
+  intercourse_for_conception: '备孕同房'
+};
+
+const PREGNANCY_KIND_LABELS: Record<string, string> = {
+  pregnancy_test: '验孕',
+  bleeding: '孕期出血',
+  pain: '孕期疼痛',
+  ultrasound: '超声检查',
+  pregnancy_outcome: '妊娠结局'
+};
 
 const tileClass = 'rounded-[1.25rem] border border-slate-100 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900';
 
@@ -61,6 +78,11 @@ const ReproductivePanel: React.FC<ReproductivePanelProps> = ({ date }) => {
 
   const trackedPartner = useMemo(() => getTrackedPartner(partners), [partners]);
   const [selectedPartnerId, setSelectedPartnerId] = useState<string | null>(trackedPartner?.id || null);
+  const [eventDate, setEventDate] = useState<string>(date);
+
+  useEffect(() => {
+    setEventDate(date);
+  }, [date]);
 
   useEffect(() => {
     if (!selectedPartnerId && trackedPartner?.id) {
@@ -180,7 +202,7 @@ const ReproductivePanel: React.FC<ReproductivePanelProps> = ({ date }) => {
       await saveCycleEvent({
         id: createId('cycle'),
         partnerId: selectedPartner.id,
-        date,
+        date: eventDate,
         source: 'manual',
         ...event
       });
@@ -196,7 +218,7 @@ const ReproductivePanel: React.FC<ReproductivePanelProps> = ({ date }) => {
       await savePregnancyEvent({
         id: createId('preg'),
         partnerId: selectedPartner.id,
-        date,
+        date: eventDate,
         source: 'manual',
         ...event
       });
@@ -269,9 +291,22 @@ const ReproductivePanel: React.FC<ReproductivePanelProps> = ({ date }) => {
       </section>
 
       <section className={tileClass}>
-        <div className="flex items-center gap-2">
-          <CalendarClock size={16} className="text-violet-500" />
-          <h3 className="text-sm font-black text-slate-900 dark:text-slate-100">周期记录</h3>
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <CalendarClock size={16} className="text-violet-500" />
+            <h3 className="text-sm font-black text-slate-900 dark:text-slate-100">周期记录</h3>
+          </div>
+          <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">
+            事件日期
+            <input
+              type="date"
+              value={eventDate}
+              max={date}
+              onChange={(e) => setEventDate(e.target.value || date)}
+              aria-label="事件日期"
+              className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-bold text-slate-700 dark:text-slate-200 px-2 py-1.5 min-h-[36px]"
+            />
+          </label>
         </div>
         <div className="mt-4 grid grid-cols-2 gap-2">
           <button type="button" onClick={() => recordCycleEvent({ kind: 'period_start' })} className="rounded-2xl bg-violet-50 px-3 py-3 text-xs font-black text-violet-700 dark:bg-violet-900/20 dark:text-violet-300">月经开始</button>
@@ -386,8 +421,8 @@ const ReproductivePanel: React.FC<ReproductivePanelProps> = ({ date }) => {
             <div className="space-y-2">
               {partnerCycleEvents.slice(0, 6).map((event) => (
                 <div key={event.id} className="flex items-center justify-between rounded-2xl bg-slate-50 px-3 py-3 text-xs font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-200">
-                  <span>{event.date} · {event.kind}</span>
-                  <button type="button" onClick={() => handleDeleteCycleEvent(event.id)} className="rounded-full p-1 text-slate-400 hover:text-red-500">
+                  <span>{event.date} · {CYCLE_KIND_LABELS[event.kind] || event.kind}</span>
+                  <button type="button" onClick={() => handleDeleteCycleEvent(event.id)} aria-label="删除周期事件" className="min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-red-500">
                     <Trash2 size={14} />
                   </button>
                 </div>
@@ -399,8 +434,8 @@ const ReproductivePanel: React.FC<ReproductivePanelProps> = ({ date }) => {
             <div className="space-y-2">
               {partnerPregnancyEvents.slice(0, 6).map((event) => (
                 <div key={event.id} className="flex items-center justify-between rounded-2xl bg-slate-50 px-3 py-3 text-xs font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-200">
-                  <span>{event.date} · {event.kind}</span>
-                  <button type="button" onClick={() => handleDeletePregnancyEvent(event.id)} className="rounded-full p-1 text-slate-400 hover:text-red-500">
+                  <span>{event.date} · {PREGNANCY_KIND_LABELS[event.kind] || event.kind}</span>
+                  <button type="button" onClick={() => handleDeletePregnancyEvent(event.id)} aria-label="删除怀孕事件" className="min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-red-500">
                     <Trash2 size={14} />
                   </button>
                 </div>
