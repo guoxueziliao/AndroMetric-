@@ -3,15 +3,6 @@ import type { CycleEvent, LogEntry, PartnerProfile, PregnancyEvent } from '../do
 import { attachMenstrualSummary, buildPregnancyStatus, estimateFertileWindow, predictNextPeriod } from '../features/reproductive/model/p4Derivations';
 import { flattenLogsToEvents } from '../features/stats/model/eventAdapter';
 
-const addDays = (date: string, days: number) => {
-  const base = new Date(`${date}T00:00:00`);
-  base.setDate(base.getDate() + days);
-  const year = base.getFullYear();
-  const month = String(base.getMonth() + 1).padStart(2, '0');
-  const day = String(base.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-};
-
 const createBaseLog = (date: string): LogEntry => ({
   date,
   status: 'completed',

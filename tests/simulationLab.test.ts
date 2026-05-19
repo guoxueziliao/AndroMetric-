@@ -3,12 +3,12 @@ import { generateVirtualCohortRun, runVirtualCohortBacktest } from '../features/
 
 const nextDayHardnessDelta = (run: ReturnType<typeof generateVirtualCohortRun>, predicate: (index: number) => boolean) => {
   const values = run.dayPlans
-    .map((plan, index) => {
+    .map((_plan, index) => {
       const next = run.dayPlans[index + 1];
       if (!next || next.morningHardness === null || !predicate(index)) return null;
       return next.morningHardness;
     })
-    .filter((value): value is number => typeof value === 'number');
+    .filter((value): value is 1 | 2 | 3 | 4 | 5 => value !== null);
 
   return values.length > 0 ? values.reduce((sum, value) => sum + value, 0) / values.length : 0;
 };

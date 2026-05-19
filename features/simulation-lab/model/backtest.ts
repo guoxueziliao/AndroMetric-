@@ -1,4 +1,3 @@
-import { StatsEngine } from '../../stats';
 import { analyzePersonalState } from '../../state';
 import type { PersonalStateResult } from '../../state';
 import { generateVirtualCohortRun } from './generator';

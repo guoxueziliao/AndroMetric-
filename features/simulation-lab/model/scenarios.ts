@@ -68,7 +68,7 @@ export const applyScenarioAdjustments = (
       if (isLastObservedWindow(context, 5)) {
         next.sleepHours = next.sleepHours !== null ? Math.max(4.8, next.sleepHours - 1.9) : next.sleepHours;
         next.screenMinutes = next.screenMinutes !== null ? next.screenMinutes + 120 : 120;
-        next.stressLevel = next.stressLevel !== null ? Math.min(5, (next.stressLevel + 1) as 1 | 2 | 3 | 4 | 5) : 4;
+        next.stressLevel = next.stressLevel !== null ? Math.min(5, next.stressLevel + 1) as 1 | 2 | 3 | 4 | 5 : 4;
       }
       break;
     case 'weekend_binge':
@@ -82,12 +82,12 @@ export const applyScenarioAdjustments = (
       if (context.dayIndex >= Math.max(0, context.observedDays - 14) && context.dayIndex < context.observedDays && context.dayIndex % 3 === 0) {
         next.exerciseMinutes += 35;
         next.sleepHours = next.sleepHours !== null ? next.sleepHours + 0.45 : null;
-        next.stressLevel = next.stressLevel !== null ? Math.max(1, (next.stressLevel - 1) as 1 | 2 | 3 | 4 | 5) : 2;
+        next.stressLevel = next.stressLevel !== null ? Math.max(1, next.stressLevel - 1) as 1 | 2 | 3 | 4 | 5 : 2;
       }
       break;
     case 'high_stress_week':
       if (isLastObservedWindow(context, 7)) {
-        next.stressLevel = next.stressLevel !== null ? Math.min(5, (next.stressLevel + 2) as 1 | 2 | 3 | 4 | 5) : 5;
+        next.stressLevel = next.stressLevel !== null ? Math.min(5, next.stressLevel + 2) as 1 | 2 | 3 | 4 | 5 : 5;
         next.sleepHours = next.sleepHours !== null ? Math.max(5.1, next.sleepHours - 1.2) : next.sleepHours;
         next.exerciseMinutes = Math.max(0, next.exerciseMinutes - 15);
         next.screenMinutes = next.screenMinutes !== null ? next.screenMinutes + 135 : 135;

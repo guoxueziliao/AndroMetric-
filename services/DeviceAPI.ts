@@ -1,5 +1,4 @@
 
-import { LogEntry } from '../types';
 import { StorageService } from './StorageService';
 
 /**

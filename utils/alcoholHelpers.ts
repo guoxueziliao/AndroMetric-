@@ -36,6 +36,6 @@ export const getPrediction = (grams: number) => {
     return { impact, predicted };
 };
 
-export const updateAlcoholModel = (logs: LogEntry[]) => {
+export const updateAlcoholModel = (_logs: LogEntry[]) => {
     // 逻辑预留
 };

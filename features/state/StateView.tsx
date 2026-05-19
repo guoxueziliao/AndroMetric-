@@ -1,6 +1,6 @@
 import React, { lazy, Suspense, useMemo, useState } from 'react';
 import type { LogEntry } from '../../domain';
-import { Activity, BrainCircuit, ChevronRight, Flag, ShieldAlert, Sparkles, Target, TrendingUp } from 'lucide-react';
+import { ChevronRight, Sparkles, Target, TrendingUp } from 'lucide-react';
 import { ErrorBoundary } from '../../shared/ui';
 import { analyzePersonalState, type AchievableGoal, type ConfidenceLevel, type FactorImpact, type ForecastDay, type StateReason } from './model/PersonalStateEngine';
 

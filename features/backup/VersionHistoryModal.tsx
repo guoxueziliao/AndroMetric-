@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Modal } from '../../shared/ui';
-import { Sparkles, Zap, Bug, Layout, Database, History, ChevronDown, ChevronRight, Construction, AlertCircle, Tag, GitCommit } from 'lucide-react';
+import { Sparkles, Zap, Bug, Layout, Database, ChevronDown, ChevronRight, Construction, AlertCircle, GitCommit } from 'lucide-react';
 
 interface VersionHistoryModalProps {
     isOpen: boolean;

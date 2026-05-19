@@ -1,5 +1,5 @@
 
-import { LogEntry, AlcoholConsumption, PornConsumption, PreSleepState, ExerciseIntensity, SexQuality, IllnessType, StressLevel, HardnessLevel, MorningWoodRetention, Weather, Location, Mood, SleepAttire, ChangeDetail, ExerciseRecord, SexRecordDetails, MasturbationRecordDetails, AlcoholRecord, NapRecord, HistoryCategory, HistoryEventType, SleepLocation, SleepTemperature } from '../types';
+import { LogEntry, AlcoholConsumption, PornConsumption, PreSleepState, ExerciseIntensity, IllnessType, StressLevel, HardnessLevel, MorningWoodRetention, Weather, Location, Mood, SleepAttire, ChangeDetail, HistoryEventType, SleepLocation } from '../types';
 import { isFieldUsable } from './dataQuality';
 
 export const getTodayDateString = (): string => {

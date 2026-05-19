@@ -9,12 +9,6 @@ export const LATEST_VERSION = 45;
  * MIGRATION UTILITIES
  */
 
-// Helper to safely parse dates during migrations
-const safeDate = (d: any) => {
-    const date = new Date(d);
-    return isNaN(date.getTime()) ? new Date().toISOString() : date.toISOString();
-};
-
 /**
  * INDIVIDUAL MIGRATION SCRIPTS
  * Each function transforms data from Version N to Version N+1

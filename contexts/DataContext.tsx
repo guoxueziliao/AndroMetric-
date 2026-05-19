@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext } from 'react';
+import { createContext, useContext } from 'react';
 import { CycleEvent, LogEntry, PartnerProfile, SexRecordDetails, MasturbationRecordDetails, ExerciseRecord, NapRecord, AlcoholRecord, PregnancyEvent, TagEntry, TagType } from '../types';
 
 interface DataContextType {

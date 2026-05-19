@@ -86,7 +86,6 @@ const Dashboard: React.FC<DashboardProps> = ({
     actions
   });
 
-  const latestLog = useMemo(() => logs.length > 0 ? logs[0] : null, [logs]);
   const todayDate = useMemo(() => getTodayDateString(), []);
   const todayLog = useMemo(
     () => attachMenstrualSummary(logs.find((item) => item.date === todayDate) || hydrateLog({ date: todayDate }), partners, cycleEvents),
@@ -261,8 +260,8 @@ const Dashboard: React.FC<DashboardProps> = ({
                 todayLog={todayLog}
                 todayTiles={todayTiles}
                 last7Days={last7Days}
-                pendingLog={pendingLog}
-                ongoingNap={ongoingNap}
+                pendingLog={pendingLog ?? null}
+                ongoingNap={ongoingNap ?? null}
                 onSelectTile={setSelectedTileKey}
             />
         )}

@@ -6,7 +6,6 @@ import type {
   Health,
   HardnessLevel,
   LogEntry,
-  MasturbationRecordDetails,
   MorningRecord,
   ScreenTimeRecord,
   SleepRecord,
@@ -28,7 +27,6 @@ import type {
 
 const DEFAULT_START_DATE = '2026-01-01';
 const DEFAULT_FORECAST_DAYS = 7;
-const DAY_MS = 24 * 60 * 60 * 1000;
 
 const toDateKey = (date: Date) => {
   const year = date.getFullYear();
@@ -148,6 +146,7 @@ const finalizeDataQuality = (
   const quality = buildDataQualityForLog(log, 'manual', now);
 
   Object.entries(fieldStates).forEach(([path, state]) => {
+    if (state === undefined) return;
     applyRootState(quality, path, state, now);
   });
 

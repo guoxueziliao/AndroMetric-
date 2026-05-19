@@ -1,5 +1,5 @@
 
-import { LogEntry, Health, MorningRecord, SleepRecord, AlcoholRecord } from '../types';
+import { LogEntry, Health, MorningRecord, SleepRecord } from '../types';
 import { buildDataQualityForLog, markDisplayDefaults } from './dataQuality';
 
 /**
