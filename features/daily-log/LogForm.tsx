@@ -332,7 +332,7 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
             />
 
             <div className="bg-white dark:bg-slate-900 rounded-[2rem] shadow-soft border border-slate-100 dark:border-white/5 overflow-hidden">
-                <div className="flex bg-slate-50/50 dark:bg-slate-900/50 border-b border-slate-100 dark:border-white/5">
+                <div className="flex bg-slate-50/50 dark:bg-slate-900 border-b border-slate-100 dark:border-white/5">
                     {[
                         { id: 'sex', label: '性活动' },
                         { id: 'life', label: '生活' },
@@ -454,7 +454,7 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
 
                             <div className="space-y-3">
                                 <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">屏幕使用时间</label>
-                                <div className="rounded-[1.5rem] border border-slate-100 bg-slate-50 p-4 dark:border-white/5 dark:bg-slate-900/50">
+                                <div className="rounded-[1.5rem] border border-slate-100 bg-slate-50 p-4 dark:border-white/5 dark:bg-slate-900">
                                     <div className="flex items-center gap-3">
                                         <input
                                             type="number"
@@ -564,16 +564,16 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
                     {activeMidTab === 'health' && (
                         <div className="space-y-10 animate-in fade-in duration-300">
                             <div className="space-y-4">
-                                <label className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest block">心情</label>
+                                <label className="text-xs font-bold text-slate-400 dark:text-slate-400 uppercase tracking-widest block">心情</label>
                                 <FaceSelector options={MOOD_FACES} value={log.mood || null} onChange={v => setField('mood', v)} />
                             </div>
                             <div className="space-y-4">
-                                <label className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest block">压力等级</label>
+                                <label className="text-xs font-bold text-slate-400 dark:text-slate-400 uppercase tracking-widest block">压力等级</label>
                                 <FaceSelector options={STRESS_FACES} value={log.stressLevel || null} onChange={v => setField('stressLevel', v)} />
                             </div>
 
                             <div className="space-y-4">
-                                <label className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest block">补剂</label>
+                                <label className="text-xs font-bold text-slate-400 dark:text-slate-400 uppercase tracking-widest block">补剂</label>
                                 <div className="flex flex-wrap gap-2">
                                     {SUPPLEMENT_OPTIONS.map((name) => {
                                         const selected = (log.supplements || []).some(item => item.name === name && item.taken);
@@ -595,9 +595,9 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
                                 </div>
                             </div>
 
-                            <div className="space-y-4 rounded-[1.5rem] border border-slate-100 bg-slate-50/70 p-4 dark:border-white/5 dark:bg-slate-950/40">
-                                <label className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest block">周期摘要（兼容）</label>
-                                <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500">
+                            <div className="space-y-4 rounded-[1.5rem] border border-slate-100 bg-slate-50/70 p-4 dark:border-white/5 dark:bg-slate-950">
+                                <label className="text-xs font-bold text-slate-400 dark:text-slate-400 uppercase tracking-widest block">周期摘要（兼容）</label>
+                                <p className="text-[11px] font-bold text-slate-400 dark:text-slate-400">
                                     建议在首页九宫格的“经期”面板维护周期、备孕和怀孕事件；这里仅保留每日摘要兼容。
                                 </p>
                                 <div className="grid grid-cols-2 gap-2">
@@ -625,7 +625,7 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
                                 />
                             </div>
                             
-                            <div className={`mt-6 rounded-[1.5rem] border transition-all duration-300 overflow-hidden ${log.health?.isSick ? 'bg-red-50/50 dark:bg-red-900/10 border-red-200 dark:border-red-900/30' : 'bg-slate-50/50 dark:bg-slate-950/50 border-slate-100 dark:border-slate-800'}`}>
+                            <div className={`mt-6 rounded-[1.5rem] border transition-all duration-300 overflow-hidden ${log.health?.isSick ? 'bg-red-50/50 dark:bg-red-900/10 border-red-200 dark:border-red-900/30' : 'bg-slate-50/50 dark:bg-slate-950 border-slate-100 dark:border-slate-800'}`}>
                                 <div className="flex items-center justify-between p-5">
                                     <div className="flex items-center gap-4">
                                         <ShieldAlert className={log.health?.isSick ? 'text-red-500 animate-pulse' : 'text-slate-400 dark:text-slate-600'} size={20}/>
@@ -657,7 +657,7 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
                                     <div className="px-5 pb-6 space-y-6 animate-in slide-in-from-top-2 duration-300">
                                         <div className="space-y-3">
                                             <label className="text-[10px] font-black text-red-600/70 dark:text-red-400/50 uppercase tracking-widest block">程度评价</label>
-                                            <div className="flex bg-white dark:bg-slate-900/50 rounded-xl p-1 border border-red-100 dark:border-red-900/30 shadow-sm">
+                                            <div className="flex bg-white dark:bg-slate-900 rounded-xl p-1 border border-red-100 dark:border-red-900/30 shadow-sm">
                                                 {[
                                                     { v: 'mild', l: '轻微' },
                                                     { v: 'moderate', l: '明显' },
@@ -706,7 +706,7 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
                                         </div>
 
                                         <div className="space-y-3 pt-2 border-t border-red-100 dark:border-red-900/30">
-                                            <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest block">用药情况</label>
+                                            <label className="text-[10px] font-black text-slate-400 dark:text-slate-400 uppercase tracking-widest block">用药情况</label>
                                             <div className="flex flex-wrap gap-2">
                                                 {['感冒药', '止痛药', '助眠药', '消炎药', '维生素'].map(m => {
                                                     const isSelected = log.health?.medications?.includes(m);

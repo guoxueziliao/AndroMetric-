@@ -173,7 +173,7 @@ const ExerciseRecordModal: React.FC<ExerciseRecordModalProps> = ({ isOpen, onClo
                     </div>
                 ) : (
                     <div className="grid grid-cols-2 gap-4">
-                        <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-3xl border border-slate-100 dark:border-white/5 transition-all focus-within:border-emerald-500">
+                        <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-3xl border border-slate-100 dark:border-white/5 transition-all focus-within:border-emerald-500">
                              <label className="text-[10px] text-slate-400 font-black uppercase mb-1 flex items-center gap-1"><Clock size={10}/> 开始时间</label>
                              <input type="time" value={record.startTime} onChange={e => setRecord({...record, startTime: e.target.value})} className="bg-transparent font-mono text-2xl font-bold text-brand-text dark:text-slate-100 outline-none w-full"/>
                         </div>
@@ -183,7 +183,7 @@ const ExerciseRecordModal: React.FC<ExerciseRecordModalProps> = ({ isOpen, onClo
                                  <input type="number" value={record.steps || ''} onChange={e => setRecord({...record, steps: parseInt(e.target.value)})} placeholder="0" className="bg-transparent font-mono text-2xl font-bold text-emerald-600 dark:text-emerald-400 outline-none w-full"/>
                              </div>
                         ) : !isStartMode && (
-                            <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-3xl border border-slate-100 dark:border-white/5">
+                            <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-3xl border border-slate-100 dark:border-white/5">
                                 <label className="text-[10px] text-slate-400 font-black uppercase mb-1 flex items-center gap-1"><Flag size={10}/> 结束时间</label>
                                 <input type="time" value={endTime} onChange={e => handleEndTimeChange(e.target.value)} className="bg-transparent font-mono text-2xl font-bold text-brand-text dark:text-slate-100 outline-none w-full"/>
                             </div>
@@ -241,12 +241,12 @@ const ExerciseRecordModal: React.FC<ExerciseRecordModalProps> = ({ isOpen, onClo
                 {(isFinishMode || (!isStartMode && record.type)) && !isStepBased && (
                     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4">
                         <div className="space-y-4">
-                            <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-2"><TrendingUp size={12}/> 训练强度评级</label>
+                            <label className="text-[10px] font-black text-slate-400 dark:text-slate-400 uppercase tracking-widest flex items-center gap-2"><TrendingUp size={12}/> 训练强度评级</label>
                             <div className="flex gap-2">
                                 {INTENSITY_OPTS.map(opt => {
                                     const isSel = record.intensity === opt.value;
                                     return (
-                                        <button key={opt.value} onClick={() => setRecord({...record, intensity: opt.value})} className={`flex-1 py-4 px-2 rounded-2xl transition-all border-2 flex flex-col items-center justify-center gap-0.5 ${isSel ? 'border-brand-accent bg-blue-50 dark:bg-blue-900/20 text-brand-accent shadow-lg shadow-blue-500/10' : 'border-transparent bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-500'}`}>
+                                        <button key={opt.value} onClick={() => setRecord({...record, intensity: opt.value})} className={`flex-1 py-4 px-2 rounded-2xl transition-all border-2 flex flex-col items-center justify-center gap-0.5 ${isSel ? 'border-brand-accent bg-blue-50 dark:bg-blue-900/20 text-brand-accent shadow-lg shadow-blue-500/10' : 'border-transparent bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-400'}`}>
                                             <span className="text-sm font-black">{opt.label}</span>
                                             <span className="text-[9px] font-bold opacity-60">{opt.desc}</span>
                                         </button>
@@ -255,7 +255,7 @@ const ExerciseRecordModal: React.FC<ExerciseRecordModalProps> = ({ isOpen, onClo
                             </div>
                         </div>
                         <div className="space-y-4">
-                            <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-2"><Sparkles size={12}/> 身心恢复感知</label>
+                            <label className="text-[10px] font-black text-slate-400 dark:text-slate-400 uppercase tracking-widest flex items-center gap-2"><Sparkles size={12}/> 身心恢复感知</label>
                             <div className="grid grid-cols-4 gap-3">
                                 {FEELING_OPTS.map(opt => {
                                     const isSel = record.feeling === opt.value;
@@ -269,7 +269,7 @@ const ExerciseRecordModal: React.FC<ExerciseRecordModalProps> = ({ isOpen, onClo
                             </div>
                         </div>
                         <div className="space-y-4">
-                            <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-2"><Target size={12}/> 重点训练部位 (多选)</label>
+                            <label className="text-[10px] font-black text-slate-400 dark:text-slate-400 uppercase tracking-widest flex items-center gap-2"><Target size={12}/> 重点训练部位 (多选)</label>
                             <div className="flex flex-wrap gap-2">
                                 {MUSCLE_GROUPS.map(part => {
                                     const isSel = record.bodyParts?.includes(part);
@@ -285,7 +285,7 @@ const ExerciseRecordModal: React.FC<ExerciseRecordModalProps> = ({ isOpen, onClo
                 )}
                 <div className="relative group pt-4">
                     <div className="absolute left-5 top-8 text-slate-400 group-focus-within:text-brand-accent transition-colors"><PenLine size={18} /></div>
-                    <textarea className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-white/5 rounded-[1.5rem] py-4 pl-14 pr-4 text-xs font-medium outline-none focus:border-brand-accent transition-all min-h-[100px]" placeholder="记录你的训练心得或感悟..." value={record.notes || ''} onChange={e => setRecord({...record, notes: e.target.value})}/>
+                    <textarea className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-white/5 rounded-[1.5rem] py-4 pl-14 pr-4 text-xs font-medium outline-none focus:border-brand-accent transition-all min-h-[100px]" placeholder="记录你的训练心得或感悟..." value={record.notes || ''} onChange={e => setRecord({...record, notes: e.target.value})}/>
                 </div>
             </div>
         </Modal>

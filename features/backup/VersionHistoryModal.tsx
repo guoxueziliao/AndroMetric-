@@ -176,7 +176,7 @@ const VersionCard: React.FC<{ entry: VersionEntry, isLatest: boolean }> = ({ ent
 
                 {/* Expanded Details */}
                 {isExpanded && (
-                    <div className="mt-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4 border border-slate-100 dark:border-slate-800/50 animate-in slide-in-from-top-2 duration-200">
+                    <div className="mt-3 bg-slate-50 dark:bg-slate-800 rounded-xl p-4 border border-slate-100 dark:border-slate-800/50 animate-in slide-in-from-top-2 duration-200">
                         {entry.changes.length === 0 ? (
                             <div className="text-xs text-slate-400 italic">暂无详细记录</div>
                         ) : (

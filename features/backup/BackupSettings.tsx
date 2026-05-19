@@ -166,7 +166,7 @@ const BackupSettings: React.FC<BackupSettingsProps> = ({ logs }) => {
         )}
 
         <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
-          <p className="text-xs text-slate-400 dark:text-slate-500 leading-relaxed">
+          <p className="text-xs text-slate-400 dark:text-slate-400 leading-relaxed">
             <strong className="text-slate-600 dark:text-slate-400">备份策略：</strong>
             最近 12 周每周保留 1 个备份，12 个月后每月保留 1 个，超过 12 个月的备份将被自动清理。
           </p>

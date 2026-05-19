@@ -107,7 +107,7 @@ const TagManager: React.FC<TagManagerProps> = ({
     return (
         <Modal isOpen={isOpen} onClose={onClose} title={onSelectTag ? "选择或创建标签" : "标签管理"}>
             <div className="h-[75vh] flex flex-col -mt-2">
-                <div className="flex bg-slate-100 dark:bg-slate-800/50 p-1 rounded-xl mb-3 border border-slate-200 dark:border-slate-800 shrink-0">
+                <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl mb-3 border border-slate-200 dark:border-slate-800 shrink-0">
                     <button onClick={() => setActiveTab('xp')} className={`flex-1 py-2 text-xs font-bold rounded-lg flex items-center justify-center gap-2 transition-all ${activeTab === 'xp' ? 'bg-white dark:bg-slate-700 shadow-sm text-brand-accent' : 'text-slate-400'}`}><TagIcon size={14} /> 题材</button>
                     <button onClick={() => setActiveTab('event')} className={`flex-1 py-2 text-xs font-bold rounded-lg flex items-center justify-center gap-2 transition-all ${activeTab === 'event' ? 'bg-white dark:bg-slate-700 shadow-sm text-brand-accent' : 'text-slate-400'}`}><Activity size={14} /> 事件</button>
                     <button onClick={() => setActiveTab('symptom')} className={`flex-1 py-2 text-xs font-bold rounded-lg flex items-center justify-center gap-2 transition-all ${activeTab === 'symptom' ? 'bg-white dark:bg-slate-700 shadow-sm text-brand-accent' : 'text-slate-400'}`}><ShieldAlert size={14} /> 症状</button>
@@ -125,7 +125,7 @@ const TagManager: React.FC<TagManagerProps> = ({
                                             {XP_DIMENSIONS.map(dim => {
                                                 const DimIcon = dim.icon;
                                                 return (
-                                                    <button key={dim.id} onClick={() => setSelectedXpDim(dim.id)} className={`flex items-center gap-1.5 p-2.5 rounded-xl border-2 transition-all ${selectedXpDim === dim.id ? 'border-blue-500 bg-white dark:bg-slate-800 shadow-sm' : 'border-transparent bg-slate-100/50 dark:bg-slate-900/50 opacity-60'}`}>
+                                                    <button key={dim.id} onClick={() => setSelectedXpDim(dim.id)} className={`flex items-center gap-1.5 p-2.5 rounded-xl border-2 transition-all ${selectedXpDim === dim.id ? 'border-blue-500 bg-white dark:bg-slate-800 shadow-sm' : 'border-transparent bg-slate-100/50 dark:bg-slate-900 opacity-60'}`}>
                                                         <DimIcon size={12} className={dim.color}/>
                                                         <span className="text-[10px] font-black text-slate-700 dark:text-slate-200">{dim.id}</span>
                                                     </button>

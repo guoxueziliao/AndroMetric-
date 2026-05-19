@@ -48,7 +48,7 @@ const ImpactFindings: React.FC<ImpactFindingsProps> = ({ logs }) => {
     <section className="space-y-2">
       <div className="flex items-center gap-2 px-2">
         <BrainCircuit size={14} className="text-violet-500"/>
-        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">高影响因子</span>
+        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-400">高影响因子</span>
       </div>
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         {findings.map(f => {

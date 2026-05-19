@@ -257,7 +257,7 @@ const TagHealthCheck: React.FC<TagHealthCheckProps> = ({ logs, onNavigateToTag }
                 </div>
             )}
 
-            <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl text-[10px] text-slate-400 leading-relaxed border border-slate-100 dark:border-slate-800">
+            <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-xl text-[10px] text-slate-400 leading-relaxed border border-slate-100 dark:border-slate-800">
                 <p className="font-bold mb-1">💡 为什么体检很重要？</p>
                 <p>随着记录增多，标签系统容易出现熵增（混乱）。定期体检能防止“人妻”和“人妻出轨”同时存在，或“SP”和“打屁股”混用，确保长期统计的准确性。系统只提供建议，所有修改权在您手中。</p>
             </div>

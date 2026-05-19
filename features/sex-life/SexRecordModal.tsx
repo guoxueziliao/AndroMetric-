@@ -714,7 +714,7 @@ const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave
 
              {/* Expanded Content */}
              {isGlobalPanelOpen && (
-                 <div className="p-5 pb-8 space-y-6 animate-in slide-in-from-bottom-5 max-h-[60vh] overflow-y-auto custom-scrollbar bg-slate-50 dark:bg-slate-950/50">
+                 <div className="p-5 pb-8 space-y-6 animate-in slide-in-from-bottom-5 max-h-[60vh] overflow-y-auto custom-scrollbar bg-slate-50 dark:bg-slate-950">
                      
                      {/* 1. Safety & State */}
                      <div className="grid grid-cols-2 gap-4">

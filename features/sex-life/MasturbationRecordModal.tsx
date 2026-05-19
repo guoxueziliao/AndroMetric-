@@ -275,7 +275,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                 </div>
 
                 {/* 2. Materials */}
-                <div className="bg-slate-50/50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 rounded-3xl p-4 space-y-4">
+                <div className="bg-slate-50/50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-3xl p-4 space-y-4">
                     <div className="flex justify-between items-center px-1">
                         <div className="flex items-center gap-2">
                             <LayoutGrid size={14} className="text-slate-400" />
@@ -311,7 +311,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                         ))}
                         <button
                             onClick={() => setEditingItem({ id: Math.random().toString(36).substr(2, 9), actors: [], xpTags: [], type: '', platform: '', title: '' })}
-                            className="w-full py-8 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl flex flex-col items-center justify-center gap-2 group hover:border-brand-accent/50 transition-all bg-white dark:bg-slate-900/40"
+                            className="w-full py-8 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl flex flex-col items-center justify-center gap-2 group hover:border-brand-accent/50 transition-all bg-white dark:bg-slate-900"
                         >
                             <MonitorPlay size={32} className="text-slate-300 group-hover:text-brand-accent transition-colors" />
                             <div className="text-center">
@@ -395,7 +395,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                             <div className="text-[10px] text-slate-400 font-bold">快射时停下</div>
                         </div>
                     </div>
-                    <div className="flex items-center gap-4 bg-white dark:bg-slate-800/50 p-1.5 rounded-2xl border border-slate-100 dark:border-slate-700">
+                    <div className="flex items-center gap-4 bg-white dark:bg-slate-800 p-1.5 rounded-2xl border border-slate-100 dark:border-slate-700">
                         <button onClick={() => updateData({edgingCount: Math.max(0, data.edgingCount - 1)})} className="p-2 bg-slate-100 dark:bg-slate-700 rounded-full text-slate-400"><Minus size={16}/></button>
                         <span className="text-base font-black text-slate-800 dark:text-slate-100 w-4 text-center tabular-nums">{data.edgingCount}</span>
                         <button onClick={() => updateData({edgingCount: data.edgingCount + 1})} className="p-2 bg-purple-50 dark:bg-purple-900/40 text-purple-600 rounded-full"><Plus size={16}/></button>
@@ -493,7 +493,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
 
                 {/* 8. Sage Mode */}
                 <div className="bg-slate-50 dark:bg-slate-900 p-5 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 space-y-6">
-                    <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500">
+                    <div className="flex items-center gap-2 text-slate-400 dark:text-slate-400">
                         <Zap size={16} />
                         <span className="text-[10px] font-black uppercase tracking-widest">贤者时间 (SAGE MODE)</span>
                     </div>
@@ -521,7 +521,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
 
                 {/* 9. Satisfaction */}
                 <div className="bg-slate-50 dark:bg-slate-900 p-5 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 space-y-6">
-                    <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500">
+                    <div className="flex items-center gap-2 text-slate-400 dark:text-slate-400">
                         <BatteryFull size={16} className="text-brand-accent"/>
                         <span className="text-[10px] font-black uppercase tracking-widest text-brand-accent">生理需求满足感 (SATISFACTION)</span>
                     </div>

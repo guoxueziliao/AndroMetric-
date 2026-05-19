@@ -31,7 +31,7 @@ const WEATHER_LABELS: Record<string, string> = { sunny: '晴', cloudy: '多云',
 const LOCATION_LABELS: Record<string, string> = { home: '家', partner: '伴侣家', hotel: '酒店', travel: '旅途', other: '其他' };
 const MOOD_LABELS: Record<string, string> = { happy: '开心', excited: '兴奋', neutral: '平静', anxious: '焦虑', sad: '低落', angry: '生气' };
 const PORN_LABELS: Record<string, string> = { none: '无', low: '少量', medium: '适量', high: '沉迷' };
-const panelLoadingClass = 'flex items-center justify-center rounded-3xl border border-dashed border-slate-200 bg-white/70 p-4 text-xs font-bold text-slate-400 dark:border-slate-800 dark:bg-slate-900/40 dark:text-slate-500';
+const panelLoadingClass = 'flex items-center justify-center rounded-3xl border border-dashed border-slate-200 bg-white/70 p-4 text-xs font-bold text-slate-400 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400';
 
 interface SummarySectionProps {
   title: string;
@@ -184,7 +184,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                     点击右下角的 <span className="inline-flex items-center justify-center w-6 h-6 bg-brand-accent text-white rounded-full font-black text-xs mx-0.5">+</span> 按钮开始第一条快记 ——
                     睡眠、运动、饮品、性事件都可以从这里录入。
                 </p>
-                <p className="text-xs text-brand-muted dark:text-slate-500">
+                <p className="text-xs text-brand-muted dark:text-slate-400">
                     或者在底部"日历"里直接点今天,写完整日记。
                 </p>
             </section>
@@ -236,7 +236,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             return (
                 <section className="space-y-3 animate-in fade-in slide-in-from-top-4 duration-500">
                     {ongoingItems.length > 1 && (
-                        <div className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-2 pt-1">
+                        <div className="text-[10px] font-black text-slate-400 dark:text-slate-400 uppercase tracking-widest px-2 pt-1">
                             进行中 ({ongoingItems.length})
                         </div>
                     )}
@@ -435,7 +435,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                                             {summaryLog.sleep?.naps && summaryLog.sleep.naps.length > 0 && (
                                                 <div className="pt-2 space-y-2">
                                                     {summaryLog.sleep.naps.map(nap => (
-                                                        <div key={nap.id} className="flex justify-between items-center text-xs font-bold text-slate-500 bg-slate-50 dark:bg-slate-950/50 p-3 rounded-2xl">
+                                                        <div key={nap.id} className="flex justify-between items-center text-xs font-bold text-slate-500 bg-slate-50 dark:bg-slate-950 p-3 rounded-2xl">
                                                             <div className="flex items-center gap-2">
                                                                 <div className="w-1.5 h-1.5 rounded-full bg-orange-400"></div>
                                                                 <span>午休 ({nap.startTime})</span>

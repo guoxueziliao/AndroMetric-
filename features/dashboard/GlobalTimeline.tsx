@@ -197,7 +197,7 @@ export const GlobalTimeline: React.FC<GlobalTimelineProps> = ({ log, allLogs }) 
                         <div className={`absolute -left-[27px] top-1.5 w-3.5 h-3.5 rounded-full border-4 border-white dark:border-[#020617] shadow-sm ${e.color.split(' ')[0].replace('text-', 'bg-')}`}></div>
                         
                         {/* Time */}
-                        <div className="text-[11px] font-mono font-black text-slate-400 dark:text-slate-500 pt-1 min-w-[38px] tabular-nums">{e.time}</div>
+                        <div className="text-[11px] font-mono font-black text-slate-400 dark:text-slate-400 pt-1 min-w-[38px] tabular-nums">{e.time}</div>
                         
                         {/* Event Card */}
                         <div className={`flex-1 p-3.5 rounded-2xl flex items-center justify-between transition-all ${e.color.split(' ')[1]}`}>
@@ -220,7 +220,7 @@ export const GlobalTimeline: React.FC<GlobalTimelineProps> = ({ log, allLogs }) 
                 d.setDate(d.getDate() + 1);
                 return l.date === d.toISOString().split('T')[0];
             }) && (
-                <div className="mt-8 p-4 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 text-center">
+                <div className="mt-8 p-4 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 text-center">
                     <p className="text-[10px] text-slate-400 font-bold italic">“今晚入睡”将在明天醒来打卡后自动同步至此。</p>
                 </div>
             )}

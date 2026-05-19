@@ -42,7 +42,7 @@ const TrendsPanel: React.FC<TrendsPanelProps> = ({ logs }) => {
   }, [logs]);
 
   return (
-    <div className="flex h-60 flex-col rounded-3xl border border-slate-100 bg-white p-5 shadow-soft transition-colors dark:border-white/5 dark:bg-slate-900/40">
+    <div className="flex h-60 flex-col rounded-3xl border border-slate-100 bg-white p-5 shadow-soft transition-colors dark:border-white/5 dark:bg-slate-900">
       <div className="mb-4 flex items-center gap-2">
         <div className="rounded-full bg-violet-50 p-2 text-violet-500 dark:bg-violet-500/10"><TrendingUp size={18}/></div>
         <span className="text-sm font-bold text-slate-800 dark:text-slate-300">近 7 日趋势</span>
@@ -80,7 +80,7 @@ const TrendsPanel: React.FC<TrendsPanelProps> = ({ logs }) => {
               </div>
             );
           })}
-          <div className="pt-1 text-[10px] text-slate-400 dark:text-slate-500">
+          <div className="pt-1 text-[10px] text-slate-400 dark:text-slate-400">
             对比上一个 7 日窗口 · 基于 {METRICS.hardness.label} 等指标
           </div>
         </div>

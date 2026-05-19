@@ -50,7 +50,7 @@ const TONE: Record<RecordCardTone, { surface: string; iconBox: string; iconText:
     subline: 'text-violet-500/70'
   },
   slate: {
-    surface: 'bg-slate-50 dark:bg-slate-900/40 border-slate-100 dark:border-slate-800',
+    surface: 'bg-slate-50 dark:bg-slate-900 border-slate-100 dark:border-slate-800',
     iconBox: 'bg-white dark:bg-slate-800 text-slate-500',
     iconText: 'text-slate-500',
     title: 'text-slate-700 dark:text-slate-300',

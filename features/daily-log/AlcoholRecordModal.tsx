@@ -138,7 +138,7 @@ const AlcoholRecordModal: React.FC<AlcoholRecordModalProps> = ({ isOpen, onClose
                 {onSwitchToOther && (
                     <div className="flex p-1 mx-4 mt-3 bg-slate-100 dark:bg-[#111827] rounded-2xl border border-slate-200 dark:border-white/5 shrink-0">
                         <button className="flex-1 py-2 text-xs font-black rounded-xl bg-white dark:bg-[#1e293b] text-amber-500 shadow-md">饮酒</button>
-                        <button onClick={onSwitchToOther} className="flex-1 py-2 text-xs font-black rounded-xl text-slate-400 dark:text-slate-500 transition-colors">提神饮品</button>
+                        <button onClick={onSwitchToOther} className="flex-1 py-2 text-xs font-black rounded-xl text-slate-400 dark:text-slate-400 transition-colors">提神饮品</button>
                     </div>
                 )}
                 <div className="px-6 py-6 bg-slate-50 dark:bg-[#0f172a] border-b border-slate-100 dark:border-white/5 relative shrink-0">
@@ -148,7 +148,7 @@ const AlcoholRecordModal: React.FC<AlcoholRecordModalProps> = ({ isOpen, onClose
                                 <Beer size={32} className="text-amber-500" />
                             </div>
                             <div>
-                                <div className="text-[10px] text-slate-400 dark:text-slate-500 font-black uppercase tracking-widest mb-1">酒精摄入总量</div>
+                                <div className="text-[10px] text-slate-400 dark:text-slate-400 font-black uppercase tracking-widest mb-1">酒精摄入总量</div>
                                 <div className="flex items-baseline gap-1">
                                     <span className="text-5xl font-black text-amber-500 tabular-nums">{totalGrams}</span>
                                     <span className="text-sm font-bold text-slate-400">克</span>
@@ -156,7 +156,7 @@ const AlcoholRecordModal: React.FC<AlcoholRecordModalProps> = ({ isOpen, onClose
                             </div>
                         </div>
                         <div className="text-right">
-                            <div className="text-[10px] text-slate-400 dark:text-slate-500 font-black uppercase mb-1">预测状态</div>
+                            <div className="text-[10px] text-slate-400 dark:text-slate-400 font-black uppercase mb-1">预测状态</div>
                             <div className="text-3xl font-black text-amber-500">{prediction.predicted}级</div>
                             <input
                                 type="time"
@@ -173,13 +173,13 @@ const AlcoholRecordModal: React.FC<AlcoholRecordModalProps> = ({ isOpen, onClose
                     {step === 0 ? (
                         <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">
                             <div className="flex p-1 bg-slate-100 dark:bg-[#111827] rounded-2xl border border-slate-200 dark:border-white/5">
-                                <button onClick={() => setMode('session')} className={`flex-1 py-2 text-xs font-black rounded-xl transition-all ${mode === 'session' ? 'bg-white dark:bg-[#1e293b] text-amber-500 shadow-md' : 'text-slate-400 dark:text-slate-500'}`}>持续性饮酒</button>
-                                <button onClick={() => setMode('sip')} className={`flex-1 py-2 text-xs font-black rounded-xl transition-all ${mode === 'sip' ? 'bg-white dark:bg-[#1e293b] text-amber-500 shadow-md' : 'text-slate-400 dark:text-slate-500'}`}>一口/一杯</button>
+                                <button onClick={() => setMode('session')} className={`flex-1 py-2 text-xs font-black rounded-xl transition-all ${mode === 'session' ? 'bg-white dark:bg-[#1e293b] text-amber-500 shadow-md' : 'text-slate-400 dark:text-slate-400'}`}>持续性饮酒</button>
+                                <button onClick={() => setMode('sip')} className={`flex-1 py-2 text-xs font-black rounded-xl transition-all ${mode === 'sip' ? 'bg-white dark:bg-[#1e293b] text-amber-500 shadow-md' : 'text-slate-400 dark:text-slate-400'}`}>一口/一杯</button>
                             </div>
 
                             {Object.keys(selectedItems).length > 0 && (
                                 <div className="space-y-4">
-                                    <h4 className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase px-1">已添加清单 (可微调毫升/精度)</h4>
+                                    <h4 className="text-[11px] font-black text-slate-400 dark:text-slate-400 uppercase px-1">已添加清单 (可微调毫升/精度)</h4>
                                     {/* Fix: Explicitly type item to avoid 'unknown' errors */}
                                     {(Object.entries(selectedItems) as [string, { count: number, abv: number, vol: number }][]).map(([key, item]) => {
                                         const preset = DRINK_TYPES.find(d => d.key === key);
@@ -191,7 +191,7 @@ const AlcoholRecordModal: React.FC<AlcoholRecordModalProps> = ({ isOpen, onClose
                                                         <div className="text-2xl">{preset?.icon}</div>
                                                         <div>
                                                             <div className="text-sm font-black text-slate-800 dark:text-slate-100 flex items-center gap-1">{preset?.name} {isExp ? <ChevronUp size={14}/> : <ChevronDown size={14}/>}</div>
-                                                            <div className="text-[10px] text-slate-400 dark:text-slate-500 font-bold">{item.vol}毫升 · {item.abv}% 浓度</div>
+                                                            <div className="text-[10px] text-slate-400 dark:text-slate-400 font-bold">{item.vol}毫升 · {item.abv}% 浓度</div>
                                                         </div>
                                                     </div>
                                                     <div className="flex items-center gap-3 bg-slate-100 dark:bg-[#0a0f1d] p-1.5 rounded-xl border border-slate-200 dark:border-white/5 shadow-inner">
@@ -203,11 +203,11 @@ const AlcoholRecordModal: React.FC<AlcoholRecordModalProps> = ({ isOpen, onClose
                                                 {isExp && (
                                                     <div className="px-6 pb-6 pt-2 space-y-6 animate-in slide-in-from-top-2">
                                                         <div className="space-y-3">
-                                                            <div className="flex justify-between text-[10px] font-black uppercase text-slate-400 dark:text-slate-500"><span>单杯毫升 (ml)</span><span className="text-amber-500">{item.vol}ml</span></div>
+                                                            <div className="flex justify-between text-[10px] font-black uppercase text-slate-400 dark:text-slate-400"><span>单杯毫升 (ml)</span><span className="text-amber-500">{item.vol}ml</span></div>
                                                             <input type="range" min="10" max="2000" step="10" value={item.vol} onChange={e => updateItemValue(key, 'vol', parseInt(e.target.value))} className="w-full h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full appearance-none accent-amber-500" />
                                                         </div>
                                                         <div className="space-y-3">
-                                                            <div className="flex justify-between text-[10px] font-black uppercase text-slate-400 dark:text-slate-500"><span>酒精浓度 (ABV)</span><span className="text-red-500">{item.abv}%</span></div>
+                                                            <div className="flex justify-between text-[10px] font-black uppercase text-slate-400 dark:text-slate-400"><span>酒精浓度 (ABV)</span><span className="text-red-500">{item.abv}%</span></div>
                                                             <input type="range" min="0" max="75" step="0.5" value={item.abv} onChange={e => updateItemValue(key, 'abv', parseFloat(e.target.value))} className="w-full h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full appearance-none accent-amber-500" />
                                                         </div>
                                                         <button onClick={() => updateItemValue(key, 'count', 0)} className="w-full py-2 text-[10px] font-bold text-red-500 flex items-center justify-center gap-1"><Trash2 size={12}/> 移除此项</button>
@@ -220,7 +220,7 @@ const AlcoholRecordModal: React.FC<AlcoholRecordModalProps> = ({ isOpen, onClose
                             )}
 
                             <div className="space-y-4 pb-10">
-                                <h4 className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase px-1">点击添加酒类</h4>
+                                <h4 className="text-[11px] font-black text-slate-400 dark:text-slate-400 uppercase px-1">点击添加酒类</h4>
                                 <div className="grid grid-cols-2 gap-3">
                                     {DRINK_TYPES.map(drink => (
                                         <button 
@@ -231,7 +231,7 @@ const AlcoholRecordModal: React.FC<AlcoholRecordModalProps> = ({ isOpen, onClose
                                             <div className="text-3xl">{drink.icon}</div>
                                             <div className="text-left">
                                                 <div className="text-[13px] font-black text-slate-800 dark:text-slate-200">{drink.name}</div>
-                                                <div className="text-[10px] text-slate-400 dark:text-slate-500 font-bold mt-0.5">{drink.abv}% · {drink.volume}ml</div>
+                                                <div className="text-[10px] text-slate-400 dark:text-slate-400 font-bold mt-0.5">{drink.abv}% · {drink.volume}ml</div>
                                             </div>
                                         </button>
                                     ))}
@@ -245,14 +245,14 @@ const AlcoholRecordModal: React.FC<AlcoholRecordModalProps> = ({ isOpen, onClose
                                 const setter = key === 'where' ? setDrinkWhere : key === 'who' ? setDrinkWith : setDrinkWhy;
                                 return (
                                     <div key={key} className="space-y-4">
-                                        <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500 px-1">
+                                        <div className="flex items-center gap-2 text-slate-400 dark:text-slate-400 px-1">
                                             <dim.icon size={14} /><h4 className="text-[11px] font-black uppercase tracking-widest">{dim.label}</h4>
                                         </div>
                                         <div className="flex flex-wrap gap-2">
                                             {dim.options.map(opt => (
                                                 <button 
                                                     key={opt} onClick={() => setter(opt)} 
-                                                    className={`px-4 py-2 rounded-full text-xs font-bold border transition-all ${state === opt ? dim.activeColor + ' text-white shadow-md scale-105' : 'bg-slate-50 dark:bg-[#111827] text-slate-400 dark:text-slate-500 border-slate-200 dark:border-white/5'}`}
+                                                    className={`px-4 py-2 rounded-full text-xs font-bold border transition-all ${state === opt ? dim.activeColor + ' text-white shadow-md scale-105' : 'bg-slate-50 dark:bg-[#111827] text-slate-400 dark:text-slate-400 border-slate-200 dark:border-white/5'}`}
                                                 >
                                                     {opt}
                                                 </button>
@@ -263,7 +263,7 @@ const AlcoholRecordModal: React.FC<AlcoholRecordModalProps> = ({ isOpen, onClose
                             })}
 
                             <div className="space-y-5 pt-4 border-t border-slate-100 dark:border-white/5">
-                                <h4 className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-1 flex items-center gap-2"><Sparkles size={14} /> 4. 醉到什么程度？</h4>
+                                <h4 className="text-[11px] font-black text-slate-400 dark:text-slate-400 uppercase tracking-widest px-1 flex items-center gap-2"><Sparkles size={14} /> 4. 醉到什么程度？</h4>
                                 <div className="grid grid-cols-4 gap-3 pb-10">
                                     {DRUNK_LEVELS.map(lvl => (
                                         <button 
@@ -271,7 +271,7 @@ const AlcoholRecordModal: React.FC<AlcoholRecordModalProps> = ({ isOpen, onClose
                                             className={`flex flex-col items-center py-5 rounded-[2.5rem] transition-all border-2 ${drunkLevel === lvl.id ? 'bg-white dark:bg-[#1e293b] border-amber-500 shadow-xl scale-105' : 'bg-slate-50 dark:bg-[#111827] border-transparent opacity-60'}`}
                                         >
                                             <span className="text-3xl mb-2">{lvl.emoji}</span>
-                                            <span className={`text-[10px] font-black ${drunkLevel === lvl.id ? 'text-amber-500' : 'text-slate-400 dark:text-slate-500'}`}>{lvl.label}</span>
+                                            <span className={`text-[10px] font-black ${drunkLevel === lvl.id ? 'text-amber-500' : 'text-slate-400 dark:text-slate-400'}`}>{lvl.label}</span>
                                         </button>
                                     ))}
                                 </div>

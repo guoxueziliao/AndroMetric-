@@ -37,7 +37,7 @@ const stateToneClass: Record<string, string> = {
 };
 
 const tabClass = (active: boolean) => (
-  `flex-1 min-h-[44px] rounded-xl px-3 py-2 text-xs font-bold transition-all ${active ? 'bg-white text-brand-accent shadow-sm dark:bg-slate-800' : 'text-brand-muted dark:text-slate-500'}`
+  `flex-1 min-h-[44px] rounded-xl px-3 py-2 text-xs font-bold transition-all ${active ? 'bg-white text-brand-accent shadow-sm dark:bg-slate-800' : 'text-brand-muted dark:text-slate-400'}`
 );
 
 const factorTone = (positive: boolean) => (
@@ -185,7 +185,7 @@ const StateView: React.FC<StateViewProps> = ({ isDarkMode, logs }) => {
           </span>
         </div>
 
-        <div className="flex rounded-2xl border border-slate-200 bg-brand-primary p-1 dark:border-slate-800 dark:bg-slate-900/50">
+        <div className="flex rounded-2xl border border-slate-200 bg-brand-primary p-1 dark:border-slate-800 dark:bg-slate-900">
           <button type="button" onClick={() => setActiveTab('status')} className={tabClass(activeTab === 'status')}>状态引擎</button>
           <button type="button" onClick={() => setActiveTab('history')} className={tabClass(activeTab === 'history')}>历史统计</button>
         </div>

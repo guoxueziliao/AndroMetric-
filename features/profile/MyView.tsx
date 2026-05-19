@@ -188,7 +188,7 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
                     <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-xl"><Database size={20}/></div>
                     <div className="text-left">
                         <h3 className="font-bold text-brand-text dark:text-slate-200">设置与数据</h3>
-                        <p className="text-xs text-brand-muted dark:text-slate-500">外观 / 隐私 / 体检 / 备份 / 导入导出</p>
+                        <p className="text-xs text-brand-muted dark:text-slate-400">外观 / 隐私 / 体检 / 备份 / 导入导出</p>
                     </div>
                 </div>
                 <div className="flex items-center text-slate-400 text-xs">
@@ -202,7 +202,7 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
                     <div className="p-2 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-xl"><History size={20}/></div>
                     <div className="text-left">
                         <h3 className="font-bold text-brand-text dark:text-slate-200">版本记录</h3>
-                        <p className="text-xs text-brand-muted dark:text-slate-500">查看更新与新功能 (v{settings.version})</p>
+                        <p className="text-xs text-brand-muted dark:text-slate-400">查看更新与新功能 (v{settings.version})</p>
                     </div>
                 </div>
                 <ChevronRight size={18} className="text-slate-400"/>
@@ -242,7 +242,7 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
                   <label className="flex items-center justify-between p-3 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl cursor-pointer">
                       <div>
                           <p className="text-sm font-bold text-brand-text dark:text-slate-200">隐私模糊</p>
-                          <p className="text-xs text-brand-muted dark:text-slate-500 mt-0.5">界面整体模糊 + 灰阶,适合在他人附近浏览</p>
+                          <p className="text-xs text-brand-muted dark:text-slate-400 mt-0.5">界面整体模糊 + 灰阶,适合在他人附近浏览</p>
                       </div>
                       <span className="relative inline-flex items-center">
                           <input
@@ -281,25 +281,25 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
                                   <div className="flex justify-between"><span>发现问题</span><span className={healthReport.issues.length > 0 ? 'text-red-500 font-bold' : 'text-green-500'}>{healthReport.issues.length}</span></div>
                               </div>
                               <div className="grid grid-cols-3 gap-2 text-center">
-                                  <div className="rounded-xl bg-slate-50 dark:bg-slate-950/50 p-2 border border-slate-200 dark:border-slate-800">
+                                  <div className="rounded-xl bg-slate-50 dark:bg-slate-950 p-2 border border-slate-200 dark:border-slate-800">
                                       <div className="text-[10px] text-slate-400 font-bold">结构</div>
                                       <div className="text-sm font-black text-slate-700 dark:text-slate-200">{healthReport.scores.structure}</div>
                                   </div>
-                                  <div className="rounded-xl bg-slate-50 dark:bg-slate-950/50 p-2 border border-slate-200 dark:border-slate-800">
+                                  <div className="rounded-xl bg-slate-50 dark:bg-slate-950 p-2 border border-slate-200 dark:border-slate-800">
                                       <div className="text-[10px] text-slate-400 font-bold">完整度</div>
                                       <div className="text-sm font-black text-slate-700 dark:text-slate-200">{healthReport.scores.completeness}</div>
                                   </div>
-                                  <div className="rounded-xl bg-slate-50 dark:bg-slate-950/50 p-2 border border-slate-200 dark:border-slate-800">
+                                  <div className="rounded-xl bg-slate-50 dark:bg-slate-950 p-2 border border-slate-200 dark:border-slate-800">
                                       <div className="text-[10px] text-slate-400 font-bold">分析可用度</div>
                                       <div className="text-sm font-black text-slate-700 dark:text-slate-200">{healthReport.scores.analytics}</div>
                                   </div>
                               </div>
-                              <div className="text-xs space-y-1 text-slate-500 rounded-xl bg-slate-50 dark:bg-slate-950/50 p-3 border border-slate-200 dark:border-slate-800">
+                              <div className="text-xs space-y-1 text-slate-500 rounded-xl bg-slate-50 dark:bg-slate-950 p-3 border border-slate-200 dark:border-slate-800">
                                   <div className="flex justify-between"><span>已追踪字段</span><span>{healthReport.stats.completeness.trackedFields}</span></div>
                                   <div className="flex justify-between"><span>有效字段</span><span>{healthReport.stats.completeness.recordedFields}</span></div>
                                   <div className="flex justify-between"><span>缺失/默认字段</span><span>{healthReport.stats.completeness.missingFields}</span></div>
                               </div>
-                              <div className="rounded-xl bg-slate-50 dark:bg-slate-950/50 p-3 border border-slate-200 dark:border-slate-800">
+                              <div className="rounded-xl bg-slate-50 dark:bg-slate-950 p-3 border border-slate-200 dark:border-slate-800">
                                   <h4 className="text-xs font-bold text-slate-500 mb-2">分析样本</h4>
                                   <div className="space-y-1 text-xs text-slate-500">
                                       {Object.entries(healthReport.stats.analyticsAvailability).map(([key, item]) => (
@@ -313,7 +313,7 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
                               
                               {/* Display Issues List */}
                               {healthReport.issues.length > 0 && (
-                                  <div className="mt-2 bg-slate-50 dark:bg-slate-950/50 rounded-xl p-3 border border-slate-200 dark:border-slate-800">
+                                  <div className="mt-2 bg-slate-50 dark:bg-slate-950 rounded-xl p-3 border border-slate-200 dark:border-slate-800">
                                       <h4 className="text-xs font-bold text-slate-500 mb-2 flex items-center">
                                           <AlertCircle size={12} className="mr-1 text-red-500"/> 
                                           问题详情 ({healthReport.issues.length})
@@ -384,7 +384,7 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
             </div>
             <div className="text-left">
               <h3 className="font-bold text-sm text-brand-text dark:text-slate-200">标签管理</h3>
-              <p className="text-xs text-brand-muted dark:text-slate-500">重命名或合并 XP、事件标签</p>
+              <p className="text-xs text-brand-muted dark:text-slate-400">重命名或合并 XP、事件标签</p>
             </div>
           </div>
           <ChevronRight size={18} className="text-slate-400" />
@@ -403,7 +403,7 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
             </div>
             <div className="text-left">
               <h3 className="font-bold text-sm text-brand-text dark:text-slate-200">虚拟回测实验室</h3>
-              <p className="text-xs text-brand-muted dark:text-slate-500">仅供开发验证的合成人群回测工具</p>
+              <p className="text-xs text-brand-muted dark:text-slate-400">仅供开发验证的合成人群回测工具</p>
             </div>
           </div>
           <ChevronRight size={18} className="text-slate-400" />

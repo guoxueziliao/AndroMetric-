@@ -83,7 +83,7 @@ const KPICard = ({ label, value, unit, icon: Icon, colorClass = "text-brand-text
         </div>
         <div>
             <p className="text-xs text-brand-muted dark:text-slate-400 font-bold uppercase tracking-wider">{label}</p>
-            <p className={`text-3xl font-black mt-1 ${colorClass}`}>{value}<span className="text-sm font-bold text-brand-muted dark:text-slate-500 ml-1">{unit}</span></p>
+            <p className={`text-3xl font-black mt-1 ${colorClass}`}>{value}<span className="text-sm font-bold text-brand-muted dark:text-slate-400 ml-1">{unit}</span></p>
         </div>
     </div>
 );
@@ -274,21 +274,21 @@ const StatsView: React.FC<StatsViewProps> = ({ isDarkMode, logs: rawLogs }) => {
                 </div>
 
                 {displayLogs.length < 3 ? (
-                    <div className="rounded-3xl border border-dashed border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/40 p-8 text-center space-y-3">
+                    <div className="rounded-3xl border border-dashed border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900 p-8 text-center space-y-3">
                         <div className="text-base font-black text-brand-text dark:text-slate-100">数据不足以生成图表</div>
                         <p className="text-sm text-brand-muted dark:text-slate-400 leading-relaxed">
                             至少需要 3 条已完成的日记才能跑出趋势、相关性与维度雷达。<br/>
                             目前已完成 <span className="font-bold text-brand-accent">{displayLogs.length}</span> 条。
                         </p>
-                        <p className="text-xs text-brand-muted dark:text-slate-500">
+                        <p className="text-xs text-brand-muted dark:text-slate-400">
                             继续记录,本页会自动解锁。
                         </p>
                     </div>
                 ) : (
                 <>
-                <div className="flex p-1 bg-brand-primary dark:bg-slate-900/50 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-x-auto scrollbar-hide">
+                <div className="flex p-1 bg-brand-primary dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-x-auto scrollbar-hide">
                     {STATS_TABS.map(tab => (
-                        <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex-1 min-h-[44px] py-2 px-3 text-xs font-bold rounded-xl transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-white dark:bg-slate-800 text-brand-accent shadow-sm' : 'text-brand-muted dark:text-slate-500'}`}>{tab.label}</button>
+                        <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex-1 min-h-[44px] py-2 px-3 text-xs font-bold rounded-xl transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-white dark:bg-slate-800 text-brand-accent shadow-sm' : 'text-brand-muted dark:text-slate-400'}`}>{tab.label}</button>
                     ))}
                 </div>
 
@@ -391,7 +391,7 @@ const StatsView: React.FC<StatsViewProps> = ({ isDarkMode, logs: rawLogs }) => {
                                 }
                                 return sectionsRendered.map(group => (
                                     <div key={group.key} className="space-y-2">
-                                        <div className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider px-1">{group.label}</div>
+                                        <div className="text-[10px] font-black text-slate-400 dark:text-slate-400 uppercase tracking-wider px-1">{group.label}</div>
                                         {group.items.map(insight => <InsightCard key={insight.id} insight={insight} />)}
                                     </div>
                                 ));

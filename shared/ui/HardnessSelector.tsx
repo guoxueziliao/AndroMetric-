@@ -8,7 +8,7 @@ const HardnessSelector = ({ value, onChange }: { value: number, onChange: (val: 
     ];
 
     return (
-        <div className="bg-slate-50 dark:bg-slate-950/50 rounded-[2rem] p-5 border border-slate-100 dark:border-white/5 transition-colors">
+        <div className="bg-slate-50 dark:bg-slate-950 rounded-[2rem] p-5 border border-slate-100 dark:border-white/5 transition-colors">
             <div className="flex justify-between items-end h-24 px-1 mb-2 relative">
                 {levels.map((item) => {
                     const isSelected = value === item.val;

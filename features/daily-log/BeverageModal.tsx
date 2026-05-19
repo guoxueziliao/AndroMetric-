@@ -168,7 +168,7 @@ const BeverageModal: React.FC<BeverageModalProps> = ({ isOpen, onClose, data, ac
             <div className="flex flex-col h-[75vh] -mx-4 -mb-4">
                 {onSwitchToOther && (
                     <div className="flex p-1 mx-4 mt-3 bg-slate-100 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shrink-0">
-                        <button onClick={onSwitchToOther} className="flex-1 py-2 text-xs font-black rounded-xl text-slate-400 dark:text-slate-500 transition-colors">饮酒</button>
+                        <button onClick={onSwitchToOther} className="flex-1 py-2 text-xs font-black rounded-xl text-slate-400 dark:text-slate-400 transition-colors">饮酒</button>
                         <button className="flex-1 py-2 text-xs font-black rounded-xl bg-white dark:bg-slate-900 text-orange-500 shadow-md">提神饮品</button>
                     </div>
                 )}
@@ -209,7 +209,7 @@ const BeverageModal: React.FC<BeverageModalProps> = ({ isOpen, onClose, data, ac
 
                 <div className="flex-1 flex overflow-hidden">
                     {/* 左侧分类栏 */}
-                    <div className="w-24 bg-slate-50/50 dark:bg-slate-900/50 border-r border-slate-100 dark:border-slate-800 flex flex-col pt-2 shrink-0 overflow-y-auto custom-scrollbar">
+                    <div className="w-24 bg-slate-50/50 dark:bg-slate-900 border-r border-slate-100 dark:border-slate-800 flex flex-col pt-2 shrink-0 overflow-y-auto custom-scrollbar">
                         {CATEGORIES.map(cat => (
                             <button
                                 key={cat.id}
@@ -257,7 +257,7 @@ const BeverageModal: React.FC<BeverageModalProps> = ({ isOpen, onClose, data, ac
                                             className={`w-full p-4 rounded-2xl border-2 transition-all flex items-center justify-between group ${
                                                 isDailyMode 
                                                 ? 'border-emerald-500 bg-emerald-50/50 dark:bg-emerald-900/10' 
-                                                : 'border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50'
+                                                : 'border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900'
                                             }`}
                                         >
                                             <div className="flex items-center gap-3">

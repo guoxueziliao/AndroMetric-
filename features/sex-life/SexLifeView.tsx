@@ -283,7 +283,7 @@ const SexLifeView: React.FC<SexLifeViewProps> = ({
 
                                         {/* 素材详情区域 (Masterbation 专用) */}
                                         {!isSex && record.mbDetails?.contentItems && record.mbDetails.contentItems.length > 0 && (
-                                            <div className="grid grid-cols-1 gap-2 mb-4 bg-slate-50 dark:bg-slate-950/50 p-3 rounded-2xl border border-slate-100 dark:border-slate-800">
+                                            <div className="grid grid-cols-1 gap-2 mb-4 bg-slate-50 dark:bg-slate-950 p-3 rounded-2xl border border-slate-100 dark:border-slate-800">
                                                 <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5 mb-1 px-1">
                                                     <Film size={10} /> 观看素材 ({record.mbDetails.contentItems.length})
                                                 </div>
@@ -332,7 +332,7 @@ const SexLifeView: React.FC<SexLifeViewProps> = ({
 
                                         {/* 备注区域 */}
                                         {record.notes && (
-                                            <div className="relative p-3 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border-l-4 border-slate-200 dark:border-slate-700">
+                                            <div className="relative p-3 bg-slate-50 dark:bg-slate-800 rounded-2xl border-l-4 border-slate-200 dark:border-slate-700">
                                                 <Quote size={12} className="absolute -top-2 -left-1 text-slate-300 dark:text-slate-600 fill-current" />
                                                 <p className="text-[11px] text-slate-600 dark:text-slate-400 font-medium leading-relaxed italic">
                                                     {record.notes}

@@ -28,7 +28,7 @@ export interface NoticeItem {
 const LEVEL_CONFIG = {
     error: { icon: AlertCircle, color: 'text-red-600 dark:text-red-400', bg: 'bg-red-50 dark:bg-red-900/20', border: 'border-red-200 dark:border-red-900/30' },
     warn: { icon: AlertTriangle, color: 'text-orange-600 dark:text-orange-400', bg: 'bg-amber-50 dark:bg-amber-900/20', border: 'border-amber-200 dark:border-amber-900/30' },
-    info: { icon: Info, color: 'text-slate-600 dark:text-slate-400', bg: 'bg-slate-50 dark:bg-slate-800/50', border: 'border-slate-200 dark:border-slate-700' }
+    info: { icon: Info, color: 'text-slate-600 dark:text-slate-400', bg: 'bg-slate-50 dark:bg-slate-800', border: 'border-slate-200 dark:border-slate-700' }
 };
 
 export const NoticeBadge: React.FC<{

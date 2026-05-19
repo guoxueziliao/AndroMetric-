@@ -466,18 +466,18 @@ const ReproductivePanel: React.FC<ReproductivePanelProps> = ({ date }) => {
           </div>
           <div className="mt-4 space-y-2">
             {delayedPeriodAlert && (
-              <div className="flex items-start gap-2 rounded-2xl bg-white/70 px-3 py-3 text-xs font-bold text-amber-900 dark:bg-slate-900/40 dark:text-amber-200">
+              <div className="flex items-start gap-2 rounded-2xl bg-white/70 px-3 py-3 text-xs font-bold text-amber-900 dark:bg-slate-900 dark:text-amber-200">
                 <AlertTriangle size={14} className="mt-0.5 shrink-0" />
                 <span>{delayedPeriodAlert}</span>
               </div>
             )}
             {(pregnancyStatus?.alerts || []).map((alert) => (
-              <div key={alert} className="flex items-start gap-2 rounded-2xl bg-white/70 px-3 py-3 text-xs font-bold text-amber-900 dark:bg-slate-900/40 dark:text-amber-200">
+              <div key={alert} className="flex items-start gap-2 rounded-2xl bg-white/70 px-3 py-3 text-xs font-bold text-amber-900 dark:bg-slate-900 dark:text-amber-200">
                 <AlertTriangle size={14} className="mt-0.5 shrink-0" />
                 <span>{alert}</span>
               </div>
             ))}
-            <div className="flex items-start gap-2 rounded-2xl bg-white/70 px-3 py-3 text-xs font-bold text-slate-700 dark:bg-slate-900/40 dark:text-slate-300">
+            <div className="flex items-start gap-2 rounded-2xl bg-white/70 px-3 py-3 text-xs font-bold text-slate-700 dark:bg-slate-900 dark:text-slate-300">
               <TestTube2 size={14} className="mt-0.5 shrink-0" />
               <span>所有窗口和月经预测仅作估算，不能作为避孕依据。</span>
             </div>

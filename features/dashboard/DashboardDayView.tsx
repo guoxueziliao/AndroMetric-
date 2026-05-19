@@ -20,7 +20,7 @@ interface DashboardDayViewProps {
 }
 
 const inlineLoader = (
-  <div className="flex items-center justify-center rounded-3xl border border-dashed border-slate-200 bg-white/70 p-4 text-xs font-bold text-slate-400 dark:border-slate-800 dark:bg-slate-900/40 dark:text-slate-500">
+  <div className="flex items-center justify-center rounded-3xl border border-dashed border-slate-200 bg-white/70 p-4 text-xs font-bold text-slate-400 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
     加载中...
   </div>
 );
@@ -38,7 +38,7 @@ const DashboardDayView: React.FC<DashboardDayViewProps> = ({
     <TodayGrid tiles={todayTiles} onSelect={onSelectTile} />
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
       <TrendsPanel logs={logs} />
-      <div className="flex h-60 flex-col overflow-hidden rounded-3xl border border-slate-100 bg-white p-4 shadow-soft transition-colors dark:border-white/5 dark:bg-slate-900/40">
+      <div className="flex h-60 flex-col overflow-hidden rounded-3xl border border-slate-100 bg-white p-4 shadow-soft transition-colors dark:border-white/5 dark:bg-slate-900">
         <div className="mb-3 flex shrink-0 items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="rounded-lg bg-blue-50 p-1.5 text-blue-500 dark:bg-blue-500/10"><Moon size={14} fill="currentColor" fillOpacity={0.2} /></div>
@@ -89,7 +89,7 @@ const DashboardDayView: React.FC<DashboardDayViewProps> = ({
         </motion.div>
       </div>
 
-      <div className="flex h-60 flex-col rounded-3xl border border-slate-100 bg-white p-5 shadow-soft transition-colors dark:border-white/5 dark:bg-slate-900/40">
+      <div className="flex h-60 flex-col rounded-3xl border border-slate-100 bg-white p-5 shadow-soft transition-colors dark:border-white/5 dark:bg-slate-900">
         <div className="mb-6 flex items-center gap-2">
           <div className="rounded-full bg-orange-50 p-2 text-orange-500 dark:bg-orange-500/10"><Activity size={18} /></div>
           <span className="text-sm font-bold text-slate-800 dark:text-slate-300">今日活动</span>
@@ -102,7 +102,7 @@ const DashboardDayView: React.FC<DashboardDayViewProps> = ({
         </div>
       </div>
 
-      <div className="rounded-3xl border border-slate-100 bg-white p-5 shadow-soft transition-colors dark:border-white/5 dark:bg-slate-900/40">
+      <div className="rounded-3xl border border-slate-100 bg-white p-5 shadow-soft transition-colors dark:border-white/5 dark:bg-slate-900">
         <div className="mb-4 flex items-center gap-2">
           <div className="rounded-full bg-slate-100 p-2 text-slate-500 dark:bg-slate-800"><Calendar size={18} /></div>
           <span className="text-sm font-bold text-slate-800 dark:text-slate-300">今日时间线</span>
