@@ -16,3 +16,4 @@ export type {
 } from '../../utils/tagValidators';
 export * from '../../utils/constants';
 export * from './errors';
+export * from './targetDate';
