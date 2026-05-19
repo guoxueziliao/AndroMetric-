@@ -662,7 +662,7 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
                                         <div className="space-y-3">
                                             <label className="text-[10px] font-black text-red-600/70 dark:text-red-400/50 uppercase tracking-widest block">具体症状</label>
                                             <div className="flex flex-wrap gap-2">
-                                                {['头痛', '喉咙痛', '胃不适', '肌肉酸痛', '发烧', '鼻塞', '乏力', '咳嗽'].map(s => {
+                                                {['头痛', '喉咙痛', '胃不适', '肌肉酸痛', '腹泻', '发烧', '鼻塞', '乏力', '咳嗽'].map(s => {
                                                     const isSelected = log.health?.symptoms?.includes(s);
                                                     return (
                                                         <button
@@ -757,7 +757,7 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
                     )}
                 </div>
 
-                <textarea 
+                <textarea
                     value={log.notes || ''}
                     onChange={(e) => setField('notes', e.target.value)}
                     placeholder="今天感觉如何？写点什么吧..."
@@ -765,18 +765,20 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
                 />
             </div>
 
-            <div className="flex gap-4 pt-4 pb-12">
-                <button 
+            <div className="sticky bottom-20 z-20 -mx-4 mt-4 px-4 pt-3 pb-3 bg-brand-bg/90 dark:bg-slate-950/90 backdrop-blur-md border-t border-slate-200/60 dark:border-slate-800/60 flex gap-3">
+                <button
+                    type="button"
                     onClick={() => { onSave({ ...log, status: 'pending' }); }}
-                    className="flex-1 py-5 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 font-black text-lg rounded-[2rem] shadow-soft border border-slate-100 dark:border-white/5 active:scale-95 transition-all"
+                    className="flex-1 min-h-[48px] py-3 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 font-bold text-sm rounded-2xl shadow-soft border border-slate-100 dark:border-white/5 active:scale-[0.98] transition-all"
                 >
                     保存草稿
                 </button>
-                <button 
+                <button
+                    type="button"
                     onClick={() => { onSave({ ...log, status: 'completed' }); }}
-                    className="flex-[2] py-5 bg-brand-accent text-white font-black text-lg rounded-[2rem] shadow-xl shadow-blue-500/30 active:scale-95 transition-all flex items-center justify-center gap-3"
+                    className="flex-[2] min-h-[48px] py-3 bg-brand-accent text-white font-bold text-sm rounded-2xl shadow-xl shadow-blue-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
                 >
-                    <Check size={26} strokeWidth={3.5} />
+                    <Check size={20} strokeWidth={3} />
                     完成记录
                 </button>
             </div>
