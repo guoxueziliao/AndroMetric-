@@ -1,4 +1,4 @@
-export type MidTabType = 'life' | 'env' | 'health';
+export type MidTabType = 'sex' | 'life' | 'env' | 'health';
 
 export const SUPPLEMENT_OPTIONS = ['维生素D', '锌', '镁', '鱼油', '辅酶Q10', '益生菌'];
 

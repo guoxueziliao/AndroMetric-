@@ -10,4 +10,6 @@ export { default as ConfirmModal } from './ConfirmModal';
 export { default as ErrorBoundary } from './ErrorBoundary';
 export { default as AnimatedButton } from './AnimatedButton';
 export { default as AnimatedPage, AnimatedPresence } from './AnimatedPage';
+export { default as RecordCard } from './RecordCard';
+export type { RecordCardTone } from './RecordCard';
 export * from './NoticeSystem';

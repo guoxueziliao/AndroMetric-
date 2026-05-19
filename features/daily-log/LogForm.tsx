@@ -6,7 +6,7 @@ import {
     Snowflake, Wind, CloudFog, Home, Navigation, Hotel, Plane,
     Shirt, Droplets, ShieldAlert, Search, Coffee, Edit3, Beer, RotateCcw
 } from 'lucide-react';
-import { ConfirmModal } from '../../shared/ui';
+import { ConfirmModal, RecordCard } from '../../shared/ui';
 import BeverageModal from './BeverageModal';
 import ExerciseRecordModal from './ExerciseRecordModal';
 import AlcoholRecordModal from './AlcoholRecordModal';
@@ -105,7 +105,7 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
         };
     });
 
-    const [activeMidTab, setActiveMidTab] = useState<MidTabType>('life');
+    const [activeMidTab, setActiveMidTab] = useState<MidTabType>('sex');
     const [modalState, setModalState] = useState({ bev: false, sex: false, mb: false, ex: false, alc: false, nap: false });
     const [eventSearch, setEventSearch] = useState('');
     
@@ -334,11 +334,12 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
             <div className="bg-white dark:bg-slate-900 rounded-[2rem] shadow-soft border border-slate-100 dark:border-white/5 overflow-hidden">
                 <div className="flex bg-slate-50/50 dark:bg-slate-900/50 border-b border-slate-100 dark:border-white/5">
                     {[
+                        { id: 'sex', label: '性活动' },
                         { id: 'life', label: '生活' },
                         { id: 'env', label: '环境' },
                         { id: 'health', label: '健康' }
                     ].map(t => (
-                        <button 
+                        <button
                             key={t.id}
                             onClick={() => setActiveMidTab(t.id as MidTabType)}
                             className={`flex-1 py-4 text-sm font-black transition-all relative ${activeMidTab === t.id ? 'text-brand-accent' : 'text-slate-400'}`}
@@ -350,6 +351,47 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
                 </div>
 
                 <div className="p-6 min-h-[340px]">
+                    {activeMidTab === 'sex' && (
+                        <div className="space-y-5 animate-in fade-in duration-300">
+                            <div className="space-y-3">
+                                {log.masturbation?.map(m => (
+                                    <RecordCard
+                                        key={m.id}
+                                        tone="blue"
+                                        icon={<Hand size={18}/>}
+                                        title={<>自慰记录</>}
+                                        meta={`${m.startTime} · ${m.duration}分`}
+                                        subline={m.contentItems?.length ? m.contentItems.map(i => i.type).join(', ') : '无素材'}
+                                        onEdit={() => handleEdit('mb', m)}
+                                        onDelete={() => removeItem('masturbation', m.id)}
+                                    />
+                                ))}
+                                {log.sex?.map(s => (
+                                    <RecordCard
+                                        key={s.id}
+                                        tone="pink"
+                                        icon={<Heart size={18} fill="currentColor" fillOpacity={0.2}/>}
+                                        title={s.interactions?.[0]?.partner || '性爱记录'}
+                                        meta={`${s.startTime} · ${s.duration}分`}
+                                        subline={`${s.interactions?.length || 1} 阶段`}
+                                        onEdit={() => handleEdit('sex', s)}
+                                        onDelete={() => removeItem('sex', s.id)}
+                                    />
+                                ))}
+                                {!log.masturbation?.length && !log.sex?.length && (
+                                    <p className="text-[11px] text-slate-300 italic pl-1">今天没有性活动记录</p>
+                                )}
+                            </div>
+                            <div className="flex gap-3">
+                                <button onClick={() => { setEditTarget(null); setModalState(s => ({ ...s, sex: true })); }} className="flex-1 py-4 bg-pink-50 dark:bg-pink-900/20 text-pink-600 dark:text-pink-400 rounded-2xl font-black text-xs flex items-center justify-center gap-2 border border-pink-100 dark:border-pink-900/50 active:scale-95 transition-all">
+                                    <Heart size={16} fill="currentColor" fillOpacity={0.2} /> 记录性爱
+                                </button>
+                                <button onClick={() => { setEditTarget(null); setModalState(s => ({ ...s, mb: true })); }} className="flex-1 py-4 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-2xl font-black text-xs flex items-center justify-center gap-2 border border-blue-100 dark:border-blue-900/50 active:scale-95 transition-all">
+                                    <Hand size={16} /> 记录自慰
+                                </button>
+                            </div>
+                        </div>
+                    )}
                     {activeMidTab === 'life' && (
                         <div className="space-y-8 animate-in fade-in duration-300">
                             {/* 饮酒列表 */}
@@ -479,51 +521,6 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
                                             {opt.label}
                                         </button>
                                     ))}
-                                </div>
-                            </div>
-
-                            {/* 性活动 */}
-                            <div className="pt-4 border-t border-slate-100 dark:border-white/5">
-                                <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-4 block">性活动</label>
-                                <div className="space-y-3 mb-5">
-                                    {log.masturbation?.map(m => (
-                                        <div key={m.id} className="group flex justify-between items-center bg-blue-50/50 dark:bg-blue-900/10 p-3.5 rounded-2xl border border-blue-100 dark:border-blue-900/30 shadow-sm">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 bg-white dark:bg-slate-800 rounded-full flex items-center justify-center text-blue-500 shadow-sm"><Hand size={18}/></div>
-                                                <div>
-                                                    <span className="text-xs font-black text-blue-700 dark:text-blue-400">自慰记录 <span className="font-mono opacity-50 text-[10px] ml-1">{m.startTime} · {m.duration}分</span></span>
-                                                    <div className="text-[9px] text-blue-500/70 font-bold">{m.contentItems?.length ? m.contentItems.map(i => i.type).join(', ') : '无素材'}</div>
-                                                </div>
-                                            </div>
-                                            <div className="flex gap-1.5">
-                                                <button onClick={() => handleEdit('mb', m)} className="p-2 bg-white dark:bg-slate-700 rounded-xl text-slate-400 hover:text-brand-accent transition-colors shadow-sm"><Edit3 size={16}/></button>
-                                                <button onClick={() => removeItem('masturbation', m.id)} className="p-2 bg-white dark:bg-slate-700 rounded-xl text-slate-400 hover:text-red-500 transition-colors shadow-sm"><Trash2 size={16}/></button>
-                                            </div>
-                                        </div>
-                                    ))}
-                                    {log.sex?.map(s => (
-                                        <div key={s.id} className="group flex justify-between items-center bg-pink-50/50 dark:bg-pink-900/10 p-3.5 rounded-2xl border border-pink-100 dark:border-pink-900/30 shadow-sm">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 bg-white dark:bg-slate-800 rounded-full flex items-center justify-center text-pink-500 shadow-sm"><Heart size={18} fill="currentColor" fillOpacity={0.2}/></div>
-                                                <div>
-                                                    <span className="text-xs font-black text-pink-700 dark:text-pink-400">{s.interactions?.[0]?.partner || '性爱记录'} <span className="font-mono opacity-50 text-[10px] ml-1">{s.startTime} · {s.duration}分</span></span>
-                                                    <div className="text-[9px] text-pink-500/70 font-bold">{s.interactions?.length || 1} 阶段</div>
-                                                </div>
-                                            </div>
-                                            <div className="flex gap-1.5">
-                                                <button onClick={() => handleEdit('sex', s)} className="p-2 bg-white dark:bg-slate-700 rounded-xl text-slate-400 hover:text-brand-accent transition-colors shadow-sm"><Edit3 size={16}/></button>
-                                                <button onClick={() => removeItem('sex', s.id)} className="p-2 bg-white dark:bg-slate-700 rounded-xl text-slate-400 hover:text-red-500 transition-colors shadow-sm"><Trash2 size={16}/></button>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                                <div className="flex gap-3">
-                                    <button onClick={() => { setEditTarget(null); setModalState(s => ({ ...s, sex: true })); }} className="flex-1 py-4 bg-pink-50 dark:bg-pink-900/20 text-pink-600 dark:text-pink-400 rounded-2xl font-black text-xs flex items-center justify-center gap-2 border border-pink-100 dark:border-pink-900/50 active:scale-95 transition-all">
-                                        <Heart size={16} fill="currentColor" fillOpacity={0.2} /> 记录性爱
-                                    </button>
-                                    <button onClick={() => { setEditTarget(null); setModalState(s => ({ ...s, mb: true })); }} className="flex-1 py-4 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-2xl font-black text-xs flex items-center justify-center gap-2 border border-blue-100 dark:border-blue-900/50 active:scale-95 transition-all">
-                                        <Hand size={16} /> 记录自慰
-                                    </button>
                                 </div>
                             </div>
                         </div>
