@@ -19,29 +19,28 @@ const NavItem: React.FC<{
     <motion.button
       onClick={onClick}
       whileTap={{ scale: 0.9 }}
-      className={`group relative flex flex-col items-center justify-center flex-1 h-14 transition-colors duration-300 ${
+      aria-label={label}
+      aria-pressed={isActive}
+      className={`group relative flex flex-col items-center justify-center flex-1 min-h-[56px] gap-0.5 py-1 transition-colors duration-300 ${
         isActive
         ? 'text-brand-accent'
         : 'text-brand-muted hover:text-slate-600 dark:hover:text-slate-300'
       }`}
     >
       <motion.div
-        animate={isActive ? { scale: 1.1, y: -2 } : { scale: 1, y: 0 }}
+        animate={isActive ? { scale: 1.1, y: 0 } : { scale: 1, y: 0 }}
         transition={{ type: 'spring', stiffness: 400, damping: 17 }}
-        className={`p-2 rounded-2xl transition-colors duration-300 ${isActive ? 'bg-blue-50 dark:bg-blue-500/10' : ''}`}
+        className={`p-1.5 rounded-2xl transition-colors duration-300 ${isActive ? 'bg-blue-50 dark:bg-blue-500/10' : ''}`}
       >
         <Icon size={22} strokeWidth={isActive ? 2.5 : 2} />
       </motion.div>
-      <motion.span
-        animate={{ opacity: isActive ? 1 : 0, y: isActive ? 0 : 5 }}
-        className="text-[10px] font-bold absolute -bottom-0.5"
-      >
+      <span className={`text-[10px] font-bold leading-none ${isActive ? 'opacity-100' : 'opacity-70'}`}>
         {label}
-      </motion.span>
+      </span>
       {isActive && (
         <motion.span
           layoutId="bottomNavIndicator"
-          className="absolute bottom-1 w-1 h-1 rounded-full bg-brand-accent"
+          className="absolute bottom-0 w-1 h-1 rounded-full bg-brand-accent"
           transition={{ type: 'spring', stiffness: 500, damping: 30 }}
         />
       )}

@@ -231,7 +231,7 @@ const TagHealthCheck: React.FC<TagHealthCheckProps> = ({ logs, onNavigateToTag }
                                         {issue.issueType}
                                     </span>
                                 </div>
-                                <div className="text-brand-accent opacity-0 group-hover:opacity-100 transition-opacity flex items-center text-xs font-bold">
+                                <div className="text-brand-accent flex items-center text-xs font-bold">
                                     管理 <ArrowRight size={12} className="ml-1"/>
                                 </div>
                             </div>

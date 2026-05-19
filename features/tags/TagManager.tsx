@@ -95,9 +95,9 @@ const TagManager: React.FC<TagManagerProps> = ({
                         <span className={`font-bold text-sm ${count === 0 ? 'text-slate-400' : 'text-brand-text dark:text-slate-200'}`}>{tag.replace(/^#/, '')}</span>
                         {count > 0 && <span className="text-[10px] bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded-full text-slate-500">{count}次</span>}
                     </div>
-                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onClick={() => onStartEditingTag(tag)} className="p-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-slate-400 hover:text-blue-500 rounded-lg"><Edit2 size={14}/></button>
-                        <button onClick={() => onDelete(tag)} className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-400 hover:text-red-500 rounded-lg"><Trash2 size={14}/></button>
+                    <div className="flex gap-1">
+                        <button onClick={() => onStartEditingTag(tag)} aria-label="重命名标签" className="p-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-slate-400 hover:text-blue-500 rounded-lg min-w-[44px] min-h-[44px] flex items-center justify-center"><Edit2 size={14}/></button>
+                        <button onClick={() => onDelete(tag)} aria-label="删除标签" className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-400 hover:text-red-500 rounded-lg min-w-[44px] min-h-[44px] flex items-center justify-center"><Trash2 size={14}/></button>
                     </div>
                 </>
             )}

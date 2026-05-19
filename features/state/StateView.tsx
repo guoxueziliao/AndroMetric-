@@ -37,7 +37,7 @@ const stateToneClass: Record<string, string> = {
 };
 
 const tabClass = (active: boolean) => (
-  `flex-1 rounded-xl px-3 py-2 text-xs font-bold transition-all ${active ? 'bg-white text-brand-accent shadow-sm dark:bg-slate-800' : 'text-brand-muted dark:text-slate-500'}`
+  `flex-1 min-h-[44px] rounded-xl px-3 py-2 text-xs font-bold transition-all ${active ? 'bg-white text-brand-accent shadow-sm dark:bg-slate-800' : 'text-brand-muted dark:text-slate-500'}`
 );
 
 const factorTone = (positive: boolean) => (

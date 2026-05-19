@@ -119,11 +119,13 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({ label, value, onChange,
                 }
             >
                 <div className="space-y-4">
-                    <div className="flex items-center space-x-2">
-                        <input type="date" value={tempDate} onChange={(e) => setTempDate(e.target.value)} className="w-full bg-slate-50 border border-slate-300 rounded-md p-2 focus:ring-brand-accent focus:border-brand-accent"/>
-                        <input type="time" value={tempTime} onChange={(e) => setTempTime(e.target.value)} className="w-full bg-slate-50 border border-slate-300 rounded-md p-2 focus:ring-brand-accent focus:border-brand-accent"/>
-                        <button type="button" onClick={handleSetToNow} className="p-2 bg-slate-100 rounded-md hover:bg-slate-200"><Clock size={20}/></button>
+                    <div className="grid grid-cols-2 gap-2">
+                        <input type="date" value={tempDate} onChange={(e) => setTempDate(e.target.value)} className="bg-slate-50 border border-slate-300 rounded-md p-3 min-h-[44px] focus:ring-brand-accent focus:border-brand-accent"/>
+                        <input type="time" value={tempTime} onChange={(e) => setTempTime(e.target.value)} className="bg-slate-50 border border-slate-300 rounded-md p-3 min-h-[44px] focus:ring-brand-accent focus:border-brand-accent"/>
                     </div>
+                    <button type="button" onClick={handleSetToNow} className="w-full min-h-[44px] flex items-center justify-center gap-2 bg-slate-100 dark:bg-slate-800 rounded-md p-2 text-sm font-bold text-brand-muted hover:bg-slate-200">
+                        <Clock size={16}/> 设为现在
+                    </button>
                     {quickOptions && quickOptions.length > 0 && (
                         <div>
                             <p className="text-xs text-brand-muted mb-2">快捷选项:</p>

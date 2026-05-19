@@ -275,7 +275,7 @@ const StatsView: React.FC<StatsViewProps> = ({ isDarkMode, logs: rawLogs }) => {
 
                 <div className="flex p-1 bg-brand-primary dark:bg-slate-900/50 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-x-auto scrollbar-hide">
                     {STATS_TABS.map(tab => (
-                        <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex-1 py-2 px-3 text-xs font-bold rounded-xl transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-white dark:bg-slate-800 text-brand-accent shadow-sm' : 'text-brand-muted dark:text-slate-500'}`}>{tab.label}</button>
+                        <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex-1 min-h-[44px] py-2 px-3 text-xs font-bold rounded-xl transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-white dark:bg-slate-800 text-brand-accent shadow-sm' : 'text-brand-muted dark:text-slate-500'}`}>{tab.label}</button>
                     ))}
                 </div>
 

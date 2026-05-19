@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { X, ChevronRight, Plus, Trash2, MapPin, ChevronDown, Activity, Shirt, Zap, ArrowRight, Sparkles, Droplets, Flame, User, GripHorizontal, LayoutGrid, Tag, GripVertical, Star } from 'lucide-react';
+import { X, ChevronRight, Plus, Trash2, MapPin, ChevronDown, ChevronUp, Activity, Shirt, Zap, ArrowRight, Sparkles, Droplets, Flame, User, GripHorizontal, LayoutGrid, Tag, Star } from 'lucide-react';
 import type { SexRecordDetails, SexInteraction, SexAction, SexActionType, PartnerProfile, LogEntry } from '../../domain';
 import { getSexRecommendations, type Recommendation } from '../../utils/recommendationEngine';
 import {
@@ -59,9 +59,6 @@ const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave
   const [isGlobalPanelOpen, setIsGlobalPanelOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   
-  // Drag State
-  const [draggedIdx, setDraggedIdx] = useState<number | null>(null);
-
   // Sorting logic based on history
   const activeInteraction = data.interactions.find(i => i.id === editingInteractionId);
   const activePartnerName = activeInteraction?.partner;
@@ -225,26 +222,14 @@ const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave
       updateActive('chain', activeInteraction.chain.filter(a => a.id !== id));
   };
   
-  const handleDragStart = (e: React.DragEvent, index: number) => {
-      setDraggedIdx(index);
-      e.dataTransfer.effectAllowed = 'move';
-  };
-  
-  const handleDragOver = (e: React.DragEvent, index: number) => {
-      e.preventDefault();
-      if (draggedIdx === null || draggedIdx === index) return;
-      
-      const newChain = [...(activeInteraction?.chain || [])];
-      const draggedItem = newChain[draggedIdx];
-      newChain.splice(draggedIdx, 1);
-      newChain.splice(index, 0, draggedItem);
-      
+  const moveChainItem = (index: number, direction: -1 | 1) => {
+      if (!activeInteraction) return;
+      const chain = activeInteraction.chain;
+      const target = index + direction;
+      if (target < 0 || target >= chain.length) return;
+      const newChain = [...chain];
+      [newChain[index], newChain[target]] = [newChain[target], newChain[index]];
       updateActive('chain', newChain);
-      setDraggedIdx(index);
-  };
-  
-  const handleDragEnd = () => {
-      setDraggedIdx(null);
   };
 
   const toggleArrayItem = (field: 'costumes' | 'toys', value: string) => {
@@ -484,8 +469,8 @@ const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave
                                  {/* Timeline Flow (Vertical) */}
                                  <div className="flex-1 min-h-[120px] bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 relative overflow-hidden">
                                      <div className="absolute left-[22px] top-6 bottom-6 w-0.5 bg-slate-300 dark:bg-slate-700 rounded-full"></div>
-                                     <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 pl-10">动作时间轴 (可拖拽)</div>
-                                     
+                                     <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 pl-10">动作时间轴</div>
+
                                      <div id="timeline-flow" className="space-y-3 overflow-y-auto max-h-[300px] custom-scrollbar pr-2 relative">
                                         {activeInteraction.chain.length === 0 ? (
                                             <div className="flex flex-col items-center justify-center py-10 text-slate-400 text-xs italic">
@@ -494,34 +479,49 @@ const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave
                                             </div>
                                         ) : (
                                             activeInteraction.chain.map((a, i) => (
-                                                <div 
+                                                <div
                                                     key={a.id}
-                                                    draggable
-                                                    onDragStart={(e) => handleDragStart(e, i)}
-                                                    onDragOver={(e) => handleDragOver(e, i)}
-                                                    onDragEnd={handleDragEnd}
-                                                    className={`relative pl-10 group cursor-move transition-transform duration-200 ${draggedIdx === i ? 'opacity-50 scale-95' : 'opacity-100'}`}
+                                                    className="relative pl-10"
                                                 >
                                                     {/* Dot */}
-                                                    <div className="absolute left-[3px] top-1/2 -translate-y-1/2 w-3 h-3 rounded-full border-2 border-slate-50 dark:border-slate-950 bg-slate-400 z-10 group-hover:bg-brand-accent group-hover:scale-125 transition-all"></div>
-                                                    
+                                                    <div className="absolute left-[3px] top-1/2 -translate-y-1/2 w-3 h-3 rounded-full border-2 border-slate-50 dark:border-slate-950 bg-slate-400 z-10"></div>
+
                                                     {/* Card */}
                                                     <div className={`flex items-center justify-between p-3 rounded-xl border bg-white dark:bg-slate-900 shadow-sm ${a.type === 'act' ? 'border-purple-200 dark:border-purple-900' : 'border-blue-200 dark:border-blue-900'}`}>
-                                                        <div className="flex items-center gap-3">
-                                                            <div className="text-slate-400 cursor-grab active:cursor-grabbing"><GripVertical size={16}/></div>
-                                                            <div className="flex flex-col">
-                                                                <span className="font-bold text-sm text-brand-text dark:text-slate-200">{a.name}</span>
-                                                                <span className={`text-[10px] uppercase font-bold ${a.type === 'act' ? 'text-purple-500' : 'text-blue-500'}`}>
-                                                                    {a.type === 'act' ? '行为' : '体位'}
-                                                                </span>
-                                                            </div>
+                                                        <div className="flex flex-col flex-1 min-w-0">
+                                                            <span className="font-bold text-sm text-brand-text dark:text-slate-200 truncate">{a.name}</span>
+                                                            <span className={`text-[10px] uppercase font-bold ${a.type === 'act' ? 'text-purple-500' : 'text-blue-500'}`}>
+                                                                {a.type === 'act' ? '行为' : '体位'}
+                                                            </span>
                                                         </div>
-                                                        <button 
-                                                            onClick={() => removeFromChain(a.id)}
-                                                            className="p-1.5 rounded-full hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors"
-                                                        >
-                                                            <Trash2 size={14}/>
-                                                        </button>
+                                                        <div className="flex items-center gap-1 shrink-0">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => moveChainItem(i, -1)}
+                                                                disabled={i === 0}
+                                                                aria-label="上移"
+                                                                className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-brand-accent disabled:opacity-30 disabled:hover:bg-transparent"
+                                                            >
+                                                                <ChevronUp size={16}/>
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => moveChainItem(i, 1)}
+                                                                disabled={i === activeInteraction.chain.length - 1}
+                                                                aria-label="下移"
+                                                                className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-brand-accent disabled:opacity-30 disabled:hover:bg-transparent"
+                                                            >
+                                                                <ChevronDown size={16}/>
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => removeFromChain(a.id)}
+                                                                aria-label="删除"
+                                                                className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-500"
+                                                            >
+                                                                <Trash2 size={16}/>
+                                                            </button>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             ))

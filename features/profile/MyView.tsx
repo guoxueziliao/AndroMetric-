@@ -327,7 +327,7 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
                                                               issue.severity === 'medium' ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400' : 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
                                                           }`}>{issue.type}</span>
                                                       </div>
-                                                      <div className="flex items-center text-brand-accent opacity-0 group-hover:opacity-100 transition-opacity">
+                                                      <div className="flex items-center text-brand-accent">
                                                           <span className="font-bold mr-1">前往修复</span>
                                                           <ArrowRight size={12}/>
                                                       </div>
@@ -421,9 +421,9 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
                                       <div className="font-bold text-xs truncate text-brand-text dark:text-slate-300">{snap.description}</div>
                                       <div className="text-[10px] text-slate-400">{new Date(snap.timestamp).toLocaleString()} • v{snap.dataVersion}</div>
                                   </div>
-                                  <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                      <button onClick={() => onRestoreSnapshot(snap.id!)} className="p-1.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 rounded-lg" title="还原"><RotateCcw size={14}/></button>
-                                      <button onClick={() => onDeleteSnapshot(snap.id!)} className="p-1.5 bg-red-50 dark:bg-red-900/30 text-red-600 rounded-lg" title="删除"><Trash2 size={14}/></button>
+                                  <div className="flex gap-2">
+                                      <button onClick={() => onRestoreSnapshot(snap.id!)} aria-label="还原快照" className="p-2 bg-blue-50 dark:bg-blue-900/30 text-blue-600 rounded-lg min-w-[44px] min-h-[44px] flex items-center justify-center" title="还原"><RotateCcw size={14}/></button>
+                                      <button onClick={() => onDeleteSnapshot(snap.id!)} aria-label="删除快照" className="p-2 bg-red-50 dark:bg-red-900/30 text-red-600 rounded-lg min-w-[44px] min-h-[44px] flex items-center justify-center" title="删除"><Trash2 size={14}/></button>
                                   </div>
                               </div>
                           ))

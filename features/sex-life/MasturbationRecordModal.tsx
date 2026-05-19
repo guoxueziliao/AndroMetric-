@@ -283,9 +283,9 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                                         )}
                                     </div>
                                 </div>
-                                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button onClick={() => setEditingItem(item)} className="p-1.5 text-slate-400 hover:text-brand-accent"><Edit2 size={14}/></button>
-                                    <button onClick={() => updateData({contentItems: data.contentItems.filter(i => i.id !== item.id)})} className="p-1.5 text-slate-400 hover:text-red-500"><Trash2 size={14}/></button>
+                                <div className="flex gap-1">
+                                    <button onClick={() => setEditingItem(item)} aria-label="编辑素材" className="p-2 text-slate-400 hover:text-brand-accent min-w-[44px] min-h-[44px] flex items-center justify-center"><Edit2 size={14}/></button>
+                                    <button onClick={() => updateData({contentItems: data.contentItems.filter(i => i.id !== item.id)})} aria-label="删除素材" className="p-2 text-slate-400 hover:text-red-500 min-w-[44px] min-h-[44px] flex items-center justify-center"><Trash2 size={14}/></button>
                                 </div>
                             </div>
                         ))}
