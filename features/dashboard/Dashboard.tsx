@@ -188,85 +188,75 @@ const Dashboard: React.FC<DashboardProps> = ({
                 </p>
             </section>
         )}
-        {(ongoingNap || ongoingExercise || ongoingMb || pendingLog || ongoingAlcohol) && (
-            <section className="space-y-3 animate-in fade-in slide-in-from-top-4 duration-500">
-                {pendingLog && (
-                    <div className="bg-gradient-to-r from-emerald-500 to-teal-600 p-4 rounded-3xl shadow-lg text-white flex justify-between items-center transform transition-transform hover:scale-[1.01]">
-                        <div className="flex items-center gap-3">
-                            <div className="p-2 bg-white/20 rounded-full animate-pulse"><Bed size={20}/></div>
-                            <div>
-                                <div className="font-bold text-sm">正在睡觉中...</div>
-                                <div className="text-[10px] opacity-70">{formatTime(pendingLog.sleep?.startTime)} 开始</div>
+        {(() => {
+            const ongoingItems: Array<{
+                kind: 'sleep' | 'nap' | 'mb' | 'exercise' | 'alcohol';
+                Icon: typeof Bed;
+                title: string;
+                startLabel: string | undefined;
+                gradient: string;
+                textColor: string;
+                finishLabel: string;
+                onFinish: () => void;
+            }> = [];
+            if (pendingLog) ongoingItems.push({
+                kind: 'sleep', Icon: Bed, title: '正在睡觉中...',
+                startLabel: formatTime(pendingLog.sleep?.startTime),
+                gradient: 'from-emerald-500 to-teal-600', textColor: 'text-emerald-600',
+                finishLabel: '醒了', onFinish: () => onEdit(pendingLog.date)
+            });
+            if (ongoingNap) ongoingItems.push({
+                kind: 'nap', Icon: Sofa, title: '正在午休中...',
+                startLabel: ongoingNap.startTime,
+                gradient: 'from-orange-400 to-amber-500', textColor: 'text-orange-600',
+                finishLabel: '醒了', onFinish: () => onFinishNap?.(ongoingNap)
+            });
+            if (ongoingMb) ongoingItems.push({
+                kind: 'mb', Icon: Hand, title: '正在施法中...',
+                startLabel: ongoingMb.startTime,
+                gradient: 'from-blue-500 to-indigo-600', textColor: 'text-blue-600',
+                finishLabel: '收工', onFinish: () => onFinishMasturbation?.(ongoingMb)
+            });
+            if (ongoingExercise) ongoingItems.push({
+                kind: 'exercise', Icon: Dumbbell, title: `正在${ongoingExercise.type}中...`,
+                startLabel: ongoingExercise.startTime,
+                gradient: 'from-yellow-400 to-orange-500', textColor: 'text-orange-600',
+                finishLabel: '完成', onFinish: () => onFinishExercise?.(ongoingExercise)
+            });
+            if (ongoingAlcohol) ongoingItems.push({
+                kind: 'alcohol', Icon: Beer, title: '正在酒局中...',
+                startLabel: ongoingAlcohol.time,
+                gradient: 'from-purple-500 to-indigo-600', textColor: 'text-indigo-600',
+                finishLabel: '结算', onFinish: () => onFinishAlcohol?.(ongoingAlcohol)
+            });
+
+            if (ongoingItems.length === 0) return null;
+
+            return (
+                <section className="space-y-3 animate-in fade-in slide-in-from-top-4 duration-500">
+                    {ongoingItems.length > 1 && (
+                        <div className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-2 pt-1">
+                            进行中 ({ongoingItems.length})
+                        </div>
+                    )}
+                    {ongoingItems.map(item => (
+                        <div key={item.kind} className={`bg-gradient-to-r ${item.gradient} p-4 rounded-3xl shadow-lg text-white flex justify-between items-center transform transition-transform hover:scale-[1.01]`}>
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-white/20 rounded-full animate-pulse"><item.Icon size={20}/></div>
+                                <div>
+                                    <div className="font-bold text-sm">{item.title}</div>
+                                    <div className="text-[10px] opacity-70">{item.startLabel} 开始</div>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <button onClick={() => onRequestCancel(item.kind)} aria-label={`取消${item.title}`} className="p-2 text-white/60 hover:text-white transition-colors"><X size={18}/></button>
+                                <button onClick={item.onFinish} className={`px-5 py-2 bg-white ${item.textColor} rounded-full text-xs font-bold shadow-sm active:scale-95 transition-all`}>{item.finishLabel}</button>
                             </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                            <button onClick={() => onRequestCancel('sleep')} className="p-2 text-white/60 hover:text-white transition-colors"><X size={18}/></button>
-                            <button onClick={() => onEdit(pendingLog.date)} className="px-5 py-2 bg-white text-emerald-600 rounded-full text-xs font-bold shadow-sm active:scale-95 transition-all">醒了</button>
-                        </div>
-                    </div>
-                )}
-                {ongoingNap && (
-                    <div className="bg-gradient-to-r from-orange-400 to-amber-500 p-4 rounded-3xl shadow-lg text-white flex justify-between items-center transform transition-transform hover:scale-[1.01]">
-                        <div className="flex items-center gap-3">
-                            <div className="p-2 bg-white/20 rounded-full animate-pulse"><Sofa size={20}/></div>
-                            <div>
-                                <div className="font-bold text-sm">正在午休中...</div>
-                                <div className="text-[10px] opacity-70">{ongoingNap.startTime} 开始</div>
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <button onClick={() => onRequestCancel('nap')} className="p-2 text-white/60 hover:text-white transition-colors"><X size={18}/></button>
-                            <button onClick={() => onFinishNap?.(ongoingNap)} className="px-5 py-2 bg-white text-orange-600 rounded-full text-xs font-bold shadow-sm active:scale-95 transition-all">醒了</button>
-                        </div>
-                    </div>
-                )}
-                {ongoingMb && (
-                    <div className="bg-gradient-to-r from-blue-500 to-indigo-600 p-4 rounded-3xl shadow-lg text-white flex justify-between items-center transform transition-transform hover:scale-[1.01]">
-                        <div className="flex items-center gap-3">
-                            <div className="p-2 bg-white/20 rounded-full animate-pulse"><Hand size={20}/></div>
-                            <div>
-                                <div className="font-bold text-sm">正在施法中...</div>
-                                <div className="text-[10px] opacity-70">{ongoingMb.startTime} 开始</div>
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <button onClick={() => onRequestCancel('mb')} className="p-2 text-white/60 hover:text-white transition-colors"><X size={18}/></button>
-                            <button onClick={() => onFinishMasturbation?.(ongoingMb)} className="px-5 py-2 bg-white text-blue-600 rounded-full text-xs font-bold shadow-sm active:scale-95 transition-all">收工</button>
-                        </div>
-                    </div>
-                )}
-                {ongoingExercise && (
-                    <div className="bg-gradient-to-r from-yellow-400 to-orange-500 p-4 rounded-3xl shadow-lg text-white flex justify-between items-center transform transition-transform hover:scale-[1.01]">
-                        <div className="flex items-center gap-3">
-                            <div className="p-2 bg-white/20 rounded-full animate-pulse"><Dumbbell size={20}/></div>
-                            <div>
-                                <div className="font-bold text-sm">正在{ongoingExercise.type}中...</div>
-                                <div className="text-[10px] opacity-70">{ongoingExercise.startTime} 开始</div>
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <button onClick={() => onRequestCancel('exercise')} className="p-2 text-white/60 hover:text-white transition-colors"><X size={18}/></button>
-                            <button onClick={() => onFinishExercise?.(ongoingExercise)} className="px-5 py-2 bg-white text-orange-600 rounded-full text-xs font-bold shadow-sm active:scale-95 transition-all">完成</button>
-                        </div>
-                    </div>
-                )}
-                {ongoingAlcohol && (
-                    <div className="bg-gradient-to-r from-purple-500 to-indigo-600 p-4 rounded-3xl shadow-lg text-white flex justify-between items-center transform transition-transform hover:scale-[1.01]">
-                        <div className="flex items-center gap-3">
-                            <div className="p-2 bg-white/20 rounded-full animate-pulse"><Beer size={20}/></div>
-                            <div>
-                                <div className="font-bold text-sm">正在酒局中...</div>
-                                <div className="text-[10px] opacity-70">{ongoingAlcohol.time} 开始</div>
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <button onClick={() => onRequestCancel('alcohol')} className="p-2 text-white/60 hover:text-white transition-colors"><X size={18}/></button>
-                            <button onClick={() => onFinishAlcohol?.(ongoingAlcohol)} className="px-5 py-2 bg-white text-indigo-600 rounded-full text-xs font-bold shadow-sm active:scale-95 transition-all">结算</button>
-                        </div>
-                    </div>
-                )}
-            </section>
-        )}
+                    ))}
+                </section>
+            );
+        })()}
 
         {activeView === 'day' && (
             <DashboardDayView

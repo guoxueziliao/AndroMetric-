@@ -313,10 +313,47 @@ const ReproductivePanel: React.FC<ReproductivePanelProps> = ({ date }) => {
           <button type="button" onClick={() => recordCycleEvent({ kind: 'period_end' })} className="rounded-2xl bg-violet-50 px-3 py-3 text-xs font-black text-violet-700 dark:bg-violet-900/20 dark:text-violet-300">月经结束</button>
           <button type="button" onClick={() => recordCycleEvent({ kind: 'ovulation_test', payload: { ovulationTest: 'peak' } })} className="rounded-2xl bg-pink-50 px-3 py-3 text-xs font-black text-pink-700 dark:bg-pink-900/20 dark:text-pink-300">排卵峰值</button>
           <button type="button" onClick={() => recordCycleEvent({ kind: 'ovulation_test', payload: { ovulationTest: 'negative' } })} className="rounded-2xl bg-slate-100 px-3 py-3 text-xs font-black text-slate-700 dark:bg-slate-800 dark:text-slate-200">排卵阴性</button>
-          <button type="button" onClick={() => recordCycleEvent({ kind: 'flow', payload: { flow: 'heavy' } })} className="rounded-2xl bg-rose-50 px-3 py-3 text-xs font-black text-rose-700 dark:bg-rose-900/20 dark:text-rose-300">流量偏多</button>
-          <button type="button" onClick={() => recordCycleEvent({ kind: 'cramp', payload: { crampLevel: 4 } })} className="rounded-2xl bg-orange-50 px-3 py-3 text-xs font-black text-orange-700 dark:bg-orange-900/20 dark:text-orange-300">痛经明显</button>
           <button type="button" onClick={() => recordCycleEvent({ kind: 'spotting' })} className="rounded-2xl bg-amber-50 px-3 py-3 text-xs font-black text-amber-700 dark:bg-amber-900/20 dark:text-amber-300">点滴出血</button>
           <button type="button" onClick={() => recordCycleEvent({ kind: 'intercourse_for_conception', payload: { intercourseProtected: false } })} className="rounded-2xl bg-emerald-50 px-3 py-3 text-xs font-black text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300">备孕同房</button>
+        </div>
+        <div className="mt-3 rounded-2xl bg-orange-50 dark:bg-orange-900/20 p-3 space-y-2">
+          <div className="text-[10px] font-black text-orange-700 dark:text-orange-300 uppercase tracking-widest">痛经程度</div>
+          <div className="grid grid-cols-4 gap-1.5">
+            {([
+              { lvl: 1, label: '1 轻微' },
+              { lvl: 2, label: '2 不适' },
+              { lvl: 3, label: '3 明显' },
+              { lvl: 4, label: '4 剧烈' }
+            ] as const).map(opt => (
+              <button
+                key={opt.lvl}
+                type="button"
+                onClick={() => recordCycleEvent({ kind: 'cramp', payload: { crampLevel: opt.lvl } })}
+                className="min-h-[40px] rounded-xl bg-white dark:bg-slate-800 px-2 py-2 text-[11px] font-bold text-orange-700 dark:text-orange-300 border border-orange-100 dark:border-orange-900/40 active:scale-95"
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="mt-3 rounded-2xl bg-rose-50 dark:bg-rose-900/20 p-3 space-y-2">
+          <div className="text-[10px] font-black text-rose-700 dark:text-rose-300 uppercase tracking-widest">月经流量</div>
+          <div className="grid grid-cols-3 gap-1.5">
+            {([
+              { v: 'light' as const, label: '少量' },
+              { v: 'medium' as const, label: '中量' },
+              { v: 'heavy' as const, label: '偏多' }
+            ]).map(opt => (
+              <button
+                key={opt.v}
+                type="button"
+                onClick={() => recordCycleEvent({ kind: 'flow', payload: { flow: opt.v } })}
+                className="min-h-[40px] rounded-xl bg-white dark:bg-slate-800 px-2 py-2 text-[11px] font-bold text-rose-700 dark:text-rose-300 border border-rose-100 dark:border-rose-900/40 active:scale-95"
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
         </div>
         <div className="mt-4 text-xs font-bold text-slate-500 dark:text-slate-400">
           已记录：月经 {countEventsByKind(partnerCycleEvents, ['period_start', 'period_end'])} 条，排卵 {countEventsByKind(partnerCycleEvents, ['ovulation_test'])} 条
@@ -369,10 +406,44 @@ const ReproductivePanel: React.FC<ReproductivePanelProps> = ({ date }) => {
         <div className="mt-4 grid grid-cols-2 gap-2">
           <button type="button" onClick={() => recordPregnancyEvent({ kind: 'pregnancy_test', payload: { pregnancyTest: 'positive' } })} className="rounded-2xl bg-sky-50 px-3 py-3 text-xs font-black text-sky-700 dark:bg-sky-900/20 dark:text-sky-300">试纸阳性</button>
           <button type="button" onClick={() => recordPregnancyEvent({ kind: 'pregnancy_test', payload: { pregnancyTest: 'negative' } })} className="rounded-2xl bg-slate-100 px-3 py-3 text-xs font-black text-slate-700 dark:bg-slate-800 dark:text-slate-200">试纸阴性</button>
-          <button type="button" onClick={() => recordPregnancyEvent({ kind: 'bleeding', payload: { bleedingLevel: 'heavy' } })} className="rounded-2xl bg-rose-50 px-3 py-3 text-xs font-black text-rose-700 dark:bg-rose-900/20 dark:text-rose-300">大量出血</button>
-          <button type="button" onClick={() => recordPregnancyEvent({ kind: 'pain', payload: { painSeverity: 4, painSide: 'left', withDizziness: true } })} className="rounded-2xl bg-orange-50 px-3 py-3 text-xs font-black text-orange-700 dark:bg-orange-900/20 dark:text-orange-300">单侧腹痛</button>
           <button type="button" onClick={() => recordPregnancyEvent({ kind: 'ultrasound', payload: { intrauterineConfirmed: true, gestationalSacSeen: true } })} className="rounded-2xl bg-emerald-50 px-3 py-3 text-xs font-black text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300">宫内妊娠确认</button>
           <button type="button" onClick={() => recordPregnancyEvent({ kind: 'pregnancy_outcome', payload: { pregnancyOutcome: 'early_loss' } })} className="rounded-2xl bg-slate-100 px-3 py-3 text-xs font-black text-slate-700 dark:bg-slate-800 dark:text-slate-200">记录结局</button>
+        </div>
+        <div className="mt-3 rounded-2xl bg-rose-50 dark:bg-rose-900/20 p-3 space-y-2">
+          <div className="text-[10px] font-black text-rose-700 dark:text-rose-300 uppercase tracking-widest">孕期出血程度</div>
+          <div className="grid grid-cols-3 gap-1.5">
+            {([
+              { v: 'light' as const, label: '少量' },
+              { v: 'moderate' as const, label: '中量' },
+              { v: 'heavy' as const, label: '大量' }
+            ]).map(opt => (
+              <button
+                key={opt.v}
+                type="button"
+                onClick={() => recordPregnancyEvent({ kind: 'bleeding', payload: { bleedingLevel: opt.v } })}
+                className="min-h-[40px] rounded-xl bg-white dark:bg-slate-800 px-2 py-2 text-[11px] font-bold text-rose-700 dark:text-rose-300 border border-rose-100 dark:border-rose-900/40 active:scale-95"
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="mt-3 rounded-2xl bg-orange-50 dark:bg-orange-900/20 p-3 space-y-2">
+          <div className="text-[10px] font-black text-orange-700 dark:text-orange-300 uppercase tracking-widest">腹痛 (位置 × 程度)</div>
+          <div className="grid grid-cols-3 gap-1.5">
+            {(['left', 'bilateral', 'right'] as const).map(side => (
+              ([1, 2, 3, 4] as const).map(lvl => (
+                <button
+                  key={`${side}-${lvl}`}
+                  type="button"
+                  onClick={() => recordPregnancyEvent({ kind: 'pain', payload: { painSeverity: lvl, painSide: side } })}
+                  className="min-h-[36px] rounded-lg bg-white dark:bg-slate-800 px-1 py-1.5 text-[10px] font-bold text-orange-700 dark:text-orange-300 border border-orange-100 dark:border-orange-900/40 active:scale-95"
+                >
+                  {side === 'left' ? '左' : side === 'right' ? '右' : '双侧'} · {lvl}
+                </button>
+              ))
+            )).flat()}
+          </div>
         </div>
         <div className="mt-4 rounded-2xl bg-slate-50 p-4 text-xs font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
           当前状态：

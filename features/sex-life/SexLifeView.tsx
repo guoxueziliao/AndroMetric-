@@ -1,11 +1,13 @@
-import React, { useMemo, useState } from 'react';
+import React, { lazy, Suspense, useMemo, useState } from 'react';
 import type { LogEntry, MasturbationRecordDetails, PartnerProfile, SexRecordDetails, TagEntry, TagType } from '../../domain';
-import { HeartHandshake, Clock, MapPin, Droplets, Hand, Users, ChevronDown, AlertTriangle, Film, Quote, Smartphone } from 'lucide-react';
+import { HeartHandshake, Clock, MapPin, Droplets, Hand, Users, ChevronDown, AlertTriangle, Film, Quote, Smartphone, CalendarHeart } from 'lucide-react';
 import { ErrorBoundary } from '../../shared/ui';
 import PartnerManager from './PartnerManager';
 import SexRecordModal from './SexRecordModal';
 import MasturbationRecordModal from './MasturbationRecordModal';
 import { LABELS } from '../../shared/lib';
+
+const ReproductivePanel = lazy(() => import('../reproductive/ReproductivePanel'));
 
 interface TimelineRecord {
     id: string;
@@ -67,6 +69,9 @@ const SexLifeView: React.FC<SexLifeViewProps> = ({
     const [isMbModalOpen, setIsMbModalOpen] = useState(false);
     const [editingRecord, setEditingRecord] = useState<TimelineRecord | null>(null);
     const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+    const [showReproductive, setShowReproductive] = useState(false);
+
+    const today = useMemo(() => new Date().toISOString().split('T')[0], []);
 
     const timeline = useMemo(() => {
         const allRecords: TimelineRecord[] = [];
@@ -159,7 +164,7 @@ const SexLifeView: React.FC<SexLifeViewProps> = ({
             <div className="space-y-6">
                 <div className="flex justify-between items-center px-1">
                     <h2 className="text-2xl font-black text-brand-text dark:text-slate-100 flex items-center tracking-tight">
-                        <HeartHandshake className="mr-2 text-pink-500" size={28} /> 
+                        <HeartHandshake className="mr-2 text-pink-500" size={28} />
                         性爱日记
                     </h2>
                     <button onClick={() => setIsPartnerManagerOpen(true)} className="flex items-center space-x-1.5 px-4 py-2 bg-white dark:bg-slate-900 text-brand-text dark:text-slate-200 border border-slate-200 dark:border-slate-800 rounded-2xl text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-all shadow-sm active:scale-95">
@@ -167,6 +172,30 @@ const SexLifeView: React.FC<SexLifeViewProps> = ({
                         <span>伴侣档案</span>
                     </button>
                 </div>
+
+                <button
+                    type="button"
+                    onClick={() => setShowReproductive(s => !s)}
+                    className="w-full bg-rose-50 dark:bg-rose-900/10 border border-rose-100 dark:border-rose-900/30 rounded-3xl p-4 flex items-center justify-between hover:bg-rose-100/40 dark:hover:bg-rose-900/20 transition-colors active:scale-[0.99]"
+                >
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-white dark:bg-slate-900 rounded-xl shadow-sm">
+                            <CalendarHeart size={18} className="text-rose-500"/>
+                        </div>
+                        <div className="text-left">
+                            <div className="text-sm font-black text-rose-700 dark:text-rose-300">伴侣周期</div>
+                            <div className="text-[10px] font-bold text-rose-500 dark:text-rose-400 mt-0.5">月经 · 排卵 · 孕期事件追踪</div>
+                        </div>
+                    </div>
+                    <ChevronDown size={18} className={`text-rose-400 transition-transform ${showReproductive ? 'rotate-180' : ''}`}/>
+                </button>
+                {showReproductive && (
+                    <div className="animate-in slide-in-from-top-2 duration-300">
+                        <Suspense fallback={<div className="p-6 text-center text-xs text-slate-400">加载周期面板...</div>}>
+                            <ReproductivePanel date={today}/>
+                        </Suspense>
+                    </div>
+                )}
 
                 <div className="grid grid-cols-2 gap-3">
                     <div className="bg-blue-50/50 dark:bg-blue-900/10 p-4 rounded-3xl border border-blue-100 dark:border-blue-900/30">
