@@ -10,7 +10,8 @@ import { formatTime, calculateSleepDuration, getTodayDateString, LABELS } from '
 import { useDashboardController, type DashboardActions, type SummaryTab } from './model/useDashboardController';
 import { buildTodayTiles, buildWeekSummary, type TodayTileKey } from './model/p1Summary';
 import { hydrateLog } from '../../core/storage';
-import { useData } from '../../contexts/DataContext';
+import { usePartners } from '../../contexts/PartnerContext';
+import { useReproductive } from '../../contexts/ReproductiveContext';
 import { attachMenstrualSummary } from '../reproductive/model/p4Derivations';
 import DashboardDayView from './DashboardDayView';
 
@@ -51,7 +52,8 @@ const Dashboard: React.FC<DashboardProps> = ({
     onFinishNap,
     onFinishAlcohol
   } = actions;
-  const { partners, cycleEvents } = useData();
+  const { partners } = usePartners();
+  const { cycleEvents } = useReproductive();
 
   const logs = useMemo(() => Array.isArray(rawLogs) ? rawLogs : [], [rawLogs]);
   const [activeView, setActiveView] = useState<DashboardView>('day');

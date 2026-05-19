@@ -1,7 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, Baby, CalendarClock, HeartHandshake, ShieldAlert, TestTube2, Trash2 } from 'lucide-react';
 import type { CycleEvent, PartnerProfile, PregnancyEvent, ReproductiveGoal } from '../../domain';
-import { useData } from '../../contexts/DataContext';
+import { useLogQuery } from '../../contexts/LogQueryContext';
+import { usePartners } from '../../contexts/PartnerContext';
+import { useReproductive } from '../../contexts/ReproductiveContext';
 import { useToast } from '../../contexts/ToastContext';
 import {
   buildCycleTimeline,
@@ -45,17 +47,16 @@ const getProfile = (partner: PartnerProfile) => partner.reproductiveProfile || {
 };
 
 const ReproductivePanel: React.FC<ReproductivePanelProps> = ({ date }) => {
+  const { logs } = useLogQuery();
+  const { partners, addOrUpdatePartner } = usePartners();
   const {
-    logs,
-    partners,
     cycleEvents,
     pregnancyEvents,
-    addOrUpdatePartner,
     saveCycleEvent,
     deleteCycleEvent,
     savePregnancyEvent,
     deletePregnancyEvent
-  } = useData();
+  } = useReproductive();
   const { showToast } = useToast();
 
   const trackedPartner = useMemo(() => getTrackedPartner(partners), [partners]);
