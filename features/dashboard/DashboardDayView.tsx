@@ -4,6 +4,7 @@ import { Activity, Calendar, Moon } from 'lucide-react';
 import type { LogEntry, NapRecord } from '../../domain';
 import { analyzeSleep } from '../../shared/lib';
 import TodayGrid from './TodayGrid';
+import TrendsPanel from './TrendsPanel';
 import type { TodayTile, TodayTileKey } from './model/p1Summary';
 
 const GlobalTimeline = lazy(() => import('./GlobalTimeline').then((module) => ({ default: module.GlobalTimeline })));
@@ -36,6 +37,7 @@ const DashboardDayView: React.FC<DashboardDayViewProps> = ({
   <div className="space-y-4">
     <TodayGrid tiles={todayTiles} onSelect={onSelectTile} />
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <TrendsPanel logs={logs} />
       <div className="flex h-60 flex-col overflow-hidden rounded-3xl border border-slate-100 bg-white p-4 shadow-soft transition-colors dark:border-white/5 dark:bg-slate-900/40">
         <div className="mb-3 flex shrink-0 items-center justify-between">
           <div className="flex items-center gap-2">
