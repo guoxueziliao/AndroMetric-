@@ -2,7 +2,7 @@
 import React, { useState, useMemo } from 'react';
 import { History, PenTool, Zap, Wrench, HeartPulse, Hand, Dumbbell, BedDouble, SunMedium, Beer, ShieldAlert, CloudSun, FileText } from 'lucide-react';
 import type { LogEntry, HistoryCategory, HistoryEventType } from '../../domain';
-import { inferHistoryEventType } from '../../shared/lib';
+import { inferHistoryEventType } from '../../domain';
 import { DiffRow } from './DiffRow';
 
 interface LogHistoryProps {

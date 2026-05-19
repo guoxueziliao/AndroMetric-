@@ -4,7 +4,8 @@ import type {
   ScreenTimeRecord,
   SupplementRecord
 } from '../../../domain';
-import { analyzeSleep, calculateDataQuality } from '../../../shared/lib';
+import { calculateDataQuality } from '../../../domain';
+import { analyzeSleep } from '../../../shared/lib';
 
 export type TodayTileKey =
   | 'date'

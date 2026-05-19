@@ -1,7 +1,8 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import type { LogEntry } from '../../domain';
 import { ChevronLeft, ChevronRight, Zap, Dumbbell, Moon, Clock, BatteryWarning, TrendingUp, Minus, Calendar as CalendarIcon, Hand, Heart, Beer, ShieldAlert, Film, BrainCircuit } from 'lucide-react';
-import { analyzeSleep, calculateDataQuality } from '../../shared/lib';
+import { analyzeSleep } from '../../shared/lib';
+import { calculateDataQuality } from '../../domain';
 import { type HeatmapMetric, formatMinutes, getHeatmapMetricValue } from './model/p1Summary';
 
 interface ActivityCalendarProps {

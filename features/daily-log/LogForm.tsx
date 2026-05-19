@@ -15,7 +15,8 @@ import type { LogEntry, PartnerProfile, AlcoholRecord, TagEntry, TagType } from 
 import MorningSection from './MorningSection';
 import SleepSection from './SleepSection';
 import { FaceSelector, MOOD_FACES, STRESS_FACES } from '../../shared/ui';
-import { calculateDataQuality, formatDateFriendly } from '../../shared/lib';
+import { formatDateFriendly } from '../../shared/lib';
+import { calculateDataQuality } from '../../domain';
 import { hydrateLog } from '../../core/storage';
 
 interface LogFormData {
