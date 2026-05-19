@@ -172,7 +172,7 @@ export const GlobalTimeline: React.FC<GlobalTimelineProps> = ({ log, allLogs }) 
                     time: nextSleepTime,
                     type: 'sleep_end',
                     title: '今晚入睡',
-                    desc: nextLog.sleep.environment?.location === 'home' ? '休息中...' : nextLog.sleep.environment?.location,
+                    desc: nextLog.sleep.environment?.location === 'home' ? '休息中...' : (nextLog.sleep.environment?.location ?? undefined),
                     icon: Bed,
                     color: 'text-indigo-600 bg-indigo-100 dark:bg-indigo-900/30',
                     timestamp: 5000 // 确保在当天所有活动之后

@@ -8,7 +8,7 @@ export type MorningWoodRetention = 'instant' | 'brief' | 'normal' | 'extended';
 export interface MorningRecord {
     id: string;
     timestamp: number;
-    wokeWithErection: boolean;
+    wokeWithErection: boolean | null;
     hardness?: HardnessLevel | null;
     retention?: MorningWoodRetention | null;
     wokenByErection: boolean;
@@ -26,24 +26,24 @@ export interface NapRecord {
     endTime?: string;
     ongoing: boolean;
     duration: number;
-    quality: number;
+    quality: number | null;
     hardness?: HardnessLevel | null;
     hasDream?: boolean;
     dreamTypes?: string[];
     notes?: string;
-    location?: SleepLocation;
-    temperature?: SleepTemperature;
+    location?: SleepLocation | null;
+    temperature?: SleepTemperature | null;
     naturalAwakening?: boolean;
-    attire?: SleepAttire;
+    attire?: SleepAttire | null;
     withPartner?: boolean;
-    preSleepState?: PreSleepState;
+    preSleepState?: PreSleepState | null;
 }
 
 export interface SleepRecord {
     id: string;
     startTime?: string | null;
     endTime?: string | null;
-    quality: number;
+    quality: number | null;
     attire?: SleepAttire | null;
     naturalAwakening: boolean;
     nocturnalEmission: boolean;
@@ -53,9 +53,9 @@ export interface SleepRecord {
     hasDream: boolean;
     dreamTypes: string[];
     environment: {
-        location: SleepLocation;
-        temperature: SleepTemperature;
-    };
+        location: SleepLocation | null;
+        temperature: SleepTemperature | null;
+    } | null;
 }
 
 export type IllnessType = 'cold' | 'fever' | 'headache' | 'other';

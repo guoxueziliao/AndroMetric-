@@ -54,10 +54,11 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
 
     const [data, setData] = useState<MasturbationRecordDetails>({
         id: '', startTime: '', duration: 15, status: 'completed', tools: ['手'], contentItems: [],
-        edging: 'none', edgingCount: 0, lubricant: '无润滑', useCondom: false, ejaculation: true, orgasmIntensity: 3,
-        satisfactionLevel: 3,
-        mood: 'neutral', stressLevel: 3, energyLevel: 3, interrupted: false, interruptionReasons: [], notes: '',
-        volumeForceLevel: 3, postMood: '平静/贤者', fatigue: '无明显疲劳', location: '卧室/床上'
+        edging: 'none', edgingCount: 0, lubricant: '无润滑', useCondom: false, ejaculation: true,
+        orgasmIntensity: null,
+        satisfactionLevel: null,
+        mood: 'neutral', stressLevel: null, energyLevel: null, interrupted: false, interruptionReasons: [], notes: '',
+        volumeForceLevel: undefined, postMood: undefined, fatigue: undefined, location: undefined
     });
 
     const [endTime, setEndTime] = useState('');
@@ -121,18 +122,12 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                 setData({
                     ...initialData,
                     contentItems: initialData.contentItems || [],
-                    volumeForceLevel: initialData.volumeForceLevel || (initialData.ejaculation ? 3 : undefined),
-                    satisfactionLevel: initialData.satisfactionLevel || (initialData.ejaculation ? 3 : 1),
-                    postMood: initialData.postMood || '平静/贤者',
-                    fatigue: initialData.fatigue || '无明显疲劳',
-                    orgasmIntensity: initialData.orgasmIntensity ?? 3,
                     edgingCount: initialData.edgingCount ?? 0,
                     lubricant: initialData.lubricant || '无润滑',
                     useCondom: initialData.useCondom || false,
                     interrupted: initialData.interrupted || false,
                     interruptionReasons: initialData.interruptionReasons || [],
-                    duration: calculatedDuration,
-                    location: initialData.location || '卧室/床上'
+                    duration: calculatedDuration
                 });
                 setEndTime(calculatedEndTime);
             } else {
@@ -140,10 +135,11 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                     id: Date.now().toString(),
                     startTime: nowStr,
                     duration: 0, status: 'completed', tools: ['手'], contentItems: [],
-                    edging: 'none', edgingCount: 0, lubricant: '无润滑', useCondom: false, ejaculation: true, orgasmIntensity: 3,
-                    satisfactionLevel: 3,
-                    mood: 'neutral', stressLevel: 3, energyLevel: 3, interrupted: false, interruptionReasons: [], notes: '',
-                    volumeForceLevel: 3, postMood: '平静/贤者', fatigue: '无明显疲劳', location: '卧室/床上'
+                    edging: 'none', edgingCount: 0, lubricant: '无润滑', useCondom: false, ejaculation: true,
+                    orgasmIntensity: null,
+                    satisfactionLevel: null,
+                    mood: 'neutral', stressLevel: null, energyLevel: null, interrupted: false, interruptionReasons: [], notes: '',
+                    volumeForceLevel: undefined, postMood: undefined, fatigue: undefined, location: undefined
                 });
                 setEndTime(nowStr);
             }
@@ -439,7 +435,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                         <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">最终结局</span>
                         <div className="flex p-1 bg-slate-200 dark:bg-slate-800 rounded-2xl">
                             <button
-                                onClick={() => updateData({ejaculation: true, volumeForceLevel: data.volumeForceLevel || 3})}
+                                onClick={() => updateData({ejaculation: true})}
                                 className={`flex-1 py-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 ${data.ejaculation ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500'}`}
                             >
                                 <Droplets size={14} className={data.ejaculation ? 'animate-pulse' : ''}/> 已射精
@@ -457,7 +453,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                         <div className="space-y-4 animate-in slide-in-from-top-2">
                             <div className="flex justify-between items-center px-1">
                                 <label className="text-[10px] font-black text-blue-500 dark:text-blue-400 uppercase tracking-widest flex items-center gap-1.5"><Droplets size={12}/> 射精强度 (量/力)</label>
-                                <span className="text-[10px] font-bold text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">Lv.{data.volumeForceLevel}</span>
+                                <span className="text-[10px] font-bold text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">{data.volumeForceLevel ? `Lv.${data.volumeForceLevel}` : '未评'}</span>
                             </div>
                             <div className="grid grid-cols-5 gap-2">
                                 {FORCE_LEVELS.map(f => {
@@ -475,10 +471,10 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                     )}
                     <div className="space-y-4 pt-2 border-t border-slate-100 dark:border-slate-800 pt-4">
                         <div className="flex justify-between text-[10px] font-black text-slate-400 uppercase px-1">
-                            <span>爽度评分 ({data.orgasmIntensity})</span>
-                            <span className={`${orgasmLabelInfo.color} flex items-center gap-1 transition-colors duration-300`}>{orgasmLabelInfo.label}</span>
+                            <span>爽度评分 ({data.orgasmIntensity ?? '未设'})</span>
+                            <span className={`${orgasmLabelInfo.color} flex items-center gap-1 transition-colors duration-300`}>{data.orgasmIntensity ? orgasmLabelInfo.label : '点击下方滑块评分'}</span>
                         </div>
-                        <input type="range" min="1" max="5" step="1" value={data.orgasmIntensity} onChange={e => updateData({orgasmIntensity: parseInt(e.target.value)})} className="w-full h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full appearance-none accent-pink-500" />
+                        <input type="range" min="1" max="5" step="1" value={data.orgasmIntensity ?? 3} onChange={e => updateData({orgasmIntensity: parseInt(e.target.value)})} className={`w-full h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full appearance-none accent-pink-500 ${data.orgasmIntensity === null ? 'opacity-40' : ''}`} />
                     </div>
                 </div>
 
@@ -524,12 +520,18 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                             ))}
                         </div>
                         <div className="flex flex-col items-center animate-in fade-in duration-300">
-                            <span className={`text-sm font-black ${SATISFACTION_LEVELS[(data.satisfactionLevel || 1) - 1].color.replace('bg-', 'text-')}`}>
-                                {SATISFACTION_LEVELS[(data.satisfactionLevel || 1) - 1].label}
-                            </span>
-                            <span className="text-[10px] font-bold text-slate-400 mt-0.5">
-                                {SATISFACTION_LEVELS[(data.satisfactionLevel || 1) - 1].desc}
-                            </span>
+                            {data.satisfactionLevel ? (
+                                <>
+                                    <span className={`text-sm font-black ${SATISFACTION_LEVELS[data.satisfactionLevel - 1].color.replace('bg-', 'text-')}`}>
+                                        {SATISFACTION_LEVELS[data.satisfactionLevel - 1].label}
+                                    </span>
+                                    <span className="text-[10px] font-bold text-slate-400 mt-0.5">
+                                        {SATISFACTION_LEVELS[data.satisfactionLevel - 1].desc}
+                                    </span>
+                                </>
+                            ) : (
+                                <span className="text-xs font-bold text-slate-400">点击上方色块评分</span>
+                            )}
                         </div>
                     </div>
                 </div>

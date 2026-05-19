@@ -256,7 +256,7 @@ export const flattenLogsToEvents = (logs: LogEntry[], options: EventAdapterOptio
                     ts,
                     {
                         duration: m.duration,
-                        intensity: m.orgasmIntensity,
+                        intensity: m.orgasmIntensity ?? undefined,
                         score: masturbationScore.totalScore ?? undefined,
                         qualityScore: masturbationScore.qualityScore ?? undefined,
                         satisfactionScore: masturbationScore.satisfactionScore ?? undefined,

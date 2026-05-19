@@ -52,9 +52,12 @@ export const hydrateLog = (raw: any): LogEntry => {
         })) : [],
 
         masturbation: Array.isArray(raw.masturbation) ? raw.masturbation.map((m: any) => ({
-            ...m, 
+            ...m,
             status: m.status || 'completed',
-            satisfactionLevel: m.satisfactionLevel ?? (m.ejaculation ? 3 : 1), // Default based on ejaculation
+            satisfactionLevel: m.satisfactionLevel ?? null,
+            orgasmIntensity: m.orgasmIntensity ?? null,
+            stressLevel: m.stressLevel ?? null,
+            energyLevel: m.energyLevel ?? null,
             contentItems: Array.isArray(m.contentItems) ? m.contentItems.map((c: any) => ({
                 ...c,
                 xpTags: Array.isArray(c.xpTags) ? c.xpTags : []
@@ -141,7 +144,7 @@ export const hydrateLog = (raw: any): LogEntry => {
         id: raw.sleep?.id || `sr_${log.date}_${Date.now()}`,
         startTime: raw.sleep?.startTime ?? raw.sleepDateTime ?? null,
         endTime: raw.sleep?.endTime ?? raw.wakeUpDateTime ?? null,
-        quality: raw.sleep?.quality ?? raw.sleepQuality ?? 3,
+        quality: raw.sleep?.quality ?? raw.sleepQuality ?? null,
         attire: raw.sleep?.attire ?? raw.sleepAttire ?? null,
         naturalAwakening: raw.sleep?.naturalAwakening ?? raw.naturalAwakening ?? false,
         nocturnalEmission: raw.sleep?.nocturnalEmission ?? raw.nocturnalEmission ?? false,
@@ -150,7 +153,7 @@ export const hydrateLog = (raw: any): LogEntry => {
         naps: naps,
         hasDream: raw.sleep?.hasDream ?? false,
         dreamTypes: Array.isArray(raw.sleep?.dreamTypes) ? raw.sleep.dreamTypes : [],
-        environment: raw.sleep?.environment || { location: 'home', temperature: 'comfortable' }
+        environment: raw.sleep?.environment ?? null
     };
     log.sleep = { ...defaultSleep, ...(raw.sleep || {}) };
 

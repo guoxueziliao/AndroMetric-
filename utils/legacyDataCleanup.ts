@@ -136,6 +136,48 @@ const scrubIncompleteMasturbationDefaults = (log: LogEntry) => {
     return changed;
 };
 
+/**
+ * V46: Flag (do not delete) legacy masturbation records that look like
+ * they inherited the old hydrate inference: satisfactionLevel === 3 when ejaculation=true,
+ * orgasmIntensity === 3 when ejaculation=true. Only applies to records that look like
+ * quick-starts (no contentItems, no notes, short duration), where the user didn't
+ * actually open the modal and set values.
+ */
+const flagLegacyInferredMasturbationDefaults = (log: LogEntry, now: number): boolean => {
+    if (!Array.isArray(log.masturbation) || log.masturbation.length === 0) return false;
+    if (!log.dataQuality) return false;
+    let changed = false;
+
+    log.masturbation.forEach(record => {
+        const looksLikeQuickStart = record.ejaculation === true
+            && (!Array.isArray(record.contentItems) || record.contentItems.length === 0)
+            && !hasValue(record.notes)
+            && (record.duration ?? 0) <= 5
+            && !record.interrupted;
+
+        if (!looksLikeQuickStart) return;
+
+        const downgrade = (path: string) => {
+            const current = log.dataQuality?.fields?.[path];
+            if (!current || current.state !== 'recorded') return;
+            log.dataQuality!.fields[path] = {
+                state: 'defaulted',
+                source: 'migration',
+                confidence: 0,
+                updatedAt: now
+            };
+            changed = true;
+        };
+
+        if (record.satisfactionLevel === 3) downgrade(`masturbation.${record.id}.satisfactionLevel`);
+        if (record.orgasmIntensity === 3) downgrade(`masturbation.${record.id}.orgasmIntensity`);
+        if (record.stressLevel === 3) downgrade(`masturbation.${record.id}.stressLevel`);
+        if (record.energyLevel === 3) downgrade(`masturbation.${record.id}.energyLevel`);
+    });
+
+    return changed;
+};
+
 export const scrubHistoricalDefaultContamination = (
     log: LogEntry,
     source: DataQualitySource = 'repair'
@@ -177,4 +219,18 @@ export const scrubHistoricalDefaultContamination = (
     }
 
     return { log: nextLog, changed, notes };
+};
+
+/**
+ * V46 light migration helper: flag legacy masturbation defaults without deleting.
+ * Returns the log with possibly-mutated dataQuality.fields entries.
+ * Safe to call after dataQuality is fully built.
+ */
+export const flagLegacyMasturbationInference = (
+    log: LogEntry,
+    now: number = Date.now()
+): { log: LogEntry; changed: boolean } => {
+    const nextLog = cloneLog(log);
+    const changed = flagLegacyInferredMasturbationDefaults(nextLog, now);
+    return { log: nextLog, changed };
 };

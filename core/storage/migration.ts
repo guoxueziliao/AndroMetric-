@@ -1,9 +1,9 @@
 import { PartnerProfile, ReproductiveProfile, StoredData, LogEntry, SexRecordDetails, MasturbationRecordDetails, SexInteraction, SexAction, ExerciseRecord, MorningRecord, SleepRecord, ContentItem } from '../../domain';
 import { buildDataQualityForLog } from '../../utils/dataQuality';
-import { scrubHistoricalDefaultContamination } from '../../utils/legacyDataCleanup';
+import { scrubHistoricalDefaultContamination, flagLegacyMasturbationInference } from '../../utils/legacyDataCleanup';
 
 // The latest version of our data structure.
-export const LATEST_VERSION = 45;
+export const LATEST_VERSION = 46;
 
 /**
  * MIGRATION UTILITIES
@@ -391,6 +391,13 @@ function migrateV44toV45(logs: any[]): LogEntry[] {
   }));
 }
 
+// V46 (0.0.8 light): downgrade historical masturbation satisfaction/orgasm inference to 'defaulted'
+// without deleting values. Pre-0.0.8 hydrateLog inferred satisfactionLevel from ejaculation;
+// records that look like quick-starts and carry sat/orgasm/stress/energy === 3 are likely lies.
+function migrateV45toV46(logs: any[]): LogEntry[] {
+  return logs.map((log: LogEntry) => flagLegacyMasturbationInference(log).log);
+}
+
 /**
  * REPAIR UTILS
  */
@@ -438,7 +445,8 @@ const MIGRATION_REGISTRY: Record<number, (logs: any[]) => any[]> = {
     42: migrateV41toV42,
     43: migrateV42toV43,
     44: migrateV43toV44,
-    45: migrateV44toV45
+    45: migrateV44toV45,
+    46: migrateV45toV46
 };
 
 export function runPartnerMigrations(partners: PartnerProfile[], currentVersion: number): PartnerProfile[] {

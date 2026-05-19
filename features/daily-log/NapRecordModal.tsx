@@ -50,8 +50,8 @@ const NapRecordModal: React.FC<NapRecordModalProps> = ({ isOpen, onClose, data, 
     const { onSave } = actions;
 
     const [record, setRecord] = useState<NapRecord>({
-        id: '', startTime: '', ongoing: false, duration: 30, quality: 3, hardness: null, hasDream: false, dreamTypes: [], notes: '',
-        location: 'home', temperature: 'comfortable', naturalAwakening: true, attire: 'light', withPartner: false, preSleepState: 'calm'
+        id: '', startTime: '', ongoing: false, duration: 30, quality: null, hardness: null, hasDream: false, dreamTypes: [], notes: '',
+        location: null, temperature: null, naturalAwakening: false, attire: null, withPartner: false, preSleepState: null
     });
     const [endTime, setEndTime] = useState('');
 
@@ -63,16 +63,16 @@ const NapRecordModal: React.FC<NapRecordModalProps> = ({ isOpen, onClose, data, 
             if (initialData) {
                 const updatedRecord = {
                     ...initialData,
-                    quality: initialData.quality || 3,
-                    hardness: initialData.hardness || null,
-                    hasDream: initialData.hasDream || false,
-                    dreamTypes: initialData.dreamTypes || [],
-                    location: initialData.location || 'home',
-                    temperature: initialData.temperature || 'comfortable',
-                    naturalAwakening: initialData.naturalAwakening ?? true,
-                    attire: initialData.attire || 'light',
-                    withPartner: initialData.withPartner || false,
-                    preSleepState: initialData.preSleepState || 'calm'
+                    quality: initialData.quality ?? null,
+                    hardness: initialData.hardness ?? null,
+                    hasDream: initialData.hasDream ?? false,
+                    dreamTypes: initialData.dreamTypes ?? [],
+                    location: initialData.location ?? null,
+                    temperature: initialData.temperature ?? null,
+                    naturalAwakening: initialData.naturalAwakening ?? false,
+                    attire: initialData.attire ?? null,
+                    withPartner: initialData.withPartner ?? false,
+                    preSleepState: initialData.preSleepState ?? null
                 };
 
                 let initialEndTime = '';
@@ -102,8 +102,8 @@ const NapRecordModal: React.FC<NapRecordModalProps> = ({ isOpen, onClose, data, 
             } else {
                 const endD = new Date(now); endD.setMinutes(now.getMinutes() + 30);
                 setRecord({
-                    id: Date.now().toString(), startTime: nowStr, ongoing: false, duration: 30, quality: 3, hardness: null, hasDream: false, dreamTypes: [], notes: '',
-                    location: 'home', temperature: 'comfortable', naturalAwakening: true, attire: 'light', withPartner: false, preSleepState: 'calm'
+                    id: Date.now().toString(), startTime: nowStr, ongoing: false, duration: 30, quality: null, hardness: null, hasDream: false, dreamTypes: [], notes: '',
+                    location: null, temperature: null, naturalAwakening: false, attire: null, withPartner: false, preSleepState: null
                 });
                 setEndTime(endD.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false }));
             }
@@ -186,13 +186,13 @@ const NapRecordModal: React.FC<NapRecordModalProps> = ({ isOpen, onClose, data, 
                 {/* 2. 质量滑块 */}
                 <div className="space-y-4">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                        <Star size={12}/> 午休质量反馈
+                        <Star size={12}/> 午休质量反馈 {record.quality === null && <span className="text-slate-300 normal-case tracking-normal">[未评分,移动滑块设置]</span>}
                     </label>
-                    <RangeSlider 
-                        leftLabel="非常糟糕 (1)" rightLabel="神清气爽 (5)" 
+                    <RangeSlider
+                        leftLabel="非常糟糕 (1)" rightLabel="神清气爽 (5)"
                         min={1} max={5} colorClass="accent-orange-500"
-                        value={record.quality || 3} 
-                        onChange={(v: number) => setRecord({...record, quality: v})} 
+                        value={record.quality ?? 3}
+                        onChange={(v: number) => setRecord({...record, quality: v})}
                     />
                 </div>
 
@@ -216,12 +216,12 @@ const NapRecordModal: React.FC<NapRecordModalProps> = ({ isOpen, onClose, data, 
                 {/* 4. 环境选项 */}
                 <div className="grid grid-cols-1 gap-6">
                     <div className="space-y-3">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><Shirt size={12}/> 穿着方式</label>
-                        <IconToggleButton options={ATTIRE_OPTS} selected={record.attire || 'light'} onSelect={v => setRecord({...record, attire: v})} renderIcon={() => <Shirt size={18}/>}/>
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><Shirt size={12}/> 穿着方式 {!record.attire && <span className="text-slate-300 normal-case tracking-normal">[未选]</span>}</label>
+                        <IconToggleButton options={ATTIRE_OPTS} selected={record.attire} onSelect={v => setRecord({...record, attire: v})} renderIcon={() => <Shirt size={18}/>}/>
                     </div>
                     <div className="space-y-3">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><BrainCircuit size={12}/> 睡前状态</label>
-                        <IconToggleButton options={PRE_SLEEP_OPTS} selected={record.preSleepState || 'calm'} onSelect={v => setRecord({...record, preSleepState: v})} renderIcon={() => <Sparkles size={18}/>}/>
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><BrainCircuit size={12}/> 睡前状态 {!record.preSleepState && <span className="text-slate-300 normal-case tracking-normal">[未选]</span>}</label>
+                        <IconToggleButton options={PRE_SLEEP_OPTS} selected={record.preSleepState} onSelect={v => setRecord({...record, preSleepState: v})} renderIcon={() => <Sparkles size={18}/>}/>
                     </div>
                 </div>
 
@@ -229,13 +229,15 @@ const NapRecordModal: React.FC<NapRecordModalProps> = ({ isOpen, onClose, data, 
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><MapPin size={12}/> 地点</label>
-                        <select value={record.location} onChange={e => setRecord({...record, location: e.target.value as any})} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-xs font-bold outline-none appearance-none">
+                        <select value={record.location ?? ''} onChange={e => setRecord({...record, location: (e.target.value || null) as any})} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-xs font-bold outline-none appearance-none">
+                            <option value="">未选择</option>
                             {LOCATIONS.map(loc => <option key={loc.value} value={loc.value}>{loc.label}</option>)}
                         </select>
                     </div>
                     <div className="space-y-2">
                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><Thermometer size={12}/> 温感</label>
-                        <select value={record.temperature} onChange={e => setRecord({...record, temperature: e.target.value as any})} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-xs font-bold outline-none appearance-none">
+                        <select value={record.temperature ?? ''} onChange={e => setRecord({...record, temperature: (e.target.value || null) as any})} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-xs font-bold outline-none appearance-none">
+                            <option value="">未选择</option>
                             <option value="cold">冷</option>
                             <option value="comfortable">舒适</option>
                             <option value="hot">热</option>

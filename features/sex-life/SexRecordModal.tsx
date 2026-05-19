@@ -165,15 +165,14 @@ const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave
 
   const addInteraction = () => {
       const newId = Date.now().toString();
-      const last = data.interactions[data.interactions.length - 1];
       setData(prev => ({
           ...prev,
           interactions: [...prev.interactions, {
               id: newId,
-              partner: last?.partner || '',
-              location: last?.location || '',
-              role: last?.role || '',
-              costumes: last?.costumes || [],
+              partner: '',
+              location: '',
+              role: '',
+              costumes: [],
               toys: [],
               chain: []
           }]

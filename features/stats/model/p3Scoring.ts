@@ -229,7 +229,7 @@ export const scoreMasturbationRecord = (log: LogEntry, record: MasturbationRecor
     {
       weight: 20,
       usable: isFieldUsable(log, `masturbation.${record.id}.orgasmIntensity`) && typeof record.orgasmIntensity === 'number',
-      contribution: (record.orgasmIntensity / 5) * 20
+      contribution: ((record.orgasmIntensity ?? 0) / 5) * 20
     },
     {
       weight: 15,

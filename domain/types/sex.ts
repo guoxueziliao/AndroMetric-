@@ -30,11 +30,11 @@ export interface MasturbationRecordDetails {
     lubricant: string;
     useCondom: boolean;
     ejaculation: boolean;
-    orgasmIntensity: number;
-    satisfactionLevel?: number; // 1-5: 生理满足感/泄压程度
+    orgasmIntensity: number | null;
+    satisfactionLevel?: number | null; // 1-5: 生理满足感/泄压程度
     mood: 'happy' | 'neutral' | 'sad' | 'excited' | 'anxious' | 'angry';
-    stressLevel: number;
-    energyLevel: number;
+    stressLevel: number | null;
+    energyLevel: number | null;
     interrupted: boolean;
     interruptionReasons: string[];
     notes: string;
