@@ -4,9 +4,12 @@ import type { MetricId } from './StatsEngine';
 import { analyzeSleep } from '../../../shared/lib';
 import { isFieldUsable } from '../../../utils/dataQuality';
 
+export type InsightCategory = 'correlation' | 'anomaly' | 'pattern' | 'preference';
+
 export interface Insight {
     id: string;
     type: 'positive' | 'negative' | 'neutral' | 'warning';
+    category: InsightCategory;
     title: string;
     description: string;
     score?: number; // For sorting relevance
@@ -69,6 +72,7 @@ const generateCorrelations = (logs: LogEntry[]): Insight[] => {
                 insights.push({
                     id: `${factorId}_impact`,
                     type,
+                    category: 'correlation',
                     title,
                     description: desc,
                     score,
@@ -115,6 +119,7 @@ const detectAnomalies = (logs: LogEntry[]): Insight[] => {
                 insights.push({
                     id: `drop_${curr.date}`,
                     type: 'negative',
+                    category: 'anomaly',
                     title: '硬度骤降警报',
                     description: `${curr.date} 硬度下降 ${prev.morning.hardness - curr.morning.hardness} 级。可能原因：${causes.join(' + ')}。`,
                     score: 8,
@@ -162,6 +167,7 @@ const analyzeMasturbationLoop = (logs: LogEntry[]): Insight[] => {
              insights.push({
                 id: 'edging_boost',
                 type: 'positive',
+                category: 'pattern',
                 title: '边缘控制效应',
                 description: `边缘 (Edging) 后，次日硬度提升 ${(edgingAvg - globalAvg).toFixed(1)} 级。`,
                 score: 11,
@@ -205,10 +211,11 @@ const analyzeXPChange = (logs: LogEntry[]): Insight[] => {
     Object.keys(recentCounts).forEach(tag => {
         const recentShare = recentCounts[tag] / recentTotal;
         const allShare = (allCounts[tag] || 0) / allTotal;
-        if (recentShare > allShare + 0.2) { 
+        if (recentShare > allShare + 0.2) {
              insights.push({
                 id: `xp_surge_${tag}`,
                 type: 'neutral',
+                category: 'preference',
                 title: '性癖偏好转移',
                 description: `最近对「${tag}」兴趣激增 ${Math.round((recentShare - allShare)*100)}%。`,
                 score: 7,

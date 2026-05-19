@@ -5,7 +5,7 @@ import { flattenLogsToEvents } from './model/eventAdapter';
 import { calculateXpStats } from './model/xpStats';
 import type { DimensionStat } from './model/xpStats';
 import { generateInsights } from './model/insights';
-import type { Insight } from './model/insights';
+import type { Insight, InsightCategory } from './model/insights';
 import type { LogEntry } from '../../domain';
 import { Activity, Zap, TrendingUp, BrainCircuit, Radar, CheckCircle, ArrowDown, AlertTriangle, Info, Tag, Sparkles } from 'lucide-react';
 import { ErrorBoundary } from '../../shared/ui';
@@ -372,7 +372,30 @@ const StatsView: React.FC<StatsViewProps> = ({ isDarkMode, logs: rawLogs }) => {
                         </ChartCard>
                         <div className="space-y-3">
                             <h3 className="text-sm font-bold text-brand-muted uppercase tracking-wider flex items-center px-1"><BrainCircuit size={16} className="mr-2"/> 智能分析</h3>
-                            {insights.slice(0, 3).map(insight => <InsightCard key={insight.id} insight={insight} />)}
+                            {(() => {
+                                const groups: Array<{ key: InsightCategory; label: string }> = [
+                                    { key: 'correlation', label: '相关性' },
+                                    { key: 'anomaly', label: '异常事件' },
+                                    { key: 'pattern', label: '行为模式' },
+                                    { key: 'preference', label: '偏好趋势' }
+                                ];
+                                const sectionsRendered = groups
+                                    .map(g => ({ ...g, items: insights.filter(i => i.category === g.key).slice(0, 3) }))
+                                    .filter(g => g.items.length > 0);
+                                if (sectionsRendered.length === 0) {
+                                    return (
+                                        <div className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 px-4 py-6 text-center text-xs font-medium text-slate-400">
+                                            样本不足或无显著发现，继续记录以解锁洞察。
+                                        </div>
+                                    );
+                                }
+                                return sectionsRendered.map(group => (
+                                    <div key={group.key} className="space-y-2">
+                                        <div className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider px-1">{group.label}</div>
+                                        {group.items.map(insight => <InsightCard key={insight.id} insight={insight} />)}
+                                    </div>
+                                ));
+                            })()}
                         </div>
                     </div>
                 )}
