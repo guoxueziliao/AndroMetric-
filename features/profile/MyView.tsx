@@ -90,6 +90,8 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
     healthReport,
     isRepairing,
     importStatus,
+    importPreview,
+    importStrategy,
     snapshotFeedback,
     canUseFileSystem,
     onRunHealthCheck,
@@ -101,6 +103,11 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
     onRestoreSnapshot,
     onDeleteSnapshot,
     onFileChange,
+    onCancelImportPreview,
+    onConfirmImport,
+    onChangeImportStrategy,
+    backupMetadata,
+    backupStatus,
     onClearAllData,
     onExportAndClear
   } = useProfileMaintenance({
@@ -188,6 +195,42 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
       setIsSettingsOpen(false);
       onNavigateToLog(date);
   };
+
+  const formatImportDate = (value?: string) => {
+    if (!value) return '未知';
+    const time = new Date(value).getTime();
+    if (Number.isNaN(time)) return value;
+    return new Date(time).toLocaleString('zh-CN');
+  };
+
+  const importPreviewRows = importPreview ? [
+    ['日志', importPreview.counts.logs],
+    ['伴侣', importPreview.counts.partners],
+    ['标签', importPreview.counts.tags],
+    ['周期事件', importPreview.counts.cycleEvents],
+    ['怀孕事件', importPreview.counts.pregnancyEvents]
+  ] as const : [];
+
+  const formatRelativeDays = (timestamp: number): string => {
+    const days = Math.floor((Date.now() - timestamp) / (1000 * 60 * 60 * 24));
+    if (days <= 0) return '今天';
+    if (days === 1) return '昨天';
+    if (days < 30) return `${days} 天前`;
+    if (days < 365) return `${Math.floor(days / 30)} 月前`;
+    return `${Math.floor(days / 365)} 年前`;
+  };
+
+  const ecosystemHints: string[] = (() => {
+    const hints: string[] = [];
+    const exportDays = settings.lastExportAt
+      ? (Date.now() - settings.lastExportAt) / (1000 * 60 * 60 * 24)
+      : Infinity;
+    if (exportDays > 30) hints.push('已超过 30 天未导出，建议手动备份一次。');
+    if (snapshots.length === 0) hints.push('暂无内部快照，重要操作前可创建一个保护点。');
+    if (backupStatus.needsReauthorization) hints.push('自动备份目录授权失效，请到下方重新授权。');
+    if (healthReport && healthReport.score < 80) hints.push(`数据健康分 ${healthReport.score}，建议运行一键修复。`);
+    return hints;
+  })();
 
   return (
     <>
@@ -472,6 +515,49 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
                   </div>
               </section>
 
+              {/* Data Ecosystem Overview */}
+              <section>
+                  <h3 className="text-xs font-bold text-brand-muted uppercase tracking-wider mb-3 flex items-center">
+                      <ShieldCheck size={14} className="mr-1.5 text-emerald-500"/> 数据生态
+                  </h3>
+                  <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl p-4 shadow-sm space-y-3">
+                      <div className="grid grid-cols-2 gap-2 text-center">
+                          <div className="rounded-xl bg-slate-50 dark:bg-slate-950 p-2 border border-slate-200 dark:border-slate-800">
+                              <div className="text-[10px] text-slate-400 font-bold">最近导出</div>
+                              <div className="text-xs font-black text-brand-text dark:text-slate-200">
+                                  {settings.lastExportAt ? formatRelativeDays(settings.lastExportAt) : '从未'}
+                              </div>
+                          </div>
+                          <div className="rounded-xl bg-slate-50 dark:bg-slate-950 p-2 border border-slate-200 dark:border-slate-800">
+                              <div className="text-[10px] text-slate-400 font-bold">内部快照</div>
+                              <div className="text-xs font-black text-brand-text dark:text-slate-200">{snapshots.length} 个</div>
+                          </div>
+                          <div className="rounded-xl bg-slate-50 dark:bg-slate-950 p-2 border border-slate-200 dark:border-slate-800">
+                              <div className="text-[10px] text-slate-400 font-bold">自动备份</div>
+                              <div className="text-xs font-black text-brand-text dark:text-slate-200">
+                                  {backupStatus.isReady && backupMetadata?.lastBackupAt
+                                      ? formatRelativeDays(backupMetadata.lastBackupAt)
+                                      : backupStatus.needsReauthorization ? '需重授权' : '未启用'}
+                              </div>
+                          </div>
+                          <div className="rounded-xl bg-slate-50 dark:bg-slate-950 p-2 border border-slate-200 dark:border-slate-800">
+                              <div className="text-[10px] text-slate-400 font-bold">数据版本</div>
+                              <div className="text-xs font-black text-brand-text dark:text-slate-200">v{dbMeta.dataVersion}</div>
+                          </div>
+                      </div>
+                      {ecosystemHints.length > 0 && (
+                          <ul className="space-y-1 text-[11px] text-slate-500 dark:text-slate-400">
+                              {ecosystemHints.map((hint) => (
+                                  <li key={hint} className="flex items-start gap-1.5">
+                                      <span className="mt-1 inline-block h-1 w-1 rounded-full bg-brand-accent"/>
+                                      <span>{hint}</span>
+                                  </li>
+                              ))}
+                          </ul>
+                      )}
+                  </div>
+              </section>
+
 {/* Auto Backup Settings */}
       <section>
         <Suspense fallback={null}>
@@ -561,7 +647,7 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
                           {importStatus === 'importing' ? <RotateCcw className="animate-spin text-brand-accent mb-2" size={24}/> : <FolderInput size={24} className="text-brand-accent mb-2"/>}
                           <span className="text-xs font-bold text-brand-text dark:text-slate-300">{importStatus === 'success' ? '导入成功' : '导入 JSON'}</span>
                       </button>
-                      <input type="file" ref={fileInputRef} onChange={onFileChange} accept=".json" className="hidden" />
+                      <input type="file" ref={fileInputRef} onChange={onFileChange} accept=".json,.hdenc.json" className="hidden" />
                       
                       {canUseFileSystem && (
                           <button onClick={onFileSystemBackup} className="col-span-2 flex items-center justify-center p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700">
@@ -620,6 +706,64 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
         currentPinSalt={settings.appLock?.pinSalt}
         onComplete={handlePinComplete}
       />
+
+      <Modal
+        isOpen={!!importPreview}
+        onClose={onCancelImportPreview}
+        title="导入预览"
+        footer={
+          <div className="flex gap-3 w-full">
+            <button onClick={onCancelImportPreview} className="flex-1 py-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-sm font-bold">取消</button>
+            <button onClick={onConfirmImport} disabled={importStatus === 'importing'} className="flex-1 py-3 rounded-xl bg-brand-accent text-white text-sm font-bold disabled:opacity-50">
+              {importStatus === 'importing' ? '导入中...' : '确认导入'}
+            </button>
+          </div>
+        }
+      >
+        {importPreview && (
+          <div className="space-y-4 py-2">
+            <div className="rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-4 space-y-2 text-xs text-slate-500 dark:text-slate-400">
+              <div className="flex justify-between"><span>文件类型</span><span className="font-bold text-brand-text dark:text-slate-200">{importPreview.encrypted ? '加密备份' : '普通 JSON'}</span></div>
+              <div className="flex justify-between"><span>导出时间</span><span className="font-bold text-brand-text dark:text-slate-200">{formatImportDate(importPreview.exportDate)}</span></div>
+              <div className="flex justify-between"><span>应用版本</span><span className="font-bold text-brand-text dark:text-slate-200">{importPreview.appVersion || '未知'}</span></div>
+              <div className="flex justify-between"><span>数据版本</span><span className="font-bold text-brand-text dark:text-slate-200">{importPreview.dataVersion ?? '未知'}</span></div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              {importPreviewRows.map(([label, value]) => (
+                <div key={label} className="rounded-xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-3 text-center">
+                  <div className="text-[10px] font-bold text-slate-400">{label}</div>
+                  <div className="text-lg font-black text-brand-text dark:text-slate-200">{value}</div>
+                </div>
+              ))}
+            </div>
+
+            <div className="rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-3 space-y-3">
+              <div className="flex items-center justify-between text-xs font-bold text-slate-500 dark:text-slate-400">
+                <span>包含设置</span>
+                <span className={importPreview.includesSettings ? 'text-green-500' : 'text-slate-400'}>{importPreview.includesSettings ? '是' : '否'}</span>
+              </div>
+              <div className="flex items-center justify-between text-xs font-bold text-slate-500 dark:text-slate-400">
+                <span>包含用户名</span>
+                <span className={importPreview.includesUserName ? 'text-green-500' : 'text-slate-400'}>{importPreview.includesUserName ? '是' : '否'}</span>
+              </div>
+              <label className="block text-xs font-bold text-slate-500 dark:text-slate-400">
+                导入策略
+                <select
+                  value={importStrategy}
+                  onChange={(e) => onChangeImportStrategy(e.target.value as typeof importStrategy)}
+                  className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-brand-text outline-none dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200"
+                >
+                  <option value="merge">合并：保留现有数据，覆盖同 ID/同日期记录</option>
+                  <option value="overwrite">覆盖：清空当前数据后导入</option>
+                </select>
+              </label>
+            </div>
+
+            <p className="text-xs leading-relaxed text-slate-400 dark:text-slate-500">确认后会先创建一个“导入前自动快照”，再执行导入。</p>
+          </div>
+        )}
+      </Modal>
 
       {/* Clear Data Confirmation */}
       <Modal isOpen={isClearDataModalOpen} onClose={() => { setIsClearDataModalOpen(false); setClearDataConfirmText(''); }} title="⚠️ 危险操作" footer={

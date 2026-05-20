@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useMemo, useState, type ChangeEvent } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import type { AppSettings, LogEntry, Snapshot } from '../../../domain';
-import { StorageService, db } from '../../../core/storage';
+import { StorageService, db, backupService } from '../../../core/storage';
 import { useToast } from '../../../contexts/ToastContext';
-import { decryptSnapshotJson, encryptSnapshotJson, getErrorMessage, isEncryptedSnapshotJson } from '../../../shared/lib';
+import { decryptSnapshotJson, encryptSnapshotJson, getErrorMessage } from '../../../shared/lib';
+import type { ImportPreview, ImportStrategy } from './importPreview';
+import { buildImportPreview, getImportFileKind } from './importPreview';
 import type { DataHealthReport } from '../../../utils/dataHealthCheck';
 
 interface UseProfileMaintenanceParams {
@@ -80,11 +82,15 @@ export const useProfileMaintenance = ({
     };
   }) || { dataVersion: 0, dataFixVersion: 0 };
 
-  const [importStatus, setImportStatus] = useState<'idle' | 'importing' | 'success' | 'error'>('idle');
+  const [importStatus, setImportStatus] = useState<'idle' | 'importing' | 'preview' | 'success' | 'error'>('idle');
+  const [importPreview, setImportPreview] = useState<ImportPreview | null>(null);
+  const [importStrategy, setImportStrategy] = useState<ImportStrategy>('merge');
   const [snapshotFeedback, setSnapshotFeedback] = useState('');
   const [healthReport, setHealthReport] = useState<DataHealthReport | null>(null);
   const [isRepairing, setIsRepairing] = useState(false);
   const [isMobile, setIsMobile] = useState(getIsMobileDevice);
+  const backupMetadata = useLiveQuery(() => backupService.getMetadata()) || null;
+  const backupStatus = useMemo(() => backupService.getStatus(), [backupMetadata]);
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(getIsMobileDevice());
@@ -278,16 +284,20 @@ export const useProfileMaintenance = ({
       if (typeof text !== 'string') return;
 
       try {
-        const rawText = isEncryptedSnapshotJson(text)
-          ? await decryptSnapshotJson(text, window.prompt('请输入备份密码') || '')
-          : text;
-        await StorageService.restoreSnapshot(rawText, 'merge');
-        setImportStatus('success');
-        showToast('导入成功', 'success');
-        setTimeout(() => setImportStatus('idle'), 2000);
+        const encrypted = getImportFileKind(text) === 'encrypted';
+        const passphrase = encrypted ? window.prompt('请输入备份密码') : null;
+        if (encrypted && !passphrase) {
+          setImportStatus('idle');
+          return;
+        }
+        const rawText = encrypted ? await decryptSnapshotJson(text, passphrase!) : text;
+        const preview = buildImportPreview(rawText, encrypted);
+        setImportPreview(preview);
+        setImportStrategy('merge');
+        setImportStatus('preview');
       } catch (error) {
         setImportStatus('error');
-        showToast(getErrorMessage(error, '导入失败'), 'error');
+        showToast(getErrorMessage(error, '导入预览失败'), 'error');
         setTimeout(() => setImportStatus('idle'), 3000);
       }
     };
@@ -295,14 +305,42 @@ export const useProfileMaintenance = ({
     event.target.value = '';
   }, [showToast]);
 
+  const handleCancelImportPreview = useCallback(() => {
+    setImportPreview(null);
+    setImportStatus('idle');
+    setImportStrategy('merge');
+  }, []);
+
+  const handleConfirmImport = useCallback(async () => {
+    if (!importPreview) return;
+
+    setImportStatus('importing');
+    try {
+      await StorageService.snapshots.create(`导入前自动快照 - ${new Date().toLocaleString('zh-CN')}`);
+      await StorageService.restoreSnapshot(importPreview.rawText, importStrategy);
+      setImportPreview(null);
+      setImportStatus('success');
+      showToast('导入成功，已创建导入前安全快照', 'success');
+      setTimeout(() => setImportStatus('idle'), 2000);
+    } catch (error) {
+      setImportStatus('error');
+      showToast(getErrorMessage(error, '导入失败'), 'error');
+      setTimeout(() => setImportStatus('preview'), 3000);
+    }
+  }, [importPreview, importStrategy, showToast]);
+
   return {
     snapshots,
     dbMeta,
     healthReport,
     isRepairing,
     importStatus,
+    importPreview,
+    importStrategy,
     snapshotFeedback,
     canUseFileSystem,
+    backupMetadata,
+    backupStatus,
     onRunHealthCheck: runHealthCheck,
     onRepairData: handleRepairData,
     onExportClick: handleExportClick,
@@ -312,6 +350,9 @@ export const useProfileMaintenance = ({
     onRestoreSnapshot: handleRestoreSnapshot,
     onDeleteSnapshot: handleDeleteSnapshot,
     onFileChange: handleFileChange,
+    onCancelImportPreview: handleCancelImportPreview,
+    onConfirmImport: handleConfirmImport,
+    onChangeImportStrategy: setImportStrategy,
     onClearAllData: handleClearAllData,
     onExportAndClear: handleExportAndClear
   };
