@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Download, X, Smartphone, RefreshCw, WifiOff } from 'lucide-react';
+import { Download, X, Smartphone, RefreshCw, WifiOff, Share, PlusSquare } from 'lucide-react';
 import { usePWA } from '../../hooks/usePWA';
 import { Modal } from '../../shared/ui';
 
 export const PWAInstallPrompt: React.FC = () => {
-  const { isInstalled, canInstall, isOffline, installApp, updateAvailable, updateApp } = usePWA();
+  const { isInstalled, canInstall, isOffline, installApp, updateAvailable, updateApp, isIOS, isSafari } = usePWA();
   const [showInstallPrompt, setShowInstallPrompt] = useState(false);
   const [showUpdatePrompt, setShowUpdatePrompt] = useState(false);
   const [dismissed, setDismissed] = useState(false);
@@ -21,13 +21,13 @@ export const PWAInstallPrompt: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (canInstall && !isInstalled && !dismissed) {
+    if ((canInstall || (isIOS && isSafari)) && !isInstalled && !dismissed) {
       const timer = setTimeout(() => {
         setShowInstallPrompt(true);
       }, 3000);
       return () => clearTimeout(timer);
     }
-  }, [canInstall, isInstalled, dismissed]);
+  }, [canInstall, isInstalled, dismissed, isIOS, isSafari]);
 
   useEffect(() => {
     if (updateAvailable) {
@@ -111,8 +111,17 @@ export const PWAInstallPrompt: React.FC = () => {
                 </button>
               </div>
               <p className="text-sm text-slate-600 dark:text-slate-400 mb-3">
-                将&ldquo;硬度日记&rdquo;安装到主屏幕，随时随地快速记录，享受原生应用体验。
+                {isIOS && isSafari
+                  ? 'iOS 需要通过 Safari 分享菜单添加到主屏幕，安装后可全屏启动并离线使用。'
+                  : '将&ldquo;硬度日记&rdquo;安装到主屏幕，随时随地快速记录，享受原生应用体验。'}
               </p>
+              {isIOS && isSafari ? (
+                <div className="mb-3 space-y-2 rounded-xl bg-slate-50 p-3 text-xs font-bold text-slate-600 dark:bg-slate-900 dark:text-slate-300">
+                  <div className="flex items-center gap-2"><span className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-white text-[10px]">1</span>点击 Safari 底部 <Share size={14} className="text-blue-500" /> 分享按钮</div>
+                  <div className="flex items-center gap-2"><span className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-white text-[10px]">2</span>选择 <PlusSquare size={14} className="text-blue-500" /> 添加到主屏幕</div>
+                  <div className="flex items-center gap-2"><span className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-white text-[10px]">3</span>确认名称后点“添加”</div>
+                </div>
+              ) : null}
               <div className="flex gap-2">
                 <button
                   onClick={handleDismiss}
@@ -120,13 +129,15 @@ export const PWAInstallPrompt: React.FC = () => {
                 >
                   暂不安装
                 </button>
-                <button
-                  onClick={handleInstall}
-                  className="flex-1 py-2.5 bg-blue-500 text-white rounded-xl text-sm font-bold flex items-center justify-center gap-2"
-                >
-                  <Download size={18} />
-                  安装
-                </button>
+                {!isIOS || !isSafari ? (
+                  <button
+                    onClick={handleInstall}
+                    className="flex-1 py-2.5 bg-blue-500 text-white rounded-xl text-sm font-bold flex items-center justify-center gap-2"
+                  >
+                    <Download size={18} />
+                    安装
+                  </button>
+                ) : null}
               </div>
             </div>
           </div>

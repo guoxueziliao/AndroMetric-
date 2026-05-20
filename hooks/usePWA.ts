@@ -10,9 +10,14 @@ interface PWAState {
   updateAvailable: boolean;
   isAndroid: boolean;
   isIOS: boolean;
+  isSafari: boolean;
 }
 
 export function usePWA() {
+  const userAgent = navigator.userAgent;
+  const isIOS = /iPad|iPhone|iPod/.test(userAgent);
+  const isSafari = /^((?!chrome|android|crios|fxios|edgios).)*safari/i.test(userAgent);
+
   const [state, setState] = useState<PWAState>({
     isInstalled: false,
     isStandalone: false,
@@ -21,8 +26,9 @@ export function usePWA() {
     installPrompt: null,
     swVersion: '',
     updateAvailable: false,
-    isAndroid: /Android/i.test(navigator.userAgent),
-    isIOS: /iPad|iPhone|iPod/.test(navigator.userAgent)
+    isAndroid: /Android/i.test(userAgent),
+    isIOS,
+    isSafari
   });
 
   useEffect(() => {
