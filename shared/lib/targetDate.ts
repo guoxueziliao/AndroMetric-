@@ -1,3 +1,5 @@
+import { PHYSIOLOGICAL_DAY_CUTOFF_HOUR, SLEEP_RECORD_NEXT_DAY_HOUR } from '../../domain';
+
 /**
  * 生理日规则的时间→日期映射。
  *
@@ -14,7 +16,7 @@ const formatDate = (date: Date): string => {
 
 export const getActivityTargetDate = (now: Date = new Date()): string => {
   const target = new Date(now);
-  if (target.getHours() < 3) {
+  if (target.getHours() < PHYSIOLOGICAL_DAY_CUTOFF_HOUR) {
     target.setDate(target.getDate() - 1);
   }
   return formatDate(target);
@@ -22,7 +24,7 @@ export const getActivityTargetDate = (now: Date = new Date()): string => {
 
 export const getSleepTargetDate = (now: Date = new Date()): string => {
   const target = new Date(now);
-  if (target.getHours() >= 12) {
+  if (target.getHours() >= SLEEP_RECORD_NEXT_DAY_HOUR) {
     target.setDate(target.getDate() + 1);
   }
   return formatDate(target);

@@ -1,0 +1,2 @@
+export const PHYSIOLOGICAL_DAY_CUTOFF_HOUR = 3;
+export const SLEEP_RECORD_NEXT_DAY_HOUR = 12;

@@ -483,7 +483,7 @@ npm run build
 
 基础测试覆盖：
 
-- 生理日规则：凌晨 03:00 前活动归前一日。
+- 生理日规则：凌晨 03:00 前活动归前一日；睡眠开始时间 ≥ 12:00 归次日睡眠记录。阈值常量位于 `domain/rules/physiologicalDay.ts`，映射实现位于 `shared/lib/targetDate.ts`。
 - `hydrateLog` 默认结构稳定。
 - 快捷记录 use case 正确追加记录和 `changeHistory`。
 - 标签校验核心规则不变。
