@@ -1,5 +1,5 @@
 import { db } from './db';
-import { CycleEvent, LogEntry, PartnerProfile, PregnancyEvent, Snapshot, TagEntry, DataQualitySource } from '../../domain';
+import { CycleEvent, LogEntry, PartnerProfile, PregnancyEvent, Snapshot, TagEntry, DataQualitySource, type AppSettings, type SnapshotData, type ExportSnapshot } from '../../domain';
 import { validateLogEntry } from '../../utils/validators';
 import { runMigrations, runPartnerMigrations, LATEST_VERSION } from './migration';
 import { pluginManager } from '../../services/PluginManager';
@@ -9,6 +9,37 @@ import { checkDataHealth, DataHealthReport } from '../../utils/dataHealthCheck';
 import { repairLogUsingHistory } from '../../utils/historyRepair';
 import { backupService } from '../../services/BackupService';
 import { prepareLogForSave } from '../../utils/dataQuality';
+import { APP_VERSION } from '../../app/appConfig';
+
+const readSnapshotLocalState = (): Pick<ExportSnapshot, 'settings' | 'userName'> => {
+    let settings: AppSettings | null = null;
+    let userName: string | null = null;
+
+    try {
+        const settingsStr = localStorage.getItem('appSettings');
+        settings = settingsStr ? JSON.parse(settingsStr) as AppSettings : null;
+        userName = localStorage.getItem('userName');
+    } catch (e) {
+        Logger.error('StorageService:ReadSnapshotLocalStateFailed', e);
+    }
+
+    return { settings, userName };
+};
+
+const buildSnapshotData = (
+    logs: LogEntry[],
+    partners: PartnerProfile[],
+    tags: TagEntry[],
+    cycleEvents: CycleEvent[],
+    pregnancyEvents: PregnancyEvent[]
+): SnapshotData => ({
+    version: LATEST_VERSION,
+    logs,
+    partners,
+    tags,
+    cycleEvents,
+    pregnancyEvents
+});
 
 export const StorageService = {
     async init() {
@@ -54,33 +85,16 @@ export const StorageService = {
         const tags = await db.tags.toArray();
         const cycleEvents = await db.cycle_events.toArray();
         const pregnancyEvents = await db.pregnancy_events.toArray();
+        const localState = readSnapshotLocalState();
 
-        // 抓取 LocalStorage 中的非数据库设置
-        let appSettings = null;
-        let userName = null;
-        try {
-            const settingsStr = localStorage.getItem('appSettings');
-            appSettings = settingsStr ? JSON.parse(settingsStr) : null;
-            userName = localStorage.getItem('userName');
-        } catch (e) {
-            console.error('Failed to capture localStorage for snapshot');
-        }
-
-        const snapshot = {
+        const snapshot: ExportSnapshot = {
             appName: '硬度日记',
-            appVersion: '0.0.6',
+            appVersion: APP_VERSION,
             dataVersion: LATEST_VERSION,
             exportDate: new Date().toISOString(),
-            settings: appSettings,
-            userName: userName,
-            data: {
-                version: LATEST_VERSION,
-                logs: logs,
-                partners: partners,
-                tags: tags,
-                cycleEvents,
-                pregnancyEvents
-            }
+            settings: localState.settings,
+            userName: localState.userName,
+            data: buildSnapshotData(logs, partners, tags, cycleEvents, pregnancyEvents)
         };
         return JSON.stringify(snapshot, null, 2);
     },
@@ -209,30 +223,25 @@ export const StorageService = {
             const cycleEvents = await db.cycle_events.toArray();
             const pregnancyEvents = await db.pregnancy_events.toArray();
             const meta = await db.meta.get('dataVersion');
-
-            // 内部快照也记录设置信息，确保回滚时设置也一致
-            let appSettings = null;
-            try {
-                const s = localStorage.getItem('appSettings');
-                appSettings = s ? JSON.parse(s) : null;
-            } catch(e){}
+            const dataVersion = meta ? meta.value : LATEST_VERSION;
+            const localState = readSnapshotLocalState();
 
             const snapshot: Snapshot = {
                 timestamp: Date.now(),
-                dataVersion: meta ? meta.value : LATEST_VERSION,
-                appVersion: '0.0.6',
+                dataVersion,
+                appVersion: APP_VERSION,
                 description,
-                data: { logs, partners, tags, cycleEvents, pregnancyEvents } as any // 快照结构扩展
+                settings: localState.settings,
+                userName: localState.userName,
+                data: buildSnapshotData(logs, partners, tags, cycleEvents, pregnancyEvents)
             };
-            // 将设置信息存入快照对象的冗余字段
-            (snapshot as any).settings = appSettings;
 
             await db.snapshots.add(snapshot);
         },
         restore: async (id: number) => {
             const snapshot = await db.snapshots.get(id);
             if (!snapshot) throw new Error('Snapshot not found');
-            const data = snapshot.data as any;
+            const data = snapshot.data;
             const normalizedPartners = runPartnerMigrations(data.partners || [], snapshot.dataVersion || LATEST_VERSION);
 
             await db.transaction('rw', [db.logs, db.partners, db.tags, db.meta, db.cycle_events, db.pregnancy_events], async () => {
@@ -250,9 +259,12 @@ export const StorageService = {
             });
 
             // 内部快照还原也写回 LocalStorage
-            if ((snapshot as any).settings) {
-                localStorage.setItem('appSettings', JSON.stringify((snapshot as any).settings));
+            if (snapshot.settings) {
+                localStorage.setItem('appSettings', JSON.stringify(snapshot.settings));
                 setTimeout(() => window.location.reload(), 500);
+            }
+            if (snapshot.userName) {
+                localStorage.setItem('userName', snapshot.userName);
             }
 
             pluginManager.notifyDataChange(data.logs);

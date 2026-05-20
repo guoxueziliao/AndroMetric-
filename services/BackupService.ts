@@ -1,4 +1,6 @@
-import { CycleEvent, LogEntry, PregnancyEvent } from '../types';
+import { CycleEvent, LogEntry, PregnancyEvent, type ExportSnapshot, type PartnerProfile, type TagEntry } from '../types';
+import { APP_VERSION } from '../app/appConfig';
+import { LATEST_VERSION } from '../core/storage/migration';
 import { fileSystemService, FileSystemService } from './FileSystemService';
 import { Logger } from './LoggerService';
 import {
@@ -135,19 +137,15 @@ export class BackupService {
     this.needsReauthorization = false;
   }
 
-  async autoBackup(
+  private async writeBackup(
     logs: LogEntry[],
-    partners?: unknown[],
-    tags?: unknown[],
+    partners?: PartnerProfile[],
+    tags?: TagEntry[],
     cycleEvents?: CycleEvent[],
     pregnancyEvents?: PregnancyEvent[]
   ): Promise<boolean> {
-    if (!this.settings.autoBackupEnabled) {
-      return false;
-    }
-
     if (!this.fileSystem.isReady()) {
-      Logger.warn('BackupService:AutoBackupSkipped', { reason: 'File system not ready' });
+      Logger.warn('BackupService:BackupSkipped', { reason: 'File system not ready' });
       return false;
     }
 
@@ -164,19 +162,33 @@ export class BackupService {
           Logger.warn('BackupService:CleanupFailed', err);
         });
 
-        Logger.info('BackupService:AutoBackupComplete', { filename });
+        Logger.info('BackupService:BackupComplete', { filename });
       }
       return success;
     } catch (err) {
-      Logger.error('BackupService:AutoBackupFailed', err);
+      Logger.error('BackupService:BackupFailed', err);
       return false;
     }
   }
 
+  async autoBackup(
+    logs: LogEntry[],
+    partners?: PartnerProfile[],
+    tags?: TagEntry[],
+    cycleEvents?: CycleEvent[],
+    pregnancyEvents?: PregnancyEvent[]
+  ): Promise<boolean> {
+    if (!this.settings.autoBackupEnabled) {
+      return false;
+    }
+
+    return this.writeBackup(logs, partners, tags, cycleEvents, pregnancyEvents);
+  }
+
   async manualBackup(
     logs: LogEntry[],
-    partners?: unknown[],
-    tags?: unknown[],
+    partners?: PartnerProfile[],
+    tags?: TagEntry[],
     cycleEvents?: CycleEvent[],
     pregnancyEvents?: PregnancyEvent[]
   ): Promise<boolean> {
@@ -187,7 +199,7 @@ export class BackupService {
       }
     }
 
-    return this.autoBackup(logs, partners, tags, cycleEvents, pregnancyEvents);
+    return this.writeBackup(logs, partners, tags, cycleEvents, pregnancyEvents);
   }
 
   generateBackupFilename(): string {
@@ -200,16 +212,20 @@ export class BackupService {
 
   private prepareBackupData(
     logs: LogEntry[],
-    partners?: unknown[],
-    tags?: unknown[],
+    partners?: PartnerProfile[],
+    tags?: TagEntry[],
     cycleEvents?: CycleEvent[],
     pregnancyEvents?: PregnancyEvent[]
-  ): unknown {
+  ): ExportSnapshot {
     return {
       appName: '硬度日记',
-      appVersion: '0.0.7',
+      appVersion: APP_VERSION,
+      dataVersion: LATEST_VERSION,
       exportDate: new Date().toISOString(),
+      settings: null,
+      userName: null,
       data: {
+        version: LATEST_VERSION,
         logs,
         partners: partners || [],
         tags: tags || [],
@@ -281,6 +297,14 @@ export class BackupService {
       date: new Date(f.lastModified),
       size: f.size
     }));
+  }
+
+  async readBackup(filename: string): Promise<string | null> {
+    if (!this.fileSystem.isReady()) {
+      return null;
+    }
+
+    return this.fileSystem.readBackupFile(filename);
   }
 }
 
