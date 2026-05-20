@@ -95,6 +95,7 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
     onRunHealthCheck,
     onRepairData,
     onExportClick,
+    onEncryptedExportClick,
     onFileSystemBackup,
     onCreateSnapshot,
     onRestoreSnapshot,
@@ -551,6 +552,10 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
                       <button onClick={onExportClick} className="flex flex-col items-center justify-center p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl hover:border-brand-accent transition-colors">
                           <Share2 size={24} className="text-brand-accent mb-2"/>
                           <span className="text-xs font-bold text-brand-text dark:text-slate-300">导出 JSON</span>
+                      </button>
+                      <button onClick={onEncryptedExportClick} className="flex flex-col items-center justify-center p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl hover:border-brand-accent transition-colors">
+                          <ShieldCheck size={24} className="text-emerald-500 mb-2"/>
+                          <span className="text-xs font-bold text-brand-text dark:text-slate-300">加密导出</span>
                       </button>
                       <button onClick={handleImportClick} className="flex flex-col items-center justify-center p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl hover:border-brand-accent transition-colors">
                           {importStatus === 'importing' ? <RotateCcw className="animate-spin text-brand-accent mb-2" size={24}/> : <FolderInput size={24} className="text-brand-accent mb-2"/>}

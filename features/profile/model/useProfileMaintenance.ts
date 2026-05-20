@@ -3,7 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import type { AppSettings, LogEntry, Snapshot } from '../../../domain';
 import { StorageService, db } from '../../../core/storage';
 import { useToast } from '../../../contexts/ToastContext';
-import { getErrorMessage } from '../../../shared/lib';
+import { decryptSnapshotJson, encryptSnapshotJson, getErrorMessage, isEncryptedSnapshotJson } from '../../../shared/lib';
 import type { DataHealthReport } from '../../../utils/dataHealthCheck';
 
 interface UseProfileMaintenanceParams {
@@ -137,20 +137,25 @@ export const useProfileMaintenance = ({
     }
   }, [runHealthCheck, settings.version, showToast]);
 
-  const exportData = useCallback(async (exportType: 'export' | 'backup') => {
+  const exportData = useCallback(async (exportType: 'export' | 'backup', encrypted = false) => {
     if (logs.length === 0) {
       showToast('没有数据可导出', 'error');
-      return;
+      return false;
     }
 
+    const passphrase = encrypted ? window.prompt('请输入导出密码。导入时必须使用同一个密码。') : null;
+    if (encrypted && !passphrase) return false;
+
     const timestamp = createTimestamp();
+    const extension = encrypted ? 'hdenc.json' : 'json';
     const filename = exportType === 'backup'
-      ? `硬度日记-应用内备份-${timestamp}.json`
-      : `硬度日记-数据导出-${logs[0]?.date || 'data'}.json`;
+      ? `硬度日记-应用内备份-${timestamp}.${extension}`
+      : `硬度日记-数据导出-${logs[0]?.date || 'data'}.${extension}`;
 
     try {
       const jsonStr = await StorageService.createSnapshot();
-      const blob = new Blob([jsonStr], { type: 'application/json' });
+      const content = encrypted ? await encryptSnapshotJson(jsonStr, passphrase!) : jsonStr;
+      const blob = new Blob([content], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.download = filename;
@@ -160,9 +165,11 @@ export const useProfileMaintenance = ({
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
 
-      showToast(exportType === 'backup' ? '备份文件已生成' : '导出成功', 'success');
+      showToast(encrypted ? '加密备份文件已生成' : exportType === 'backup' ? '备份文件已生成' : '导出成功', 'success');
+      return true;
     } catch (error) {
       showToast(`导出失败: ${getErrorMessage(error, '未知错误')}`, 'error');
+      return false;
     }
   }, [logs, showToast]);
 
@@ -185,9 +192,14 @@ export const useProfileMaintenance = ({
     }, 500);
   }, [exportData, handleClearAllData]);
 
-  const handleExportClick = useCallback(() => {
-    exportData('export');
-    onUpdateSettings({ ...settings, lastExportAt: Date.now() });
+  const handleExportClick = useCallback(async () => {
+    const success = await exportData('export');
+    if (success) onUpdateSettings({ ...settings, lastExportAt: Date.now() });
+  }, [exportData, onUpdateSettings, settings]);
+
+  const handleEncryptedExportClick = useCallback(async () => {
+    const success = await exportData('export', true);
+    if (success) onUpdateSettings({ ...settings, lastExportAt: Date.now() });
   }, [exportData, onUpdateSettings, settings]);
 
   const handleFileSystemBackup = useCallback(async () => {
@@ -266,7 +278,10 @@ export const useProfileMaintenance = ({
       if (typeof text !== 'string') return;
 
       try {
-        await StorageService.restoreSnapshot(text, 'merge');
+        const rawText = isEncryptedSnapshotJson(text)
+          ? await decryptSnapshotJson(text, window.prompt('请输入备份密码') || '')
+          : text;
+        await StorageService.restoreSnapshot(rawText, 'merge');
         setImportStatus('success');
         showToast('导入成功', 'success');
         setTimeout(() => setImportStatus('idle'), 2000);
@@ -291,6 +306,7 @@ export const useProfileMaintenance = ({
     onRunHealthCheck: runHealthCheck,
     onRepairData: handleRepairData,
     onExportClick: handleExportClick,
+    onEncryptedExportClick: handleEncryptedExportClick,
     onFileSystemBackup: handleFileSystemBackup,
     onCreateSnapshot: handleCreateSnapshot,
     onRestoreSnapshot: handleRestoreSnapshot,

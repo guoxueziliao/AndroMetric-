@@ -21,3 +21,4 @@ export * from './errors';
 export * from './targetDate';
 export * from './pinCrypto';
 export * from './webauthn';
+export * from './encryptedBackup';
