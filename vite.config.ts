@@ -56,22 +56,32 @@ export default defineConfig({
         description: "一款私密、专业的日记应用，帮助您记录每日硬度，探索生活方式与身体活力之间的联系。",
         icons: [
           {
-            "src": "/icon-192.png",
-            "type": "image/png",
-            "sizes": "192x192",
-            "purpose": "any maskable"
+            src: "/icon-192x192.png",
+            type: "image/png",
+            sizes: "192x192",
+            purpose: "any"
           },
           {
-            "src": "/icon-512.png",
-            "type": "image/png",
-            "sizes": "512x512",
-            "purpose": "any maskable"
+            src: "/icon-512x512.png",
+            type: "image/png",
+            sizes: "512x512",
+            purpose: "any"
+          },
+          {
+            src: "/icon-512x512.png",
+            type: "image/png",
+            sizes: "512x512",
+            purpose: "maskable"
           }
         ],
-        start_url: ".",
+        start_url: "/?source=pwa",
+        scope: "/",
+        id: "/",
         display: "standalone",
+        orientation: "portrait-primary",
         background_color: "#020617",
-        theme_color: "#020617"
+        theme_color: "#020617",
+        categories: ["health", "lifestyle", "productivity"]
       },
       workbox: {
         // Cache external CDNs used in index.html
@@ -83,7 +93,7 @@ export default defineConfig({
               cacheName: 'tailwindcss-cache',
               expiration: {
                 maxEntries: 10,
-                maxAgeSeconds: 60 * 60 * 24 * 365 // 1 year
+                maxAgeSeconds: 60 * 60 * 24 * 365
               },
               cacheableResponse: {
                 statuses: [0, 200]
@@ -97,7 +107,7 @@ export default defineConfig({
               cacheName: 'aistudiocdn-cache',
               expiration: {
                 maxEntries: 50,
-                maxAgeSeconds: 60 * 60 * 24 * 365 // 1 year
+                maxAgeSeconds: 60 * 60 * 24 * 365
               },
               cacheableResponse: {
                 statuses: [0, 200]
