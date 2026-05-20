@@ -1,10 +1,11 @@
 
 import React, { useRef, useState, useMemo, lazy, Suspense } from 'react';
-import { Settings, AlertTriangle, Archive, Database, History, Trash2, Smartphone, Moon, Sun, Share2, Pencil, FolderInput, Stethoscope, CheckCircle, Wrench, RotateCcw, ShieldCheck, ChevronRight, AlertCircle, ArrowRight, Tags, FlaskConical } from 'lucide-react';
-import type { AppSettings, LogEntry, TagEntry, TagType } from '../../domain';
+import { Settings, AlertTriangle, Archive, Database, History, Trash2, Smartphone, Moon, Sun, Share2, Pencil, FolderInput, Stethoscope, CheckCircle, Wrench, RotateCcw, ShieldCheck, ChevronRight, AlertCircle, ArrowRight, Tags, FlaskConical, LockKeyhole } from 'lucide-react';
+import type { AppLockSettings, AppSettings, LogEntry, TagEntry, TagType } from '../../domain';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
 import { Modal } from '../../shared/ui';
 import { InstallButton } from '../pwa';
+import PinSetupModal from './PinSetupModal';
 import { useProfileMaintenance } from './model/useProfileMaintenance';
 
 const TagManager = lazy(() => import('../tags').then((module) => ({ default: module.TagManager })));
@@ -67,6 +68,7 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
   const logs = useMemo(() => Array.isArray(rawLogs) ? rawLogs : [], [rawLogs]);
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [pinModalMode, setPinModalMode] = useState<'enable' | 'change' | 'disable' | null>(null);
   const [isTagManagerOpen, setIsTagManagerOpen] = useState(false);
   const [isSimulationLabOpen, setIsSimulationLabOpen] = useState(false);
   const isDevMode = typeof window !== 'undefined' && window.localStorage?.getItem('devMode') === '1';
@@ -136,7 +138,24 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
   };
 
   const handleImportClick = () => fileInputRef.current?.click();
-  
+
+  const updateAppLock = (appLock: AppLockSettings) => onUpdateSettings({ ...settings, appLock });
+
+  const handlePinComplete = (result: { pinHash: string; pinSalt: string } | null) => {
+    if (!result) {
+      updateAppLock({ enabled: false, autoLockMinutes: settings.appLock?.autoLockMinutes ?? 5 });
+      setPinModalMode(null);
+      return;
+    }
+    updateAppLock({
+      enabled: true,
+      pinHash: result.pinHash,
+      pinSalt: result.pinSalt,
+      autoLockMinutes: settings.appLock?.autoLockMinutes ?? 5
+    });
+    setPinModalMode(null);
+  };
+
   const handleJumpToIssue = (date: string) => {
       setIsSettingsOpen(false);
       onNavigateToLog(date);
@@ -239,22 +258,61 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
               {/* 1b. Privacy Mode */}
               <section>
                   <h3 className="text-xs font-bold text-brand-muted uppercase tracking-wider mb-3">隐私</h3>
-                  <label className="flex items-center justify-between p-3 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl cursor-pointer">
-                      <div>
-                          <p className="text-sm font-bold text-brand-text dark:text-slate-200">隐私模糊</p>
-                          <p className="text-xs text-brand-muted dark:text-slate-400 mt-0.5">界面整体模糊 + 灰阶,适合在他人附近浏览</p>
+                  <div className="space-y-3">
+                    <label className="flex items-center justify-between p-3 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl cursor-pointer">
+                        <div>
+                            <p className="text-sm font-bold text-brand-text dark:text-slate-200">隐私模糊</p>
+                            <p className="text-xs text-brand-muted dark:text-slate-400 mt-0.5">界面整体模糊 + 灰阶,适合在他人附近浏览</p>
+                        </div>
+                        <span className="relative inline-flex items-center">
+                            <input
+                                type="checkbox"
+                                checked={!!settings.privacyMode}
+                                onChange={(e) => onUpdateSettings({ ...settings, privacyMode: e.target.checked })}
+                                className="sr-only peer"
+                            />
+                            <span className="w-11 h-6 bg-slate-200 dark:bg-slate-700 rounded-full peer peer-checked:bg-brand-accent transition-colors"></span>
+                            <span className="absolute left-0.5 top-0.5 w-5 h-5 bg-white rounded-full transition-transform peer-checked:translate-x-5"></span>
+                        </span>
+                    </label>
+
+                    <div className="p-3 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl space-y-3">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-start gap-3">
+                          <div className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-brand-accent"><LockKeyhole size={18} /></div>
+                          <div>
+                            <p className="text-sm font-bold text-brand-text dark:text-slate-200">应用锁</p>
+                            <p className="text-xs text-brand-muted dark:text-slate-400 mt-0.5">离开一段时间后用 4 位 PIN 解锁</p>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setPinModalMode(settings.appLock?.enabled ? 'disable' : 'enable')}
+                          className={`px-3 py-2 rounded-xl text-xs font-black transition-colors ${settings.appLock?.enabled ? 'bg-red-50 text-red-500 dark:bg-red-900/20 dark:text-red-400' : 'bg-brand-accent text-white'}`}
+                        >
+                          {settings.appLock?.enabled ? '关闭' : '开启'}
+                        </button>
                       </div>
-                      <span className="relative inline-flex items-center">
-                          <input
-                              type="checkbox"
-                              checked={!!settings.privacyMode}
-                              onChange={(e) => onUpdateSettings({ ...settings, privacyMode: e.target.checked })}
-                              className="sr-only peer"
-                          />
-                          <span className="w-11 h-6 bg-slate-200 dark:bg-slate-700 rounded-full peer peer-checked:bg-brand-accent transition-colors"></span>
-                          <span className="absolute left-0.5 top-0.5 w-5 h-5 bg-white rounded-full transition-transform peer-checked:translate-x-5"></span>
-                      </span>
-                  </label>
+                      {settings.appLock?.enabled && (
+                        <div className="flex items-center justify-between gap-3 border-t border-slate-100 dark:border-slate-800 pt-3">
+                          <button type="button" onClick={() => setPinModalMode('change')} className="text-xs font-black text-brand-accent">修改 PIN</button>
+                          <label className="flex items-center gap-2 text-xs font-bold text-brand-muted dark:text-slate-400">
+                            自动锁定
+                            <select
+                              value={settings.appLock.autoLockMinutes}
+                              onChange={(e) => updateAppLock({ ...settings.appLock!, autoLockMinutes: Number(e.target.value) })}
+                              className="rounded-xl border border-slate-100 bg-slate-50 px-2 py-1 text-xs font-bold text-brand-text outline-none dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200"
+                            >
+                              <option value={1}>1 分钟</option>
+                              <option value={5}>5 分钟</option>
+                              <option value={15}>15 分钟</option>
+                              <option value={30}>30 分钟</option>
+                            </select>
+                          </label>
+                        </div>
+                      )}
+                    </div>
+                  </div>
               </section>
 
               {/* 2. Health Check & Repair */}
@@ -500,6 +558,15 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
           <SimulationLabPanel />
         </Suspense>
       </Modal>
+
+      <PinSetupModal
+        isOpen={pinModalMode !== null}
+        onClose={() => setPinModalMode(null)}
+        mode={pinModalMode || 'enable'}
+        currentPinHash={settings.appLock?.pinHash}
+        currentPinSalt={settings.appLock?.pinSalt}
+        onComplete={handlePinComplete}
+      />
 
       {/* Clear Data Confirmation */}
       <Modal isOpen={isClearDataModalOpen} onClose={() => { setIsClearDataModalOpen(false); setClearDataConfirmText(''); }} title="⚠️ 危险操作" footer={

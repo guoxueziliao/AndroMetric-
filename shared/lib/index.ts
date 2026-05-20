@@ -19,3 +19,4 @@ export type {
 export * from '../../utils/constants';
 export * from './errors';
 export * from './targetDate';
+export * from './pinCrypto';

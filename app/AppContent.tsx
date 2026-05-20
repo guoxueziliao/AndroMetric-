@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useMemo, useState } from 'react';
+import React, { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { AppSettings } from '../types';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import Welcome from './Welcome';
@@ -9,6 +9,7 @@ import { Modal } from '../shared/ui';
 import type { AppData } from './AppProviders';
 import { defaultSettings } from './appConfig';
 import InitializationScreen from './InitializationScreen';
+import LockScreen from './LockScreen';
 import MainViewRouter from './MainViewRouter';
 import SidebarNav from './SidebarNav';
 import { useAppBootstrap } from './useAppBootstrap';
@@ -53,6 +54,33 @@ const AppContent: React.FC<{ data: AppData }> = ({ data }) => {
   const { isBlurred } = useAppBootstrap();
   const { hasSeenWelcome, markWelcomeSeen } = useWelcomeScreen();
   const quickRecordData = useQuickRecordData(data);
+
+  const appLock = settings.appLock;
+  const lockEnabled = !!(appLock?.enabled && appLock.pinHash && appLock.pinSalt);
+  const [unlocked, setUnlocked] = useState(!lockEnabled);
+  const hiddenAtRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (!lockEnabled && !unlocked) setUnlocked(true);
+  }, [lockEnabled, unlocked]);
+
+  useEffect(() => {
+    if (!lockEnabled) return;
+    const handleVisibility = () => {
+      if (document.hidden) {
+        hiddenAtRef.current = Date.now();
+      } else if (hiddenAtRef.current !== null) {
+        const elapsedMin = (Date.now() - hiddenAtRef.current) / 60000;
+        hiddenAtRef.current = null;
+        const threshold = appLock?.autoLockMinutes ?? 5;
+        if (threshold > 0 && elapsedMin >= threshold) {
+          setUnlocked(false);
+        }
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
+  }, [lockEnabled, appLock?.autoLockMinutes]);
 
   const [activeMainView, setActiveMainView] = useState<MainView>('calendar');
   const [isVersionHistoryOpen, setIsVersionHistoryOpen] = useState(false);
@@ -158,6 +186,10 @@ const AppContent: React.FC<{ data: AppData }> = ({ data }) => {
   if (isInitializing) return <InitializationScreen />;
 
   if (!hasSeenWelcome) return <Welcome onGetStarted={markWelcomeSeen} />;
+
+  if (lockEnabled && !unlocked && appLock) {
+    return <LockScreen appLock={appLock} onUnlock={() => setUnlocked(true)} />;
+  }
 
   return (
     <div className={`min-h-screen bg-brand-bg dark:bg-slate-950 text-brand-text dark:text-slate-200 font-sans transition-all duration-500 safe-area-top safe-area-bottom safe-area-left safe-area-right ${(isBlurred || settings.privacyMode) ? 'blur-md grayscale opacity-50' : ''}`}>

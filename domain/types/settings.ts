@@ -1,3 +1,10 @@
+export interface AppLockSettings {
+    enabled: boolean;
+    pinHash?: string;
+    pinSalt?: string;
+    autoLockMinutes: number;
+}
+
 export interface AppSettings {
     version: string;
     theme: 'system' | 'light' | 'dark';
@@ -6,6 +13,7 @@ export interface AppSettings {
     notificationTime: { morning: string; evening: string };
     hiddenFields: string[];
     lastExportAt?: number;
+    appLock?: AppLockSettings;
 }
 
 export interface BackupState {
