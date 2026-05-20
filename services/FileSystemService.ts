@@ -116,7 +116,7 @@ export class FileSystemService {
     }
   }
 
-  async readBackupFile(filename: string): Promise<unknown | null> {
+  async readBackupFile(filename: string): Promise<string | null> {
     if (!this.isInitialized || !this.directoryHandle) {
       return null;
     }
@@ -124,8 +124,7 @@ export class FileSystemService {
     try {
       const fileHandle = await this.directoryHandle.getFileHandle(filename);
       const file = await fileHandle.getFile();
-      const text = await file.text();
-      return JSON.parse(text);
+      return file.text();
     } catch (err) {
       Logger.error('FileSystemService:ReadFailed', { filename, error: err });
       return null;

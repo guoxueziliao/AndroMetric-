@@ -13,13 +13,15 @@ const BackupSettings: React.FC<BackupSettingsProps> = ({ logs }) => {
     isReady,
     needsReauthorization,
     metadata,
+    backupFiles,
     isLoading,
     error,
     successMessage,
     onToggleAutoBackup,
     onChangeDirectory,
     onReauthorize,
-    onManualBackup
+    onManualBackup,
+    onRestoreBackup
   } = useBackupSettings({ logs });
 
   const formatDate = (timestamp: number | null): string => {
@@ -31,6 +33,12 @@ const BackupSettings: React.FC<BackupSettingsProps> = ({ logs }) => {
       hour: '2-digit',
       minute: '2-digit'
     });
+  };
+
+  const formatSize = (bytes: number): string => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+    return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
   };
 
   return (
@@ -124,6 +132,27 @@ const BackupSettings: React.FC<BackupSettingsProps> = ({ logs }) => {
               <Download className="w-4 h-4" />
               {isLoading ? '处理中...' : '立即备份'}
             </button>
+
+            {backupFiles.length > 0 && (
+              <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl space-y-2">
+                <span className="text-xs font-medium text-slate-500 dark:text-slate-400 block">最近备份</span>
+                {backupFiles.map((file) => (
+                  <div key={file.name} className="flex items-center justify-between gap-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-700 p-2">
+                    <div className="min-w-0">
+                      <p className="truncate text-xs font-bold text-slate-700 dark:text-slate-300">{file.name}</p>
+                      <p className="text-[10px] text-slate-400">{formatDate(file.date.getTime())} • {formatSize(file.size)}</p>
+                    </div>
+                    <button
+                      onClick={() => onRestoreBackup(file.name)}
+                      disabled={isLoading}
+                      className="shrink-0 rounded-lg bg-blue-50 px-3 py-2 text-xs font-bold text-blue-600 transition-colors hover:bg-blue-100 disabled:opacity-50 dark:bg-blue-900/30 dark:text-blue-400"
+                    >
+                      恢复
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 

@@ -2,6 +2,12 @@ import { useCallback, useEffect, useState } from 'react';
 import type { LogEntry } from '../../../domain';
 import { StorageService, backupService, type BackupMetadata } from '../../../core/storage';
 
+interface BackupFileSummary {
+  name: string;
+  date: Date;
+  size: number;
+}
+
 interface UseBackupSettingsParams {
   logs?: LogEntry[];
 }
@@ -11,13 +17,16 @@ export const useBackupSettings = ({ logs }: UseBackupSettingsParams) => {
   const [isReady, setIsReady] = useState(false);
   const [needsReauthorization, setNeedsReauthorization] = useState(false);
   const [metadata, setMetadata] = useState<BackupMetadata | null>(null);
+  const [backupFiles, setBackupFiles] = useState<BackupFileSummary[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const loadMetadata = useCallback(async () => {
     const meta = await backupService.getMetadata();
+    const files = await backupService.listBackups();
     setMetadata(meta);
+    setBackupFiles(files.slice(0, 5));
   }, []);
 
   const refreshStatus = useCallback(() => {
@@ -123,17 +132,43 @@ export const useBackupSettings = ({ logs }: UseBackupSettingsParams) => {
     }
   }, [loadMetadata, logs, refreshStatus, showSuccessMessage]);
 
+  const handleRestoreBackup = useCallback(async (filename: string) => {
+    if (!confirm('恢复此备份前会先创建当前数据的安全快照，然后覆盖当前数据。确定继续吗？')) return;
+
+    setError(null);
+    setIsLoading(true);
+    try {
+      const rawText = await backupService.readBackup(filename);
+      if (!rawText) {
+        setError('无法读取备份文件');
+        return;
+      }
+
+      await StorageService.snapshots.create(`文件系统恢复前自动快照 - ${new Date().toLocaleString('zh-CN')}`);
+      await StorageService.restoreSnapshot(rawText, 'overwrite');
+      showSuccessMessage('备份恢复成功');
+      await loadMetadata();
+    } catch {
+      setError('恢复失败，请确认备份文件未损坏');
+    } finally {
+      setIsLoading(false);
+      refreshStatus();
+    }
+  }, [loadMetadata, refreshStatus, showSuccessMessage]);
+
   return {
     isEnabled,
     isReady,
     needsReauthorization,
     metadata,
+    backupFiles,
     isLoading,
     error,
     successMessage,
     onToggleAutoBackup: handleToggleAutoBackup,
     onChangeDirectory: handleChangeDirectory,
     onReauthorize: handleReauthorize,
-    onManualBackup: handleManualBackup
+    onManualBackup: handleManualBackup,
+    onRestoreBackup: handleRestoreBackup
   };
 };
