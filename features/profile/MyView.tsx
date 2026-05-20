@@ -1,9 +1,10 @@
 
 import React, { useRef, useState, useMemo, lazy, Suspense } from 'react';
-import { Settings, AlertTriangle, Archive, Database, History, Trash2, Smartphone, Moon, Sun, Share2, Pencil, FolderInput, Stethoscope, CheckCircle, Wrench, RotateCcw, ShieldCheck, ChevronRight, AlertCircle, ArrowRight, Tags, FlaskConical, LockKeyhole } from 'lucide-react';
+import { Settings, AlertTriangle, Archive, Database, History, Trash2, Smartphone, Moon, Sun, Share2, Pencil, FolderInput, Stethoscope, CheckCircle, Wrench, RotateCcw, ShieldCheck, ChevronRight, AlertCircle, ArrowRight, Tags, FlaskConical, Fingerprint, LockKeyhole } from 'lucide-react';
 import type { AppLockSettings, AppSettings, LogEntry, TagEntry, TagType } from '../../domain';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
 import { Modal } from '../../shared/ui';
+import { canUseWebAuthn, createWebAuthnCredential } from '../../shared/lib';
 import { InstallButton } from '../pwa';
 import PinSetupModal from './PinSetupModal';
 import { useProfileMaintenance } from './model/useProfileMaintenance';
@@ -69,6 +70,8 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [pinModalMode, setPinModalMode] = useState<'enable' | 'change' | 'disable' | null>(null);
+  const [biometricStatus, setBiometricStatus] = useState<string | null>(null);
+  const [biometricBusy, setBiometricBusy] = useState(false);
   const [isTagManagerOpen, setIsTagManagerOpen] = useState(false);
   const [isSimulationLabOpen, setIsSimulationLabOpen] = useState(false);
   const isDevMode = typeof window !== 'undefined' && window.localStorage?.getItem('devMode') === '1';
@@ -145,15 +148,39 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
     if (!result) {
       updateAppLock({ enabled: false, autoLockMinutes: settings.appLock?.autoLockMinutes ?? 5 });
       setPinModalMode(null);
+      setBiometricStatus(null);
       return;
     }
     updateAppLock({
       enabled: true,
       pinHash: result.pinHash,
       pinSalt: result.pinSalt,
-      autoLockMinutes: settings.appLock?.autoLockMinutes ?? 5
+      autoLockMinutes: settings.appLock?.autoLockMinutes ?? 5,
+      webAuthnCredentialId: settings.appLock?.webAuthnCredentialId
     });
     setPinModalMode(null);
+  };
+
+  const handleEnableBiometric = async () => {
+    if (!settings.appLock?.enabled || biometricBusy) return;
+    setBiometricBusy(true);
+    setBiometricStatus(null);
+    try {
+      const credentialId = await createWebAuthnCredential();
+      updateAppLock({ ...settings.appLock, webAuthnCredentialId: credentialId });
+      setBiometricStatus('已启用生物识别解锁');
+    } catch {
+      setBiometricStatus('生物识别设置失败或已取消');
+    } finally {
+      setBiometricBusy(false);
+    }
+  };
+
+  const handleDisableBiometric = () => {
+    if (!settings.appLock) return;
+    const { webAuthnCredentialId: _removed, ...nextLock } = settings.appLock;
+    updateAppLock(nextLock);
+    setBiometricStatus('已关闭生物识别解锁');
   };
 
   const handleJumpToIssue = (date: string) => {
@@ -294,22 +321,43 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
                         </button>
                       </div>
                       {settings.appLock?.enabled && (
-                        <div className="flex items-center justify-between gap-3 border-t border-slate-100 dark:border-slate-800 pt-3">
-                          <button type="button" onClick={() => setPinModalMode('change')} className="text-xs font-black text-brand-accent">修改 PIN</button>
-                          <label className="flex items-center gap-2 text-xs font-bold text-brand-muted dark:text-slate-400">
-                            自动锁定
-                            <select
-                              value={settings.appLock.autoLockMinutes}
-                              onChange={(e) => updateAppLock({ ...settings.appLock!, autoLockMinutes: Number(e.target.value) })}
-                              className="rounded-xl border border-slate-100 bg-slate-50 px-2 py-1 text-xs font-bold text-brand-text outline-none dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200"
-                            >
-                              <option value={1}>1 分钟</option>
-                              <option value={5}>5 分钟</option>
-                              <option value={15}>15 分钟</option>
-                              <option value={30}>30 分钟</option>
-                            </select>
-                          </label>
-                        </div>
+                        <>
+                          <div className="flex items-center justify-between gap-3 border-t border-slate-100 dark:border-slate-800 pt-3">
+                            <button type="button" onClick={() => setPinModalMode('change')} className="text-xs font-black text-brand-accent">修改 PIN</button>
+                            <label className="flex items-center gap-2 text-xs font-bold text-brand-muted dark:text-slate-400">
+                              自动锁定
+                              <select
+                                value={settings.appLock.autoLockMinutes}
+                                onChange={(e) => updateAppLock({ ...settings.appLock!, autoLockMinutes: Number(e.target.value) })}
+                                className="rounded-xl border border-slate-100 bg-slate-50 px-2 py-1 text-xs font-bold text-brand-text outline-none dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200"
+                              >
+                                <option value={1}>1 分钟</option>
+                                <option value={5}>5 分钟</option>
+                                <option value={15}>15 分钟</option>
+                                <option value={30}>30 分钟</option>
+                              </select>
+                            </label>
+                          </div>
+                          <div className="flex items-center justify-between gap-3 border-t border-slate-100 dark:border-slate-800 pt-3">
+                            <div className="flex items-center gap-2 text-xs font-bold text-brand-muted dark:text-slate-400">
+                              <Fingerprint size={16} className="text-brand-accent" />
+                              生物识别
+                            </div>
+                            {canUseWebAuthn() ? (
+                              <button
+                                type="button"
+                                onClick={settings.appLock.webAuthnCredentialId ? handleDisableBiometric : handleEnableBiometric}
+                                disabled={biometricBusy}
+                                className="rounded-xl bg-slate-100 px-3 py-2 text-xs font-black text-brand-text transition-colors disabled:opacity-50 dark:bg-slate-800 dark:text-slate-200"
+                              >
+                                {biometricBusy ? '处理中...' : settings.appLock.webAuthnCredentialId ? '关闭' : '启用'}
+                              </button>
+                            ) : (
+                              <span className="text-[11px] font-bold text-slate-400">当前环境不支持</span>
+                            )}
+                          </div>
+                          {biometricStatus && <p className="text-[11px] font-bold text-slate-400">{biometricStatus}</p>}
+                        </>
                       )}
                     </div>
                   </div>

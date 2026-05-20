@@ -3,6 +3,7 @@ export interface AppLockSettings {
     pinHash?: string;
     pinSalt?: string;
     autoLockMinutes: number;
+    webAuthnCredentialId?: string;
 }
 
 export interface AppSettings {

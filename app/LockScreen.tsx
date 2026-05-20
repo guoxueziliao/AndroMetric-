@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Lock, Delete } from 'lucide-react';
-import { verifyPin } from '../shared/lib';
+import { Fingerprint, Lock, Delete } from 'lucide-react';
+import { canUseWebAuthn, verifyPin, verifyWebAuthnCredential } from '../shared/lib';
 import type { AppLockSettings } from '../domain';
 
 interface LockScreenProps {
@@ -15,7 +15,9 @@ const LockScreen: React.FC<LockScreenProps> = ({ appLock, onUnlock }) => {
   const [pin, setPin] = useState('');
   const [shake, setShake] = useState(false);
   const [verifying, setVerifying] = useState(false);
+  const [biometricBusy, setBiometricBusy] = useState(false);
   const [attempts, setAttempts] = useState(0);
+  const canUseBiometric = !!appLock.webAuthnCredentialId && canUseWebAuthn();
 
   useEffect(() => {
     if (pin.length !== PIN_LENGTH) return;
@@ -59,6 +61,17 @@ const LockScreen: React.FC<LockScreenProps> = ({ appLock, onUnlock }) => {
     setPin(p => p.slice(0, -1));
   };
 
+  const unlockWithBiometric = async () => {
+    if (!appLock.webAuthnCredentialId || biometricBusy) return;
+    setBiometricBusy(true);
+    try {
+      const ok = await verifyWebAuthnCredential(appLock.webAuthnCredentialId);
+      if (ok) onUnlock();
+    } finally {
+      setBiometricBusy(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-[200] flex flex-col items-center justify-center bg-brand-bg dark:bg-slate-950 px-6 safe-area-top safe-area-bottom">
       <div className="mb-8 flex flex-col items-center gap-3">
@@ -67,9 +80,21 @@ const LockScreen: React.FC<LockScreenProps> = ({ appLock, onUnlock }) => {
         </div>
         <h1 className="text-xl font-black text-brand-text dark:text-slate-100">输入 PIN</h1>
         <p className="text-xs text-brand-muted dark:text-slate-400">
-          {attempts === 0 ? '请输入 4 位 PIN 解锁' : `已输错 ${attempts} 次,继续重试`}
+          {attempts === 0 ? (canUseBiometric ? '使用生物识别或 4 位 PIN 解锁' : '请输入 4 位 PIN 解锁') : `已输错 ${attempts} 次,继续重试`}
         </p>
       </div>
+
+      {canUseBiometric && (
+        <button
+          type="button"
+          onClick={unlockWithBiometric}
+          disabled={biometricBusy}
+          className="mb-8 flex items-center gap-2 rounded-2xl bg-brand-accent px-5 py-3 text-sm font-black text-white shadow-soft active:scale-95 transition-all disabled:opacity-50"
+        >
+          <Fingerprint size={18} />
+          {biometricBusy ? '验证中...' : '生物识别解锁'}
+        </button>
+      )}
 
       <motion.div
         animate={shake ? { x: [-8, 8, -6, 6, -3, 3, 0] } : { x: 0 }}
