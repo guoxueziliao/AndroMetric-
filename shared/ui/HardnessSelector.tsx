@@ -1,62 +1,155 @@
-const HardnessSelector = ({ value, onChange }: { value: number, onChange: (val: number) => void }) => {
-    const levels = [
-        { val: 1, label: '豆腐', sub: '软趴趴', color: 'bg-accent-muted/20 border-accent-muted/30', rotation: 135 },
-        { val: 2, label: '剥皮', sub: '微勃', color: 'bg-accent-muted/35 border-accent-muted/45', rotation: 105 },
-        { val: 3, label: '带皮', sub: '标准', color: 'bg-accent-muted/65 border-accent-muted', rotation: 65 },
-        { val: 4, label: '冻瓜', sub: '坚硬', color: 'bg-accent border-accent-hover', rotation: 30 },
-        { val: 5, label: '铁棒', sub: '超硬', color: 'bg-surface-inverted border-surface-inverted', rotation: 0 },
-    ];
+import React from 'react';
+import { motion } from 'framer-motion';
 
-    return (
-        <div className="bg-surface-muted rounded-[2rem] p-5 border border-surface-border transition-colors">
-            <div className="flex justify-between items-end h-24 px-1 mb-2 relative">
-                {levels.map((item) => {
-                    const isSelected = value === item.val;
-                    return (
-                        <button
-                            key={item.val}
-                            type="button"
-                            onClick={() => onChange(item.val)}
-                            className="group flex flex-col items-center gap-2 focus:outline-none w-1/5 relative z-10"
-                        >
-                            <div className="relative h-16 w-full flex items-end justify-center">
-                                <div 
-                                    className={`
-                                        w-5 rounded-full border-2 transition-all duration-slow ease-emphasized origin-bottom
-                                        ${item.color}
-                                        ${isSelected ? 'shadow-glow ring-2 ring-offset-2 ring-accent ring-offset-surface-card z-10' : 'opacity-40 saturate-50 dark:opacity-20 hover:opacity-80'}
-                                    `}
-                                    style={{ 
-                                        height: isSelected ? '4.2rem' : '3rem',
-                                        transform: `rotate(${isSelected ? 0 : item.rotation}deg) scale(${isSelected ? 1.15 : 1})`
-                                    }} 
-                                >
-                                    <div className="absolute top-2 left-1 w-1 h-1/3 bg-text-on-accent/40 rounded-full"></div>
-                                    {item.val >= 4 && (
-                                        <div className="absolute bottom-2 right-1 w-0.5 h-1/4 bg-surface-base/20 rounded-full"></div>
-                                    )}
-                                </div>
-                            </div>
-                            <div className={`flex flex-col items-center transition-all duration-slow ${isSelected ? 'translate-y-0 opacity-100' : 'translate-y-1 opacity-40'}`}>
-                                <span className={`text-[10px] font-black uppercase tracking-tighter ${isSelected ? 'text-accent' : 'text-text-muted'}`}>
-                                    {item.label}
-                                </span>
-                            </div>
-                        </button>
-                    )
-                })}
-            </div>
-            <div className="text-center h-6 mt-2">
-                <span className="text-[11px] font-black text-accent animate-in fade-in slide-in-from-bottom-1 duration-slow">
-                    {value === 1 && "Level 1: 像豆腐一样 (充血不足)"}
-                    {value === 2 && "Level 2: 像剥皮黄瓜 (硬度欠佳)"}
-                    {value === 3 && "Level 3: 像带皮黄瓜 (勉强合格)"}
-                    {value === 4 && "Level 4: 像冰镇黄瓜 (足够坚硬)"}
-                    {value === 5 && "Level 5: 像铁棒一样 (完全坚硬)"}
+type Density = 'compact' | 'comfortable';
+
+interface HardnessSelectorProps {
+  value: number;
+  onChange?: (value: number) => void;
+  density?: Density;
+  readOnly?: boolean;
+  showDescription?: boolean;
+}
+
+interface LevelDef {
+  val: number;
+  primary: string;
+  sub: string;
+  description: string;
+  color: string;
+  selectedColor: string;
+  barHeight: { compact: number; comfortable: number };
+}
+
+const LEVELS: LevelDef[] = [
+  {
+    val: 1,
+    primary: '疲软',
+    sub: '豆腐',
+    description: '充血不足，阴茎完全柔软',
+    color: 'bg-accent-muted/20 border-accent-muted/30',
+    selectedColor: 'bg-accent-muted border-accent-muted shadow-glow',
+    barHeight: { compact: 20, comfortable: 32 },
+  },
+  {
+    val: 2,
+    primary: '轻度勃起',
+    sub: '剥皮',
+    description: '轻微充血，硬度欠佳',
+    color: 'bg-accent-muted/35 border-accent-muted/45',
+    selectedColor: 'bg-accent-muted border-accent-muted shadow-glow',
+    barHeight: { compact: 28, comfortable: 44 },
+  },
+  {
+    val: 3,
+    primary: '半勃起',
+    sub: '带皮',
+    description: '中等充血，勉强可插入',
+    color: 'bg-accent/40 border-accent/50',
+    selectedColor: 'bg-accent border-accent shadow-glow',
+    barHeight: { compact: 36, comfortable: 56 },
+  },
+  {
+    val: 4,
+    primary: '充分勃起',
+    sub: '冻瓜',
+    description: '充分充血，可稳定插入',
+    color: 'bg-accent/65 border-accent/75',
+    selectedColor: 'bg-accent border-accent-hover shadow-glow',
+    barHeight: { compact: 44, comfortable: 68 },
+  },
+  {
+    val: 5,
+    primary: '完全勃起',
+    sub: '铁棒',
+    description: '最大充血，高硬度',
+    color: 'bg-surface-inverted/60 border-surface-inverted/70',
+    selectedColor: 'bg-surface-inverted border-surface-inverted shadow-glow',
+    barHeight: { compact: 52, comfortable: 80 },
+  },
+];
+
+const HardnessSelector: React.FC<HardnessSelectorProps> = ({
+  value,
+  onChange,
+  density = 'comfortable',
+  readOnly = false,
+  showDescription,
+}) => {
+  const resolvedShowDesc = showDescription ?? (density === 'comfortable');
+  const interactive = !readOnly && !!onChange;
+
+  return (
+    <div className={`bg-surface-muted rounded-2xl border border-surface-border transition-colors ${density === 'compact' ? 'p-3' : 'p-5'}`}>
+      {/* Bar segments */}
+      <div className={`flex justify-between items-end px-1 ${density === 'compact' ? 'h-14 mb-2' : 'h-20 mb-3'}`}>
+        {LEVELS.map((level) => {
+          const isSelected = value === level.val;
+          const barH = level.barHeight[density];
+
+          return (
+            <button
+              key={level.val}
+              type="button"
+              onClick={interactive ? () => onChange(level.val) : undefined}
+              disabled={!interactive}
+              className={`group flex flex-col items-center gap-1 flex-1 relative z-10 focus:outline-none ${interactive ? 'cursor-pointer' : 'cursor-default'}`}
+            >
+              <motion.div
+                className={`
+                  w-full max-w-[2rem] rounded-lg border-2 transition-colors
+                  ${isSelected ? level.selectedColor : level.color}
+                  ${!isSelected && interactive ? 'opacity-40 dark:opacity-25 hover:opacity-80' : ''}
+                  ${!isSelected && !interactive ? 'opacity-30 dark:opacity-20' : ''}
+                `}
+                animate={{
+                  height: isSelected ? barH * 1.15 : barH,
+                  scale: isSelected ? 1.05 : 1,
+                }}
+                transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+              />
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Labels */}
+      <div className="flex justify-between px-1">
+        {LEVELS.map((level) => {
+          const isSelected = value === level.val;
+          return (
+            <div
+              key={level.val}
+              className={`flex-1 flex flex-col items-center transition-all ${isSelected ? 'opacity-100' : 'opacity-40'}`}
+            >
+              <span className={`text-[10px] font-black leading-tight ${isSelected ? 'text-accent' : 'text-text-muted'}`}>
+                {level.primary}
+              </span>
+              {density === 'comfortable' && (
+                <span className={`text-[8px] font-bold mt-0.5 ${isSelected ? 'text-text-muted' : 'text-text-muted/60'}`}>
+                  {level.sub}
                 </span>
+              )}
             </div>
+          );
+        })}
+      </div>
+
+      {/* Description */}
+      {resolvedShowDesc && (
+        <div className="text-center mt-3 min-h-[1.2rem]">
+          <motion.span
+            key={value}
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-[11px] font-bold text-accent"
+          >
+            {LEVELS[value - 1]?.description}
+          </motion.span>
         </div>
-    );
+      )}
+    </div>
+  );
 };
 
 export default HardnessSelector;
