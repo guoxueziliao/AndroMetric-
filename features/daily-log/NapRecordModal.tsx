@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Clock, Sparkles, Star, Zap, Check, MapPin, Leaf, Heart, Shirt, Thermometer, BrainCircuit } from 'lucide-react';
 import type { NapRecord, SleepLocation } from '../../domain';
-import { HardnessSelector, IconToggleButton, Modal, RangeSlider } from '../../shared/ui';
+import { HardnessSelector, IconToggleButton, Modal, RangeSlider, Switch } from '../../shared/ui';
 
 interface NapRecordModalData {
     initialData?: NapRecord;
@@ -217,11 +217,11 @@ const NapRecordModal: React.FC<NapRecordModalProps> = ({ isOpen, onClose, data, 
                 <div className="grid grid-cols-1 gap-6">
                     <div className="space-y-3">
                         <label className="text-[10px] font-black text-text-muted uppercase tracking-widest flex items-center gap-2"><Shirt size={12}/> 穿着方式 {!record.attire && <span className="text-text-muted/60 normal-case tracking-normal">[未选]</span>}</label>
-                        <IconToggleButton options={ATTIRE_OPTS} selected={record.attire} onSelect={v => setRecord({...record, attire: v})} renderIcon={() => <Shirt size={18}/>}/>
+                        <IconToggleButton options={ATTIRE_OPTS} selected={record.attire ?? ''} onSelect={v => setRecord({...record, attire: v as any})} renderIcon={() => <Shirt size={18}/>}/>
                     </div>
                     <div className="space-y-3">
                         <label className="text-[10px] font-black text-text-muted uppercase tracking-widest flex items-center gap-2"><BrainCircuit size={12}/> 睡前状态 {!record.preSleepState && <span className="text-text-muted/60 normal-case tracking-normal">[未选]</span>}</label>
-                        <IconToggleButton options={PRE_SLEEP_OPTS} selected={record.preSleepState} onSelect={v => setRecord({...record, preSleepState: v})} renderIcon={() => <Sparkles size={18}/>}/>
+                        <IconToggleButton options={PRE_SLEEP_OPTS} selected={record.preSleepState ?? ''} onSelect={v => setRecord({...record, preSleepState: v as any})} renderIcon={() => <Sparkles size={18}/>}/>
                     </div>
                 </div>
 
@@ -251,11 +251,10 @@ const NapRecordModal: React.FC<NapRecordModalProps> = ({ isOpen, onClose, data, 
                     
                     <div className="flex items-center justify-between bg-surface-muted p-4 rounded-2xl">
                         <label className="font-bold text-sm text-text-primary">醒来有勃起吗？</label>
-                        <input 
-                            type="checkbox" 
-                            className="toggle-checkbox" 
-                            checked={hasErection} 
-                            onChange={(e) => setRecord({...record, hardness: e.target.checked ? 3 : null})} 
+                        <Switch
+                            checked={hasErection}
+                            onCheckedChange={(checked) => setRecord({...record, hardness: checked ? 3 : null})}
+                            aria-label="醒来有勃起"
                         />
                     </div>
 
@@ -273,7 +272,7 @@ const NapRecordModal: React.FC<NapRecordModalProps> = ({ isOpen, onClose, data, 
                 <div className="bg-chart-tertiary/10 rounded-2xl p-4 border border-chart-tertiary/25">
                     <div className="flex items-center justify-between mb-4">
                         <label className="text-[10px] font-black text-chart-tertiary uppercase tracking-widest flex items-center gap-2"><Sparkles size={14}/> 梦境探测</label>
-                        <input type="checkbox" className="toggle-checkbox h-4 w-8" checked={record.hasDream} onChange={e => setRecord({...record, hasDream: e.target.checked})} />
+                        <Switch size="sm" checked={record.hasDream ?? false} onCheckedChange={checked => setRecord({...record, hasDream: checked})} aria-label="梦境探测" />
                     </div>
                     {record.hasDream && (
                         <div className="flex flex-wrap gap-2 animate-in fade-in zoom-in-95">

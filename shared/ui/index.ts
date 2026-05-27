@@ -11,6 +11,8 @@ export { default as ConfirmModal } from './ConfirmModal';
 export type { ConfirmSeverity } from './ConfirmModal';
 export { default as OverlayPrimitive } from './OverlayPrimitive';
 export type { OverlayVariant } from './OverlayPrimitive';
+export { default as Switch, SwitchField } from './Switch';
+export type { SwitchTone, SwitchSize } from './Switch';
 export { default as ErrorBoundary } from './ErrorBoundary';
 export { default as AnimatedButton } from './AnimatedButton';
 export { default as AnimatedPage, AnimatedPresence } from './AnimatedPage';

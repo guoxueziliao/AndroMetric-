@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Check, Clock, Film, PenLine, Plus, Minus, Zap, Edit2, Trash2, MonitorPlay, ChevronDown, LayoutGrid, Activity, Droplets, BatteryFull, PhoneOff, HeartOff, Flag, MapPin } from 'lucide-react';
 import type { MasturbationRecordDetails, LogEntry, PartnerProfile, ContentItem, TagEntry, TagType } from '../../domain';
-import { Modal } from '../../shared/ui';
+import { Modal, Switch } from '../../shared/ui';
 import { calculateInventory } from '../../shared/lib';
 import { useMasturbationTagTools } from './model/useMasturbationTagTools';
 import { analyzeUserPatterns } from '../daily-log/model/smartDefaults';
@@ -414,11 +414,10 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                                 <div className="text-[10px] text-text-muted font-bold">意外状况或心不在焉</div>
                             </div>
                         </div>
-                        <input
-                            type="checkbox"
-                            className="toggle-checkbox"
+                        <Switch
                             checked={data.interrupted}
-                            onChange={e => updateData({interrupted: e.target.checked, interruptionReasons: e.target.checked ? data.interruptionReasons : []})}
+                            onCheckedChange={checked => updateData({interrupted: checked, interruptionReasons: checked ? data.interruptionReasons : []})}
+                            aria-label="中途被打断"
                         />
                     </div>
                     {data.interrupted && (

@@ -1,7 +1,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { BedDouble, Leaf, CloudDrizzle, Heart, CloudSun, Clock, Edit2, Trash2, AlertCircle, Sparkles, MapPin, Thermometer } from 'lucide-react';
 import type { SleepRecord, NapRecord, LogEntry, SleepAttire, SleepTemperature } from '../../domain';
-import { DateTimePicker, RangeSlider } from '../../shared/ui';
+import { DateTimePicker, RangeSlider, Switch } from '../../shared/ui';
 import { useSmartDefaults } from './model/useSmartDefaults';
 
 interface SleepSectionProps {
@@ -155,7 +155,7 @@ const SleepSection: React.FC<SleepSectionProps> = ({ sleep, onChange, onEditNap,
       <RangeSlider
         leftLabel="质量极差 (1)" rightLabel="睡得超棒 (5)"
         min={1} max={5} colorClass="accent-accent"
-        value={sleep.quality}
+        value={sleep.quality ?? 3}
         onChange={(v: number) => onChange('quality', v)}
       />
 
@@ -187,7 +187,7 @@ const SleepSection: React.FC<SleepSectionProps> = ({ sleep, onChange, onEditNap,
             <Sparkles size={14} className="mr-1.5"/> 梦境记录
           </div>
           <div className="flex items-center">
-            <input type="checkbox" className="toggle-checkbox h-4 w-8" checked={showDreams} onChange={e => handleDreamToggle(e.target.checked)} />
+            <Switch size="sm" checked={showDreams} onCheckedChange={handleDreamToggle} aria-label="梦境记录" />
           </div>
         </div>
         {showDreams && (

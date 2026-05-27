@@ -6,7 +6,7 @@ import {
     Snowflake, Wind, CloudFog, Home, Navigation, Hotel, Plane,
     Shirt, Droplets, ShieldAlert, Search, Coffee, Edit3, Beer, RotateCcw
 } from 'lucide-react';
-import { ConfirmModal, RecordCard } from '../../shared/ui';
+import { ConfirmModal, RecordCard, Switch } from '../../shared/ui';
 import BeverageModal from './BeverageModal';
 import ExerciseRecordModal from './ExerciseRecordModal';
 import AlcoholRecordModal from './AlcoholRecordModal';
@@ -631,16 +631,14 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
                                         <ShieldAlert className={log.health?.isSick ? 'text-state-danger-text animate-pulse' : 'text-text-muted'} size={20}/>
                                         <span className={`text-sm font-black ${log.health?.isSick ? 'text-state-danger-text' : 'text-text-secondary'}`}>身体不适</span>
                                     </div>
-                                    <input 
-                                        type="checkbox" 
-                                        className="toggle-checkbox" 
-                                        checked={log.health?.isSick || false} 
-                                        onChange={e => {
-                                            const checked = e.target.checked;
-                                            setLog(prev => ({ 
-                                                ...prev, 
-                                                health: { 
-                                                    ...(prev.health || { isSick: false, symptoms: [], medications: [] }), 
+                                    <Switch
+                                        tone="danger"
+                                        checked={log.health?.isSick || false}
+                                        onCheckedChange={checked => {
+                                            setLog(prev => ({
+                                                ...prev,
+                                                health: {
+                                                    ...(prev.health || { isSick: false, symptoms: [], medications: [] }),
                                                     isSick: checked,
                                                     discomfortLevel: checked ? (prev.health?.discomfortLevel || 'mild') : undefined,
                                                     symptoms: checked ? (prev.health?.symptoms || []) : [],
