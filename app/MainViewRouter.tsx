@@ -1,5 +1,6 @@
 import React, { lazy, Suspense } from 'react';
 import { ArrowLeft, Loader2 } from 'lucide-react';
+import { ErrorBoundary } from '../shared/ui';
 import {
   AlcoholRecord,
   AppSettings,
@@ -154,20 +155,22 @@ const MainViewRouter: React.FC<MainViewRouterProps> = ({
               />
             )}
             {activeMainView === 'my' && (
-              <MyView
-                data={{
-                  settings,
-                  logs,
-                  userTags
-                }}
-                actions={{
-                  onAddOrUpdateLog,
-                  onAddOrUpdateTag,
-                  onDeleteTag,
-                  onUpdateSettings,
-                  onNavigateToLog: onEdit
-                }}
-              />
+              <ErrorBoundary fallback={<div className="p-6 text-center"><h2 className="text-xl font-black text-red-500 mb-2">页面加载出错</h2><p className="text-sm text-text-muted">请刷新页面或检查控制台</p></div>}>
+                <MyView
+                  data={{
+                    settings,
+                    logs,
+                    userTags
+                  }}
+                  actions={{
+                    onAddOrUpdateLog,
+                    onAddOrUpdateTag,
+                    onDeleteTag,
+                    onUpdateSettings,
+                    onNavigateToLog: onEdit
+                  }}
+                />
+              </ErrorBoundary>
             )}
           </Suspense>
         </main>
