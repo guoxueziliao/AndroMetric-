@@ -321,8 +321,17 @@ export const applyTouchedPathsToQuality = (
 };
 
 const shouldStripDefault = (log: LogEntry, path: string, touchedPaths: Set<string>) => {
+    if (!DISPLAY_DEFAULT_PATHS.has(path)) return false;
     const quality = log.dataQuality?.fields?.[path];
-    return DISPLAY_DEFAULT_PATHS.has(path) && quality?.state === 'defaulted' && !touchedPaths.has(path);
+    if (quality?.state !== 'defaulted') return false;
+    // Check exact match or ancestor path in touchedPaths
+    // e.g. 'sleep.environment' in touchedPaths covers 'sleep.environment.location'
+    if (touchedPaths.has(path)) return false;
+    const parts = path.split('.');
+    for (let i = 1; i < parts.length; i++) {
+        if (touchedPaths.has(parts.slice(0, i).join('.'))) return false;
+    }
+    return true;
 };
 
 const deletePathValue = (target: LogEntry, path: string) => {
