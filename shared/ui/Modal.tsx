@@ -1,123 +1,94 @@
-import React, { useEffect } from 'react';
-import { motion, AnimatePresence, type Variants } from 'framer-motion';
+import React from 'react';
+import { motion } from 'framer-motion';
 import { X } from 'lucide-react';
-import { motionDuration, motionEase } from './motionTokens';
+import OverlayPrimitive, { type OverlayVariant } from './OverlayPrimitive';
+
+export type ModalSize = 'sm' | 'md' | 'lg' | 'full';
+export type ModalVariant = OverlayVariant;
 
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
-  title: string;
+  title?: string;
   children: React.ReactNode;
   footer?: React.ReactNode;
+  /** Overlay semantic variant. Affects closeOnBackdrop default and future theming. */
+  variant?: ModalVariant;
+  /** Max-width of the modal panel. Default 'md'. */
+  size?: ModalSize;
+  /** Whether clicking the backdrop closes the modal. Default: true except for 'danger'. */
+  closeOnBackdrop?: boolean;
+  /** Secondary description text shown below the title. */
+  description?: string;
 }
 
-const backdropVariants: Variants = {
-  hidden: { opacity: 0 },
-  visible: { 
-    opacity: 1,
-    transition: { duration: motionDuration.normal }
-  },
-  exit: { 
-    opacity: 0,
-    transition: { duration: motionDuration.normal }
-  }
+const sizeClasses: Record<ModalSize, string> = {
+  sm: 'max-w-sm',
+  md: 'max-w-md',
+  lg: 'max-w-lg',
+  full: 'max-w-xl',
 };
 
-const contentVariants: Variants = {
-  hidden: { 
-    opacity: 0, 
-    scale: 0.95, 
-    y: 20 
-  },
-  visible: { 
-    opacity: 1, 
-    scale: 1, 
-    y: 0,
-    transition: { 
-      duration: motionDuration.slow,
-      ease: motionEase.emphasized
-    }
-  },
-  exit: { 
-    opacity: 0, 
-    scale: 0.95, 
-    y: 20,
-    transition: { duration: motionDuration.normal }
-  }
-};
-
-const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, footer }) => {
-  useEffect(() => {
-    const handleEsc = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        onClose();
-      }
-    };
-    window.addEventListener('keydown', handleEsc);
-    return () => {
-      window.removeEventListener('keydown', handleEsc);
-    };
-  }, [onClose]);
-
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [isOpen]);
+const Modal: React.FC<ModalProps> = ({
+  isOpen,
+  onClose,
+  title,
+  children,
+  footer,
+  variant = 'default',
+  size = 'md',
+  closeOnBackdrop,
+  description,
+}) => {
+  const resolvedCloseOnBackdrop = closeOnBackdrop ?? (variant !== 'danger');
 
   return (
-    <AnimatePresence mode="wait">
-      {isOpen && (
-        <motion.div
-          variants={backdropVariants}
-          initial="hidden"
-          animate="visible"
-          exit="exit"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-overlay-scrim/60 p-4 backdrop-blur-md"
-          aria-labelledby="modal-title"
-          role="dialog"
-          aria-modal="true"
-          onClick={onClose}
-        >
-          <motion.div
-            variants={contentVariants}
-            initial="hidden"
-            animate="visible"
-            exit="exit"
-            className="relative bg-surface-card w-full max-w-md rounded-[2rem] shadow-2xl dark:shadow-dark-glow flex flex-col max-h-[90vh] overflow-hidden border border-surface-border/60"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex-none flex items-center justify-between px-6 py-5 border-b border-surface-border/60 bg-surface-card/80 backdrop-blur-md">
-              <h2 id="modal-title" className="text-xl font-black text-text-primary truncate pr-4 tracking-tight">{title}</h2>
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={onClose}
-                className="flex-none p-1.5 rounded-full text-text-muted hover:bg-surface-muted hover:text-text-primary transition-colors"
-                aria-label="关闭弹窗"
-              >
-                <X size={24} />
-              </motion.button>
+    <OverlayPrimitive
+      isOpen={isOpen}
+      onClose={onClose}
+      closeOnBackdrop={resolvedCloseOnBackdrop}
+      closeOnEsc
+      variant={variant}
+      aria-labelledby={title ? 'modal-title' : undefined}
+    >
+      <div
+        className={`relative bg-surface-card w-full ${sizeClasses[size]} rounded-[2rem] shadow-2xl dark:shadow-dark-glow flex flex-col max-h-[90vh] overflow-hidden border border-surface-border/60`}
+      >
+        {(title || description) && (
+          <div className="flex-none flex items-center justify-between px-6 py-5 border-b border-surface-border/60 bg-surface-card/80 backdrop-blur-md">
+            <div className="min-w-0 flex-1">
+              {title && (
+                <h2 id="modal-title" className="text-xl font-black text-text-primary truncate pr-4 tracking-tight">
+                  {title}
+                </h2>
+              )}
+              {description && (
+                <p className="text-sm text-text-muted mt-0.5 truncate">{description}</p>
+              )}
             </div>
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={onClose}
+              className="flex-none p-1.5 rounded-full text-text-muted hover:bg-surface-muted hover:text-text-primary transition-colors"
+              aria-label="关闭弹窗"
+            >
+              <X size={24} />
+            </motion.button>
+          </div>
+        )}
 
-            <div className="flex-1 overflow-y-auto px-6 py-4 custom-scrollbar text-text-secondary">
-              {children}
-            </div>
+        <div className="flex-1 overflow-y-auto px-6 py-4 custom-scrollbar text-text-secondary">
+          {children}
+        </div>
 
-            {footer && (
-              <div className="flex-none px-6 py-5 border-t border-surface-border/60 flex justify-end space-x-3 bg-surface-muted/80 backdrop-blur-md">
-                {footer}
-              </div>
-            )}
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+        {footer && (
+          <div className="flex-none px-6 py-5 border-t border-surface-border/60 flex justify-end space-x-3 bg-surface-muted/80 backdrop-blur-md">
+            {footer}
+          </div>
+        )}
+      </div>
+    </OverlayPrimitive>
   );
 };
 

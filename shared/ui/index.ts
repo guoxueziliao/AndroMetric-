@@ -1,4 +1,5 @@
 export { default as Modal } from './Modal';
+export type { ModalSize, ModalVariant } from './Modal';
 export { default as BottomSheet } from './BottomSheet';
 export { default as Toast, ToastStack } from './Toast';
 export type { ToastType } from './Toast';
@@ -7,6 +8,9 @@ export * from './FormControls';
 export { default as HardnessSelector } from './HardnessSelector';
 export { default as SafeDeleteModal } from './SafeDeleteModal';
 export { default as ConfirmModal } from './ConfirmModal';
+export type { ConfirmSeverity } from './ConfirmModal';
+export { default as OverlayPrimitive } from './OverlayPrimitive';
+export type { OverlayVariant } from './OverlayPrimitive';
 export { default as ErrorBoundary } from './ErrorBoundary';
 export { default as AnimatedButton } from './AnimatedButton';
 export { default as AnimatedPage, AnimatedPresence } from './AnimatedPage';
