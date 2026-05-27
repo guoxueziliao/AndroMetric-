@@ -55,7 +55,7 @@ const PartnerList: React.FC<PartnerListProps> = ({ partners, sortedPartners, par
                   <div className="flex items-center gap-2 mt-0.5">
                     {p.origin && <span className="text-[10px] text-text-muted bg-surface-muted  px-1.5 rounded">{p.origin}</span>}
                     {stats && (
-                      <span className={`text-[10px] flex items-center ${isInactive ? 'text-text-muted' : 'text-green-600 dark:text-green-400'}`}>
+                      <span className={`text-[10px] flex items-center ${isInactive ? 'text-text-muted' : 'text-state-success dark:text-state-success'}`}>
                         <Clock size={10} className="mr-0.5" /> {stats.daysAgo === 0 ? '今天' : `${stats.daysAgo}天前`}
                       </span>
                     )}

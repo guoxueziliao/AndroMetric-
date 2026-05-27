@@ -242,7 +242,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                 {/* 0. Inventory Header */}
                 <div className="flex justify-between items-center px-1">
                     <div className="flex items-center gap-1.5 text-text-muted ">
-                        <Zap size={14} className="text-amber-500 fill-amber-500" />
+                        <Zap size={14} className="text-state-warning fill-state-warning" />
                         <span className="text-[10px] font-black uppercase tracking-widest">当前蓄力 (INVENTORY)</span>
                     </div>
                     <span className="text-sm font-black text-text-primary ">{inventory}</span>
@@ -261,15 +261,15 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                         </div>
                     </div>
 
-                    <div className="bg-blue-50 dark:bg-blue-900/10 p-4 rounded-2xl border border-blue-100 dark:border-blue-900/30 flex items-center justify-between shadow-inner">
+                    <div className="bg-chart-primary dark:bg-chart-primary/10 p-4 rounded-2xl border border-chart-primary dark:border-chart-primary/30 flex items-center justify-between shadow-inner">
                         <div className="flex flex-col">
-                            <span className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest">持续时长 (分钟)</span>
-                            <div className="text-xs text-blue-400 font-bold mt-0.5">根据起止时间自动计算</div>
+                            <span className="text-[10px] font-black text-chart-primary dark:text-chart-primary uppercase tracking-widest">持续时长 (分钟)</span>
+                            <div className="text-xs text-chart-primary font-bold mt-0.5">根据起止时间自动计算</div>
                         </div>
-                        <div className="flex items-center gap-4 bg-surface-card  p-1.5 rounded-xl border border-blue-200 dark:border-blue-900/50 shadow-sm">
-                            <button onClick={() => handleDurationChange(data.duration - 1)} aria-label="减少 1 分钟" className="min-w-[44px] min-h-[44px] flex items-center justify-center text-text-muted hover:text-red-500 transition-colors"><Minus size={18} strokeWidth={3}/></button>
+                        <div className="flex items-center gap-4 bg-surface-card  p-1.5 rounded-xl border border-chart-primary dark:border-chart-primary/50 shadow-sm">
+                            <button onClick={() => handleDurationChange(data.duration - 1)} aria-label="减少 1 分钟" className="min-w-[44px] min-h-[44px] flex items-center justify-center text-text-muted hover:text-state-danger transition-colors"><Minus size={18} strokeWidth={3}/></button>
                             <span className="text-xl font-black text-text-primary  tabular-nums min-w-[2rem] text-center">{data.duration}</span>
-                            <button onClick={() => handleDurationChange(data.duration + 1)} aria-label="增加 1 分钟" className="min-w-[44px] min-h-[44px] flex items-center justify-center text-blue-600 hover:text-blue-500 transition-colors"><Plus size={18} strokeWidth={3}/></button>
+                            <button onClick={() => handleDurationChange(data.duration + 1)} aria-label="增加 1 分钟" className="min-w-[44px] min-h-[44px] flex items-center justify-center text-chart-primary hover:text-chart-primary transition-colors"><Plus size={18} strokeWidth={3}/></button>
                         </div>
                     </div>
                 </div>
@@ -295,7 +295,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                                         {item.xpTags && item.xpTags.length > 0 && (
                                             <div className="flex flex-wrap gap-1 mt-1">
                                                 {item.xpTags.map(tag => (
-                                                    <span key={tag} className="text-[8px] bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 px-1 rounded border border-blue-100 dark:border-blue-900/50">
+                                                    <span key={tag} className="text-[8px] bg-chart-primary dark:bg-chart-primary/40 text-chart-primary dark:text-chart-primary px-1 rounded border border-chart-primary dark:border-chart-primary/50">
                                                         {tag.replace(/^#/, '')}
                                                     </span>
                                                 ))}
@@ -305,7 +305,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                                 </div>
                                 <div className="flex gap-1">
                                     <button onClick={() => setEditingItem(item)} aria-label="编辑素材" className="p-2 text-text-muted hover:text-accent min-w-[44px] min-h-[44px] flex items-center justify-center"><Edit2 size={14}/></button>
-                                    <button onClick={() => updateData({contentItems: data.contentItems.filter(i => i.id !== item.id)})} aria-label="删除素材" className="p-2 text-text-muted hover:text-red-500 min-w-[44px] min-h-[44px] flex items-center justify-center"><Trash2 size={14}/></button>
+                                    <button onClick={() => updateData({contentItems: data.contentItems.filter(i => i.id !== item.id)})} aria-label="删除素材" className="p-2 text-text-muted hover:text-state-danger min-w-[44px] min-h-[44px] flex items-center justify-center"><Trash2 size={14}/></button>
                                 </div>
                             </div>
                         ))}
@@ -318,7 +318,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                                 <div className="text-xs font-bold text-text-muted group-hover:text-text-muted">暂无素材详情</div>
                                 <div className="text-[10px] text-text-muted mt-1">添加具体的视频、演员或标签</div>
                             </div>
-                            <div className="mt-2 px-4 py-1.5 bg-blue-50 dark:bg-blue-900/20 text-accent text-xs font-black rounded-lg border border-blue-100 dark:border-blue-900">
+                            <div className="mt-2 px-4 py-1.5 bg-chart-primary dark:bg-chart-primary/20 text-accent text-xs font-black rounded-lg border border-chart-primary dark:border-chart-primary">
                                 + 添加素材
                             </div>
                         </button>
@@ -340,7 +340,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                                 <button
                                     key={loc.id}
                                     onClick={() => updateData({location: loc.id})}
-                                    className={`flex flex-col items-center justify-center py-4 px-1 rounded-2xl border-2 transition-all active:scale-95 ${isSel ? 'border-accent bg-blue-50 dark:bg-blue-900/20 text-accent shadow-md' : 'border-transparent bg-surface-muted  text-text-muted hover:bg-surface-muted'}`}
+                                    className={`flex flex-col items-center justify-center py-4 px-1 rounded-2xl border-2 transition-all active:scale-95 ${isSel ? 'border-accent bg-chart-primary dark:bg-chart-primary/20 text-accent shadow-md' : 'border-transparent bg-surface-muted  text-text-muted hover:bg-surface-muted'}`}
                                 >
                                     <loc.icon size={20} className={`mb-1.5 ${isSel ? 'text-accent' : 'text-text-muted'}`} />
                                     <span className="text-[10px] font-black text-center">{loc.id}</span>
@@ -366,7 +366,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                         {TOOL_OPTIONS.map(tool => {
                             const isSel = data.tools.includes(tool);
                             return (
-                                <button key={tool} onClick={() => updateData({tools: isSel ? data.tools.filter(t => t !== tool) : [...data.tools, tool]})} className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border ${isSel ? 'bg-blue-900/20 text-accent border-accent' : 'bg-surface-muted  text-text-muted border-transparent'}`}>
+                                <button key={tool} onClick={() => updateData({tools: isSel ? data.tools.filter(t => t !== tool) : [...data.tools, tool]})} className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border ${isSel ? 'bg-chart-primary/20 text-accent border-accent' : 'bg-surface-muted  text-text-muted border-transparent'}`}>
                                     {tool}
                                 </button>
                             );
@@ -377,10 +377,10 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                             <select value={data.lubricant} onChange={e => updateData({lubricant: e.target.value})} className="w-full bg-surface-muted  border border-surface-border  rounded-xl p-3 pl-8 text-xs font-bold appearance-none outline-none focus:border-accent">
                                 {LUBRICANT_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
                             </select>
-                            <Droplets size={14} className="absolute left-3 top-3.5 text-blue-500" />
+                            <Droplets size={14} className="absolute left-3 top-3.5 text-chart-primary" />
                             <ChevronDown size={14} className="absolute right-3 top-3.5 text-text-muted pointer-events-none" />
                         </div>
-                        <button onClick={() => updateData({useCondom: !data.useCondom})} className={`px-5 rounded-xl text-xs font-black flex items-center gap-2 border transition-all ${data.useCondom ? 'bg-surface-card dark:bg-surface-muted text-text-on-accent  border-slate-900' : 'bg-surface-muted  text-text-muted border-surface-border '}`}>
+                        <button onClick={() => updateData({useCondom: !data.useCondom})} className={`px-5 rounded-xl text-xs font-black flex items-center gap-2 border transition-all ${data.useCondom ? 'bg-surface-card dark:bg-surface-muted text-text-on-accent  border-surface-border' : 'bg-surface-muted  text-text-muted border-surface-border '}`}>
                             <div className={`w-2 h-2 rounded-full border border-current ${data.useCondom ? 'bg-current' : 'bg-transparent'}`}></div> 戴套
                         </button>
                     </div>
@@ -389,7 +389,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                 {/* 5. Edging */}
                 <div className="bg-surface-muted  p-4 rounded-3xl border border-surface-border  flex items-center justify-between shadow-sm">
                     <div className="flex items-center gap-3">
-                        <div className="p-2 bg-purple-50 dark:bg-purple-900/20 text-purple-600 rounded-xl"><Activity size={20}/></div>
+                        <div className="p-2 bg-chart-tertiary dark:bg-chart-tertiary/20 text-chart-tertiary rounded-xl"><Activity size={20}/></div>
                         <div>
                             <div className="text-xs font-black text-text-secondary ">边缘控制 (Edging)</div>
                             <div className="text-[10px] text-text-muted font-bold">快射时停下</div>
@@ -398,15 +398,15 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                     <div className="flex items-center gap-4 bg-surface-card  p-1.5 rounded-2xl border border-surface-border ">
                         <button onClick={() => updateData({edgingCount: Math.max(0, data.edgingCount - 1)})} className="p-2 bg-surface-muted  rounded-full text-text-muted"><Minus size={16}/></button>
                         <span className="text-base font-black text-text-primary  w-4 text-center tabular-nums">{data.edgingCount}</span>
-                        <button onClick={() => updateData({edgingCount: data.edgingCount + 1})} className="p-2 bg-purple-50 dark:bg-purple-900/40 text-purple-600 rounded-full"><Plus size={16}/></button>
+                        <button onClick={() => updateData({edgingCount: data.edgingCount + 1})} className="p-2 bg-chart-tertiary dark:bg-chart-tertiary/40 text-chart-tertiary rounded-full"><Plus size={16}/></button>
                     </div>
                 </div>
 
                 {/* 6. Interruption */}
-                <div className={`bg-surface-muted  p-5 rounded-[2.5rem] border transition-all ${data.interrupted ? 'border-orange-200 dark:border-orange-900/30' : 'border-surface-border '}`}>
+                <div className={`bg-surface-muted  p-5 rounded-[2.5rem] border transition-all ${data.interrupted ? 'border-state-warning dark:border-state-warning/30' : 'border-surface-border '}`}>
                     <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-3">
-                            <div className={`p-2 rounded-xl ${data.interrupted ? 'bg-orange-100 dark:bg-orange-900/40 text-orange-600' : 'bg-surface-border  text-text-muted'}`}>
+                            <div className={`p-2 rounded-xl ${data.interrupted ? 'bg-state-warning dark:bg-state-warning/40 text-state-warning' : 'bg-surface-border  text-text-muted'}`}>
                                 <PhoneOff size={18}/>
                             </div>
                             <div>
@@ -423,7 +423,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                     </div>
                     {data.interrupted && (
                         <div className="space-y-4 animate-in slide-in-from-top-2">
-                            <label className="text-[10px] font-black text-orange-600 dark:text-orange-400 uppercase tracking-widest px-1">打断原因 (多选)</label>
+                            <label className="text-[10px] font-black text-state-warning dark:text-state-warning uppercase tracking-widest px-1">打断原因 (多选)</label>
                             <div className="flex flex-wrap gap-2">
                                 {INTERRUPTION_REASONS.map(reason => {
                                     const isSel = data.interruptionReasons?.includes(reason);
@@ -431,7 +431,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                                         <button
                                             key={reason}
                                             onClick={() => toggleInterruptionReason(reason)}
-                                            className={`px-3 py-1.5 rounded-xl text-[10px] font-bold border transition-all ${isSel ? 'bg-orange-500 text-text-on-accent border-orange-600' : 'bg-surface-card  text-text-muted border-surface-border '}`}
+                                            className={`px-3 py-1.5 rounded-xl text-[10px] font-bold border transition-all ${isSel ? 'bg-state-warning text-text-on-accent border-state-warning' : 'bg-surface-card  text-text-muted border-surface-border '}`}
                                         >
                                             {reason}
                                         </button>
@@ -449,7 +449,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                         <div className="flex p-1 bg-surface-border  rounded-2xl">
                             <button
                                 onClick={() => updateData({ejaculation: true})}
-                                className={`flex-1 py-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 ${data.ejaculation ? 'bg-blue-600 text-text-on-accent shadow-lg' : 'text-text-muted'}`}
+                                className={`flex-1 py-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 ${data.ejaculation ? 'bg-chart-primary text-text-on-accent shadow-lg' : 'text-text-muted'}`}
                             >
                                 <Droplets size={14} className={data.ejaculation ? 'animate-pulse' : ''}/> 已射精
                             </button>
@@ -465,15 +465,15 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                     {data.ejaculation && (
                         <div className="space-y-4 animate-in slide-in-from-top-2">
                             <div className="flex justify-between items-center px-1">
-                                <label className="text-[10px] font-black text-blue-500 dark:text-blue-400 uppercase tracking-widest flex items-center gap-1.5"><Droplets size={12}/> 射精强度 (量/力)</label>
+                                <label className="text-[10px] font-black text-chart-primary dark:text-chart-primary uppercase tracking-widest flex items-center gap-1.5"><Droplets size={12}/> 射精强度 (量/力)</label>
                                 <span className="text-[10px] font-bold text-text-muted bg-surface-muted  px-2 py-0.5 rounded-full">{data.volumeForceLevel ? `Lv.${data.volumeForceLevel}` : '未评'}</span>
                             </div>
                             <div className="grid grid-cols-5 gap-2">
                                 {FORCE_LEVELS.map(f => {
                                     const isSel = data.volumeForceLevel === f.lvl;
                                     return (
-                                        <button key={f.lvl} onClick={() => updateData({volumeForceLevel: f.lvl})} className={`flex flex-col items-center py-4 rounded-2xl border-2 transition-all ${isSel ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-600' : 'border-transparent bg-surface-card  text-text-muted opacity-40'}`}>
-                                            <div className={`w-2 h-2 rounded-full mb-2 ${isSel ? 'bg-blue-500 shadow-glow' : 'bg-surface-border dark:bg-surface-muted'}`}></div>
+                                        <button key={f.lvl} onClick={() => updateData({volumeForceLevel: f.lvl})} className={`flex flex-col items-center py-4 rounded-2xl border-2 transition-all ${isSel ? 'border-chart-primary bg-chart-primary dark:bg-chart-primary/30 text-chart-primary' : 'border-transparent bg-surface-card  text-text-muted opacity-40'}`}>
+                                            <div className={`w-2 h-2 rounded-full mb-2 ${isSel ? 'bg-chart-primary shadow-glow' : 'bg-surface-border dark:bg-surface-muted'}`}></div>
                                             <span className="text-[10px] font-black">{f.label}</span>
                                         </button>
                                     );
@@ -501,7 +501,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                         <label className="text-[10px] font-black text-text-muted uppercase px-1">心理状态</label>
                         <div className="flex flex-wrap gap-2">
                             {POST_MOOD_OPTIONS.map(opt => (
-                                <button key={opt} onClick={() => updateData({postMood: opt})} className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${data.postMood === opt ? 'bg-blue-900  text-text-on-accent border-blue-900 shadow-md' : 'bg-surface-card  text-text-muted border-surface-border '}`}>
+                                <button key={opt} onClick={() => updateData({postMood: opt})} className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${data.postMood === opt ? 'bg-chart-primary  text-text-on-accent border-chart-primary shadow-md' : 'bg-surface-card  text-text-muted border-surface-border '}`}>
                                     {opt}
                                 </button>
                             ))}
@@ -511,7 +511,7 @@ const MasturbationRecordModal: React.FC<MasturbationRecordModalProps> = ({ isOpe
                         <label className="text-[10px] font-black text-text-muted uppercase px-1">身体疲劳度</label>
                         <div className="flex flex-wrap gap-2">
                             {FATIGUE_OPTIONS.map(opt => (
-                                <button key={opt} onClick={() => updateData({fatigue: opt})} className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${data.fatigue === opt ? 'bg-amber-600 dark:bg-amber-900/40 text-text-on-accent border-amber-600 shadow-md' : 'bg-surface-card  text-text-muted border-surface-border '}`}>
+                                <button key={opt} onClick={() => updateData({fatigue: opt})} className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${data.fatigue === opt ? 'bg-state-warning dark:bg-state-warning/40 text-text-on-accent border-state-warning shadow-md' : 'bg-surface-card  text-text-muted border-surface-border '}`}>
                                     {opt}
                                 </button>
                             ))}

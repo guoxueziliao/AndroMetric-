@@ -1,13 +1,13 @@
 import type { LogEntry, PartnerProfile, PartnerType } from '../../../domain';
 
 export const COLORS = [
-  'bg-pink-500',
-  'bg-purple-500',
-  'bg-indigo-500',
-  'bg-blue-500',
-  'bg-teal-500',
-  'bg-rose-500',
-  'bg-orange-500'
+  'bg-accent-vivid',
+  'bg-chart-tertiary',
+  'bg-chart-secondary',
+  'bg-chart-primary',
+  'bg-accent',
+  'bg-chart-quaternary',
+  'bg-state-warning'
 ];
 
 export const SENSITIVE_SPOTS = [
@@ -22,9 +22,9 @@ export const STIMULATION_METHODS = [
 ];
 
 export const TYPE_CONFIG: Record<PartnerType, { label: string; color: string; desc: string }> = {
-  stable: { label: '固定伴侣', color: 'bg-pink-500 border-pink-600', desc: '老婆/女友/长期' },
-  dating: { label: '约会/炮友', color: 'bg-purple-500 border-purple-600', desc: '情人/Py/Dating' },
-  casual: { label: '露水/偶遇', color: 'bg-blue-500 border-blue-600', desc: '一夜情/捡尸/艳遇' },
+  stable: { label: '固定伴侣', color: 'bg-accent-vivid border-accent-vivid', desc: '老婆/女友/长期' },
+  dating: { label: '约会/炮友', color: 'bg-chart-tertiary border-chart-tertiary', desc: '情人/Py/Dating' },
+  casual: { label: '露水/偶遇', color: 'bg-chart-primary border-chart-primary', desc: '一夜情/捡尸/艳遇' },
   service: { label: '服务/交易', color: 'bg-surface-muted border-surface-border', desc: '技师/外围/交易' }
 };
 
@@ -42,12 +42,12 @@ export interface PartnerCategory {
 }
 
 export const getPartnerCategory = (p: PartnerProfile): PartnerCategory | null => {
-  if (p.isMarried) return { label: '人妻', color: 'bg-rose-50 text-text-on-accent' };
+  if (p.isMarried) return { label: '人妻', color: 'bg-accent-vivid text-text-on-accent' };
 
   if (p.age !== undefined) {
-    if (p.age < 25) return { label: '少女', color: 'bg-pink-400 text-text-on-accent' };
-    if (p.age <= 35) return { label: '少妇', color: 'bg-purple-500 text-text-on-accent' };
-    return { label: '熟妇', color: 'bg-amber-600 text-text-on-accent' };
+    if (p.age < 25) return { label: '少女', color: 'bg-accent-vivid text-text-on-accent' };
+    if (p.age <= 35) return { label: '少妇', color: 'bg-chart-tertiary text-text-on-accent' };
+    return { label: '熟妇', color: 'bg-state-warning text-text-on-accent' };
   }
   return null;
 };

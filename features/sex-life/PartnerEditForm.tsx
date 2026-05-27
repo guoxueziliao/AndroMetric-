@@ -147,7 +147,7 @@ const PartnerEditForm: React.FC<PartnerEditFormProps> = ({
                       delete newM[name];
                       update({ milestones: newM });
                     }}
-                    className="text-text-muted hover:text-red-500"
+                    className="text-text-muted hover:text-state-danger"
                   >
                     <Trash2 size={14} />
                   </button>
@@ -204,13 +204,13 @@ const PartnerEditForm: React.FC<PartnerEditFormProps> = ({
             </div>
 
             <div>
-              <label className="text-xs font-bold text-pink-500 uppercase tracking-wider mb-2 block">敏感点 (多选)</label>
+              <label className="text-xs font-bold text-accent-vivid uppercase tracking-wider mb-2 block">敏感点 (多选)</label>
               <div className="flex flex-wrap gap-2">
                 {SENSITIVE_SPOTS.map(spot => (
                   <button
                     key={spot}
                     onClick={() => onToggleArrayItem('sensitiveSpots', spot)}
-                    className={`text-xs px-2 py-1 rounded border transition-all ${formData.sensitiveSpots?.includes(spot) ? 'bg-pink-500 text-text-on-accent border-pink-600' : 'bg-surface-muted  border-surface-border  text-text-muted'}`}
+                    className={`text-xs px-2 py-1 rounded border transition-all ${formData.sensitiveSpots?.includes(spot) ? 'bg-accent-vivid text-text-on-accent border-accent-vivid' : 'bg-surface-muted  border-surface-border  text-text-muted'}`}
                   >
                     {spot}
                   </button>
@@ -219,13 +219,13 @@ const PartnerEditForm: React.FC<PartnerEditFormProps> = ({
             </div>
 
             <div>
-              <label className="text-xs font-bold text-orange-500 uppercase tracking-wider mb-2 block">喜欢的刺激方式 (多选)</label>
+              <label className="text-xs font-bold text-state-warning uppercase tracking-wider mb-2 block">喜欢的刺激方式 (多选)</label>
               <div className="flex flex-wrap gap-2">
                 {STIMULATION_METHODS.map(m => (
                   <button
                     key={m}
                     onClick={() => onToggleArrayItem('stimulationPreferences', m)}
-                    className={`text-xs px-2 py-1 rounded border transition-all ${formData.stimulationPreferences?.includes(m) ? 'bg-orange-500 text-text-on-accent border-orange-600' : 'bg-surface-muted  border-surface-border  text-text-muted'}`}
+                    className={`text-xs px-2 py-1 rounded border transition-all ${formData.stimulationPreferences?.includes(m) ? 'bg-state-warning text-text-on-accent border-state-warning' : 'bg-surface-muted  border-surface-border  text-text-muted'}`}
                   >
                     {m}
                   </button>
@@ -260,7 +260,7 @@ const PartnerEditForm: React.FC<PartnerEditFormProps> = ({
                     <button
                       key={d}
                       onClick={() => update({ orgasmDifficulty: d })}
-                      className={`flex-1 text-xs py-1 rounded ${formData.orgasmDifficulty === d ? 'bg-surface-card text-indigo-600 shadow-sm' : 'text-text-muted'}`}
+                      className={`flex-1 text-xs py-1 rounded ${formData.orgasmDifficulty === d ? 'bg-surface-card text-chart-tertiary shadow-sm' : 'text-text-muted'}`}
                     >
                       {d === 'easy' ? '易高潮' : d === 'medium' ? '普通' : '难高潮'}
                     </button>
@@ -269,11 +269,11 @@ const PartnerEditForm: React.FC<PartnerEditFormProps> = ({
               </div>
               <div className="flex gap-4 pt-2">
                 <label className="flex items-center gap-2 text-sm text-text-secondary ">
-                  <input type="checkbox" checked={formData.analDeveloped || false} onChange={e => update({ analDeveloped: e.target.checked })} className="rounded text-indigo-500" />
+                  <input type="checkbox" checked={formData.analDeveloped || false} onChange={e => update({ analDeveloped: e.target.checked })} className="rounded text-chart-tertiary" />
                   后庭开发
                 </label>
                 <label className="flex items-center gap-2 text-sm text-text-secondary ">
-                  <input type="checkbox" checked={formData.squirtingAbility || false} onChange={e => update({ squirtingAbility: e.target.checked })} className="rounded text-blue-500" />
+                  <input type="checkbox" checked={formData.squirtingAbility || false} onChange={e => update({ squirtingAbility: e.target.checked })} className="rounded text-chart-primary" />
                   潮吹体质
                 </label>
               </div>

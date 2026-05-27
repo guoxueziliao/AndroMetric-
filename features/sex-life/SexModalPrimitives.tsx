@@ -30,7 +30,7 @@ export const TabButton: React.FC<{ active: boolean; onClick: () => void; icon: R
   <button
     onClick={onClick}
     className={`flex flex-col items-center justify-center py-2 px-1 rounded-xl transition-all flex-1 relative
-      ${active ? 'text-accent bg-blue-50 ' : 'text-text-muted hover:text-text-secondary dark:hover:text-text-muted'}`}
+      ${active ? 'text-accent bg-chart-primary ' : 'text-text-muted hover:text-text-secondary dark:hover:text-text-muted'}`}
   >
     <div className="p-2 rounded-full mb-1">
       <Icon size={18} />

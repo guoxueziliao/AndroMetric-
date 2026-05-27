@@ -64,15 +64,15 @@ const MasturbationContentItemEditor: React.FC<MasturbationContentItemEditorProps
             </button>
             <div className="space-y-2">
               {!editingItem.type && (
-                <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-900/30 rounded-lg p-3 flex items-center justify-between">
+                <div className="bg-state-warning dark:bg-state-warning/20 border border-state-warning dark:border-state-warning/30 rounded-lg p-3 flex items-center justify-between">
                   <div className="flex items-start gap-2">
-                    <AlertTriangle size={16} className="text-amber-500 mt-0.5" />
+                    <AlertTriangle size={16} className="text-state-warning mt-0.5" />
                     <div>
-                      <div className="text-xs font-black text-amber-700 dark:text-amber-400">未选择素材类型</div>
-                      <div className="text-[10px] text-amber-600/70 dark:text-amber-400/50">分类统计失效</div>
+                      <div className="text-xs font-black text-state-warning dark:text-state-warning">未选择素材类型</div>
+                      <div className="text-[10px] text-state-warning/70 dark:text-state-warning/50">分类统计失效</div>
                     </div>
                   </div>
-                  <button onClick={scrollToTypePicker} className="text-[10px] font-black text-amber-700 border border-amber-200 px-2 py-1 rounded bg-surface-card">去选择</button>
+                  <button onClick={scrollToTypePicker} className="text-[10px] font-black text-state-warning border border-state-warning px-2 py-1 rounded bg-surface-card">去选择</button>
                 </div>
               )}
             </div>
@@ -119,7 +119,7 @@ const MasturbationContentItemEditor: React.FC<MasturbationContentItemEditorProps
             <div className="pt-4 border-t border-surface-border ">
               <div className="flex justify-between items-center mb-4">
                 <label className="text-xs font-black text-text-muted uppercase tracking-widest">XP 标签 ({editingItem.xpTags?.length || 0})</label>
-                <button onClick={() => setIsTagManagerOpen(true)} className="p-1.5 bg-blue-50 dark:bg-blue-900/30 text-accent rounded-lg flex items-center gap-1 text-[10px] font-black"><Settings size={12} /> 管理</button>
+                <button onClick={() => setIsTagManagerOpen(true)} className="p-1.5 bg-chart-primary dark:bg-chart-primary/30 text-accent rounded-lg flex items-center gap-1 text-[10px] font-black"><Settings size={12} /> 管理</button>
               </div>
 
               <div className="mb-4">
@@ -157,7 +157,7 @@ const MasturbationContentItemEditor: React.FC<MasturbationContentItemEditorProps
                   displayTags.map(tag => {
                     const isSel = editingItem.xpTags?.includes(tag);
                     return (
-                      <button key={tag} onClick={() => toggleXpTag(tag)} className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${isSel ? 'bg-blue-500 text-text-on-accent border-blue-600 shadow-sm' : 'bg-surface-card  text-text-muted border-surface-border '}`}>
+                      <button key={tag} onClick={() => toggleXpTag(tag)} className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${isSel ? 'bg-chart-primary text-text-on-accent border-chart-primary shadow-sm' : 'bg-surface-card  text-text-muted border-surface-border '}`}>
                         {tag.replace(/^#/, '')}
                       </button>
                     );

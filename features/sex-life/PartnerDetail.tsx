@@ -36,7 +36,7 @@ const PartnerDetail: React.FC<PartnerDetailProps> = ({ partner, partnerStats, on
               {p.age && <span className="bg-overlay-scrim/20 px-2 py-0.5 rounded text-sm">{p.age}岁</span>}
               {p.height && <span className="bg-overlay-scrim/20 px-2 py-0.5 rounded text-sm">{p.height}cm</span>}
               {p.weight && <span className="bg-overlay-scrim/20 px-2 py-0.5 rounded text-sm">{p.weight}kg</span>}
-              {p.cupSize && <span className="bg-pink-500/80 px-2 py-0.5 rounded text-sm">{p.cupSize}</span>}
+              {p.cupSize && <span className="bg-accent-vivid/80 px-2 py-0.5 rounded text-sm">{p.cupSize}</span>}
             </div>
             <div className="mt-3 text-xs opacity-90 flex flex-col gap-1">
               {p.firstEncounterDate && <span>📅 初次见面: {p.firstEncounterDate}</span>}
@@ -46,7 +46,7 @@ const PartnerDetail: React.FC<PartnerDetailProps> = ({ partner, partnerStats, on
           </div>
           <div className="flex gap-2">
             <button onClick={() => onEdit(p)} className="p-2 bg-surface-card/20 rounded-full hover:bg-surface-card/30"><Edit2 size={18} /></button>
-            <button onClick={() => onDeleteRequest(p.id)} className="p-2 bg-surface-card/20 rounded-full hover:bg-red-500/50"><Trash2 size={18} /></button>
+            <button onClick={() => onDeleteRequest(p.id)} className="p-2 bg-surface-card/20 rounded-full hover:bg-state-danger/50"><Trash2 size={18} /></button>
           </div>
         </div>
         {(p.contrastDaily || p.contrastBedroom) && (
@@ -68,12 +68,12 @@ const PartnerDetail: React.FC<PartnerDetailProps> = ({ partner, partnerStats, on
         <div className="bg-surface-card  border border-surface-border  rounded-xl p-4 flex items-center justify-around">
           <div className="text-center">
             <span className="text-xs text-text-muted block mb-1">让她高潮</span>
-            <span className="text-xl font-black text-pink-500">{stats.partnerCum}次</span>
+            <span className="text-xl font-black text-accent-vivid">{stats.partnerCum}次</span>
           </div>
           <div className="text-text-muted font-light text-2xl">VS</div>
           <div className="text-center">
             <span className="text-xs text-text-muted block mb-1">自己射精</span>
-            <span className="text-xl font-black text-blue-500">{stats.myCum}次</span>
+            <span className="text-xl font-black text-chart-primary">{stats.myCum}次</span>
           </div>
         </div>
       )}
@@ -81,13 +81,13 @@ const PartnerDetail: React.FC<PartnerDetailProps> = ({ partner, partnerStats, on
       {/* Milestones Timeline */}
       {p.milestones && Object.keys(p.milestones).length > 0 && (
         <div className="bg-surface-card  border border-surface-border  rounded-xl p-4">
-          <h3 className="text-sm font-bold text-text-muted uppercase mb-3 flex items-center"><Flag size={16} className="mr-2 text-yellow-500" /> 纪念日 / 里程碑</h3>
+          <h3 className="text-sm font-bold text-text-muted uppercase mb-3 flex items-center"><Flag size={16} className="mr-2 text-state-warning" /> 纪念日 / 里程碑</h3>
           <div className="relative border-l-2 border-surface-border  ml-2 space-y-4 py-1">
             {Object.entries(p.milestones)
               .sort(([, dA], [, dB]) => new Date(dA as string).getTime() - new Date(dB as string).getTime())
               .map(([name, date]) => (
                 <div key={name} className="relative pl-4">
-                  <div className="absolute -left-[5px] top-1.5 w-2.5 h-2.5 rounded-full bg-yellow-400 border-2 border-surface-card "></div>
+                  <div className="absolute -left-[5px] top-1.5 w-2.5 h-2.5 rounded-full bg-state-warning border-2 border-surface-card "></div>
                   <p className="text-xs text-text-muted font-mono">{date as React.ReactNode}</p>
                   <p className="text-sm font-bold text-text-primary ">{name}</p>
                 </div>
@@ -98,19 +98,19 @@ const PartnerDetail: React.FC<PartnerDetailProps> = ({ partner, partnerStats, on
 
       {/* Body & Sensitivity */}
       <div className="bg-surface-card  border border-surface-border  rounded-xl p-4">
-        <h3 className="text-sm font-bold text-text-muted uppercase mb-3 flex items-center"><Heart size={16} className="mr-2 text-pink-500" /> 身体密码</h3>
+        <h3 className="text-sm font-bold text-text-muted uppercase mb-3 flex items-center"><Heart size={16} className="mr-2 text-accent-vivid" /> 身体密码</h3>
         <div className="space-y-4">
           <div>
             <span className="text-xs text-text-muted block mb-2 font-medium">敏感点</span>
             <div className="flex flex-wrap gap-1.5">
-              {p.sensitiveSpots?.length ? p.sensitiveSpots.map(s => <span key={s} className="text-xs bg-pink-50 dark:bg-pink-900/20 text-pink-600 dark:text-pink-300 px-2 py-1 rounded-full border border-pink-100 dark:border-pink-900">{s}</span>) : <span className="text-xs text-text-muted">未知</span>}
+              {p.sensitiveSpots?.length ? p.sensitiveSpots.map(s => <span key={s} className="text-xs bg-accent-vivid dark:bg-accent-vivid/20 text-accent-vivid dark:text-accent-vivid px-2 py-1 rounded-full border border-accent-vivid dark:border-accent-vivid">{s}</span>) : <span className="text-xs text-text-muted">未知</span>}
             </div>
           </div>
           {p.stimulationPreferences && p.stimulationPreferences.length > 0 && (
             <div>
               <span className="text-xs text-text-muted block mb-2 font-medium">喜好的刺激</span>
               <div className="flex flex-wrap gap-1.5">
-                {p.stimulationPreferences.map(s => <span key={s} className="text-xs bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-300 px-2 py-1 rounded-full border border-orange-100 dark:border-orange-900">{s}</span>)}
+                {p.stimulationPreferences.map(s => <span key={s} className="text-xs bg-state-warning dark:bg-state-warning/20 text-state-warning dark:text-state-warning px-2 py-1 rounded-full border border-state-warning dark:border-state-warning">{s}</span>)}
               </div>
             </div>
           )}
@@ -119,27 +119,27 @@ const PartnerDetail: React.FC<PartnerDetailProps> = ({ partner, partnerStats, on
 
       {/* Capability */}
       <div className="bg-surface-card  border border-surface-border  rounded-xl p-4">
-        <h3 className="text-sm font-bold text-text-muted uppercase mb-3 flex items-center"><RulerIcon size={16} className="mr-2 text-indigo-500" /> 开发与能力</h3>
+        <h3 className="text-sm font-bold text-text-muted uppercase mb-3 flex items-center"><RulerIcon size={16} className="mr-2 text-chart-tertiary" /> 开发与能力</h3>
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-surface-muted  p-2 rounded text-center">
             <span className="text-xs text-text-muted">深喉等级</span>
-            <div className="font-bold text-indigo-500 text-lg">Lv.{p.deepThroatLevel || 0}</div>
+            <div className="font-bold text-chart-tertiary text-lg">Lv.{p.deepThroatLevel || 0}</div>
           </div>
           <div className="bg-surface-muted  p-2 rounded text-center">
             <span className="text-xs text-text-muted">高潮难度</span>
-            <div className="font-bold text-indigo-500 text-lg">{p.orgasmDifficulty === 'easy' ? '易' : p.orgasmDifficulty === 'hard' ? '难' : '中'}</div>
+            <div className="font-bold text-chart-tertiary text-lg">{p.orgasmDifficulty === 'easy' ? '易' : p.orgasmDifficulty === 'hard' ? '难' : '中'}</div>
           </div>
         </div>
         <div className="mt-3 flex flex-wrap gap-2">
-          {p.analDeveloped && <span className="text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-700 px-2 py-1 rounded border border-purple-200">✅ 后庭已开发</span>}
-          {p.squirtingAbility && <span className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 px-2 py-1 rounded border border-blue-200">💦 潮吹体质</span>}
+          {p.analDeveloped && <span className="text-xs bg-chart-tertiary dark:bg-chart-tertiary/30 text-chart-tertiary px-2 py-1 rounded border border-chart-tertiary">✅ 后庭已开发</span>}
+          {p.squirtingAbility && <span className="text-xs bg-chart-primary dark:bg-chart-primary/30 text-chart-primary px-2 py-1 rounded border border-chart-primary">💦 潮吹体质</span>}
         </div>
       </div>
 
       {/* Inner World & Notes */}
       {(p.primaryValues || p.petPeeves || p.notes) && (
         <div className="bg-surface-card  border border-surface-border  rounded-xl p-4">
-          <h3 className="text-sm font-bold text-text-muted uppercase mb-3 flex items-center"><BrainCircuit size={16} className="mr-2 text-purple-500" /> 内心与备注</h3>
+          <h3 className="text-sm font-bold text-text-muted uppercase mb-3 flex items-center"><BrainCircuit size={16} className="mr-2 text-chart-tertiary" /> 内心与备注</h3>
           <div className="space-y-3">
             {p.primaryValues && (
               <div>

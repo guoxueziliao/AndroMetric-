@@ -24,18 +24,18 @@ export const FORCE_LEVELS = [
 
 export const ORGASM_LABELS: Record<number, { label: string; color: string }> = {
   1: { label: '无感', color: 'text-text-muted' },
-  2: { label: '一般', color: 'text-blue-400' },
-  3: { label: '舒服', color: 'text-amber-500' },
-  4: { label: '很爽', color: 'text-orange-500' },
-  5: { label: '极致', color: 'text-pink-500' }
+  2: { label: '一般', color: 'text-chart-primary' },
+  3: { label: '舒服', color: 'text-state-warning' },
+  4: { label: '很爽', color: 'text-state-warning' },
+  5: { label: '极致', color: 'text-accent-vivid' }
 };
 
 export const SATISFACTION_LEVELS = [
   { lvl: 1, label: '毫无感觉', desc: '还是憋得慌', color: 'bg-surface-border' },
-  { lvl: 2, label: '解压一般', desc: '完成了任务', color: 'bg-blue-300' },
-  { lvl: 3, label: '基本达标', desc: '不怎么想了', color: 'bg-blue-400' },
-  { lvl: 4, label: '非常舒爽', desc: '完全放松', color: 'bg-blue-500' },
-  { lvl: 5, label: '灵魂升华', desc: '彻底清空，大贤者模式', color: 'bg-indigo-600' }
+  { lvl: 2, label: '解压一般', desc: '完成了任务', color: 'bg-chart-primary' },
+  { lvl: 3, label: '基本达标', desc: '不怎么想了', color: 'bg-chart-primary' },
+  { lvl: 4, label: '非常舒爽', desc: '完全放松', color: 'bg-chart-primary' },
+  { lvl: 5, label: '灵魂升华', desc: '彻底清空，大贤者模式', color: 'bg-chart-tertiary' }
 ];
 
 export const POST_MOOD_OPTIONS = ['满足/愉悦', '平静/贤者', '空虚/后悔', '焦虑/负罪', '恶心/厌恶'];

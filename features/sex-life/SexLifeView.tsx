@@ -164,7 +164,7 @@ const SexLifeView: React.FC<SexLifeViewProps> = ({
             <div className="space-y-6">
                 <div className="flex justify-between items-center px-1">
                     <h2 className="text-2xl font-black text-text-primary  flex items-center tracking-tight">
-                        <HeartHandshake className="mr-2 text-pink-500" size={28} />
+                        <HeartHandshake className="mr-2 text-accent-vivid" size={28} />
                         性爱日记
                     </h2>
                     <button onClick={() => setIsPartnerManagerOpen(true)} className="flex items-center space-x-1.5 px-4 py-2 bg-surface-card  text-text-primary  border border-surface-border  rounded-2xl text-xs font-bold hover:bg-surface-muted dark:hover:bg-surface-muted transition-all shadow-sm active:scale-95">
@@ -176,7 +176,7 @@ const SexLifeView: React.FC<SexLifeViewProps> = ({
                 <button
                     type="button"
                     onClick={() => setShowReproductive(s => !s)}
-                    className="w-full bg-rose-50 dark:bg-rose-900/10 border border-rose-100 dark:border-rose-900/30 rounded-3xl p-4 flex items-center justify-between hover:bg-rose-100/40 dark:hover:bg-rose-900/20 transition-colors active:scale-[0.99]"
+                    className="w-full bg-accent-vivid dark:bg-accent-vivid/10 border border-rose-100 dark:border-rose-900/30 rounded-3xl p-4 flex items-center justify-between hover:bg-accent-vivid/40 dark:hover:bg-accent-vivid/20 transition-colors active:scale-[0.99]"
                 >
                     <div className="flex items-center gap-3">
                         <div className="p-2 bg-surface-card  rounded-xl shadow-sm">
@@ -198,21 +198,21 @@ const SexLifeView: React.FC<SexLifeViewProps> = ({
                 )}
 
                 <div className="grid grid-cols-2 gap-3">
-                    <div className="bg-blue-50/50 dark:bg-blue-900/10 p-4 rounded-3xl border border-blue-100 dark:border-blue-900/30">
-                        <p className="text-[10px] text-blue-600 dark:text-blue-400 font-black uppercase tracking-widest mb-1 opacity-70">自慰/MB</p>
+                    <div className="bg-chart-primary/50 dark:bg-chart-primary/10 p-4 rounded-3xl border border-chart-primary dark:border-chart-primary/30">
+                        <p className="text-[10px] text-chart-primary dark:text-chart-primary font-black uppercase tracking-widest mb-1 opacity-70">自慰/MB</p>
                         <div className="flex items-baseline gap-1">
-                            <span className="text-3xl font-black text-blue-700 dark:text-blue-300">{stats.mbCount}</span>
-                            <span className="text-xs font-bold text-blue-500 dark:text-blue-500">次</span>
+                            <span className="text-3xl font-black text-chart-primary dark:text-chart-primary">{stats.mbCount}</span>
+                            <span className="text-xs font-bold text-chart-primary dark:text-chart-primary">次</span>
                         </div>
-                        <p className="text-[10px] text-blue-400 font-bold mt-1">射精率 {stats.mbEjacRate}</p>
+                        <p className="text-[10px] text-chart-primary font-bold mt-1">射精率 {stats.mbEjacRate}</p>
                     </div>
-                    <div className="bg-pink-50/50 dark:bg-pink-900/10 p-4 rounded-3xl border border-pink-100 dark:border-pink-900/30">
-                        <p className="text-[10px] text-pink-600 dark:text-pink-400 font-black uppercase tracking-widest mb-1 opacity-70">性生活/SEX</p>
+                    <div className="bg-accent-vivid/50 dark:bg-accent-vivid/10 p-4 rounded-3xl border border-accent-vivid dark:border-accent-vivid/30">
+                        <p className="text-[10px] text-accent-vivid dark:text-accent-vivid font-black uppercase tracking-widest mb-1 opacity-70">性生活/SEX</p>
                         <div className="flex items-baseline gap-1">
-                            <span className="text-3xl font-black text-pink-700 dark:text-pink-300">{stats.sexCount}</span>
-                            <span className="text-xs font-bold text-pink-500 dark:text-pink-500">次</span>
+                            <span className="text-3xl font-black text-accent-vivid dark:text-accent-vivid">{stats.sexCount}</span>
+                            <span className="text-xs font-bold text-accent-vivid dark:text-accent-vivid">次</span>
                         </div>
-                        <p className="text-[10px] text-pink-400 font-bold mt-1">射精率 {stats.sexEjacRate}</p>
+                        <p className="text-[10px] text-accent-vivid font-bold mt-1">射精率 {stats.sexEjacRate}</p>
                     </div>
                 </div>
 
@@ -225,9 +225,9 @@ const SexLifeView: React.FC<SexLifeViewProps> = ({
                     <div className="relative border-l-2 border-surface-border  ml-4 space-y-8 pb-10">
                         {visibleTimeline.map((record) => {
                             const isSex = record.type === 'sex';
-                            const accentColor = isSex ? 'text-pink-600 dark:text-pink-400' : 'text-blue-600 dark:text-blue-400';
-                            const bgColor = isSex ? 'bg-pink-50/50 dark:bg-pink-900/10' : 'bg-blue-50/50 dark:bg-blue-900/10';
-                            const borderColor = isSex ? 'border-pink-100 dark:border-pink-900/30' : 'border-blue-100 dark:border-blue-900/30';
+                            const accentColor = isSex ? 'text-accent-vivid dark:text-accent-vivid' : 'text-chart-primary dark:text-chart-primary';
+                            const bgColor = isSex ? 'bg-accent-vivid/50 dark:bg-accent-vivid/10' : 'bg-chart-primary/50 dark:bg-chart-primary/10';
+                            const borderColor = isSex ? 'border-accent-vivid dark:border-accent-vivid/30' : 'border-chart-primary dark:border-chart-primary/30';
                             
                             // 收集所有标签
                             const allTags: string[] = (isSex 
@@ -237,7 +237,7 @@ const SexLifeView: React.FC<SexLifeViewProps> = ({
                             return (
                                 <div key={`${record.date}-${record.id}`} className="relative pl-8 animate-in fade-in slide-in-from-bottom-2 duration-slow">
                                     {/* 时间轴圆点 */}
-                                    <div className={`absolute -left-[11px] top-1 w-5 h-5 rounded-full border-4 border-surface-card  z-10 ${isSex ? 'bg-pink-500' : 'bg-blue-500 shadow-glow'}`}></div>
+                                    <div className={`absolute -left-[11px] top-1 w-5 h-5 rounded-full border-4 border-surface-card  z-10 ${isSex ? 'bg-accent-vivid' : 'bg-chart-primary shadow-glow'}`}></div>
                                     
                                     <div className="flex items-baseline justify-between mb-2">
                                         <div className="flex items-center gap-2">
@@ -268,7 +268,7 @@ const SexLifeView: React.FC<SexLifeViewProps> = ({
                                             
                                             <div className="flex flex-col items-end gap-1.5">
                                                 {record.ejaculation ? (
-                                                    <div className={`flex items-center gap-1 px-3 py-1 rounded-xl text-[10px] font-black ${isSex ? 'bg-pink-100 text-pink-700 dark:bg-pink-900/50 dark:text-pink-300' : 'bg-blue-600 text-text-on-accent shadow-md shadow-glow'}`}>
+                                                    <div className={`flex items-center gap-1 px-3 py-1 rounded-xl text-[10px] font-black ${isSex ? 'bg-accent-vivid text-accent-vivid dark:bg-accent-vivid/50 dark:text-accent-vivid' : 'bg-chart-primary text-text-on-accent shadow-md shadow-glow'}`}>
                                                         <Droplets size={12} />
                                                         {record.type === 'masturbation' && record.mbDetails?.volumeForceLevel ? `射精 Lv.${record.mbDetails.volumeForceLevel}` : '已射精'}
                                                     </div>
@@ -289,12 +289,12 @@ const SexLifeView: React.FC<SexLifeViewProps> = ({
                                                 </div>
                                                 {record.mbDetails.contentItems.map(item => (
                                                     <div key={item.id} className="flex items-center gap-2 bg-surface-card  p-2.5 rounded-xl border border-surface-border dark:border-surface-card/5 shadow-sm">
-                                                        <div className="p-1.5 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-blue-500">
+                                                        <div className="p-1.5 bg-chart-primary dark:bg-chart-primary/20 rounded-lg text-chart-primary">
                                                             <Smartphone size={14} />
                                                         </div>
                                                         <div className="flex-1 min-w-0">
                                                             <div className="flex items-center gap-1.5">
-                                                                <span className="text-[9px] font-black bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 px-1.5 py-0.5 rounded uppercase">{item.type}</span>
+                                                                <span className="text-[9px] font-black bg-chart-primary dark:bg-chart-primary text-chart-primary dark:text-chart-primary px-1.5 py-0.5 rounded uppercase">{item.type}</span>
                                                                 <span className="text-[10px] font-black text-text-muted truncate">{item.platform}</span>
                                                             </div>
                                                             <div className="text-[11px] font-bold text-text-secondary  truncate mt-0.5">
@@ -310,7 +310,7 @@ const SexLifeView: React.FC<SexLifeViewProps> = ({
                                         {allTags.length > 0 && (
                                             <div className="flex flex-wrap gap-1.5 mb-4">
                                                 {Array.from(new Set(allTags)).map((tag, i) => (
-                                                    <span key={i} className={`px-2 py-1 rounded-lg text-[10px] font-bold border transition-colors ${isSex ? 'bg-pink-50/30 text-pink-600 border-pink-100 dark:bg-pink-900/10 dark:text-pink-400 dark:border-pink-900/30' : 'bg-blue-50/30 text-blue-600 border-blue-100 dark:bg-blue-900/10 dark:text-blue-400 dark:border-blue-900/30'}`}>
+                                                    <span key={i} className={`px-2 py-1 rounded-lg text-[10px] font-bold border transition-colors ${isSex ? 'bg-accent-vivid/30 text-accent-vivid border-accent-vivid dark:bg-accent-vivid/10 dark:text-accent-vivid dark:border-accent-vivid/30' : 'bg-chart-primary/30 text-chart-primary border-chart-primary dark:bg-chart-primary/10 dark:text-chart-primary dark:border-chart-primary/30'}`}>
                                                         {tag.replace(/^#/, '')}
                                                     </span>
                                                 ))}
@@ -319,11 +319,11 @@ const SexLifeView: React.FC<SexLifeViewProps> = ({
 
                                         {/* 打断状态展示 */}
                                         {!isSex && record.mbDetails?.interrupted && (
-                                            <div className="flex items-start gap-2.5 p-3 rounded-2xl bg-orange-50 dark:bg-orange-900/20 border border-orange-100 dark:border-orange-900/30 mb-4 animate-pulse">
-                                                <AlertTriangle size={14} className="text-orange-500 mt-0.5 shrink-0" />
+                                            <div className="flex items-start gap-2.5 p-3 rounded-2xl bg-state-warning dark:bg-state-warning/20 border border-state-warning dark:border-state-warning/30 mb-4 animate-pulse">
+                                                <AlertTriangle size={14} className="text-state-warning mt-0.5 shrink-0" />
                                                 <div className="flex flex-col">
-                                                    <span className="text-[11px] font-black text-orange-700 dark:text-orange-400">中途被打断</span>
-                                                    <span className="text-[10px] font-bold text-orange-600/70 dark:text-orange-400/60 leading-tight">
+                                                    <span className="text-[11px] font-black text-state-warning dark:text-state-warning">中途被打断</span>
+                                                    <span className="text-[10px] font-bold text-state-warning/70 dark:text-state-warning/60 leading-tight">
                                                         原因：{record.mbDetails.interruptionReasons?.join(', ') || '未注明'}
                                                     </span>
                                                 </div>
@@ -391,7 +391,7 @@ const SexLifeView: React.FC<SexLifeViewProps> = ({
                     logs
                 }}
                 onAddPartner={async (name: string) => {
-                    const colors = ['bg-pink-500', 'bg-purple-500', 'bg-blue-500', 'bg-emerald-500', 'bg-amber-500', 'bg-rose-500'];
+                    const colors = ['bg-accent-vivid', 'bg-chart-tertiary', 'bg-chart-primary', 'bg-chart-secondary', 'bg-state-warning', 'bg-accent-vivid'];
                     const newPartner = {
                         id: `partner_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
                         name,

@@ -340,7 +340,7 @@ const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave
                                                         </span>
                                                     )}
                                                     {interaction.role && (
-                                                        <span className="text-[10px] text-pink-600 dark:text-pink-400 bg-pink-50 dark:bg-pink-900/20 px-1.5 rounded border border-pink-100 dark:border-pink-800">
+                                                        <span className="text-[10px] text-accent-vivid dark:text-accent-vivid bg-accent-vivid dark:bg-accent-vivid/20 px-1.5 rounded border border-accent-vivid dark:border-accent-vivid">
                                                             {interaction.role}
                                                         </span>
                                                     )}
@@ -349,7 +349,7 @@ const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave
                                         </div>
                                         <div className="flex gap-2">
                                              {data.interactions.length > 1 && (
-                                                <button onClick={(e) => removeInteraction(interaction.id, e)} className="p-2 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 text-text-muted hover:text-red-500 transition-colors"><Trash2 size={14}/></button>
+                                                <button onClick={(e) => removeInteraction(interaction.id, e)} className="p-2 rounded-full hover:bg-state-danger dark:hover:bg-state-danger/20 text-text-muted hover:text-state-danger transition-colors"><Trash2 size={14}/></button>
                                              )}
                                              <button className="p-2 rounded-full hover:bg-surface-muted dark:hover:bg-surface-muted text-text-muted hover:text-accent transition-colors"><ChevronRight size={16}/></button>
                                         </div>
@@ -363,8 +363,8 @@ const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave
                                                     {(i > 0) && <ArrowRight size={12} className="text-text-muted  mx-1.5" />}
                                                     <span className={`text-xs px-2.5 py-1 rounded-md font-bold border ${
                                                         a.type === 'act' 
-                                                        ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-300 border-purple-100 dark:border-purple-800' 
-                                                        : 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-300 border-blue-100 dark:border-blue-800'
+                                                        ? 'bg-chart-tertiary dark:bg-chart-tertiary/20 text-chart-tertiary dark:text-chart-tertiary border-chart-tertiary dark:border-chart-tertiary' 
+                                                        : 'bg-chart-primary dark:bg-chart-primary/20 text-chart-primary dark:text-chart-primary border-chart-primary dark:border-chart-primary'
                                                     }`}>
                                                         {a.name}
                                                     </span>
@@ -380,8 +380,8 @@ const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave
                                     {/* Tags Row (Costume/Toys) */}
                                     {(interaction.costumes?.length > 0 || interaction.toys?.length > 0) && (
                                         <div className="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-surface-border ">
-                                            {interaction.costumes?.map(c => <span key={c} className="text-[10px] px-1.5 py-0.5 rounded bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-900/30 flex items-center"><Shirt size={8} className="mr-1"/>{c}</span>)}
-                                            {interaction.toys?.map(t => <span key={t} className="text-[10px] px-1.5 py-0.5 rounded bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-300 border border-orange-100 dark:border-orange-900/30 flex items-center"><Zap size={8} className="mr-1"/>{t}</span>)}
+                                            {interaction.costumes?.map(c => <span key={c} className="text-[10px] px-1.5 py-0.5 rounded bg-chart-tertiary dark:bg-chart-tertiary/20 text-chart-tertiary dark:text-chart-tertiary border border-chart-tertiary dark:border-chart-tertiary/30 flex items-center"><Shirt size={8} className="mr-1"/>{c}</span>)}
+                                            {interaction.toys?.map(t => <span key={t} className="text-[10px] px-1.5 py-0.5 rounded bg-state-warning dark:bg-state-warning/20 text-state-warning dark:text-state-warning border border-state-warning dark:border-state-warning/30 flex items-center"><Zap size={8} className="mr-1"/>{t}</span>)}
                                         </div>
                                     )}
                                 </Card>
@@ -393,7 +393,7 @@ const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave
                     <div className="pl-12 mt-8">
                         <button 
                             onClick={addInteraction}
-                            className="w-full py-3 rounded-xl border-2 border-dashed border-surface-border  text-text-muted hover:border-accent hover:text-accent hover:bg-blue-50 dark:hover:bg-blue-900/10 transition-all flex items-center justify-center gap-2 text-sm font-bold group"
+                            className="w-full py-3 rounded-xl border-2 border-dashed border-surface-border  text-text-muted hover:border-accent hover:text-accent hover:bg-chart-primary dark:hover:bg-chart-primary/10 transition-all flex items-center justify-center gap-2 text-sm font-bold group"
                         >
                             <div className="w-6 h-6 rounded-full bg-surface-border  flex items-center justify-center group-hover:bg-accent group-hover:text-text-on-accent transition-colors">
                                 <Plus size={14} /> 
@@ -449,15 +449,15 @@ const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave
                      {recommendations.length > 0 && (
                          <div className="flex-none px-4 py-3 bg-gradient-to-r from-blue-50/50 to-indigo-50/50 dark:from-blue-900/10 dark:to-indigo-900/10 border-b border-surface-border ">
                              <div className="flex items-center gap-2 mb-2">
-                                 <Sparkles size={12} className="text-blue-500" />
-                                 <span className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest">智能推荐 (Smart Suggest)</span>
+                                 <Sparkles size={12} className="text-chart-primary" />
+                                 <span className="text-[10px] font-black text-chart-primary dark:text-chart-primary uppercase tracking-widest">智能推荐 (Smart Suggest)</span>
                              </div>
                              <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
                                  {recommendations.map(rec => (
                                      <button 
                                          key={`${rec.type}-${rec.value}`}
                                          onClick={() => handleApplyRecommendation(rec)}
-                                         className="flex-shrink-0 px-3 py-1.5 bg-surface-card  text-[10px] font-bold text-text-secondary  rounded-xl shadow-sm border border-surface-border  flex items-center gap-1.5 hover:text-blue-500 hover:border-blue-200 transition-all active:scale-95"
+                                         className="flex-shrink-0 px-3 py-1.5 bg-surface-card  text-[10px] font-bold text-text-secondary  rounded-xl shadow-sm border border-surface-border  flex items-center gap-1.5 hover:text-chart-primary hover:border-chart-primary transition-all active:scale-95"
                                      >
                                          <span>{rec.value}</span>
                                          <span className="text-[8px] text-text-muted bg-surface-muted  px-1.5 py-0.5 rounded-md">{rec.type === 'position' ? '姿势' : rec.type === 'toy' ? '玩具' : '服饰'}</span>
@@ -494,10 +494,10 @@ const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave
                                                     <div className="absolute left-[3px] top-1/2 -translate-y-1/2 w-3 h-3 rounded-full border-2 border-surface-border  bg-surface-border z-10"></div>
 
                                                     {/* Card */}
-                                                    <div className={`flex items-center justify-between p-3 rounded-xl border bg-surface-card  shadow-sm ${a.type === 'act' ? 'border-purple-200 dark:border-purple-900' : 'border-blue-200 dark:border-blue-900'}`}>
+                                                    <div className={`flex items-center justify-between p-3 rounded-xl border bg-surface-card  shadow-sm ${a.type === 'act' ? 'border-chart-tertiary dark:border-chart-tertiary' : 'border-chart-primary dark:border-chart-primary'}`}>
                                                         <div className="flex flex-col flex-1 min-w-0">
                                                             <span className="font-bold text-sm text-text-primary  truncate">{a.name}</span>
-                                                            <span className={`text-[10px] uppercase font-bold ${a.type === 'act' ? 'text-purple-500' : 'text-blue-500'}`}>
+                                                            <span className={`text-[10px] uppercase font-bold ${a.type === 'act' ? 'text-chart-tertiary' : 'text-chart-primary'}`}>
                                                                 {a.type === 'act' ? '行为' : '体位'}
                                                             </span>
                                                         </div>
@@ -524,7 +524,7 @@ const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave
                                                                 type="button"
                                                                 onClick={() => removeFromChain(a.id)}
                                                                 aria-label="删除"
-                                                                className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-text-muted hover:bg-red-50 hover:text-red-500"
+                                                                className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-text-muted hover:bg-state-danger hover:text-state-danger"
                                                             >
                                                                 <Trash2 size={16}/>
                                                             </button>
@@ -538,13 +538,13 @@ const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave
 
                                  <div className="grid grid-cols-1 gap-6 pb-20">
                                      <div>
-                                         <h4 className="text-sm font-bold text-purple-600 dark:text-purple-400 mb-3 flex items-center gap-2"><Activity size={16}/> 行为 (Act)</h4>
+                                         <h4 className="text-sm font-bold text-chart-tertiary dark:text-chart-tertiary mb-3 flex items-center gap-2"><Activity size={16}/> 行为 (Act)</h4>
                                          <div className="flex flex-wrap gap-2">
                                              {sortedActs.map(opt => <Chip key={opt} label={opt} active={false} onClick={() => addToChain('act', opt)} color="purple"/>)}
                                          </div>
                                      </div>
                                      <div>
-                                         <h4 className="text-sm font-bold text-blue-600 dark:text-blue-400 mb-3 flex items-center gap-2"><LayoutGrid size={16}/> 姿势 (Position)</h4>
+                                         <h4 className="text-sm font-bold text-chart-primary dark:text-chart-primary mb-3 flex items-center gap-2"><LayoutGrid size={16}/> 姿势 (Position)</h4>
                                          <div className="flex flex-wrap gap-2">
                                              {sortedPositions.map(opt => <Chip key={opt} label={opt} active={false} onClick={() => addToChain('position', opt)} color="blue"/>)}
                                          </div>
@@ -559,12 +559,12 @@ const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave
                                 <div>
                                     <label className="text-xs font-bold text-text-muted uppercase tracking-wider mb-3 block">选择伴侣</label>
                                     {smartPartnerApplied && activeInteraction.partner && (
-                                        <div className="mb-3 flex items-center justify-between gap-2 rounded-2xl border border-pink-200 bg-pink-50 px-4 py-2 text-[11px] font-bold text-pink-700 dark:border-pink-900/50 dark:bg-pink-900/20 dark:text-pink-300">
+                                        <div className="mb-3 flex items-center justify-between gap-2 rounded-2xl border border-accent-vivid bg-accent-vivid px-4 py-2 text-[11px] font-bold text-accent-vivid dark:border-accent-vivid/50 dark:bg-accent-vivid/20 dark:text-accent-vivid">
                                             <span className="flex items-center gap-1.5"><Sparkles size={12}/> 智能默认 · {activeInteraction.partner} · 可换</span>
                                             <button
                                                 type="button"
                                                 onClick={() => updateActive('partner', '')}
-                                                className="rounded-full px-2 py-0.5 text-[10px] font-black text-pink-600 underline-offset-2 hover:underline dark:text-pink-400"
+                                                className="rounded-full px-2 py-0.5 text-[10px] font-black text-accent-vivid underline-offset-2 hover:underline dark:text-accent-vivid"
                                             >清除</button>
                                         </div>
                                     )}
@@ -577,7 +577,7 @@ const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave
                                                     onClick={() => updateActive('partner', p.name)}
                                                     className={`flex-shrink-0 flex flex-col items-center gap-2 transition-all duration-slow ${isActive ? 'opacity-100 scale-110' : 'opacity-60 hover:opacity-100'}`}
                                                 >
-                                                    <div className={`w-14 h-14 rounded-full flex items-center justify-center text-base font-bold shadow-md ring-2 ${isActive ? 'ring-brand-accent ring-offset-2 dark:ring-offset-slate-900' : 'ring-transparent'} ${p.avatarColor || 'bg-surface-border'} text-text-on-accent`}>
+                                                    <div className={`w-14 h-14 rounded-full flex items-center justify-center text-base font-bold shadow-md ring-2 ${isActive ? 'ring-brand-accent ring-offset-2 dark:ring-offset-surface-muted' : 'ring-transparent'} ${p.avatarColor || 'bg-surface-border'} text-text-on-accent`}>
                                                         {p.name[0]}
                                                     </div>
                                                     <span className={`text-[10px] font-medium ${isActive ? 'text-accent' : 'text-text-muted'}`}>{p.name}</span>
@@ -593,7 +593,7 @@ const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave
                                                 className="flex-shrink-0 flex flex-col items-center gap-2 opacity-90 hover:opacity-100"
                                                 aria-label="新增伴侣"
                                             >
-                                                <div className="w-14 h-14 rounded-full bg-blue-50 dark:bg-blue-900/30 border-2 border-dashed border-accent flex items-center justify-center">
+                                                <div className="w-14 h-14 rounded-full bg-chart-primary dark:bg-chart-primary/30 border-2 border-dashed border-accent flex items-center justify-center">
                                                     <Plus size={22} className="text-accent" strokeWidth={3}/>
                                                 </div>
                                                 <span className="text-[10px] font-bold text-accent">新建</span>
@@ -652,7 +652,7 @@ const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave
                          {activeTab === 'props' && (
                              <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2">
                                  <div>
-                                     <h4 className="text-sm font-bold text-indigo-600 dark:text-indigo-400 mb-3 flex items-center gap-2"><Shirt size={16}/> 服饰 (Costumes)</h4>
+                                     <h4 className="text-sm font-bold text-chart-tertiary dark:text-chart-tertiary mb-3 flex items-center gap-2"><Shirt size={16}/> 服饰 (Costumes)</h4>
                                      <div className="flex flex-wrap gap-2">
                                          {COSTUME_OPTIONS.map(opt => (
                                              <Chip 
@@ -664,7 +664,7 @@ const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave
                                      </div>
                                  </div>
                                  <div>
-                                     <h4 className="text-sm font-bold text-orange-600 dark:text-orange-400 mb-3 flex items-center gap-2"><Zap size={16}/> 玩具/道具 (Toys)</h4>
+                                     <h4 className="text-sm font-bold text-state-warning dark:text-state-warning mb-3 flex items-center gap-2"><Zap size={16}/> 玩具/道具 (Toys)</h4>
                                      <div className="flex flex-wrap gap-2">
                                          {TOY_OPTIONS.map(opt => (
                                              <Chip 
@@ -696,18 +696,18 @@ const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave
                          <GripHorizontal size={14}/> 全局设定
                      </span>
                      <div className="flex gap-2">
-                        <span className={`text-[10px] px-1.5 py-0.5 rounded border ${data.ejaculation ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-300 border-blue-200 dark:border-blue-800' : 'bg-surface-muted  text-text-muted border-transparent'}`}>
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded border ${data.ejaculation ? 'bg-chart-primary dark:bg-chart-primary/20 text-chart-primary dark:text-chart-primary border-chart-primary dark:border-chart-primary' : 'bg-surface-muted  text-text-muted border-transparent'}`}>
                             {data.ejaculation ? '已射精' : '未射精'}
                         </span>
-                        <span className={`text-[10px] px-1.5 py-0.5 rounded border ${data.protection !== '无保护措施' ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-300 border-green-200 dark:border-green-800' : 'bg-red-50 dark:bg-red-900/20 text-red-500 dark:text-red-400 border-red-200 dark:border-red-800'}`}>
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded border ${data.protection !== '无保护措施' ? 'bg-state-success dark:bg-state-success/20 text-state-success dark:text-state-success border-state-success dark:border-state-success' : 'bg-state-danger dark:bg-state-danger/20 text-state-danger dark:text-state-danger border-state-danger dark:border-state-danger'}`}>
                             {data.protection}
                         </span>
                      </div>
                  </div>
                  <div className="flex items-center gap-2">
                     {/* Mini Indicators */}
-                    {data.indicators.orgasm && <Flame size={12} className="text-red-500"/>}
-                    {data.indicators.partnerOrgasm && <Sparkles size={12} className="text-pink-500"/>}
+                    {data.indicators.orgasm && <Flame size={12} className="text-state-danger"/>}
+                    {data.indicators.partnerOrgasm && <Sparkles size={12} className="text-accent-vivid"/>}
                     <ChevronDown size={16} className={`text-text-muted transition-transform duration-slow ${isGlobalPanelOpen ? 'rotate-180' : ''}`}/>
                  </div>
              </button>
@@ -750,10 +750,10 @@ const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave
                      {/* 2. Ejaculation Control */}
                      <div className="bg-surface-card  rounded-xl p-4 border border-surface-border  space-y-4 shadow-sm">
                         <div className="flex items-center justify-between">
-                            <span className="text-sm font-bold text-text-primary  flex items-center gap-2"><Droplets size={16} className="text-blue-500"/> 射精详情</span>
+                            <span className="text-sm font-bold text-text-primary  flex items-center gap-2"><Droplets size={16} className="text-chart-primary"/> 射精详情</span>
                             <button 
                                 onClick={() => updateGlobal('ejaculation', !data.ejaculation)}
-                                className={`w-12 h-6 rounded-full relative transition-colors ${data.ejaculation ? 'bg-blue-600' : 'bg-surface-border dark:bg-surface-muted'}`}
+                                className={`w-12 h-6 rounded-full relative transition-colors ${data.ejaculation ? 'bg-chart-primary' : 'bg-surface-border dark:bg-surface-muted'}`}
                             >
                                 <div className={`absolute top-1 w-4 h-4 bg-surface-card rounded-full transition-transform shadow-sm ${data.ejaculation ? 'left-7' : 'left-1'}`}></div>
                             </button>
@@ -767,7 +767,7 @@ const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave
                                         <button 
                                             key={loc}
                                             onClick={() => updateGlobal('ejaculationLocation', loc)}
-                                            className={`text-[10px] px-3 py-1.5 rounded-lg border font-medium transition-all ${data.ejaculationLocation === loc ? 'bg-blue-600 text-text-on-accent border-blue-600 shadow-md scale-105' : 'bg-surface-muted  text-text-secondary  border-surface-border  hover:border-surface-border'}`}
+                                            className={`text-[10px] px-3 py-1.5 rounded-lg border font-medium transition-all ${data.ejaculationLocation === loc ? 'bg-chart-primary text-text-on-accent border-chart-primary shadow-md scale-105' : 'bg-surface-muted  text-text-secondary  border-surface-border  hover:border-surface-border'}`}
                                         >
                                             {loc}
                                         </button>
@@ -788,10 +788,10 @@ const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave
                          <span className="text-[10px] text-text-muted uppercase font-bold">高潮与特殊标记</span>
                          <div className="grid grid-cols-2 gap-3">
                              {[
-                                 { k: 'orgasm', l: '我高潮了', i: Flame, c: 'text-red-500' }, 
-                                 { k: 'partnerOrgasm', l: '伴侣高潮', i: Sparkles, c: 'text-pink-500' }, 
-                                 { k: 'squirting', l: '潮吹/喷水', i: Droplets, c: 'text-blue-500' },
-                                 { k: 'lingerie', l: '情趣内衣', i: Shirt, c: 'text-purple-500' }
+                                 { k: 'orgasm', l: '我高潮了', i: Flame, c: 'text-state-danger' }, 
+                                 { k: 'partnerOrgasm', l: '伴侣高潮', i: Sparkles, c: 'text-accent-vivid' }, 
+                                 { k: 'squirting', l: '潮吹/喷水', i: Droplets, c: 'text-chart-primary' },
+                                 { k: 'lingerie', l: '情趣内衣', i: Shirt, c: 'text-chart-tertiary' }
                              ].map(({k, l, i: Icon, c}) => (
                                  <button 
                                     key={k}
@@ -815,7 +815,7 @@ const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave
                                     <button 
                                         key={star}
                                         onClick={() => updateGlobal('partnerScore', star)}
-                                        className={`${(data.partnerScore || 0) >= star ? 'text-yellow-400' : 'text-text-muted '} hover:text-yellow-300 transition-colors`}
+                                        className={`${(data.partnerScore || 0) >= star ? 'text-state-warning' : 'text-text-muted '} hover:text-state-warning transition-colors`}
                                     >
                                         <Star size={18} fill={(data.partnerScore || 0) >= star ? "currentColor" : "none"} />
                                     </button>
@@ -829,7 +829,7 @@ const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave
                                 <button
                                     key={opt}
                                     onClick={() => updateGlobal('postSexActivity', data.postSexActivity?.includes(opt) ? data.postSexActivity.filter(x => x!==opt) : [...(data.postSexActivity||[]), opt])}
-                                    className={`text-[10px] px-3 py-1.5 rounded transition-all ${data.postSexActivity?.includes(opt) ? 'bg-teal-50 dark:bg-teal-900/20 text-teal-600 dark:text-teal-300 border border-teal-200 dark:border-teal-800 shadow-sm' : 'bg-surface-card  text-text-muted border border-surface-border  hover:border-surface-border'}`}
+                                    className={`text-[10px] px-3 py-1.5 rounded transition-all ${data.postSexActivity?.includes(opt) ? 'bg-accent dark:bg-accent/20 text-accent dark:text-accent border border-accent dark:border-accent shadow-sm' : 'bg-surface-card  text-text-muted border border-surface-border  hover:border-surface-border'}`}
                                 >
                                     {opt}
                                 </button>
