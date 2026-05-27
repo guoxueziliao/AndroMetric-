@@ -20,3 +20,4 @@ export { default as RecordCard, DataCard } from './RecordCard';
 export type { RecordCardTone, LegacyRecordCardTone, DataCardTone, DataCardDensity, RecordKind } from './RecordCard';
 export * from './NoticeSystem';
 export * from './useChartColors';
+export * from './icons';
