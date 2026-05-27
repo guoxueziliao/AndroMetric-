@@ -167,49 +167,49 @@ const BeverageModal: React.FC<BeverageModalProps> = ({ isOpen, onClose, data, ac
         <Modal isOpen={isOpen} onClose={onClose} title={initialData ? "修改记录" : "记录提神饮品"}>
             <div className="flex flex-col h-[75vh] -mx-4 -mb-4">
                 {onSwitchToOther && (
-                    <div className="flex p-1 mx-4 mt-3 bg-slate-100 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shrink-0">
-                        <button onClick={onSwitchToOther} className="flex-1 py-2 text-xs font-black rounded-xl text-slate-400 dark:text-slate-400 transition-colors">饮酒</button>
-                        <button className="flex-1 py-2 text-xs font-black rounded-xl bg-white dark:bg-slate-900 text-orange-500 shadow-md">提神饮品</button>
+                    <div className="flex p-1 mx-4 mt-3 bg-surface-muted rounded-2xl border border-surface-border shrink-0">
+                        <button onClick={onSwitchToOther} className="flex-1 py-2 text-xs font-black rounded-xl text-text-muted transition-colors">饮酒</button>
+                        <button className="flex-1 py-2 text-xs font-black rounded-xl bg-surface-card text-state-warning-text shadow-soft">提神饮品</button>
                     </div>
                 )}
                 {/* 顶部预览卡片 */}
-                <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 shrink-0">
-                    <div className={`transition-all duration-300 rounded-2xl p-4 flex items-center justify-between shadow-sm border ${
+                <div className="px-6 py-4 border-b border-surface-border shrink-0">
+                    <div className={`transition-all duration-slow rounded-2xl p-4 flex items-center justify-between shadow-soft border ${
                         isDailyMode 
-                        ? 'bg-emerald-50/50 dark:bg-emerald-900/10 border-emerald-100 dark:border-emerald-900/30' 
-                        : 'bg-orange-50/50 dark:bg-orange-900/10 border-orange-100 dark:border-orange-900/30'
+                        ? 'bg-state-success-bg/50 border-state-success-text/25'
+                        : 'bg-state-warning-bg/50 border-state-warning-text/25'
                     }`}>
                         <div className="flex items-center gap-4">
                             <div className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-sm border transition-colors ${
                                 isDailyMode 
-                                ? 'bg-white dark:bg-slate-800 text-emerald-600 border-emerald-100 dark:border-emerald-900/20' 
-                                : 'bg-white dark:bg-slate-800 text-orange-500 border-orange-100 dark:border-orange-900/20'
+                                ? 'bg-surface-card text-state-success-text border-state-success-text/20'
+                                : 'bg-surface-card text-state-warning-text border-state-warning-text/20'
                             }`}>
                                 {activeCat === 'chinese_tea' ? <Leaf size={24} /> : (activeCat === 'functional' ? <Zap size={24} /> : <Coffee size={24} />)}
                             </div>
                             <div>
-                                <h3 className="font-black text-lg text-slate-800 dark:text-slate-100 truncate max-w-[180px]">
+                                <h3 className="font-black text-lg text-text-primary truncate max-w-[180px]">
                                     {activeCat === 'custom' ? (customName || '请输入名称...') : selectedName}
                                 </h3>
                                 <div className="flex items-center gap-2 mt-0.5">
                                     <span className={`px-2 py-0.5 rounded text-[10px] font-bold tabular-nums transition-colors ${
                                         isDailyMode 
-                                        ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600' 
-                                        : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
+                                        ? 'bg-state-success-bg text-state-success-text'
+                                        : 'bg-surface-muted text-text-secondary'
                                     }`}>
                                         {isDailyMode ? '全天日常饮用' : `${volume} 毫升`}
                                     </span>
-                                    {!isDailyMode && <span className="text-[10px] text-slate-400 font-bold tabular-nums">{time}</span>}
+                                    {!isDailyMode && <span className="text-[10px] text-text-muted font-bold tabular-nums">{time}</span>}
                                 </div>
                             </div>
                         </div>
-                        {isDailyMode ? <RotateCcw size={20} className="text-emerald-300 animate-spin-slow" /> : <Clock size={20} className="text-slate-300" />}
+                        {isDailyMode ? <RotateCcw size={20} className="text-state-success-text/60 animate-spin-slow" /> : <Clock size={20} className="text-text-muted" />}
                     </div>
                 </div>
 
                 <div className="flex-1 flex overflow-hidden">
                     {/* 左侧分类栏 */}
-                    <div className="w-24 bg-slate-50/50 dark:bg-slate-900 border-r border-slate-100 dark:border-slate-800 flex flex-col pt-2 shrink-0 overflow-y-auto custom-scrollbar">
+                    <div className="w-24 bg-surface-muted/50 border-r border-surface-border flex flex-col pt-2 shrink-0 overflow-y-auto custom-scrollbar">
                         {CATEGORIES.map(cat => (
                             <button
                                 key={cat.id}
@@ -219,11 +219,11 @@ const BeverageModal: React.FC<BeverageModalProps> = ({ isOpen, onClose, data, ac
                                     if(cat.id !== 'chinese_tea' && cat.id !== 'custom') setIsDailyMode(false); 
                                 }}
                                 className={`flex flex-col items-center justify-center py-4 px-1 gap-1 transition-all relative shrink-0 ${
-                                    activeCat === cat.id ? 'text-orange-600 dark:text-orange-400 font-black' : 'text-slate-400 font-bold'
+                                    activeCat === cat.id ? 'text-state-warning-text font-black' : 'text-text-muted font-bold'
                                 }`}
                             >
                                 {activeCat === cat.id && (
-                                    <div className="absolute left-0 top-4 bottom-4 w-1 bg-orange-500 rounded-r-full"></div>
+                                    <div className="absolute left-0 top-4 bottom-4 w-1 bg-state-warning-text rounded-r-full"></div>
                                 )}
                                 <cat.icon size={20} />
                                 <span className="text-[10px] text-center leading-tight">{cat.label}</span>
@@ -235,15 +235,15 @@ const BeverageModal: React.FC<BeverageModalProps> = ({ isOpen, onClose, data, ac
                     <div className="flex-1 overflow-y-auto custom-scrollbar p-4">
                         {activeCat === 'custom' ? (
                             <div className="space-y-4 animate-in fade-in slide-in-from-right-4">
-                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest">饮品名称</label>
+                                <label className="text-xs font-black text-text-muted uppercase tracking-widest">饮品名称</label>
                                 <div className="relative">
-                                    <PencilLine className="absolute left-3 top-3.5 text-orange-400" size={18} />
+                                    <PencilLine className="absolute left-3 top-3.5 text-state-warning-text" size={18} />
                                     <input 
                                         autoFocus
                                         value={customName}
                                         onChange={e => setCustomName(e.target.value)}
                                         placeholder="例如：库迪生椰拿铁"
-                                        className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-orange-100 dark:border-orange-900/30 rounded-2xl py-3 pl-10 pr-4 text-sm font-bold outline-none focus:border-orange-500 transition-all"
+                                        className="w-full bg-surface-muted border-2 border-state-warning-text/20 rounded-2xl py-3 pl-10 pr-4 text-sm font-bold outline-none focus:border-state-warning-text transition-all"
                                     />
                                 </div>
                             </div>
@@ -256,33 +256,33 @@ const BeverageModal: React.FC<BeverageModalProps> = ({ isOpen, onClose, data, ac
                                             onClick={() => setIsDailyMode(!isDailyMode)}
                                             className={`w-full p-4 rounded-2xl border-2 transition-all flex items-center justify-between group ${
                                                 isDailyMode 
-                                                ? 'border-emerald-500 bg-emerald-50/50 dark:bg-emerald-900/10' 
-                                                : 'border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900'
+                                                ? 'border-state-success-text bg-state-success-bg/50'
+                                                : 'border-surface-border bg-surface-muted/50'
                                             }`}
                                         >
                                             <div className="flex items-center gap-3">
-                                                <div className={`p-2 rounded-xl transition-colors ${isDailyMode ? 'bg-emerald-500 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-400'}`}>
+                                                <div className={`p-2 rounded-xl transition-colors ${isDailyMode ? 'bg-state-success-text text-text-on-accent' : 'bg-surface-border text-text-muted'}`}>
                                                     <RotateCcw size={18} className={isDailyMode ? 'animate-spin-slow' : ''} />
                                                 </div>
                                                 <div className="text-left">
-                                                    <div className={`text-sm font-black transition-colors ${isDailyMode ? 'text-emerald-700 dark:text-emerald-300' : 'text-slate-500'}`}>全天日常饮用</div>
-                                                    <div className="text-[10px] text-slate-400 font-bold mt-0.5">不限容量 · 反复冲泡</div>
+                                                    <div className={`text-sm font-black transition-colors ${isDailyMode ? 'text-state-success-text' : 'text-text-secondary'}`}>全天日常饮用</div>
+                                                    <div className="text-[10px] text-text-muted font-bold mt-0.5">不限容量 · 反复冲泡</div>
                                                 </div>
                                             </div>
-                                            <div className={`w-6 h-6 rounded-full flex items-center justify-center transition-all ${isDailyMode ? 'bg-emerald-500 text-white' : 'border-2 border-slate-200 dark:border-slate-700'}`}>
+                                            <div className={`w-6 h-6 rounded-full flex items-center justify-center transition-all ${isDailyMode ? 'bg-state-success-text text-text-on-accent' : 'border-2 border-surface-border'}`}>
                                                 {isDailyMode && <Check size={14} strokeWidth={4} />}
                                             </div>
                                         </button>
                                         <div className="mt-2 flex items-center gap-1.5 px-1">
-                                            <Info size={12} className="text-slate-400" />
-                                            <span className="text-[10px] text-slate-400 font-bold">开启后可继续在下方选择茶叶品种</span>
+                                            <Info size={12} className="text-text-muted" />
+                                            <span className="text-[10px] text-text-muted font-bold">开启后可继续在下方选择茶叶品种</span>
                                         </div>
                                     </div>
                                 )}
 
                                 {MENU_DATA[activeCat]?.map((item, idx) => (
                                     item.type === 'divider' ? (
-                                        <div key={`div-${idx}`} className="py-2 text-[10px] font-black text-slate-300 dark:text-slate-600 text-center uppercase tracking-[0.2em]">
+                                        <div key={`div-${idx}`} className="py-2 text-[10px] font-black text-text-muted/70 text-center uppercase tracking-[0.2em]">
                                             {item.label}
                                         </div>
                                     ) : (
@@ -291,18 +291,18 @@ const BeverageModal: React.FC<BeverageModalProps> = ({ isOpen, onClose, data, ac
                                             onClick={() => handleItemClick(item)}
                                             className={`w-full p-4 rounded-2xl border-2 transition-all flex items-center justify-between group ${
                                                 selectedName === item.name
-                                                ? (isDailyMode ? 'border-emerald-500 bg-emerald-50/30 dark:bg-emerald-900/10' : 'border-orange-500 bg-orange-50/30 dark:bg-orange-900/10')
-                                                : 'border-slate-50 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-orange-200'
+                                                ? (isDailyMode ? 'border-state-success-text bg-state-success-bg/30' : 'border-state-warning-text bg-state-warning-bg/30')
+                                                : 'border-surface-border bg-surface-card hover:border-state-warning-text/30'
                                             }`}
                                         >
                                             <div className="text-left">
-                                                <div className={`text-sm font-black transition-colors ${selectedName === item.name && isDailyMode ? 'text-emerald-700 dark:text-emerald-300' : 'text-slate-700 dark:text-slate-200'}`}>{item.name}</div>
-                                                <div className="text-[10px] text-slate-400 font-bold mt-0.5">
+                                                <div className={`text-sm font-black transition-colors ${selectedName === item.name && isDailyMode ? 'text-state-success-text' : 'text-text-secondary'}`}>{item.name}</div>
+                                                <div className="text-[10px] text-text-muted font-bold mt-0.5">
                                                     {item.vol}毫升 {item.desc}
                                                 </div>
                                             </div>
                                             {selectedName === item.name && (
-                                                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-white ${isDailyMode ? 'bg-emerald-500' : 'bg-orange-500'}`}>
+                                                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-text-on-accent ${isDailyMode ? 'bg-state-success-text' : 'bg-state-warning-text'}`}>
                                                     <Check size={14} strokeWidth={4} />
                                                 </div>
                                             )}
@@ -315,17 +315,17 @@ const BeverageModal: React.FC<BeverageModalProps> = ({ isOpen, onClose, data, ac
                 </div>
 
                 {/* 底部容量选择/日常模式确认区 */}
-                <div className="px-6 py-6 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 space-y-6 shrink-0">
+                <div className="px-6 py-6 bg-surface-card border-t border-surface-border space-y-6 shrink-0">
                     {!isDailyMode && (
                         <div className="space-y-2">
-                            <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-800 rounded-2xl px-4 py-3 border border-slate-100 dark:border-slate-700">
-                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1"><Clock size={12}/> 时间</span>
+                            <div className="flex items-center justify-between bg-surface-muted rounded-2xl px-4 py-3 border border-surface-border">
+                                <span className="text-[10px] font-black text-text-muted uppercase tracking-widest flex items-center gap-1"><Clock size={12}/> 时间</span>
                                 <input
                                     type="time"
                                     value={time}
                                     onChange={e => setTime(e.target.value)}
                                     aria-label="饮品时间"
-                                    className="bg-transparent text-base font-mono font-bold text-slate-800 dark:text-slate-100 outline-none text-right min-h-[44px]"
+                                    className="bg-transparent text-base font-mono font-bold text-text-primary outline-none text-right min-h-[44px]"
                                 />
                             </div>
                             <div className="grid grid-cols-4 gap-2">
@@ -342,7 +342,7 @@ const BeverageModal: React.FC<BeverageModalProps> = ({ isOpen, onClose, data, ac
                                             d.setMinutes(d.getMinutes() + p.shift);
                                             setTime(d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false }));
                                         }}
-                                        className="py-1.5 text-[10px] font-bold rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-orange-100 dark:hover:bg-orange-900/30 hover:text-orange-600 transition-colors min-h-[36px]"
+                                        className="py-1.5 text-[10px] font-bold rounded-xl bg-surface-muted text-text-secondary hover:bg-state-warning-bg hover:text-state-warning-text transition-colors min-h-[36px]"
                                     >
                                         {p.label}
                                     </button>
@@ -351,15 +351,15 @@ const BeverageModal: React.FC<BeverageModalProps> = ({ isOpen, onClose, data, ac
                         </div>
                     )}
                     {!isDailyMode ? (
-                        <div className="animate-in slide-in-from-bottom-2 duration-300 space-y-6">
+                        <div className="animate-in slide-in-from-bottom-2 duration-slow space-y-6">
                             <div className="flex items-center justify-between">
-                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">单杯精确毫升</span>
-                                <div className="flex items-center gap-4 bg-slate-100 dark:bg-slate-800 p-1.5 rounded-2xl border border-slate-200 dark:border-slate-700">
-                                    <button onClick={() => setVolume(v => Math.max(10, v - 10))} className="p-2 bg-white dark:bg-slate-700 rounded-xl shadow-sm text-slate-400 active:scale-90 transition-transform">
+                                <span className="text-[10px] font-black text-text-muted uppercase tracking-widest">单杯精确毫升</span>
+                                <div className="flex items-center gap-4 bg-surface-muted p-1.5 rounded-2xl border border-surface-border">
+                                    <button onClick={() => setVolume(v => Math.max(10, v - 10))} className="p-2 bg-surface-card rounded-xl shadow-soft text-text-muted active:scale-90 transition-transform">
                                         <Minus size={16} strokeWidth={3} />
                                     </button>
-                                    <span className="text-xl font-black text-slate-800 dark:text-slate-100 w-16 text-center tabular-nums">{volume}</span>
-                                    <button onClick={() => setVolume(v => v + 10)} className="p-2 bg-white dark:bg-slate-700 rounded-xl shadow-sm text-slate-400 active:scale-90 transition-transform">
+                                    <span className="text-xl font-black text-text-primary w-16 text-center tabular-nums">{volume}</span>
+                                    <button onClick={() => setVolume(v => v + 10)} className="p-2 bg-surface-card rounded-xl shadow-soft text-text-muted active:scale-90 transition-transform">
                                         <Plus size={16} strokeWidth={3} />
                                     </button>
                                 </div>
@@ -372,8 +372,8 @@ const BeverageModal: React.FC<BeverageModalProps> = ({ isOpen, onClose, data, ac
                                         onClick={() => setVolume(size.vol)}
                                         className={`flex flex-col items-center justify-center py-3 px-1 rounded-2xl border-2 transition-all ${
                                             volume === size.vol 
-                                            ? 'border-orange-500 bg-orange-50/50 dark:bg-orange-900/10 text-orange-600' 
-                                            : 'border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800 text-slate-400'
+                                            ? 'border-state-warning-text bg-state-warning-bg/50 text-state-warning-text'
+                                            : 'border-surface-border bg-surface-muted/50 text-text-muted'
                                         }`}
                                     >
                                         <span className="text-xs font-black mb-0.5">{size.label}</span>
@@ -383,16 +383,16 @@ const BeverageModal: React.FC<BeverageModalProps> = ({ isOpen, onClose, data, ac
                             </div>
                         </div>
                     ) : (
-                        <div className="py-4 px-6 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl border border-emerald-100 dark:border-emerald-900/40 text-center animate-in zoom-in-95 duration-300">
-                            <p className="text-emerald-700 dark:text-emerald-300 text-xs font-black">日常饮用模式已开启</p>
-                            <p className="text-[10px] text-emerald-600/70 dark:text-emerald-400/60 mt-1">适用于抓一把茶叶全天反复加水喝的习惯</p>
+                        <div className="py-4 px-6 bg-state-success-bg rounded-2xl border border-state-success-text/25 text-center animate-in zoom-in-95 duration-slow">
+                            <p className="text-state-success-text text-xs font-black">日常饮用模式已开启</p>
+                            <p className="text-[10px] text-state-success-text/70 mt-1">适用于抓一把茶叶全天反复加水喝的习惯</p>
                         </div>
                     )}
 
                     <button
                         onClick={handleConfirm}
-                        className={`w-full py-4 text-white font-black rounded-2xl shadow-xl flex items-center justify-center gap-2 active:scale-[0.98] transition-all ${
-                            isDailyMode ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/20' : 'bg-orange-500 hover:bg-orange-600 shadow-orange-500/20'
+                        className={`w-full py-4 text-text-on-accent font-black rounded-2xl shadow-glow flex items-center justify-center gap-2 active:scale-[0.98] transition-all ${
+                            isDailyMode ? 'bg-state-success-text hover:bg-state-success-text/90' : 'bg-state-warning-text hover:bg-state-warning-text/90'
                         }`}
                     >
                         <Check size={20} strokeWidth={3} />

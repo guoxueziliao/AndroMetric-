@@ -9,7 +9,7 @@ interface DashboardMonthViewProps {
 }
 
 const inlineLoader = (
-  <div className="flex items-center justify-center rounded-3xl border border-dashed border-slate-200 bg-white/70 p-4 text-xs font-bold text-slate-400 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
+  <div className="flex items-center justify-center rounded-3xl border border-dashed border-surface-border bg-surface-card/70 p-4 text-xs font-bold text-text-muted">
     加载中...
   </div>
 );

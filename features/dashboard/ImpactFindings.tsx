@@ -47,15 +47,15 @@ const ImpactFindings: React.FC<ImpactFindingsProps> = ({ logs }) => {
   return (
     <section className="space-y-2">
       <div className="flex items-center gap-2 px-2">
-        <BrainCircuit size={14} className="text-violet-500"/>
-        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-400">高影响因子</span>
+        <BrainCircuit size={14} className="text-chart-tertiary"/>
+        <span className="text-[10px] font-black uppercase tracking-widest text-text-muted">高影响因子</span>
       </div>
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         {findings.map(f => {
           const Arrow = f.isHelpful ? TrendingUp : TrendingDown;
           const colorClass = f.isHelpful
-            ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-100 dark:border-emerald-900/50 text-emerald-700 dark:text-emerald-300'
-            : 'bg-rose-50 dark:bg-rose-900/20 border-rose-100 dark:border-rose-900/50 text-rose-700 dark:text-rose-300';
+            ? 'bg-state-success-bg border-state-success-text/25 text-state-success-text'
+            : 'bg-state-danger-bg border-state-danger-text/25 text-state-danger-text';
           const desc = f.isHelpful
             ? `${f.label} 充足时硬度 +${f.diff.toFixed(1)} 级`
             : `${f.label}↑ 时硬度 ${f.diff > 0 ? '+' : ''}${f.diff.toFixed(1)} 级`;

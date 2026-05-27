@@ -26,9 +26,9 @@ export interface NoticeItem {
 }
 
 const LEVEL_CONFIG = {
-    error: { icon: AlertCircle, color: 'text-red-600 dark:text-red-400', bg: 'bg-red-50 dark:bg-red-900/20', border: 'border-red-200 dark:border-red-900/30' },
-    warn: { icon: AlertTriangle, color: 'text-orange-600 dark:text-orange-400', bg: 'bg-amber-50 dark:bg-amber-900/20', border: 'border-amber-200 dark:border-amber-900/30' },
-    info: { icon: Info, color: 'text-slate-600 dark:text-slate-400', bg: 'bg-slate-50 dark:bg-slate-800', border: 'border-slate-200 dark:border-slate-700' }
+    error: { icon: AlertCircle, color: 'text-state-danger-text', bg: 'bg-state-danger-bg', border: 'border-state-danger-text/30' },
+    warn: { icon: AlertTriangle, color: 'text-state-warning-text', bg: 'bg-state-warning-bg', border: 'border-state-warning-text/30' },
+    info: { icon: Info, color: 'text-state-info-text', bg: 'bg-state-info-bg', border: 'border-state-info-text/30' }
 };
 
 export const NoticeBadge: React.FC<{
@@ -87,8 +87,8 @@ export const InlineNotice: React.FC<{
                             onClick={handleClick}
                             className={`flex-shrink-0 px-2 py-0.5 rounded-md text-[11px] font-bold transition-colors whitespace-nowrap ${
                                 item.action.intent === 'primary'
-                                ? 'bg-brand-accent text-white hover:bg-brand-accent/90 shadow-sm'
-                                : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
+                                ? 'bg-accent text-text-on-accent hover:bg-accent/90 shadow-sm'
+                                : 'bg-surface-card text-text-secondary border border-surface-border hover:bg-surface-muted'
                             }`}
                         >
                             {item.action.label}
@@ -97,7 +97,7 @@ export const InlineNotice: React.FC<{
                 </div>
                 {/* Spec: detail text-[11px] normal */}
                 {!compact && item.detail && (
-                    <p className="mt-1 text-[11px] opacity-90 leading-relaxed text-slate-600 dark:text-slate-400 font-normal">
+                    <p className="mt-1 text-[11px] opacity-90 leading-relaxed text-text-secondary font-normal">
                         {item.detail}
                     </p>
                 )}
@@ -142,7 +142,7 @@ export const NoticeStack: React.FC<{
             {hiddenCount > 0 && (
                 <button 
                     onClick={(e) => { e.stopPropagation(); setInternalExpanded(true); }}
-                    className="w-full text-center text-[10px] text-slate-400 hover:text-slate-600 py-1 font-medium transition-colors"
+                    className="w-full text-center text-[10px] text-text-muted hover:text-text-secondary py-1 font-medium transition-colors"
                 >
                     还有 {hiddenCount} 条提示...
                 </button>
@@ -151,7 +151,7 @@ export const NoticeStack: React.FC<{
             {isExpanded && shouldTruncate && (
                 <button 
                     onClick={(e) => { e.stopPropagation(); setInternalExpanded(false); }}
-                    className="w-full text-center text-[10px] text-slate-400 hover:text-slate-600 py-1 font-medium transition-colors"
+                    className="w-full text-center text-[10px] text-text-muted hover:text-text-secondary py-1 font-medium transition-colors"
                 >
                     收起提示
                 </button>

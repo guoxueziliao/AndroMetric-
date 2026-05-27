@@ -1,0 +1,179 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --surface-base: 245 247 250;
+    --surface-card: 255 255 255;
+    --surface-muted: 241 245 249;
+    --surface-border: 226 232 240;
+    --surface-inverted: 15 23 42;
+    --surface-elevated: 255 255 255;
+    --overlay-scrim: 0 0 0;
+
+    --text-primary: 30 41 59;
+    --text-secondary: 71 85 105;
+    --text-muted: 148 163 184;
+    --text-inverted: 248 250 252;
+    --text-on-accent: 255 255 255;
+
+    --accent: 15 118 110;
+    --accent-hover: 17 94 89;
+    --accent-vivid: 219 39 119;
+    --accent-muted: 13 148 136;
+
+    --state-danger-bg: 254 242 242;
+    --state-danger-text: 220 38 38;
+    --state-warning-bg: 255 247 237;
+    --state-warning-text: 234 88 12;
+    --state-success-bg: 240 253 244;
+    --state-success-text: 22 163 74;
+    --state-info-bg: 239 246 255;
+    --state-info-text: 37 99 235;
+
+    --chart-primary: 37 99 235;
+    --chart-secondary: 16 185 129;
+    --chart-tertiary: 139 92 246;
+    --chart-quaternary: 236 72 153;
+
+    --shadow-soft: 0 4px 20px -2px rgb(0 0 0 / 0.05);
+    --shadow-glow: 0 0 15px rgb(var(--accent) / 0.3);
+    --shadow-dark-glow: 0 0 25px rgb(0 0 0 / 0.5);
+    --easing-standard: cubic-bezier(0.4, 0, 0.2, 1);
+    --easing-emphasized: cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .dark {
+    --surface-base: 2 6 23;
+    --surface-card: 15 23 42;
+    --surface-muted: 30 41 59;
+    --surface-border: 51 65 85;
+    --surface-inverted: 248 250 252;
+    --surface-elevated: 17 24 39;
+    --overlay-scrim: 0 0 0;
+
+    --text-primary: 241 245 249;
+    --text-secondary: 203 213 225;
+    --text-muted: 148 163 184;
+    --text-inverted: 15 23 42;
+    --text-on-accent: 255 255 255;
+
+    --accent: 20 184 166;
+    --accent-hover: 45 212 191;
+    --accent-vivid: 244 114 182;
+    --accent-muted: 94 234 212;
+
+    --state-danger-bg: 127 29 29;
+    --state-danger-text: 248 113 113;
+    --state-warning-bg: 124 45 18;
+    --state-warning-text: 251 146 60;
+    --state-success-bg: 20 83 45;
+    --state-success-text: 74 222 128;
+    --state-info-bg: 30 58 138;
+    --state-info-text: 96 165 250;
+
+    --chart-primary: 96 165 250;
+    --chart-secondary: 52 211 153;
+    --chart-tertiary: 167 139 250;
+    --chart-quaternary: 244 114 182;
+
+    --shadow-soft: 0 12px 32px -20px rgb(0 0 0 / 0.7);
+    --shadow-glow: 0 0 20px rgb(var(--accent) / 0.22);
+    --shadow-dark-glow: 0 0 25px rgb(0 0 0 / 0.5);
+  }
+
+  body {
+    -webkit-tap-highlight-color: transparent;
+    font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  }
+
+  * {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+@layer components {
+  .toggle-checkbox {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 3rem;
+    height: 1.6rem;
+    background-color: rgb(var(--surface-border));
+    border-radius: 9999px;
+    position: relative;
+    transition: background-color 300ms var(--easing-standard);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .dark .toggle-checkbox {
+    background-color: rgb(var(--surface-muted));
+  }
+
+  .toggle-checkbox:checked {
+    background-color: rgb(var(--accent));
+  }
+
+  .toggle-checkbox::before {
+    content: '';
+    position: absolute;
+    top: 0.2rem;
+    left: 0.2rem;
+    width: 1.2rem;
+    height: 1.2rem;
+    background-color: white;
+    border-radius: 9999px;
+    transition: transform 300ms var(--easing-emphasized);
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.1);
+  }
+
+  .toggle-checkbox:checked::before {
+    transform: translateX(1.4rem);
+  }
+}
+
+@layer utilities {
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 5px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: rgb(var(--surface-border));
+    border-radius: 20px;
+  }
+
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .safe-area-left {
+    padding-left: env(safe-area-inset-left);
+  }
+
+  .safe-area-right {
+    padding-right: env(safe-area-inset-right);
+  }
+
+  .status-bar-bg {
+    background-color: rgb(var(--surface-base));
+    transition: background-color 300ms var(--easing-standard);
+  }
+}

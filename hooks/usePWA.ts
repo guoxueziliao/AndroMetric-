@@ -6,8 +6,6 @@ interface PWAState {
   isOffline: boolean;
   canInstall: boolean;
   installPrompt: Event | null;
-  swVersion: string;
-  updateAvailable: boolean;
   isAndroid: boolean;
   isIOS: boolean;
   isSafari: boolean;
@@ -24,8 +22,6 @@ export function usePWA() {
     isOffline: !navigator.onLine,
     canInstall: false,
     installPrompt: null,
-    swVersion: '',
-    updateAvailable: false,
     isAndroid: /Android/i.test(userAgent),
     isIOS,
     isSafari
@@ -65,31 +61,6 @@ export function usePWA() {
     const mediaQuery = window.matchMedia('(display-mode: standalone)');
     mediaQuery.addEventListener('change', checkStandalone);
 
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.ready.then(registration => {
-        registration.addEventListener('updatefound', () => {
-          const newWorker = registration.installing;
-          if (newWorker) {
-            newWorker.addEventListener('statechange', () => {
-              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                setState(prev => ({ ...prev, updateAvailable: true }));
-              }
-            });
-          }
-        });
-
-        if (registration.active) {
-          const channel = new MessageChannel();
-          channel.port1.onmessage = (event) => {
-            if (event.data?.version) {
-              setState(prev => ({ ...prev, swVersion: event.data.version }));
-            }
-          };
-          registration.active.postMessage({ type: 'GET_VERSION' }, [channel.port2]);
-        }
-      });
-    }
-
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
@@ -110,19 +81,6 @@ export function usePWA() {
 
     return result.outcome === 'accepted';
   }, [state.installPrompt]);
-
-  const updateApp = useCallback(async () => {
-    if ('serviceWorker' in navigator) {
-      const registration = await navigator.serviceWorker.ready;
-      registration.update();
-
-      if (registration.waiting) {
-        registration.waiting.postMessage({ type: 'SKIP_WAITING' });
-      }
-
-      window.location.reload();
-    }
-  }, []);
 
   const requestNotificationPermission = useCallback(async () => {
     if (!('Notification' in window)) return false;
@@ -160,24 +118,8 @@ export function usePWA() {
   return {
     ...state,
     installApp,
-    updateApp,
     requestNotificationPermission,
     scheduleNotification,
     registerPeriodicSync
   };
-}
-
-export function registerServiceWorker(): void {
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker
-        .register('/sw.js')
-        .then(registration => {
-          console.log('SW registered:', registration.scope);
-        })
-        .catch(error => {
-          console.error('SW registration failed:', error);
-        });
-    });
-  }
 }

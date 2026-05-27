@@ -13,9 +13,24 @@ interface TimelineEvent {
     title: string;
     desc?: string;
     icon: React.ElementType;
-    color: string;
+    tone: {
+        dot: string;
+        surface: string;
+        icon: string;
+        text: string;
+    };
     timestamp: number; // 生理排序权重
 }
+
+const timelineTone = {
+    sleep: { dot: 'bg-chart-tertiary', surface: 'bg-chart-tertiary/10', icon: 'text-chart-tertiary', text: 'text-chart-tertiary' },
+    wake: { dot: 'bg-state-warning-text', surface: 'bg-state-warning-bg', icon: 'text-state-warning-text', text: 'text-state-warning-text' },
+    success: { dot: 'bg-state-success-text', surface: 'bg-state-success-bg', icon: 'text-state-success-text', text: 'text-state-success-text' },
+    alcohol: { dot: 'bg-chart-tertiary', surface: 'bg-chart-tertiary/10', icon: 'text-chart-tertiary', text: 'text-chart-tertiary' },
+    info: { dot: 'bg-state-info-text', surface: 'bg-state-info-bg', icon: 'text-state-info-text', text: 'text-state-info-text' },
+    adult: { dot: 'bg-accent-vivid', surface: 'bg-accent-vivid/10', icon: 'text-accent-vivid', text: 'text-accent-vivid' },
+    warning: { dot: 'bg-state-warning-text', surface: 'bg-state-warning-bg', icon: 'text-state-warning-text', text: 'text-state-warning-text' }
+} as const;
 
 export const GlobalTimeline: React.FC<GlobalTimelineProps> = ({ log, allLogs }) => {
     
@@ -63,7 +78,7 @@ export const GlobalTimeline: React.FC<GlobalTimelineProps> = ({ log, allLogs }) 
                 title: '入睡',
                 desc: '昨晚入睡',
                 icon: Moon,
-                color: 'text-indigo-500 bg-indigo-50 dark:bg-indigo-900/30',
+                tone: timelineTone.sleep,
                 timestamp: -2000
             });
         }
@@ -77,7 +92,7 @@ export const GlobalTimeline: React.FC<GlobalTimelineProps> = ({ log, allLogs }) 
                 title: '起床',
                 desc: log.morning?.wokeWithErection ? `晨勃 Lv${log.morning.hardness}` : '无晨勃',
                 icon: SunMedium,
-                color: 'text-orange-500 bg-orange-50 dark:bg-orange-900/30',
+                tone: timelineTone.wake,
                 timestamp: -1000
             });
         }
@@ -91,7 +106,7 @@ export const GlobalTimeline: React.FC<GlobalTimelineProps> = ({ log, allLogs }) 
                     title: item.isDaily ? '全天饮茶' : '提神饮品',
                     desc: `${item.name} (${item.volume}ml)`,
                     icon: item.isDaily ? RotateCcw : Coffee,
-                    color: item.isDaily ? 'text-emerald-700 bg-emerald-100 dark:bg-emerald-900/30' : 'text-amber-700 bg-amber-100 dark:bg-amber-900/30',
+                    tone: item.isDaily ? timelineTone.success : timelineTone.warning,
                     timestamp: getPhysioWeight(item.time)
                 });
             });
@@ -106,7 +121,7 @@ export const GlobalTimeline: React.FC<GlobalTimelineProps> = ({ log, allLogs }) 
                     title: '运动',
                     desc: `${ex.type} (${ex.duration}m)`,
                     icon: Dumbbell,
-                    color: 'text-green-600 bg-green-100 dark:bg-green-900/30',
+                    tone: timelineTone.success,
                     timestamp: getPhysioWeight(time)
                 });
             });
@@ -120,7 +135,7 @@ export const GlobalTimeline: React.FC<GlobalTimelineProps> = ({ log, allLogs }) 
                     title: '饮酒',
                     desc: `${r.totalGrams}g 纯酒精`,
                     icon: Beer,
-                    color: 'text-purple-600 bg-purple-100 dark:bg-purple-900/30',
+                    tone: timelineTone.alcohol,
                     timestamp: getPhysioWeight(r.time)
                 });
             });
@@ -135,7 +150,7 @@ export const GlobalTimeline: React.FC<GlobalTimelineProps> = ({ log, allLogs }) 
                     title: '自慰',
                     desc: `${m.duration}m ${m.ejaculation ? '(射精)' : '(Edging)'}`,
                     icon: Hand,
-                    color: 'text-blue-600 bg-blue-100 dark:bg-blue-900/30',
+                    tone: timelineTone.info,
                     timestamp: getPhysioWeight(time)
                 });
             });
@@ -150,7 +165,7 @@ export const GlobalTimeline: React.FC<GlobalTimelineProps> = ({ log, allLogs }) 
                     title: '性生活',
                     desc: `${s.duration}m 与伴侣`,
                     icon: HeartPulse,
-                    color: 'text-pink-600 bg-pink-100 dark:bg-pink-900/30',
+                    tone: timelineTone.adult,
                     timestamp: getPhysioWeight(time)
                 });
             });
@@ -174,7 +189,7 @@ export const GlobalTimeline: React.FC<GlobalTimelineProps> = ({ log, allLogs }) 
                     title: '今晚入睡',
                     desc: nextLog.sleep.environment?.location === 'home' ? '休息中...' : (nextLog.sleep.environment?.location ?? undefined),
                     icon: Bed,
-                    color: 'text-indigo-600 bg-indigo-100 dark:bg-indigo-900/30',
+                    tone: timelineTone.sleep,
                     timestamp: 5000 // 确保在当天所有活动之后
                 });
             }
@@ -186,28 +201,28 @@ export const GlobalTimeline: React.FC<GlobalTimelineProps> = ({ log, allLogs }) 
     if (events.length === 0) return null;
 
     return (
-        <div className="mt-6 border-t border-slate-100 dark:border-slate-800 pt-6">
-            <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] mb-6 flex items-center">
+        <div className="mt-6 border-t border-surface-border pt-6">
+            <h3 className="text-[11px] font-black text-text-muted uppercase tracking-[0.2em] mb-6 flex items-center">
                 <Clock size={14} className="mr-2"/> 生理日时间线
             </h3>
-            <div className="relative pl-5 border-l-2 border-slate-100 dark:border-slate-800 space-y-6">
+            <div className="relative pl-5 border-l-2 border-surface-border space-y-6">
                 {events.map((e, i) => (
                     <div key={i} className="relative flex items-start gap-4 animate-in fade-in slide-in-from-left-2" style={{ animationDelay: `${i * 50}ms` }}>
                         {/* Dot */}
-                        <div className={`absolute -left-[27px] top-1.5 w-3.5 h-3.5 rounded-full border-4 border-white dark:border-[#020617] shadow-sm ${e.color.split(' ')[0].replace('text-', 'bg-')}`}></div>
+                        <div className={`absolute -left-[27px] top-1.5 w-3.5 h-3.5 rounded-full border-4 border-surface-base shadow-sm ${e.tone.dot}`}></div>
                         
                         {/* Time */}
-                        <div className="text-[11px] font-mono font-black text-slate-400 dark:text-slate-400 pt-1 min-w-[38px] tabular-nums">{e.time}</div>
+                        <div className="text-[11px] font-mono font-black text-text-muted pt-1 min-w-[38px] tabular-nums">{e.time}</div>
                         
                         {/* Event Card */}
-                        <div className={`flex-1 p-3.5 rounded-2xl flex items-center justify-between transition-all ${e.color.split(' ')[1]}`}>
+                        <div className={`flex-1 p-3.5 rounded-2xl flex items-center justify-between transition-all ${e.tone.surface}`}>
                             <div className="flex items-center gap-3">
-                                <div className={`p-2 rounded-xl bg-white/60 dark:bg-black/20 ${e.color.split(' ')[0]}`}>
+                                <div className={`p-2 rounded-xl bg-surface-card/60 ${e.tone.icon}`}>
                                     <e.icon size={18} strokeWidth={2.5}/>
                                 </div>
                                 <div>
-                                    <div className={`text-xs font-black ${e.color.split(' ')[0]}`}>{e.title}</div>
-                                    <div className="text-[10px] text-slate-500 dark:text-slate-400 font-bold mt-0.5">{e.desc}</div>
+                                    <div className={`text-xs font-black ${e.tone.text}`}>{e.title}</div>
+                                    <div className="text-[10px] text-text-muted font-bold mt-0.5">{e.desc}</div>
                                 </div>
                             </div>
                         </div>
@@ -220,8 +235,8 @@ export const GlobalTimeline: React.FC<GlobalTimelineProps> = ({ log, allLogs }) 
                 d.setDate(d.getDate() + 1);
                 return l.date === d.toISOString().split('T')[0];
             }) && (
-                <div className="mt-8 p-4 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 text-center">
-                    <p className="text-[10px] text-slate-400 font-bold italic">“今晚入睡”将在明天醒来打卡后自动同步至此。</p>
+                <div className="mt-8 p-4 bg-surface-muted rounded-2xl border border-dashed border-surface-border text-center">
+                    <p className="text-[10px] text-text-muted font-bold italic">“今晚入睡”将在明天醒来打卡后自动同步至此。</p>
                 </div>
             )}
         </div>

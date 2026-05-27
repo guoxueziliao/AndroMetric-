@@ -8,7 +8,7 @@ import { generateInsights } from './model/insights';
 import type { Insight, InsightCategory } from './model/insights';
 import type { LogEntry } from '../../domain';
 import { Activity, Zap, TrendingUp, BrainCircuit, Radar, CheckCircle, ArrowDown, AlertTriangle, Info, Tag, Sparkles } from 'lucide-react';
-import { ErrorBoundary } from '../../shared/ui';
+import { ErrorBoundary, useChartColors } from '../../shared/ui';
 import {
     getMasturbationRecommendationsFromEvents,
     getSexRecommendationsFromEvents,
@@ -61,53 +61,57 @@ interface StatsViewProps {
 
 // --- Sub-Components ---
 
+const chartColorWithAlpha = (color: string, alphaHex: string) => (
+    color.startsWith('#') && color.length === 7 ? `${color}${alphaHex}` : color
+);
+
 const ChartCard = ({ title, icon: Icon, children, subtext, className }: ChartCardProps) => (
-    <div className={`bg-white dark:bg-slate-900 p-5 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col min-h-[350px] ${className || ''}`}>
+    <div className={`bg-surface-card p-5 rounded-3xl shadow-soft border border-surface-border flex flex-col min-h-[350px] ${className || ''}`}>
         <div className="flex justify-between items-start mb-4">
-            <h3 className="font-bold text-brand-text dark:text-slate-200 flex items-center text-sm">
-                {Icon && <Icon size={16} className="mr-2 text-brand-accent"/>}
+            <h3 className="font-bold text-text-primary flex items-center text-sm">
+                {Icon && <Icon size={16} className="mr-2 text-accent"/>}
                 {title}
             </h3>
         </div>
         <div className="flex-1 relative flex flex-col items-center justify-center w-full">{children}</div>
-        {subtext && <p className="text-xs text-slate-400 mt-3 text-center">{subtext}</p>}
+        {subtext && <p className="text-xs text-text-muted mt-3 text-center">{subtext}</p>}
     </div>
 );
 
-const KPICard = ({ label, value, unit, icon: Icon, colorClass = "text-brand-text" }: KPICardProps) => (
-    <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col justify-between transition-transform hover:scale-[1.02]">
+const KPICard = ({ label, value, unit, icon: Icon, colorClass = "text-text-primary" }: KPICardProps) => (
+    <div className="bg-surface-card p-5 rounded-3xl shadow-soft border border-surface-border flex flex-col justify-between transition-transform hover:scale-[1.02]">
         <div className="flex justify-between items-start mb-2">
-            <div className="p-2 bg-brand-primary dark:bg-slate-800 rounded-2xl">
-                <Icon size={20} className="text-brand-accent" />
+            <div className="p-2 bg-surface-muted rounded-2xl">
+                <Icon size={20} className="text-accent" />
             </div>
         </div>
         <div>
-            <p className="text-xs text-brand-muted dark:text-slate-400 font-bold uppercase tracking-wider">{label}</p>
-            <p className={`text-3xl font-black mt-1 ${colorClass}`}>{value}<span className="text-sm font-bold text-brand-muted dark:text-slate-400 ml-1">{unit}</span></p>
+            <p className="text-xs text-text-muted font-bold uppercase tracking-wider">{label}</p>
+            <p className={`text-3xl font-black mt-1 ${colorClass}`}>{value}<span className="text-sm font-bold text-text-muted ml-1">{unit}</span></p>
         </div>
     </div>
 );
 
 const P3ListCard = ({ title, badge, items, emptyText }: P3ListCardProps) => (
-    <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 space-y-4">
+    <div className="bg-surface-card p-5 rounded-3xl shadow-soft border border-surface-border space-y-4">
         <div className="flex items-center justify-between gap-3">
-            <h3 className="font-bold text-brand-text dark:text-slate-200 text-sm">{title}</h3>
-            <span className="px-2 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider">{badge}</span>
+            <h3 className="font-bold text-text-primary text-sm">{title}</h3>
+            <span className="px-2 py-1 rounded-full bg-surface-muted text-[10px] font-black text-text-muted uppercase tracking-wider">{badge}</span>
         </div>
         {items.length > 0 ? (
             <div className="space-y-3">
                 {items.map((item) => (
-                    <div key={`${title}-${item.title}-${item.meta || item.detail}`} className="rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-4 py-3">
+                    <div key={`${title}-${item.title}-${item.meta || item.detail}`} className="rounded-2xl border border-surface-border bg-surface-muted px-4 py-3">
                         <div className="flex items-center justify-between gap-3">
-                            <p className="text-sm font-bold text-brand-text dark:text-slate-200">{item.title}</p>
-                            {item.meta && <span className="text-[10px] font-bold text-slate-400">{item.meta}</span>}
+                            <p className="text-sm font-bold text-text-primary">{item.title}</p>
+                            {item.meta && <span className="text-[10px] font-bold text-text-muted">{item.meta}</span>}
                         </div>
-                        <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">{item.detail}</p>
+                        <p className="mt-1 text-xs leading-relaxed text-text-secondary">{item.detail}</p>
                     </div>
                 ))}
             </div>
         ) : (
-            <div className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 px-4 py-6 text-center text-xs font-medium text-slate-400">
+            <div className="rounded-2xl border border-dashed border-surface-border px-4 py-6 text-center text-xs font-medium text-text-muted">
                 {emptyText}
             </div>
         )}
@@ -116,32 +120,33 @@ const P3ListCard = ({ title, badge, items, emptyText }: P3ListCardProps) => (
 
 const InsightCard: React.FC<{ insight: Insight }> = ({ insight }) => {
     const bgMap = {
-        positive: 'bg-green-50 dark:bg-green-900/20 border-green-100 dark:border-green-900/50',
-        negative: 'bg-red-50 dark:bg-red-900/20 border-red-100 dark:border-red-900/50',
-        warning: 'bg-orange-50 dark:bg-orange-900/20 border-orange-100 dark:border-orange-900/50',
-        neutral: 'bg-slate-50 dark:bg-slate-900 border-slate-100 dark:border-slate-800'
+        positive: 'bg-state-success-bg border-state-success-text/20',
+        negative: 'bg-state-danger-bg border-state-danger-text/20',
+        warning: 'bg-state-warning-bg border-state-warning-text/20',
+        neutral: 'bg-state-info-bg border-state-info-text/20'
     };
     const iconMap = {
-        positive: <CheckCircle size={18} className="text-green-600"/>,
-        negative: <ArrowDown size={18} className="text-red-600"/>,
-        warning: <AlertTriangle size={18} className="text-orange-500"/>,
-        neutral: <Info size={18} className="text-blue-500"/>
+        positive: <CheckCircle size={18} className="text-state-success-text"/>,
+        negative: <ArrowDown size={18} className="text-state-danger-text"/>,
+        warning: <AlertTriangle size={18} className="text-state-warning-text"/>,
+        neutral: <Info size={18} className="text-state-info-text"/>
     };
     return (
         <div className={`p-4 rounded-2xl border ${bgMap[insight.type]} animate-in slide-in-from-bottom-2`}>
             <div className="flex items-center gap-2 mb-2">
                 {iconMap[insight.type]}
-                <h4 className="font-bold text-sm text-brand-text dark:text-slate-200">{insight.title}</h4>
+                <h4 className="font-bold text-sm text-text-primary">{insight.title}</h4>
             </div>
-            <p className="text-xs text-brand-muted dark:text-slate-400 leading-relaxed">{insight.description}</p>
+            <p className="text-xs text-text-secondary leading-relaxed">{insight.description}</p>
         </div>
     );
 };
 
-const StatsView: React.FC<StatsViewProps> = ({ isDarkMode, logs: rawLogs }) => {
+const StatsView: React.FC<StatsViewProps> = ({ logs: rawLogs }) => {
     const logs = useMemo(() => Array.isArray(rawLogs) ? rawLogs : [], [rawLogs]);
     const [activeTab, setActiveTab] = useState<StatsTab>('overview');
     const [trendComparison, setTrendComparison] = useState<MetricId>('sleep');
+    const theme = useChartColors();
 
     const comparisonOptions = useMemo<readonly MetricId[]>(() => (
         ['sleep', 'exercise', 'alcohol', 'stress', 'screenTime']
@@ -162,12 +167,6 @@ const StatsView: React.FC<StatsViewProps> = ({ isDarkMode, logs: rawLogs }) => {
     const masturbationFatigue = useMemo(() => getFatigueSummaryFromEvents(eventStream, 'masturbation'), [eventStream]);
     const sexWindows = useMemo(() => getWindowsFromEvents(eventStream, 'sex'), [eventStream]);
     const masturbationWindows = useMemo(() => getWindowsFromEvents(eventStream, 'masturbation'), [eventStream]);
-
-    const theme = useMemo(() => ({
-        grid: isDarkMode ? '#1e293b' : '#f1f5f9', 
-        text: isDarkMode ? '#94a3b8' : '#64748b', 
-        primary: isDarkMode ? '#60a5fa' : '#3b82f6', 
-    }), [isDarkMode]);
 
     const commonOptions = {
         responsive: true, maintainAspectRatio: false,
@@ -270,35 +269,35 @@ const StatsView: React.FC<StatsViewProps> = ({ isDarkMode, logs: rawLogs }) => {
         <ErrorBoundary>
             <div className="space-y-6 pb-24">
                 <div className="flex justify-between items-center px-1">
-                    <h2 className="text-2xl font-bold text-brand-text dark:text-slate-100">数据洞察</h2>
+                    <h2 className="text-2xl font-bold text-text-primary">数据洞察</h2>
                 </div>
 
                 {displayLogs.length < 3 ? (
-                    <div className="rounded-3xl border border-dashed border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900 p-8 text-center space-y-3">
-                        <div className="text-base font-black text-brand-text dark:text-slate-100">数据不足以生成图表</div>
-                        <p className="text-sm text-brand-muted dark:text-slate-400 leading-relaxed">
+                    <div className="rounded-3xl border border-dashed border-surface-border bg-surface-card/50 p-8 text-center space-y-3">
+                        <div className="text-base font-black text-text-primary">数据不足以生成图表</div>
+                        <p className="text-sm text-text-secondary leading-relaxed">
                             至少需要 3 条已完成的日记才能跑出趋势、相关性与维度雷达。<br/>
-                            目前已完成 <span className="font-bold text-brand-accent">{displayLogs.length}</span> 条。
+                            目前已完成 <span className="font-bold text-accent">{displayLogs.length}</span> 条。
                         </p>
-                        <p className="text-xs text-brand-muted dark:text-slate-400">
+                        <p className="text-xs text-text-muted">
                             继续记录,本页会自动解锁。
                         </p>
                     </div>
                 ) : (
                 <>
-                <div className="flex p-1 bg-brand-primary dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-x-auto scrollbar-hide">
+                <div className="flex p-1 bg-surface-muted rounded-2xl border border-surface-border overflow-x-auto scrollbar-hide">
                     {STATS_TABS.map(tab => (
-                        <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex-1 min-h-[44px] py-2 px-3 text-xs font-bold rounded-xl transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-white dark:bg-slate-800 text-brand-accent shadow-sm' : 'text-brand-muted dark:text-slate-400'}`}>{tab.label}</button>
+                        <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex-1 min-h-[44px] py-2 px-3 text-xs font-bold rounded-xl transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-surface-card text-accent shadow-sm' : 'text-text-muted'}`}>{tab.label}</button>
                     ))}
                 </div>
 
                 {activeTab === 'overview' && (
                     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
                         <div className="grid grid-cols-2 gap-3">
-                            <KPICard label="硬度评分" value={stats.kpis.avgHardness} icon={Zap} colorClass="text-brand-accent dark:text-blue-400"/>
-                            <KPICard label="近期活跃" value={stats.kpis.totalActivity} unit="次" icon={Activity} colorClass="text-pink-500 dark:text-pink-400"/>
-                            <KPICard label="平均睡眠" value={stats.kpis.avgSleep} unit="h" icon={TrendingUp} colorClass="text-blue-500 dark:text-blue-400"/>
-                            <KPICard label="健康分" value={stats.kpis.avgHealthScore} unit="分" icon={CheckCircle} colorClass="text-emerald-500 dark:text-emerald-400"/>
+                            <KPICard label="硬度评分" value={stats.kpis.avgHardness} icon={Zap} colorClass="text-accent"/>
+                            <KPICard label="近期活跃" value={stats.kpis.totalActivity} unit="次" icon={Activity} colorClass="text-accent-vivid"/>
+                            <KPICard label="平均睡眠" value={stats.kpis.avgSleep} unit="h" icon={TrendingUp} colorClass="text-chart-primary"/>
+                            <KPICard label="健康分" value={stats.kpis.avgHealthScore} unit="分" icon={CheckCircle} colorClass="text-chart-secondary"/>
                         </div>
                         <ChartCard title="趋势对比分析" icon={TrendingUp} subtext="均线：硬度等级 | 柱状：对比指标">
                             <div className="flex flex-wrap gap-1.5 mb-3" role="tablist" aria-label="对比指标">
@@ -313,8 +312,8 @@ const StatsView: React.FC<StatsViewProps> = ({ isDarkMode, logs: rawLogs }) => {
                                             onClick={() => setTrendComparison(metricId)}
                                             className={`min-h-[44px] px-3 text-xs font-bold rounded-xl transition-colors ${
                                                 isActive
-                                                    ? 'bg-brand-accent text-white shadow-sm'
-                                                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                                                    ? 'bg-accent text-text-on-accent shadow-sm'
+                                                    : 'bg-surface-muted text-text-secondary hover:bg-surface-border'
                                             }`}
                                         >
                                             {METRICS[metricId].label}
@@ -327,8 +326,8 @@ const StatsView: React.FC<StatsViewProps> = ({ isDarkMode, logs: rawLogs }) => {
                                     data={{
                                         labels: stats.trends.labels,
                                         datasets: [
-                                            { label: '硬度均线', data: stats.trends.hardnessSMA as any, borderColor: '#8b5cf6', borderWidth: 3, pointRadius: 0, tension: 0.4, fill: false, yAxisID: 'y' },
-                                            { type: 'bar' as const, label: comparisonConfig.label, data: stats.trends.comparisonData as any, backgroundColor: 'rgba(59, 130, 246, 0.4)', borderRadius: 4, yAxisID: 'y1' }
+                                            { label: '硬度均线', data: stats.trends.hardnessSMA as any, borderColor: theme.tertiary, borderWidth: 3, pointRadius: 0, tension: 0.4, fill: false, yAxisID: 'y' },
+                                            { type: 'bar' as const, label: comparisonConfig.label, data: stats.trends.comparisonData as any, backgroundColor: chartColorWithAlpha(theme.primary, '66'), borderRadius: 4, yAxisID: 'y1' }
                                         ]
                                     } as any} 
                                     options={{ 
@@ -351,8 +350,8 @@ const StatsView: React.FC<StatsViewProps> = ({ isDarkMode, logs: rawLogs }) => {
                                             {
                                                 label: '健康分',
                                                 data: stats.trends.healthScoreSeries as any,
-                                                borderColor: '#10b981',
-                                                backgroundColor: 'rgba(16, 185, 129, 0.12)',
+                                                borderColor: theme.secondary,
+                                                backgroundColor: chartColorWithAlpha(theme.secondary, '1f'),
                                                 borderWidth: 3,
                                                 pointRadius: 3,
                                                 tension: 0.35,
@@ -371,7 +370,7 @@ const StatsView: React.FC<StatsViewProps> = ({ isDarkMode, logs: rawLogs }) => {
                             </div>
                         </ChartCard>
                         <div className="space-y-3">
-                            <h3 className="text-sm font-bold text-brand-muted uppercase tracking-wider flex items-center px-1"><BrainCircuit size={16} className="mr-2"/> 智能分析</h3>
+                            <h3 className="text-sm font-bold text-text-muted uppercase tracking-wider flex items-center px-1"><BrainCircuit size={16} className="mr-2"/> 智能分析</h3>
                             {(() => {
                                 const groups: Array<{ key: InsightCategory; label: string }> = [
                                     { key: 'correlation', label: '相关性' },
@@ -384,14 +383,14 @@ const StatsView: React.FC<StatsViewProps> = ({ isDarkMode, logs: rawLogs }) => {
                                     .filter(g => g.items.length > 0);
                                 if (sectionsRendered.length === 0) {
                                     return (
-                                        <div className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 px-4 py-6 text-center text-xs font-medium text-slate-400">
+                                        <div className="rounded-2xl border border-dashed border-surface-border px-4 py-6 text-center text-xs font-medium text-text-muted">
                                             样本不足或无显著发现，继续记录以解锁洞察。
                                         </div>
                                     );
                                 }
                                 return sectionsRendered.map(group => (
                                     <div key={group.key} className="space-y-2">
-                                        <div className="text-[10px] font-black text-slate-400 dark:text-slate-400 uppercase tracking-wider px-1">{group.label}</div>
+                                        <div className="text-[10px] font-black text-text-muted uppercase tracking-wider px-1">{group.label}</div>
                                         {group.items.map(insight => <InsightCard key={insight.id} insight={insight} />)}
                                     </div>
                                 ));
@@ -408,9 +407,9 @@ const StatsView: React.FC<StatsViewProps> = ({ isDarkMode, logs: rawLogs }) => {
                                     data={{
                                         labels: stats.trends.labels,
                                         datasets: [
-                                            { label: '睡眠(h)', data: stats.trends.sleepSeries as any, backgroundColor: 'rgba(59, 130, 246, 0.55)', borderRadius: 4 },
-                                            { label: '运动(min)', data: stats.trends.exerciseSeries as any, backgroundColor: 'rgba(16, 185, 129, 0.55)', borderRadius: 4 },
-                                            { label: '屏幕(h)', data: stats.trends.screenTimeSeries as any, backgroundColor: 'rgba(249, 115, 22, 0.55)', borderRadius: 4 }
+                                            { label: '睡眠(h)', data: stats.trends.sleepSeries as any, backgroundColor: chartColorWithAlpha(theme.primary, '8c'), borderRadius: 4 },
+                                            { label: '运动(min)', data: stats.trends.exerciseSeries as any, backgroundColor: chartColorWithAlpha(theme.secondary, '8c'), borderRadius: 4 },
+                                            { label: '屏幕(h)', data: stats.trends.screenTimeSeries as any, backgroundColor: chartColorWithAlpha(theme.quaternary, '8c'), borderRadius: 4 }
                                         ]
                                     } as any}
                                     options={commonOptions as any}
@@ -426,8 +425,8 @@ const StatsView: React.FC<StatsViewProps> = ({ isDarkMode, logs: rawLogs }) => {
                                             {
                                                 label: '健康分',
                                                 data: stats.trends.healthScoreSeries as any,
-                                                borderColor: '#10b981',
-                                                backgroundColor: 'rgba(16, 185, 129, 0.12)',
+                                                borderColor: theme.secondary,
+                                                backgroundColor: chartColorWithAlpha(theme.secondary, '1f'),
                                                 borderWidth: 3,
                                                 pointRadius: 3,
                                                 tension: 0.35,
@@ -451,10 +450,10 @@ const StatsView: React.FC<StatsViewProps> = ({ isDarkMode, logs: rawLogs }) => {
                 {activeTab === 'sexual' && (
                     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
                         <div className="grid grid-cols-2 gap-3">
-                            <KPICard label="性爱均分" value={sexualStats.averageSexScore} unit="分" icon={Sparkles} colorClass="text-pink-500 dark:text-pink-400" />
-                            <KPICard label="自慰均分" value={sexualStats.averageMasturbationScore} unit="分" icon={Zap} colorClass="text-indigo-500 dark:text-indigo-400" />
-                            <KPICard label="当前疲劳状态" value={sexualStats.currentFatigueState} icon={BrainCircuit} colorClass="text-amber-500 dark:text-amber-400" />
-                            <KPICard label="可用样本数" value={sexualStats.usableSamples} unit="条" icon={CheckCircle} colorClass="text-emerald-500 dark:text-emerald-400" />
+                            <KPICard label="性爱均分" value={sexualStats.averageSexScore} unit="分" icon={Sparkles} colorClass="text-accent-vivid" />
+                            <KPICard label="自慰均分" value={sexualStats.averageMasturbationScore} unit="分" icon={Zap} colorClass="text-chart-tertiary" />
+                            <KPICard label="当前疲劳状态" value={sexualStats.currentFatigueState} icon={BrainCircuit} colorClass="text-state-warning-text" />
+                            <KPICard label="可用样本数" value={sexualStats.usableSamples} unit="条" icon={CheckCircle} colorClass="text-chart-secondary" />
                         </div>
 
                         <div className="grid gap-4 lg:grid-cols-2">
@@ -517,7 +516,7 @@ const StatsView: React.FC<StatsViewProps> = ({ isDarkMode, logs: rawLogs }) => {
                                                 (xpStats.dimensionStats['剧情'] as DimensionStat)?.recordCount || 0,
                                                 (xpStats.dimensionStats['风格'] as DimensionStat)?.recordCount || 0
                                             ],
-                                            backgroundColor: 'rgba(236, 72, 153, 0.2)', borderColor: '#ec4899', pointBackgroundColor: '#ec4899',
+                                            backgroundColor: chartColorWithAlpha(theme.quaternary, '33'), borderColor: theme.quaternary, pointBackgroundColor: theme.quaternary,
                                         }]
                                     } as any}
                                     options={{
@@ -538,7 +537,7 @@ const StatsView: React.FC<StatsViewProps> = ({ isDarkMode, logs: rawLogs }) => {
                                 const maxRecord = Math.max(1, ...rows.map(r => r.stat.recordCount));
                                 if (rows.every(r => r.stat.recordCount === 0)) {
                                     return (
-                                        <div className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 px-4 py-6 text-center text-xs font-medium text-slate-400 w-full">
+                                        <div className="rounded-2xl border border-dashed border-surface-border px-4 py-6 text-center text-xs font-medium text-text-muted w-full">
                                             尚未录入带维度标签的记录
                                         </div>
                                     );
@@ -550,13 +549,13 @@ const StatsView: React.FC<StatsViewProps> = ({ isDarkMode, logs: rawLogs }) => {
                                             return (
                                                 <div key={r.name} className="space-y-1">
                                                     <div className="flex items-center justify-between text-[11px]">
-                                                        <span className="font-bold text-slate-600 dark:text-slate-300">{r.name}</span>
-                                                        <span className="font-mono tabular-nums text-slate-400">
+                                                        <span className="font-bold text-text-secondary">{r.name}</span>
+                                                        <span className="font-mono tabular-nums text-text-muted">
                                                             {r.stat.recordCount} 记录 · {r.stat.tagCount} 标签 · {r.stat.uniqueTags} 独立
                                                         </span>
                                                     </div>
-                                                    <div className="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
-                                                        <div className="h-full bg-gradient-to-r from-pink-400 to-fuchsia-500" style={{ width: `${pct}%` }} />
+                                                    <div className="h-2 overflow-hidden rounded-full bg-surface-muted">
+                                                        <div className="h-full bg-gradient-to-r from-accent-vivid to-chart-tertiary" style={{ width: `${pct}%` }} />
                                                     </div>
                                                 </div>
                                             );
@@ -570,7 +569,7 @@ const StatsView: React.FC<StatsViewProps> = ({ isDarkMode, logs: rawLogs }) => {
                                 <Bar 
                                     data={{
                                         labels: xpStats.topTags.slice(0, 10).map(t => t.tag),
-                                        datasets: [{ label: '频次', data: xpStats.topTags.slice(0, 10).map(t => t.count), backgroundColor: 'rgba(139, 92, 246, 0.6)', borderRadius: 4, barThickness: 16 }]
+                                        datasets: [{ label: '频次', data: xpStats.topTags.slice(0, 10).map(t => t.count), backgroundColor: chartColorWithAlpha(theme.tertiary, '99'), borderRadius: 4, barThickness: 16 }]
                                     } as any} 
                                     options={{ 
                                         ...commonOptions, 

@@ -26,8 +26,8 @@ interface QuickRecordControllerProps {
 }
 
 const modalFallback = (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/20 backdrop-blur-[2px]">
-    <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-500 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-overlay-scrim/20 backdrop-blur-[2px]">
+    <div className="rounded-2xl border border-surface-border bg-surface-card px-4 py-3 text-sm font-bold text-text-muted shadow-sm">
       表单加载中...
     </div>
   </div>

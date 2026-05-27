@@ -1,14 +1,25 @@
 import { useEffect, useState } from 'react';
 import type { AppSettings } from '../types';
 
+export type EffectiveThemeMode = 'light' | 'dark';
+
+export interface ThemeModeState {
+  isDarkMode: boolean;
+  effectiveMode: EffectiveThemeMode;
+}
+
 export const useThemeMode = (theme: AppSettings['theme']) => {
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [effectiveMode, setEffectiveMode] = useState<EffectiveThemeMode>('light');
 
   useEffect(() => {
     const applyTheme = () => {
       const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-      setIsDarkMode(isDark);
+      const nextMode = isDark ? 'dark' : 'light';
+      setEffectiveMode(nextMode);
       document.documentElement.classList.toggle('dark', isDark);
+      window.dispatchEvent(new CustomEvent<ThemeModeState>('app-theme-change', {
+        detail: { isDarkMode: isDark, effectiveMode: nextMode }
+      }));
     };
 
     applyTheme();
@@ -27,5 +38,8 @@ export const useThemeMode = (theme: AppSettings['theme']) => {
     };
   }, [theme]);
 
-  return isDarkMode;
+  return {
+    isDarkMode: effectiveMode === 'dark',
+    effectiveMode
+  };
 };

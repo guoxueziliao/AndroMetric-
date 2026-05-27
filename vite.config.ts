@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
+import packageJson from './package.json';
 
 const manualChunks = (id: string) => {
   if (!id.includes('node_modules')) return undefined;
@@ -34,6 +35,9 @@ const manualChunks = (id: string) => {
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  define: {
+    __APP_VERSION__: JSON.stringify(packageJson.version)
+  },
   build: {
     rollupOptions: {
       output: {
@@ -44,7 +48,7 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
       devOptions: {
         enabled: true, // Enable PWA in dev mode for testing
@@ -84,22 +88,8 @@ export default defineConfig({
         categories: ["health", "lifestyle", "productivity"]
       },
       workbox: {
-        // Cache external CDNs used in index.html
+        // Cache legacy external CDN assets when old installed builds still request them.
         runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/cdn\.tailwindcss\.com\/.*/i,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'tailwindcss-cache',
-              expiration: {
-                maxEntries: 10,
-                maxAgeSeconds: 60 * 60 * 24 * 365
-              },
-              cacheableResponse: {
-                statuses: [0, 200]
-              }
-            }
-          },
           {
             urlPattern: /^https:\/\/aistudiocdn\.com\/.*/i,
             handler: 'CacheFirst',

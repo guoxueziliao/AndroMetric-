@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Lock, Delete } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Modal } from '../../shared/ui';
+import { motionDuration } from '../../shared/ui/motionTokens';
 import { hashPin, randomSalt, verifyPin } from '../../shared/lib';
 
 type Step = 'verify-old' | 'enter-new' | 'confirm-new' | 'done';
@@ -112,14 +113,14 @@ const PinSetupModal: React.FC<PinSetupModalProps> = ({ isOpen, onClose, mode, cu
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={title}>
       <div className="flex flex-col items-center py-2">
-        <div className="mb-4 rounded-full bg-brand-accent/10 p-3">
-          <Lock size={22} className="text-brand-accent" />
+        <div className="mb-4 rounded-full bg-accent/10 p-3">
+          <Lock size={22} className="text-accent" />
         </div>
-        <p className="text-xs text-brand-muted dark:text-slate-400 mb-6">{subtitle}</p>
+        <p className="text-xs text-text-muted mb-6">{subtitle}</p>
 
         <motion.div
           animate={shake ? { x: [-8, 8, -6, 6, -3, 3, 0] } : { x: 0 }}
-          transition={{ duration: 0.35 }}
+          transition={{ duration: motionDuration.slow }}
           className="mb-3 flex gap-3"
         >
           {Array.from({ length: PIN_LENGTH }).map((_, i) => {
@@ -127,12 +128,12 @@ const PinSetupModal: React.FC<PinSetupModalProps> = ({ isOpen, onClose, mode, cu
             return (
               <div
                 key={i}
-                className={`h-3 w-3 rounded-full transition-all ${filled ? 'bg-brand-accent scale-110' : 'bg-slate-200 dark:bg-slate-700'}`}
+                className={`h-3 w-3 rounded-full transition-all ${filled ? 'bg-accent scale-110' : 'bg-surface-border'}`}
               />
             );
           })}
         </motion.div>
-        <div className="h-4 text-[11px] font-bold text-red-500 mb-4">{error || ''}</div>
+        <div className="h-4 text-[11px] font-bold text-state-danger-text mb-4">{error || ''}</div>
 
         <div className="grid grid-cols-3 gap-2 w-full max-w-[260px]">
           {['1','2','3','4','5','6','7','8','9'].map(d => (
@@ -141,7 +142,7 @@ const PinSetupModal: React.FC<PinSetupModalProps> = ({ isOpen, onClose, mode, cu
               type="button"
               onClick={() => press(d)}
               disabled={busy}
-              className="aspect-square rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 text-xl font-black text-brand-text dark:text-slate-100 active:scale-95 transition-all shadow-soft disabled:opacity-50"
+              className="aspect-square rounded-2xl bg-surface-card border border-surface-border text-xl font-black text-text-primary active:scale-95 transition-all shadow-soft disabled:opacity-50"
             >
               {d}
             </button>
@@ -151,7 +152,7 @@ const PinSetupModal: React.FC<PinSetupModalProps> = ({ isOpen, onClose, mode, cu
             type="button"
             onClick={() => press('0')}
             disabled={busy}
-            className="aspect-square rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 text-xl font-black text-brand-text dark:text-slate-100 active:scale-95 transition-all shadow-soft disabled:opacity-50"
+            className="aspect-square rounded-2xl bg-surface-card border border-surface-border text-xl font-black text-text-primary active:scale-95 transition-all shadow-soft disabled:opacity-50"
           >
             0
           </button>
@@ -159,7 +160,7 @@ const PinSetupModal: React.FC<PinSetupModalProps> = ({ isOpen, onClose, mode, cu
             type="button"
             onClick={backspace}
             disabled={busy || pin.length === 0}
-            className="aspect-square rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 active:scale-95 transition-all disabled:opacity-30"
+            className="aspect-square rounded-2xl bg-surface-muted border border-surface-border flex items-center justify-center text-text-muted active:scale-95 transition-all disabled:opacity-30"
             aria-label="删除"
           >
             <Delete size={18} />

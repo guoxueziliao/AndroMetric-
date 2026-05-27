@@ -14,12 +14,12 @@ export const QualityScoreRing: React.FC<QualityScoreRingProps> = ({ score }) => 
   return (
     <div className="relative flex items-center justify-center w-16 h-16">
       <svg className="w-full h-full transform -rotate-90">
-        <circle cx="32" cy="32" r={radius} stroke="currentColor" strokeWidth="4" fill="transparent" className="text-slate-100 dark:text-slate-800" />
-        <circle cx="32" cy="32" r={radius} stroke="currentColor" strokeWidth="4" fill="transparent" strokeDasharray={circumference} strokeDashoffset={offset} strokeLinecap="round" className="text-orange-500 transition-all duration-1000 ease-out" />
+        <circle cx="32" cy="32" r={radius} stroke="currentColor" strokeWidth="4" fill="transparent" className="text-surface-muted" />
+        <circle cx="32" cy="32" r={radius} stroke="currentColor" strokeWidth="4" fill="transparent" strokeDasharray={circumference} strokeDashoffset={offset} strokeLinecap="round" className="text-state-warning-text transition-all duration-slow ease-standard" />
       </svg>
       <div className="absolute flex flex-col items-center">
-        <span className="text-[9px] font-black text-slate-400 leading-none uppercase">质量</span>
-        <span className="text-sm font-black text-slate-800 dark:text-slate-100 leading-none mt-0.5">{score}</span>
+        <span className="text-[9px] font-black text-text-muted leading-none uppercase">质量</span>
+        <span className="text-sm font-black text-text-primary leading-none mt-0.5">{score}</span>
       </div>
     </div>
   );

@@ -11,11 +11,14 @@ export interface SnapshotData {
     tags: TagEntry[];
     cycleEvents: CycleEvent[];
     pregnancyEvents: PregnancyEvent[];
+    snapshots?: Snapshot[];
 }
 
 export interface ExportSnapshot {
     appName: '硬度日记';
+    /** App build version for display only. Never use this to decide import compatibility. */
     appVersion: string;
+    /** Data contract version. This is the only version field that gates import compatibility. */
     dataVersion: number;
     exportDate: string;
     settings: AppSettings | null;
@@ -26,9 +29,13 @@ export interface ExportSnapshot {
 export interface Snapshot {
     id?: number;
     timestamp: number;
+    /** Data contract version. This is the only version field that gates restore/import compatibility. */
     dataVersion: number;
+    /** App build version for display only. Never use this to decide restore/import compatibility. */
     appVersion: string;
     description: string;
+    kind?: 'manual' | 'auto-safety';
+    sizeBytes?: number;
     settings: AppSettings | null;
     userName: string | null;
     data: SnapshotData;

@@ -14,10 +14,10 @@ interface StateViewProps {
 }
 
 const confidenceClass: Record<ConfidenceLevel, string> = {
-  none: 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400',
-  low: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
-  medium: 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300',
-  high: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
+  none: 'bg-surface-muted text-text-muted',
+  low: 'bg-state-warning-bg text-state-warning-text',
+  medium: 'bg-state-info-bg text-state-info-text',
+  high: 'bg-state-success-bg text-state-success-text'
 };
 
 const confidenceLabel: Record<ConfidenceLevel, string> = {
@@ -28,40 +28,40 @@ const confidenceLabel: Record<ConfidenceLevel, string> = {
 };
 
 const stateToneClass: Record<string, string> = {
-  peak_ready: 'from-emerald-500 via-lime-500 to-cyan-500',
-  stable: 'from-sky-500 via-blue-500 to-indigo-500',
-  recovering: 'from-amber-500 via-orange-500 to-rose-500',
-  fatigued: 'from-orange-500 via-rose-500 to-pink-500',
-  risk: 'from-rose-600 via-red-500 to-orange-500',
-  insufficient_data: 'from-slate-500 via-slate-600 to-slate-700'
+  peak_ready: 'from-state-success-text via-accent-muted to-accent',
+  stable: 'from-chart-primary via-chart-tertiary to-accent',
+  recovering: 'from-state-warning-text via-accent-vivid to-chart-tertiary',
+  fatigued: 'from-state-warning-text via-state-danger-text to-accent-vivid',
+  risk: 'from-state-danger-text via-accent-vivid to-state-warning-text',
+  insufficient_data: 'from-surface-muted via-surface-border to-surface-muted'
 };
 
 const tabClass = (active: boolean) => (
-  `flex-1 min-h-[44px] rounded-xl px-3 py-2 text-xs font-bold transition-all ${active ? 'bg-white text-brand-accent shadow-sm dark:bg-slate-800' : 'text-brand-muted dark:text-slate-400'}`
+  `flex-1 min-h-[44px] rounded-xl px-3 py-2 text-xs font-bold transition-all ${active ? 'bg-surface-card text-accent shadow-sm' : 'text-text-muted'}`
 );
 
 const factorTone = (positive: boolean) => (
   positive
-    ? 'border-emerald-100 bg-emerald-50 text-emerald-700 dark:border-emerald-900/30 dark:bg-emerald-900/10 dark:text-emerald-300'
-    : 'border-rose-100 bg-rose-50 text-rose-700 dark:border-rose-900/30 dark:bg-rose-900/10 dark:text-rose-300'
+    ? 'border-state-success-text/20 bg-state-success-bg text-state-success-text'
+    : 'border-state-danger-text/20 bg-state-danger-bg text-state-danger-text'
 );
 
 const labelTone = (label: ForecastDay['label']) => {
-  if (label === '高峰日') return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300';
-  if (label === '稳定日') return 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300';
-  if (label === '恢复日') return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300';
-  return 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300';
+  if (label === '高峰日') return 'bg-state-success-bg text-state-success-text';
+  if (label === '稳定日') return 'bg-state-info-bg text-state-info-text';
+  if (label === '恢复日') return 'bg-state-warning-bg text-state-warning-text';
+  return 'bg-state-danger-bg text-state-danger-text';
 };
 
 const FactorList: React.FC<{ title: string; factors: FactorImpact[]; positive: boolean }> = ({ title, factors, positive }) => (
   <section className="space-y-3">
     <div className="flex items-center justify-between px-1">
-      <h3 className="text-sm font-black uppercase tracking-widest text-slate-400">{title}</h3>
-      <span className="text-[10px] font-bold text-slate-400">Top 5</span>
+      <h3 className="text-sm font-black uppercase tracking-widest text-text-muted">{title}</h3>
+      <span className="text-[10px] font-bold text-text-muted">Top 5</span>
     </div>
     <div className="space-y-3">
       {factors.length === 0 ? (
-        <article className="rounded-[1.5rem] border border-dashed border-slate-200 bg-slate-50 p-5 text-sm font-medium text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400">
+        <article className="rounded-[1.5rem] border border-dashed border-surface-border bg-surface-muted p-5 text-sm font-medium text-text-muted">
           目前没有足够的历史对比样本，先继续补齐睡眠、压力、运动和晨勃记录。
         </article>
       ) : factors.map((factor) => (
@@ -87,34 +87,34 @@ const FactorList: React.FC<{ title: string; factors: FactorImpact[]; positive: b
 );
 
 const ForecastCard: React.FC<{ day: ForecastDay }> = ({ day }) => (
-  <article className="rounded-[1.5rem] border border-slate-100 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+  <article className="rounded-[1.5rem] border border-surface-border bg-surface-card p-4 shadow-sm">
     <div className="flex items-center justify-between gap-3">
       <div>
-        <div className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">{day.weekday}</div>
-        <div className="mt-1 text-xs font-bold text-slate-500 dark:text-slate-400">{day.date.slice(5)}</div>
+        <div className="text-[10px] font-black uppercase tracking-[0.18em] text-text-muted">{day.weekday}</div>
+        <div className="mt-1 text-xs font-bold text-text-muted">{day.date.slice(5)}</div>
       </div>
       <span className={`rounded-full px-2 py-1 text-[10px] font-black ${labelTone(day.label)}`}>{day.label}</span>
     </div>
     <div className="mt-4 flex items-end justify-between gap-3">
       <div>
-        <div className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">硬度</div>
-        <div className="mt-1 text-2xl font-black text-slate-900 dark:text-slate-100">
+        <div className="text-[10px] font-black uppercase tracking-[0.18em] text-text-muted">硬度</div>
+        <div className="mt-1 text-2xl font-black text-text-primary">
           {day.predictedHardness !== null ? day.predictedHardness.toFixed(1) : '--'}
         </div>
       </div>
       <div className="text-right">
-        <div className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">状态分</div>
-        <div className="mt-1 text-lg font-black text-slate-700 dark:text-slate-200">{day.predictedStateScore}</div>
+        <div className="text-[10px] font-black uppercase tracking-[0.18em] text-text-muted">状态分</div>
+        <div className="mt-1 text-lg font-black text-text-secondary">{day.predictedStateScore}</div>
       </div>
     </div>
     <div className="mt-4 space-y-2">
       {day.reasons.map((reason) => (
-        <div key={reason} className="rounded-xl bg-slate-50 px-3 py-2 text-[11px] font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+        <div key={reason} className="rounded-xl bg-surface-muted px-3 py-2 text-[11px] font-bold text-text-secondary">
           {reason}
         </div>
       ))}
     </div>
-    <div className="mt-4 flex items-center justify-between text-[11px] font-bold text-slate-400">
+    <div className="mt-4 flex items-center justify-between text-[11px] font-bold text-text-muted">
       <span>预测置信度</span>
       <span className={`rounded-full px-2 py-1 ${confidenceClass[day.confidence]}`}>{confidenceLabel[day.confidence]}</span>
     </div>
@@ -122,37 +122,37 @@ const ForecastCard: React.FC<{ day: ForecastDay }> = ({ day }) => (
 );
 
 const GoalCard: React.FC<{ goal: AchievableGoal }> = ({ goal }) => (
-  <article className="rounded-[1.75rem] border border-slate-100 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+  <article className="rounded-[1.75rem] border border-surface-border bg-surface-card p-5 shadow-sm">
     <div className="flex items-start justify-between gap-4">
       <div>
-        <div className="text-sm font-black text-slate-900 dark:text-slate-100">{goal.title}</div>
-        <div className="mt-2 text-sm leading-relaxed text-slate-500 dark:text-slate-400">{goal.summary}</div>
+        <div className="text-sm font-black text-text-primary">{goal.title}</div>
+        <div className="mt-2 text-sm leading-relaxed text-text-secondary">{goal.summary}</div>
       </div>
-      <Target className="mt-1 text-brand-accent" size={18} />
+      <Target className="mt-1 text-accent" size={18} />
     </div>
     <div className="mt-4 grid grid-cols-2 gap-3">
-      <div className="rounded-2xl bg-slate-50 p-3 dark:bg-slate-800">
-        <div className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">当前</div>
-        <div className="mt-1 text-sm font-black text-slate-800 dark:text-slate-100">{goal.currentValue}</div>
+      <div className="rounded-2xl bg-surface-muted p-3">
+        <div className="text-[10px] font-black uppercase tracking-[0.18em] text-text-muted">当前</div>
+        <div className="mt-1 text-sm font-black text-text-primary">{goal.currentValue}</div>
       </div>
-      <div className="rounded-2xl bg-slate-50 p-3 dark:bg-slate-800">
-        <div className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">目标</div>
-        <div className="mt-1 text-sm font-black text-slate-800 dark:text-slate-100">{goal.targetValue}</div>
+      <div className="rounded-2xl bg-surface-muted p-3">
+        <div className="text-[10px] font-black uppercase tracking-[0.18em] text-text-muted">目标</div>
+        <div className="mt-1 text-sm font-black text-text-primary">{goal.targetValue}</div>
       </div>
     </div>
     <div className="mt-4">
-      <div className="mb-2 flex items-center justify-between text-[11px] font-bold text-slate-400">
+      <div className="mb-2 flex items-center justify-between text-[11px] font-bold text-text-muted">
         <span>预计达成度</span>
         <span>{goal.progress}%</span>
       </div>
-      <div className="h-2 rounded-full bg-slate-100 dark:bg-slate-800">
-        <div className="h-2 rounded-full bg-gradient-to-r from-sky-500 to-emerald-500" style={{ width: `${goal.progress}%` }} />
+      <div className="h-2 rounded-full bg-surface-muted">
+        <div className="h-2 rounded-full bg-gradient-to-r from-chart-primary to-accent" style={{ width: `${goal.progress}%` }} />
       </div>
     </div>
     <div className="mt-4 space-y-2">
       {goal.actions.map((action) => (
-        <div key={action} className="flex items-start gap-2 text-[12px] font-bold text-slate-600 dark:text-slate-300">
-          <ChevronRight size={14} className="mt-0.5 shrink-0 text-brand-accent" />
+        <div key={action} className="flex items-start gap-2 text-[12px] font-bold text-text-secondary">
+          <ChevronRight size={14} className="mt-0.5 shrink-0 text-accent" />
           <span>{action}</span>
         </div>
       ))}
@@ -162,10 +162,10 @@ const GoalCard: React.FC<{ goal: AchievableGoal }> = ({ goal }) => (
 
 const ReasonChip: React.FC<{ reason: StateReason }> = ({ reason }) => (
   <div className={`rounded-2xl border px-3 py-2 text-xs font-bold ${reason.effect === 'positive'
-    ? 'border-white/20 bg-white/15 text-white'
-    : 'border-black/10 bg-black/10 text-white'}`}>
+    ? 'border-surface-card/20 bg-surface-card/15 text-text-on-accent'
+    : 'border-overlay-scrim/10 bg-overlay-scrim/10 text-text-on-accent'}`}>
     <div>{reason.label}</div>
-    <div className="mt-1 text-[11px] font-medium text-white/80">{reason.detail}</div>
+    <div className="mt-1 text-[11px] font-medium text-text-on-accent/80">{reason.detail}</div>
   </div>
 );
 
@@ -179,40 +179,40 @@ const StateView: React.FC<StateViewProps> = ({ isDarkMode, logs }) => {
     <ErrorBoundary>
       <div className="space-y-6 pb-24">
         <div className="flex items-center justify-between px-1">
-          <h2 className="text-2xl font-bold text-brand-text dark:text-slate-100">状态</h2>
+          <h2 className="text-2xl font-bold text-text-primary">状态</h2>
           <span className={`rounded-full px-3 py-1 text-[11px] font-black ${confidenceClass[result.confidence.level]}`}>
             置信度 {confidenceLabel[result.confidence.level]}
           </span>
         </div>
 
-        <div className="flex rounded-2xl border border-slate-200 bg-brand-primary p-1 dark:border-slate-800 dark:bg-slate-900">
+        <div className="flex rounded-2xl border border-surface-border bg-surface-muted p-1">
           <button type="button" onClick={() => setActiveTab('status')} className={tabClass(activeTab === 'status')}>状态引擎</button>
           <button type="button" onClick={() => setActiveTab('history')} className={tabClass(activeTab === 'history')}>历史统计</button>
         </div>
 
         {activeTab === 'status' ? (
           <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2">
-            <section className={`overflow-hidden rounded-[2rem] bg-gradient-to-br p-6 text-white shadow-lg ${stateTone}`}>
+            <section className={`overflow-hidden rounded-[2rem] bg-gradient-to-br p-6 text-text-on-accent shadow-lg ${stateTone}`}>
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <div className="text-[11px] font-black uppercase tracking-[0.24em] text-white/70">当前状态</div>
+                  <div className="text-[11px] font-black uppercase tracking-[0.24em] text-text-on-accent/70">当前状态</div>
                   <div className="mt-3 text-3xl font-black">{result.currentState.label}</div>
-                  <div className="mt-2 text-sm font-medium text-white/85">{result.confidence.message}</div>
+                  <div className="mt-2 text-sm font-medium text-text-on-accent/85">{result.confidence.message}</div>
                 </div>
-                <div className="rounded-[1.5rem] bg-white/15 px-4 py-3 text-right backdrop-blur-sm">
-                  <div className="text-[10px] font-black uppercase tracking-[0.18em] text-white/65">状态分</div>
+                <div className="rounded-[1.5rem] bg-surface-card/15 px-4 py-3 text-right backdrop-blur-sm">
+                  <div className="text-[10px] font-black uppercase tracking-[0.18em] text-text-on-accent/65">状态分</div>
                   <div className="mt-1 text-3xl font-black">{result.currentState.stateScore}</div>
                 </div>
               </div>
               <div className="mt-5 grid grid-cols-2 gap-3">
-                <div className="rounded-[1.5rem] bg-white/12 p-4 backdrop-blur-sm">
-                  <div className="text-[10px] font-black uppercase tracking-[0.18em] text-white/65">硬度基线</div>
+                <div className="rounded-[1.5rem] bg-surface-card/15 p-4 backdrop-blur-sm">
+                  <div className="text-[10px] font-black uppercase tracking-[0.18em] text-text-on-accent/65">硬度基线</div>
                   <div className="mt-1 text-2xl font-black">
                     {result.currentState.hardnessBaseline !== null ? result.currentState.hardnessBaseline.toFixed(1) : '--'}
                   </div>
                 </div>
-                <div className="rounded-[1.5rem] bg-white/12 p-4 backdrop-blur-sm">
-                  <div className="text-[10px] font-black uppercase tracking-[0.18em] text-white/65">趋势</div>
+                <div className="rounded-[1.5rem] bg-surface-card/15 p-4 backdrop-blur-sm">
+                  <div className="text-[10px] font-black uppercase tracking-[0.18em] text-text-on-accent/65">趋势</div>
                   <div className="mt-1 text-2xl font-black">
                     {result.currentState.trend === 'up' ? '上行' : result.currentState.trend === 'down' ? '下行' : result.currentState.trend === 'flat' ? '平稳' : '未知'}
                   </div>
@@ -224,47 +224,47 @@ const StateView: React.FC<StateViewProps> = ({ isDarkMode, logs }) => {
             </section>
 
             <section className="grid grid-cols-2 gap-3">
-              <article className="rounded-[1.5rem] border border-slate-100 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-                <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.18em] text-slate-400">
+              <article className="rounded-[1.5rem] border border-surface-border bg-surface-card p-4 shadow-sm">
+                <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.18em] text-text-muted">
                   <TrendingUp size={14} />
                   7天均值
                 </div>
-                <div className="mt-3 text-3xl font-black text-slate-900 dark:text-slate-100">
+                <div className="mt-3 text-3xl font-black text-text-primary">
                   {weeklyAverageHardness !== null ? weeklyAverageHardness.toFixed(1) : '--'}
                 </div>
-                <div className="mt-1 text-xs font-bold text-slate-500 dark:text-slate-400">预计硬度均值</div>
+                <div className="mt-1 text-xs font-bold text-text-muted">预计硬度均值</div>
               </article>
-              <article className="rounded-[1.5rem] border border-slate-100 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-                <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.18em] text-slate-400">
+              <article className="rounded-[1.5rem] border border-surface-border bg-surface-card p-4 shadow-sm">
+                <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.18em] text-text-muted">
                   <Sparkles size={14} />
                   高峰窗口
                 </div>
-                <div className="mt-3 text-lg font-black text-slate-900 dark:text-slate-100">{result.forecast.weeklySummary.peakWindow}</div>
-                <div className="mt-1 text-xs font-bold text-slate-500 dark:text-slate-400">周内最适合冲高的日期</div>
+                <div className="mt-3 text-lg font-black text-text-primary">{result.forecast.weeklySummary.peakWindow}</div>
+                <div className="mt-1 text-xs font-bold text-text-muted">周内最适合冲高的日期</div>
               </article>
             </section>
 
             <section className="space-y-3">
               <div className="flex items-center justify-between px-1">
-                <h3 className="text-sm font-black uppercase tracking-widest text-slate-400">未来 7 天</h3>
-                <span className="text-[10px] font-bold text-slate-400">周级总结 + 日级预测</span>
+                <h3 className="text-sm font-black uppercase tracking-widest text-text-muted">未来 7 天</h3>
+                <span className="text-[10px] font-bold text-text-muted">周级总结 + 日级预测</span>
               </div>
-              <article className="rounded-[1.75rem] border border-slate-100 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+              <article className="rounded-[1.75rem] border border-surface-border bg-surface-card p-5 shadow-sm">
                 <div className="grid gap-4 md:grid-cols-3">
                   <div>
-                    <div className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">高峰窗</div>
-                    <div className="mt-2 text-sm font-black text-slate-900 dark:text-slate-100">{result.forecast.weeklySummary.peakWindow}</div>
+                    <div className="text-[10px] font-black uppercase tracking-[0.18em] text-text-muted">高峰窗</div>
+                    <div className="mt-2 text-sm font-black text-text-primary">{result.forecast.weeklySummary.peakWindow}</div>
                   </div>
                   <div>
-                    <div className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">风险窗</div>
-                    <div className="mt-2 text-sm font-black text-slate-900 dark:text-slate-100">{result.forecast.weeklySummary.riskWindow}</div>
+                    <div className="text-[10px] font-black uppercase tracking-[0.18em] text-text-muted">风险窗</div>
+                    <div className="mt-2 text-sm font-black text-text-primary">{result.forecast.weeklySummary.riskWindow}</div>
                   </div>
                   <div>
-                    <div className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">状态均值</div>
-                    <div className="mt-2 text-sm font-black text-slate-900 dark:text-slate-100">{result.forecast.weeklySummary.averageStateScore} 分</div>
+                    <div className="text-[10px] font-black uppercase tracking-[0.18em] text-text-muted">状态均值</div>
+                    <div className="mt-2 text-sm font-black text-text-primary">{result.forecast.weeklySummary.averageStateScore} 分</div>
                   </div>
                 </div>
-                <div className="mt-4 rounded-2xl bg-slate-50 p-4 text-sm font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                <div className="mt-4 rounded-2xl bg-surface-muted p-4 text-sm font-medium text-text-secondary">
                   {result.forecast.weeklySummary.summary}
                 </div>
               </article>
@@ -275,8 +275,8 @@ const StateView: React.FC<StateViewProps> = ({ isDarkMode, logs }) => {
 
             <section className="space-y-3">
               <div className="flex items-center justify-between px-1">
-                <h3 className="text-sm font-black uppercase tracking-widest text-slate-400">挑战目标</h3>
-                <span className="text-[10px] font-bold text-slate-400">自动生成</span>
+                <h3 className="text-sm font-black uppercase tracking-widest text-text-muted">挑战目标</h3>
+                <span className="text-[10px] font-bold text-text-muted">自动生成</span>
               </div>
               <div className="space-y-3">
                 {result.achievableGoals.map((goal) => <GoalCard key={goal.id} goal={goal} />)}
@@ -290,7 +290,7 @@ const StateView: React.FC<StateViewProps> = ({ isDarkMode, logs }) => {
           </div>
         ) : (
           <div className="animate-in fade-in slide-in-from-bottom-2">
-            <Suspense fallback={<div className="rounded-[1.5rem] border border-dashed border-slate-200 bg-slate-50 p-5 text-sm font-medium text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400">统计加载中...</div>}>
+            <Suspense fallback={<div className="rounded-[1.5rem] border border-dashed border-surface-border bg-surface-muted p-5 text-sm font-medium text-text-muted">统计加载中...</div>}>
               <StatsView isDarkMode={isDarkMode} logs={logs} />
             </Suspense>
           </div>

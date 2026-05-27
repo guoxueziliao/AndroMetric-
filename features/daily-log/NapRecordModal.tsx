@@ -152,18 +152,18 @@ const NapRecordModal: React.FC<NapRecordModalProps> = ({ isOpen, onClose, data, 
             onClose={onClose}
             title={initialData?.ongoing ? "结束午休" : "午休记录详情"}
             footer={
-                <button onClick={handleSave} className="w-full py-4 text-white font-black rounded-2xl shadow-xl transition-all active:scale-95 flex items-center justify-center gap-2 bg-orange-500 shadow-orange-500/20">
+                <button onClick={handleSave} className="w-full py-4 text-text-on-accent font-black rounded-2xl shadow-glow transition-all active:scale-95 flex items-center justify-center gap-2 bg-state-warning-text">
                     <Check size={20} strokeWidth={3}/> 完成午休
                 </button>
             }
         >
-            <div className="space-y-8 pb-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="space-y-8 pb-6 animate-in fade-in slide-in-from-bottom-4 duration-slow">
                 
                 {/* 1. Header Card - 时间追踪 */}
-                <div className="bg-orange-50 dark:bg-slate-900 rounded-[2.5rem] p-8 text-orange-950 dark:text-white relative overflow-hidden shadow-inner border border-orange-100 dark:border-white/5">
-                    <div className="absolute top-0 right-0 w-48 h-48 bg-orange-500/10 rounded-full blur-[60px] -translate-y-1/2 translate-x-1/2"></div>
+                <div className="bg-state-warning-bg/60 rounded-[2.5rem] p-8 text-state-warning-text relative overflow-hidden shadow-inner border border-state-warning-text/25">
+                    <div className="absolute top-0 right-0 w-48 h-48 bg-state-warning-text/10 rounded-full blur-[60px] -translate-y-1/2 translate-x-1/2"></div>
                     <div className="relative z-10 flex flex-col items-center">
-                        <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-orange-600 dark:text-orange-400 mb-2">
+                        <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-state-warning-text mb-2">
                             <Clock size={14}/> 统计
                         </div>
                         <div className="flex items-baseline gap-1">
@@ -171,13 +171,13 @@ const NapRecordModal: React.FC<NapRecordModalProps> = ({ isOpen, onClose, data, 
                             <span className="text-sm font-bold opacity-60">分钟</span>
                         </div>
                         <div className="mt-6 flex gap-3 w-full">
-                            <div className="flex-1 bg-white dark:bg-white/5 backdrop-blur-md rounded-2xl p-3 flex flex-col items-center border border-orange-200 dark:border-white/10">
-                                <span className="text-[9px] font-bold opacity-50 uppercase text-orange-900 dark:text-orange-200">开始</span>
-                                <input type="time" value={record.startTime} onChange={e => handleStartTimeChange(e.target.value)} className="bg-transparent text-sm font-mono font-bold outline-none text-center w-full text-orange-950 dark:text-white"/>
+                            <div className="flex-1 bg-surface-card/80 backdrop-blur-md rounded-2xl p-3 flex flex-col items-center border border-state-warning-text/25">
+                                <span className="text-[9px] font-bold opacity-50 uppercase text-state-warning-text">开始</span>
+                                <input type="time" value={record.startTime} onChange={e => handleStartTimeChange(e.target.value)} className="bg-transparent text-sm font-mono font-bold outline-none text-center w-full text-text-primary"/>
                             </div>
-                            <div className="flex-1 bg-white dark:bg-white/5 backdrop-blur-md rounded-2xl p-3 flex flex-col items-center border border-orange-200 dark:border-white/10">
-                                <span className="text-[9px] font-bold opacity-50 uppercase text-orange-900 dark:text-orange-200">醒来</span>
-                                <input type="time" value={endTime} onChange={e => handleEndTimeChange(e.target.value)} className="bg-transparent text-sm font-mono font-bold outline-none text-center w-full text-orange-950 dark:text-white"/>
+                            <div className="flex-1 bg-surface-card/80 backdrop-blur-md rounded-2xl p-3 flex flex-col items-center border border-state-warning-text/25">
+                                <span className="text-[9px] font-bold opacity-50 uppercase text-state-warning-text">醒来</span>
+                                <input type="time" value={endTime} onChange={e => handleEndTimeChange(e.target.value)} className="bg-transparent text-sm font-mono font-bold outline-none text-center w-full text-text-primary"/>
                             </div>
                         </div>
                     </div>
@@ -185,12 +185,12 @@ const NapRecordModal: React.FC<NapRecordModalProps> = ({ isOpen, onClose, data, 
 
                 {/* 2. 质量滑块 */}
                 <div className="space-y-4">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                        <Star size={12}/> 午休质量反馈 {record.quality === null && <span className="text-slate-300 normal-case tracking-normal">[未评分,移动滑块设置]</span>}
+                    <label className="text-[10px] font-black text-text-muted uppercase tracking-widest flex items-center gap-2">
+                        <Star size={12}/> 午休质量反馈 {record.quality === null && <span className="text-text-muted/60 normal-case tracking-normal">[未评分,移动滑块设置]</span>}
                     </label>
                     <RangeSlider
                         leftLabel="非常糟糕 (1)" rightLabel="神清气爽 (5)"
-                        min={1} max={5} colorClass="accent-orange-500"
+                        min={1} max={5} colorClass="accent-accent"
                         value={record.quality ?? 3}
                         onChange={(v: number) => setRecord({...record, quality: v})}
                     />
@@ -199,16 +199,16 @@ const NapRecordModal: React.FC<NapRecordModalProps> = ({ isOpen, onClose, data, 
                 {/* 3. 状态切换 */}
                 <div className="flex gap-2">
                     {[
-                        { key: 'naturalAwakening', label: '自然醒', icon: Leaf, color: 'text-green-600' },
-                        { key: 'withPartner', label: '有同睡', icon: Heart, color: 'text-pink-600' },
+                        { key: 'naturalAwakening', label: '自然醒', icon: Leaf, color: 'text-state-success-text' },
+                        { key: 'withPartner', label: '有同睡', icon: Heart, color: 'text-accent-vivid' },
                     ].map((item) => (
                         <button 
                             key={item.key} type="button"
                             onClick={() => setRecord({...record, [item.key]: !(record as any)[item.key]})}
-                            className={`flex-1 flex flex-col items-center justify-center py-3 px-1 rounded-xl border transition-all ${(record as any)[item.key] ? 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 shadow-inner' : 'bg-white dark:bg-slate-900 border-transparent'}`}
+                            className={`flex-1 flex flex-col items-center justify-center py-3 px-1 rounded-xl border transition-all ${(record as any)[item.key] ? 'bg-surface-muted border-surface-border shadow-inner' : 'bg-surface-card border-transparent'}`}
                         >
-                            <item.icon size={20} className={`mb-1 ${(record as any)[item.key] ? item.color : 'text-slate-300'}`}/> 
-                            <span className={`text-[10px] font-bold ${(record as any)[item.key] ? 'text-slate-700 dark:text-slate-300' : 'text-slate-400'}`}>{item.label}</span>
+                            <item.icon size={20} className={`mb-1 ${(record as any)[item.key] ? item.color : 'text-text-muted'}`}/>
+                            <span className={`text-[10px] font-bold ${(record as any)[item.key] ? 'text-text-secondary' : 'text-text-muted'}`}>{item.label}</span>
                         </button>
                     ))}
                 </div>
@@ -216,11 +216,11 @@ const NapRecordModal: React.FC<NapRecordModalProps> = ({ isOpen, onClose, data, 
                 {/* 4. 环境选项 */}
                 <div className="grid grid-cols-1 gap-6">
                     <div className="space-y-3">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><Shirt size={12}/> 穿着方式 {!record.attire && <span className="text-slate-300 normal-case tracking-normal">[未选]</span>}</label>
+                        <label className="text-[10px] font-black text-text-muted uppercase tracking-widest flex items-center gap-2"><Shirt size={12}/> 穿着方式 {!record.attire && <span className="text-text-muted/60 normal-case tracking-normal">[未选]</span>}</label>
                         <IconToggleButton options={ATTIRE_OPTS} selected={record.attire} onSelect={v => setRecord({...record, attire: v})} renderIcon={() => <Shirt size={18}/>}/>
                     </div>
                     <div className="space-y-3">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><BrainCircuit size={12}/> 睡前状态 {!record.preSleepState && <span className="text-slate-300 normal-case tracking-normal">[未选]</span>}</label>
+                        <label className="text-[10px] font-black text-text-muted uppercase tracking-widest flex items-center gap-2"><BrainCircuit size={12}/> 睡前状态 {!record.preSleepState && <span className="text-text-muted/60 normal-case tracking-normal">[未选]</span>}</label>
                         <IconToggleButton options={PRE_SLEEP_OPTS} selected={record.preSleepState} onSelect={v => setRecord({...record, preSleepState: v})} renderIcon={() => <Sparkles size={18}/>}/>
                     </div>
                 </div>
@@ -228,15 +228,15 @@ const NapRecordModal: React.FC<NapRecordModalProps> = ({ isOpen, onClose, data, 
                 {/* 5. 地点和温感 */}
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><MapPin size={12}/> 地点</label>
-                        <select value={record.location ?? ''} onChange={e => setRecord({...record, location: (e.target.value || null) as any})} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-xs font-bold outline-none appearance-none">
+                        <label className="text-[10px] font-black text-text-muted uppercase tracking-widest flex items-center gap-2"><MapPin size={12}/> 地点</label>
+                        <select value={record.location ?? ''} onChange={e => setRecord({...record, location: (e.target.value || null) as any})} className="w-full bg-surface-muted border border-surface-border rounded-xl p-3 text-xs font-bold outline-none appearance-none">
                             <option value="">未选择</option>
                             {LOCATIONS.map(loc => <option key={loc.value} value={loc.value}>{loc.label}</option>)}
                         </select>
                     </div>
                     <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><Thermometer size={12}/> 温感</label>
-                        <select value={record.temperature ?? ''} onChange={e => setRecord({...record, temperature: (e.target.value || null) as any})} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-xs font-bold outline-none appearance-none">
+                        <label className="text-[10px] font-black text-text-muted uppercase tracking-widest flex items-center gap-2"><Thermometer size={12}/> 温感</label>
+                        <select value={record.temperature ?? ''} onChange={e => setRecord({...record, temperature: (e.target.value || null) as any})} className="w-full bg-surface-muted border border-surface-border rounded-xl p-3 text-xs font-bold outline-none appearance-none">
                             <option value="">未选择</option>
                             <option value="cold">冷</option>
                             <option value="comfortable">舒适</option>
@@ -247,10 +247,10 @@ const NapRecordModal: React.FC<NapRecordModalProps> = ({ isOpen, onClose, data, 
 
                 {/* 6. 硬度选项 */}
                 <div className="space-y-4">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><Zap size={12}/> 午起生理反馈</label>
+                    <label className="text-[10px] font-black text-text-muted uppercase tracking-widest flex items-center gap-2"><Zap size={12}/> 午起生理反馈</label>
                     
-                    <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-800 p-4 rounded-2xl">
-                        <label className="font-bold text-sm text-brand-text dark:text-slate-200">醒来有勃起吗？</label>
+                    <div className="flex items-center justify-between bg-surface-muted p-4 rounded-2xl">
+                        <label className="font-bold text-sm text-text-primary">醒来有勃起吗？</label>
                         <input 
                             type="checkbox" 
                             className="toggle-checkbox" 
@@ -270,15 +270,15 @@ const NapRecordModal: React.FC<NapRecordModalProps> = ({ isOpen, onClose, data, 
                 </div>
 
                 {/* 7. 梦境记录 */}
-                <div className="bg-purple-50 dark:bg-purple-900/10 rounded-2xl p-4 border border-purple-100 dark:border-purple-900/30">
+                <div className="bg-chart-tertiary/10 rounded-2xl p-4 border border-chart-tertiary/25">
                     <div className="flex items-center justify-between mb-4">
-                        <label className="text-[10px] font-black text-purple-700 dark:text-purple-300 uppercase tracking-widest flex items-center gap-2"><Sparkles size={14}/> 梦境探测</label>
+                        <label className="text-[10px] font-black text-chart-tertiary uppercase tracking-widest flex items-center gap-2"><Sparkles size={14}/> 梦境探测</label>
                         <input type="checkbox" className="toggle-checkbox h-4 w-8" checked={record.hasDream} onChange={e => setRecord({...record, hasDream: e.target.checked})} />
                     </div>
                     {record.hasDream && (
                         <div className="flex flex-wrap gap-2 animate-in fade-in zoom-in-95">
                             {DREAM_TYPES.map(t => (
-                                <button key={t.value} onClick={() => toggleDreamType(t.value)} className={`px-4 py-2 rounded-xl text-[11px] font-bold border transition-all ${record.dreamTypes?.includes(t.value) ? 'bg-purple-500 text-white border-purple-600 shadow-sm' : 'bg-white dark:bg-slate-800 text-slate-500 border-purple-100 dark:border-purple-800'}`}>{t.label}</button>
+                                <button key={t.value} onClick={() => toggleDreamType(t.value)} className={`px-4 py-2 rounded-xl text-[11px] font-bold border transition-all ${record.dreamTypes?.includes(t.value) ? 'bg-chart-tertiary text-text-on-accent border-chart-tertiary shadow-soft' : 'bg-surface-card text-text-secondary border-chart-tertiary/25'}`}>{t.label}</button>
                             ))}
                         </div>
                     )}
@@ -287,7 +287,7 @@ const NapRecordModal: React.FC<NapRecordModalProps> = ({ isOpen, onClose, data, 
                 <textarea 
                     value={record.notes} onChange={e => setRecord({...record, notes: e.target.value})}
                     placeholder="记录午休的心得，或者是周围环境对睡眠的影响..."
-                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-800 rounded-3xl p-4 text-xs font-medium outline-none focus:border-orange-400 min-h-[100px]"
+                    className="w-full bg-surface-muted border border-surface-border rounded-3xl p-4 text-xs font-medium outline-none focus:border-accent min-h-[100px]"
                 />
             </div>
         </Modal>

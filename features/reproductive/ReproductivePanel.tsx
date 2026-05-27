@@ -44,7 +44,7 @@ const PREGNANCY_KIND_LABELS: Record<string, string> = {
   pregnancy_outcome: '妊娠结局'
 };
 
-const tileClass = 'rounded-[1.25rem] border border-slate-100 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900';
+const tileClass = 'rounded-[1.25rem] border border-surface-border bg-surface-card p-4 shadow-sm';
 
 const createId = (prefix: string) => `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
 
@@ -175,7 +175,7 @@ const ReproductivePanel: React.FC<ReproductivePanelProps> = ({ date }) => {
   if (!selectedPartner) {
     return (
       <div className="space-y-4">
-        <div className={`${tileClass} text-sm font-medium text-slate-500 dark:text-slate-400`}>
+        <div className={`${tileClass} text-sm font-medium text-text-muted`}>
           先在伴侣档案中建立一个当前关注伴侣，再开始记录周期、备孕和怀孕事件。
         </div>
       </div>
@@ -254,9 +254,9 @@ const ReproductivePanel: React.FC<ReproductivePanelProps> = ({ date }) => {
       <section className={tileClass}>
         <div className="flex items-start justify-between gap-3">
           <div>
-            <div className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">当前伴侣</div>
-            <div className="mt-2 text-xl font-black text-slate-900 dark:text-slate-100">{selectedPartner.name}</div>
-            <div className="mt-1 text-xs font-bold text-slate-500 dark:text-slate-400">
+            <div className="text-[10px] font-black uppercase tracking-[0.18em] text-text-muted">当前伴侣</div>
+            <div className="mt-2 text-xl font-black text-text-primary">{selectedPartner.name}</div>
+            <div className="mt-1 text-xs font-bold text-text-muted">
               {menstrualSummary?.predictedPeriod ? '预计月经中' : menstrualSummary?.predictedFertileWindow ? '预计窗口期' : menstrualSummary?.status === 'period' ? `经期第 ${menstrualSummary.cycleDay || 1} 天` : '当前非经期'}
             </div>
           </div>
@@ -264,7 +264,7 @@ const ReproductivePanel: React.FC<ReproductivePanelProps> = ({ date }) => {
             <select
               value={selectedPartner.id}
               onChange={(event) => setSelectedPartnerId(event.target.value)}
-              className="rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+              className="rounded-2xl border border-surface-border bg-surface-card px-3 py-2 text-xs font-bold text-text-secondary"
             >
               {partners.map((partner) => (
                 <option key={partner.id} value={partner.id}>{partner.name}</option>
@@ -273,19 +273,19 @@ const ReproductivePanel: React.FC<ReproductivePanelProps> = ({ date }) => {
           )}
         </div>
         <div className="mt-4 grid grid-cols-3 gap-3 text-center">
-          <div className="rounded-2xl bg-slate-50 p-3 dark:bg-slate-800">
-            <div className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">下次月经</div>
-            <div className="mt-1 text-sm font-black text-slate-800 dark:text-slate-100">{nextPeriod?.date || '数据不足'}</div>
+          <div className="rounded-2xl bg-surface-muted p-3">
+            <div className="text-[10px] font-black uppercase tracking-[0.18em] text-text-muted">下次月经</div>
+            <div className="mt-1 text-sm font-black text-text-primary">{nextPeriod?.date || '数据不足'}</div>
           </div>
-          <div className="rounded-2xl bg-slate-50 p-3 dark:bg-slate-800">
-            <div className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">易孕窗口</div>
-            <div className="mt-1 text-sm font-black text-slate-800 dark:text-slate-100">
+          <div className="rounded-2xl bg-surface-muted p-3">
+            <div className="text-[10px] font-black uppercase tracking-[0.18em] text-text-muted">易孕窗口</div>
+            <div className="mt-1 text-sm font-black text-text-primary">
               {fertileWindow?.startDate && fertileWindow?.endDate ? `${fertileWindow.startDate.slice(5)}-${fertileWindow.endDate.slice(5)}` : '数据不足'}
             </div>
           </div>
-          <div className="rounded-2xl bg-slate-50 p-3 dark:bg-slate-800">
-            <div className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">备孕准备度</div>
-            <div className="mt-1 text-sm font-black text-slate-800 dark:text-slate-100">{conceptionReadiness.score}</div>
+          <div className="rounded-2xl bg-surface-muted p-3">
+            <div className="text-[10px] font-black uppercase tracking-[0.18em] text-text-muted">备孕准备度</div>
+            <div className="mt-1 text-sm font-black text-text-primary">{conceptionReadiness.score}</div>
           </div>
         </div>
       </section>
@@ -293,10 +293,10 @@ const ReproductivePanel: React.FC<ReproductivePanelProps> = ({ date }) => {
       <section className={tileClass}>
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <CalendarClock size={16} className="text-violet-500" />
-            <h3 className="text-sm font-black text-slate-900 dark:text-slate-100">周期记录</h3>
+            <CalendarClock size={16} className="text-chart-tertiary" />
+            <h3 className="text-sm font-black text-text-primary">周期记录</h3>
           </div>
-          <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">
+          <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.18em] text-text-muted">
             事件日期
             <input
               type="date"
@@ -304,20 +304,20 @@ const ReproductivePanel: React.FC<ReproductivePanelProps> = ({ date }) => {
               max={date}
               onChange={(e) => setEventDate(e.target.value || date)}
               aria-label="事件日期"
-              className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-bold text-slate-700 dark:text-slate-200 px-2 py-1.5 min-h-[36px]"
+              className="rounded-xl border border-surface-border bg-surface-card text-xs font-bold text-text-secondary px-2 py-1.5 min-h-[36px]"
             />
           </label>
         </div>
         <div className="mt-4 grid grid-cols-2 gap-2">
-          <button type="button" onClick={() => recordCycleEvent({ kind: 'period_start' })} className="rounded-2xl bg-violet-50 px-3 py-3 text-xs font-black text-violet-700 dark:bg-violet-900/20 dark:text-violet-300">月经开始</button>
-          <button type="button" onClick={() => recordCycleEvent({ kind: 'period_end' })} className="rounded-2xl bg-violet-50 px-3 py-3 text-xs font-black text-violet-700 dark:bg-violet-900/20 dark:text-violet-300">月经结束</button>
-          <button type="button" onClick={() => recordCycleEvent({ kind: 'ovulation_test', payload: { ovulationTest: 'peak' } })} className="rounded-2xl bg-pink-50 px-3 py-3 text-xs font-black text-pink-700 dark:bg-pink-900/20 dark:text-pink-300">排卵峰值</button>
-          <button type="button" onClick={() => recordCycleEvent({ kind: 'ovulation_test', payload: { ovulationTest: 'negative' } })} className="rounded-2xl bg-slate-100 px-3 py-3 text-xs font-black text-slate-700 dark:bg-slate-800 dark:text-slate-200">排卵阴性</button>
-          <button type="button" onClick={() => recordCycleEvent({ kind: 'spotting' })} className="rounded-2xl bg-amber-50 px-3 py-3 text-xs font-black text-amber-700 dark:bg-amber-900/20 dark:text-amber-300">点滴出血</button>
-          <button type="button" onClick={() => recordCycleEvent({ kind: 'intercourse_for_conception', payload: { intercourseProtected: false } })} className="rounded-2xl bg-emerald-50 px-3 py-3 text-xs font-black text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300">备孕同房</button>
+          <button type="button" onClick={() => recordCycleEvent({ kind: 'period_start' })} className="rounded-2xl bg-surface-muted px-3 py-3 text-xs font-black text-chart-tertiary">月经开始</button>
+          <button type="button" onClick={() => recordCycleEvent({ kind: 'period_end' })} className="rounded-2xl bg-surface-muted px-3 py-3 text-xs font-black text-chart-tertiary">月经结束</button>
+          <button type="button" onClick={() => recordCycleEvent({ kind: 'ovulation_test', payload: { ovulationTest: 'peak' } })} className="rounded-2xl bg-surface-muted px-3 py-3 text-xs font-black text-accent-vivid">排卵峰值</button>
+          <button type="button" onClick={() => recordCycleEvent({ kind: 'ovulation_test', payload: { ovulationTest: 'negative' } })} className="rounded-2xl bg-surface-muted px-3 py-3 text-xs font-black text-text-secondary">排卵阴性</button>
+          <button type="button" onClick={() => recordCycleEvent({ kind: 'spotting' })} className="rounded-2xl bg-state-warning-bg px-3 py-3 text-xs font-black text-state-warning-text">点滴出血</button>
+          <button type="button" onClick={() => recordCycleEvent({ kind: 'intercourse_for_conception', payload: { intercourseProtected: false } })} className="rounded-2xl bg-state-success-bg px-3 py-3 text-xs font-black text-state-success-text">备孕同房</button>
         </div>
-        <div className="mt-3 rounded-2xl bg-orange-50 dark:bg-orange-900/20 p-3 space-y-2">
-          <div className="text-[10px] font-black text-orange-700 dark:text-orange-300 uppercase tracking-widest">痛经程度</div>
+        <div className="mt-3 rounded-2xl bg-state-warning-bg p-3 space-y-2">
+          <div className="text-[10px] font-black text-state-warning-text uppercase tracking-widest">痛经程度</div>
           <div className="grid grid-cols-4 gap-1.5">
             {([
               { lvl: 1, label: '1 轻微' },
@@ -329,15 +329,15 @@ const ReproductivePanel: React.FC<ReproductivePanelProps> = ({ date }) => {
                 key={opt.lvl}
                 type="button"
                 onClick={() => recordCycleEvent({ kind: 'cramp', payload: { crampLevel: opt.lvl } })}
-                className="min-h-[40px] rounded-xl bg-white dark:bg-slate-800 px-2 py-2 text-[11px] font-bold text-orange-700 dark:text-orange-300 border border-orange-100 dark:border-orange-900/40 active:scale-95"
+                className="min-h-[40px] rounded-xl bg-surface-card px-2 py-2 text-[11px] font-bold text-state-warning-text border border-state-warning-text/20 active:scale-95"
               >
                 {opt.label}
               </button>
             ))}
           </div>
         </div>
-        <div className="mt-3 rounded-2xl bg-rose-50 dark:bg-rose-900/20 p-3 space-y-2">
-          <div className="text-[10px] font-black text-rose-700 dark:text-rose-300 uppercase tracking-widest">月经流量</div>
+        <div className="mt-3 rounded-2xl bg-state-danger-bg p-3 space-y-2">
+          <div className="text-[10px] font-black text-state-danger-text uppercase tracking-widest">月经流量</div>
           <div className="grid grid-cols-3 gap-1.5">
             {([
               { v: 'light' as const, label: '少量' },
@@ -348,32 +348,32 @@ const ReproductivePanel: React.FC<ReproductivePanelProps> = ({ date }) => {
                 key={opt.v}
                 type="button"
                 onClick={() => recordCycleEvent({ kind: 'flow', payload: { flow: opt.v } })}
-                className="min-h-[40px] rounded-xl bg-white dark:bg-slate-800 px-2 py-2 text-[11px] font-bold text-rose-700 dark:text-rose-300 border border-rose-100 dark:border-rose-900/40 active:scale-95"
+                className="min-h-[40px] rounded-xl bg-surface-card px-2 py-2 text-[11px] font-bold text-state-danger-text border border-state-danger-text/20 active:scale-95"
               >
                 {opt.label}
               </button>
             ))}
           </div>
         </div>
-        <div className="mt-4 text-xs font-bold text-slate-500 dark:text-slate-400">
+        <div className="mt-4 text-xs font-bold text-text-muted">
           已记录：月经 {countEventsByKind(partnerCycleEvents, ['period_start', 'period_end'])} 条，排卵 {countEventsByKind(partnerCycleEvents, ['ovulation_test'])} 条
         </div>
       </section>
 
       <section className={tileClass}>
         <div className="flex items-center gap-2">
-          <HeartHandshake size={16} className="text-emerald-500" />
-          <h3 className="text-sm font-black text-slate-900 dark:text-slate-100">共同备孕</h3>
+          <HeartHandshake size={16} className="text-accent" />
+          <h3 className="text-sm font-black text-text-primary">共同备孕</h3>
         </div>
         <div className="mt-4 grid grid-cols-2 gap-2">
           <button
             type="button"
             onClick={() => handleProfileUpdate({ ...profile, trackingEnabled: !profile.trackingEnabled })}
-            className={`rounded-2xl px-3 py-3 text-xs font-black ${profile.trackingEnabled ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'}`}
+            className={`rounded-2xl px-3 py-3 text-xs font-black ${profile.trackingEnabled ? 'bg-state-success-bg text-state-success-text' : 'bg-surface-muted text-text-secondary'}`}
           >
             {profile.trackingEnabled ? '已开启协同追踪' : '开启协同追踪'}
           </button>
-          <div className="rounded-2xl bg-slate-50 px-3 py-3 text-xs font-black text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+          <div className="rounded-2xl bg-surface-muted px-3 py-3 text-xs font-black text-text-secondary">
             今日补剂 {conceptionReadiness.supplementTaken ? '已记录' : '未记录'}
           </div>
         </div>
@@ -385,32 +385,32 @@ const ReproductivePanel: React.FC<ReproductivePanelProps> = ({ date }) => {
               onClick={() => handleProfileUpdate({ ...profile, trackingEnabled: true, goal: option.value })}
               className={`rounded-2xl border px-3 py-3 text-xs font-black transition-all ${
                 profile.goal === option.value
-                  ? 'border-emerald-500 bg-emerald-50 text-emerald-700 dark:border-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300'
-                  : 'border-slate-200 bg-white text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300'
+                  ? 'border-accent bg-state-success-bg text-state-success-text'
+                  : 'border-surface-border bg-surface-card text-text-muted'
               }`}
             >
               {option.label}
             </button>
           ))}
         </div>
-        <div className="mt-4 rounded-2xl bg-slate-50 p-4 text-xs font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+        <div className="mt-4 rounded-2xl bg-surface-muted p-4 text-xs font-bold text-text-secondary">
           平均睡眠 {conceptionReadiness.avgSleep > 0 ? `${conceptionReadiness.avgSleep.toFixed(1)}h` : '数据不足'}，近 14 天酒精 {conceptionReadiness.alcoholGrams.toFixed(0)}g。
         </div>
       </section>
 
       <section className={tileClass}>
         <div className="flex items-center gap-2">
-          <Baby size={16} className="text-sky-500" />
-          <h3 className="text-sm font-black text-slate-900 dark:text-slate-100">怀孕事件</h3>
+          <Baby size={16} className="text-chart-primary" />
+          <h3 className="text-sm font-black text-text-primary">怀孕事件</h3>
         </div>
         <div className="mt-4 grid grid-cols-2 gap-2">
-          <button type="button" onClick={() => recordPregnancyEvent({ kind: 'pregnancy_test', payload: { pregnancyTest: 'positive' } })} className="rounded-2xl bg-sky-50 px-3 py-3 text-xs font-black text-sky-700 dark:bg-sky-900/20 dark:text-sky-300">试纸阳性</button>
-          <button type="button" onClick={() => recordPregnancyEvent({ kind: 'pregnancy_test', payload: { pregnancyTest: 'negative' } })} className="rounded-2xl bg-slate-100 px-3 py-3 text-xs font-black text-slate-700 dark:bg-slate-800 dark:text-slate-200">试纸阴性</button>
-          <button type="button" onClick={() => recordPregnancyEvent({ kind: 'ultrasound', payload: { intrauterineConfirmed: true, gestationalSacSeen: true } })} className="rounded-2xl bg-emerald-50 px-3 py-3 text-xs font-black text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300">宫内妊娠确认</button>
-          <button type="button" onClick={() => recordPregnancyEvent({ kind: 'pregnancy_outcome', payload: { pregnancyOutcome: 'early_loss' } })} className="rounded-2xl bg-slate-100 px-3 py-3 text-xs font-black text-slate-700 dark:bg-slate-800 dark:text-slate-200">记录结局</button>
+          <button type="button" onClick={() => recordPregnancyEvent({ kind: 'pregnancy_test', payload: { pregnancyTest: 'positive' } })} className="rounded-2xl bg-state-info-bg px-3 py-3 text-xs font-black text-state-info-text">试纸阳性</button>
+          <button type="button" onClick={() => recordPregnancyEvent({ kind: 'pregnancy_test', payload: { pregnancyTest: 'negative' } })} className="rounded-2xl bg-surface-muted px-3 py-3 text-xs font-black text-text-secondary">试纸阴性</button>
+          <button type="button" onClick={() => recordPregnancyEvent({ kind: 'ultrasound', payload: { intrauterineConfirmed: true, gestationalSacSeen: true } })} className="rounded-2xl bg-state-success-bg px-3 py-3 text-xs font-black text-state-success-text">宫内妊娠确认</button>
+          <button type="button" onClick={() => recordPregnancyEvent({ kind: 'pregnancy_outcome', payload: { pregnancyOutcome: 'early_loss' } })} className="rounded-2xl bg-surface-muted px-3 py-3 text-xs font-black text-text-secondary">记录结局</button>
         </div>
-        <div className="mt-3 rounded-2xl bg-rose-50 dark:bg-rose-900/20 p-3 space-y-2">
-          <div className="text-[10px] font-black text-rose-700 dark:text-rose-300 uppercase tracking-widest">孕期出血程度</div>
+        <div className="mt-3 rounded-2xl bg-state-danger-bg p-3 space-y-2">
+          <div className="text-[10px] font-black text-state-danger-text uppercase tracking-widest">孕期出血程度</div>
           <div className="grid grid-cols-3 gap-1.5">
             {([
               { v: 'light' as const, label: '少量' },
@@ -421,15 +421,15 @@ const ReproductivePanel: React.FC<ReproductivePanelProps> = ({ date }) => {
                 key={opt.v}
                 type="button"
                 onClick={() => recordPregnancyEvent({ kind: 'bleeding', payload: { bleedingLevel: opt.v } })}
-                className="min-h-[40px] rounded-xl bg-white dark:bg-slate-800 px-2 py-2 text-[11px] font-bold text-rose-700 dark:text-rose-300 border border-rose-100 dark:border-rose-900/40 active:scale-95"
+                className="min-h-[40px] rounded-xl bg-surface-card px-2 py-2 text-[11px] font-bold text-state-danger-text border border-state-danger-text/20 active:scale-95"
               >
                 {opt.label}
               </button>
             ))}
           </div>
         </div>
-        <div className="mt-3 rounded-2xl bg-orange-50 dark:bg-orange-900/20 p-3 space-y-2">
-          <div className="text-[10px] font-black text-orange-700 dark:text-orange-300 uppercase tracking-widest">腹痛 (位置 × 程度)</div>
+        <div className="mt-3 rounded-2xl bg-state-warning-bg p-3 space-y-2">
+          <div className="text-[10px] font-black text-state-warning-text uppercase tracking-widest">腹痛 (位置 × 程度)</div>
           <div className="grid grid-cols-3 gap-1.5">
             {(['left', 'bilateral', 'right'] as const).map(side => (
               ([1, 2, 3, 4] as const).map(lvl => (
@@ -437,7 +437,7 @@ const ReproductivePanel: React.FC<ReproductivePanelProps> = ({ date }) => {
                   key={`${side}-${lvl}`}
                   type="button"
                   onClick={() => recordPregnancyEvent({ kind: 'pain', payload: { painSeverity: lvl, painSide: side } })}
-                  className="min-h-[36px] rounded-lg bg-white dark:bg-slate-800 px-1 py-1.5 text-[10px] font-bold text-orange-700 dark:text-orange-300 border border-orange-100 dark:border-orange-900/40 active:scale-95"
+                  className="min-h-[36px] rounded-lg bg-surface-card px-1 py-1.5 text-[10px] font-bold text-state-warning-text border border-state-warning-text/20 active:scale-95"
                 >
                   {side === 'left' ? '左' : side === 'right' ? '右' : '双侧'} · {lvl}
                 </button>
@@ -445,7 +445,7 @@ const ReproductivePanel: React.FC<ReproductivePanelProps> = ({ date }) => {
             )).flat()}
           </div>
         </div>
-        <div className="mt-4 rounded-2xl bg-slate-50 p-4 text-xs font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+        <div className="mt-4 rounded-2xl bg-surface-muted p-4 text-xs font-bold text-text-secondary">
           当前状态：
           {' '}
           {pregnancyStatus?.state === 'intrauterine_confirmed'
@@ -459,25 +459,25 @@ const ReproductivePanel: React.FC<ReproductivePanelProps> = ({ date }) => {
       </section>
 
       {(delayedPeriodAlert || (pregnancyStatus?.alerts.length || 0) > 0) && (
-        <section className={`${tileClass} border-amber-200 bg-amber-50 dark:border-amber-900/40 dark:bg-amber-900/10`}>
+        <section className={`${tileClass} border-state-warning-text/20 bg-state-warning-bg`}>
           <div className="flex items-center gap-2">
-            <ShieldAlert size={16} className="text-amber-600" />
-            <h3 className="text-sm font-black text-amber-800 dark:text-amber-300">提醒与风险</h3>
+            <ShieldAlert size={16} className="text-state-warning-text" />
+            <h3 className="text-sm font-black text-state-warning-text">提醒与风险</h3>
           </div>
           <div className="mt-4 space-y-2">
             {delayedPeriodAlert && (
-              <div className="flex items-start gap-2 rounded-2xl bg-white/70 px-3 py-3 text-xs font-bold text-amber-900 dark:bg-slate-900 dark:text-amber-200">
+              <div className="flex items-start gap-2 rounded-2xl bg-surface-card/70 px-3 py-3 text-xs font-bold text-state-warning-text">
                 <AlertTriangle size={14} className="mt-0.5 shrink-0" />
                 <span>{delayedPeriodAlert}</span>
               </div>
             )}
             {(pregnancyStatus?.alerts || []).map((alert) => (
-              <div key={alert} className="flex items-start gap-2 rounded-2xl bg-white/70 px-3 py-3 text-xs font-bold text-amber-900 dark:bg-slate-900 dark:text-amber-200">
+              <div key={alert} className="flex items-start gap-2 rounded-2xl bg-surface-card/70 px-3 py-3 text-xs font-bold text-state-warning-text">
                 <AlertTriangle size={14} className="mt-0.5 shrink-0" />
                 <span>{alert}</span>
               </div>
             ))}
-            <div className="flex items-start gap-2 rounded-2xl bg-white/70 px-3 py-3 text-xs font-bold text-slate-700 dark:bg-slate-900 dark:text-slate-300">
+            <div className="flex items-start gap-2 rounded-2xl bg-surface-card/70 px-3 py-3 text-xs font-bold text-text-secondary">
               <TestTube2 size={14} className="mt-0.5 shrink-0" />
               <span>所有窗口和月经预测仅作估算，不能作为避孕依据。</span>
             </div>
@@ -488,12 +488,12 @@ const ReproductivePanel: React.FC<ReproductivePanelProps> = ({ date }) => {
       <section className={tileClass}>
         <div className="grid gap-4 md:grid-cols-2">
           <div>
-            <div className="mb-3 text-xs font-black uppercase tracking-[0.18em] text-slate-400">最近周期事件</div>
+            <div className="mb-3 text-xs font-black uppercase tracking-[0.18em] text-text-muted">最近周期事件</div>
             <div className="space-y-2">
               {partnerCycleEvents.slice(0, 6).map((event) => (
-                <div key={event.id} className="flex items-center justify-between rounded-2xl bg-slate-50 px-3 py-3 text-xs font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                <div key={event.id} className="flex items-center justify-between rounded-2xl bg-surface-muted px-3 py-3 text-xs font-bold text-text-secondary">
                   <span>{event.date} · {CYCLE_KIND_LABELS[event.kind] || event.kind}</span>
-                  <button type="button" onClick={() => handleDeleteCycleEvent(event.id)} aria-label="删除周期事件" className="min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-red-500">
+                  <button type="button" onClick={() => handleDeleteCycleEvent(event.id)} aria-label="删除周期事件" className="min-w-[44px] min-h-[44px] flex items-center justify-center text-text-muted hover:text-state-danger-text">
                     <Trash2 size={14} />
                   </button>
                 </div>
@@ -501,12 +501,12 @@ const ReproductivePanel: React.FC<ReproductivePanelProps> = ({ date }) => {
             </div>
           </div>
           <div>
-            <div className="mb-3 text-xs font-black uppercase tracking-[0.18em] text-slate-400">最近怀孕事件</div>
+            <div className="mb-3 text-xs font-black uppercase tracking-[0.18em] text-text-muted">最近怀孕事件</div>
             <div className="space-y-2">
               {partnerPregnancyEvents.slice(0, 6).map((event) => (
-                <div key={event.id} className="flex items-center justify-between rounded-2xl bg-slate-50 px-3 py-3 text-xs font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                <div key={event.id} className="flex items-center justify-between rounded-2xl bg-surface-muted px-3 py-3 text-xs font-bold text-text-secondary">
                   <span>{event.date} · {PREGNANCY_KIND_LABELS[event.kind] || event.kind}</span>
-                  <button type="button" onClick={() => handleDeletePregnancyEvent(event.id)} aria-label="删除怀孕事件" className="min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-red-500">
+                  <button type="button" onClick={() => handleDeletePregnancyEvent(event.id)} aria-label="删除怀孕事件" className="min-w-[44px] min-h-[44px] flex items-center justify-center text-text-muted hover:text-state-danger-text">
                     <Trash2 size={14} />
                   </button>
                 </div>

@@ -25,10 +25,10 @@ const INTENSITY_OPTS: { value: ExerciseIntensity, label: string, desc: string }[
     {value: 'high', label: '高强', desc: '竭尽全力'}
 ];
 const FEELING_OPTS: { value: 'great' | 'ok' | 'tired' | 'bad', label: string, icon: React.ElementType, color: string }[] = [
-    { value: 'great', label: '状态极佳', icon: Zap, color: 'text-yellow-500' },
-    { value: 'ok', label: '还算不错', icon: Smile, color: 'text-green-500' },
-    { value: 'tired', label: '有点累了', icon: Meh, color: 'text-orange-500' },
-    { value: 'bad', label: '身体不适', icon: Frown, color: 'text-red-500' },
+    { value: 'great', label: '状态极佳', icon: Zap, color: 'text-state-warning-text' },
+    { value: 'ok', label: '还算不错', icon: Smile, color: 'text-state-success-text' },
+    { value: 'tired', label: '有点累了', icon: Meh, color: 'text-state-warning-text' },
+    { value: 'bad', label: '身体不适', icon: Frown, color: 'text-state-danger-text' },
 ];
 
 type ExerciseRecordModalMode = 'create' | 'edit' | 'start' | 'finish';
@@ -134,7 +134,7 @@ const ExerciseRecordModal: React.FC<ExerciseRecordModalProps> = ({ isOpen, onClo
                 <button 
                     onClick={() => { onSave(record); onClose(); }} 
                     disabled={!record.type || (isStepBased && !record.steps)}
-                    className={`w-full py-4 text-white font-black rounded-2xl shadow-xl transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 ${isStartMode ? 'bg-emerald-500 shadow-emerald-500/30' : 'bg-brand-accent shadow-blue-500/30'}`}
+                    className={`w-full py-4 text-text-on-accent font-black rounded-2xl shadow-glow transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 ${isStartMode ? 'bg-state-success-text' : 'bg-accent'}`}
                 >
                     {isStartMode ? <Play size={20} fill="currentColor"/> : <Check size={20} strokeWidth={3}/>}
                     {isStartMode ? "开启运动" : "完成提交"}
@@ -144,48 +144,48 @@ const ExerciseRecordModal: React.FC<ExerciseRecordModalProps> = ({ isOpen, onClo
             <div className="space-y-6 pb-6">
                 {isFinishMode ? (
                     /* 重构后的浅色模式友好卡片 */
-                    <div className="bg-gradient-to-br from-emerald-50/80 via-white to-blue-50/80 dark:from-slate-900 dark:via-slate-800 dark:to-slate-950 border border-slate-100 dark:border-white/10 rounded-[2.5rem] p-8 relative overflow-hidden shadow-soft dark:shadow-2xl">
+                    <div className="bg-gradient-to-br from-state-success-bg/80 via-surface-card to-state-info-bg/60 border border-surface-border rounded-[2.5rem] p-8 relative overflow-hidden shadow-soft">
                         {/* 氛围光：浅色模式下更加淡雅 */}
-                        <div className="absolute top-0 right-0 w-40 h-40 bg-emerald-400/10 dark:bg-emerald-400/20 rounded-full blur-[60px] -translate-y-1/2 translate-x-1/2"></div>
-                        <div className="absolute bottom-0 left-0 w-32 h-32 bg-blue-400/10 dark:bg-blue-400/20 rounded-full blur-[50px] translate-y-1/2 -translate-x-1/2"></div>
+                        <div className="absolute top-0 right-0 w-40 h-40 bg-state-success-text/10 rounded-full blur-[60px] -translate-y-1/2 translate-x-1/2"></div>
+                        <div className="absolute bottom-0 left-0 w-32 h-32 bg-state-info-text/10 rounded-full blur-[50px] translate-y-1/2 -translate-x-1/2"></div>
                         
                         <div className="relative z-10 flex flex-col items-center">
-                            <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.25em] text-emerald-600 dark:text-emerald-400 mb-4">
+                            <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.25em] text-state-success-text mb-4">
                                 <Flame size={14} className="animate-pulse"/> WORKOUT ACCOMPLISHED
                             </div>
                             
                             <div className="flex items-baseline gap-2 mb-2">
-                                <span className="text-7xl font-black tabular-nums tracking-tighter text-slate-800 dark:text-white drop-shadow-sm">{record.duration}</span>
-                                <span className="text-lg font-black text-slate-400 dark:text-white/40">分钟</span>
+                                <span className="text-7xl font-black tabular-nums tracking-tighter text-text-primary drop-shadow-sm">{record.duration}</span>
+                                <span className="text-lg font-black text-text-muted">分钟</span>
                             </div>
 
                             <div className="mt-8 flex gap-4 w-full">
-                                <div className="flex-1 bg-white dark:bg-white/[0.03] backdrop-blur-xl rounded-3xl p-5 text-center border border-slate-100 dark:border-white/[0.08] shadow-sm dark:shadow-inner">
-                                    <div className="text-[10px] font-black text-slate-400 dark:text-white/30 uppercase mb-2 tracking-widest">START</div>
-                                    <div className="text-xl font-mono font-bold text-slate-700 dark:text-white/90">{record.startTime}</div>
+                                <div className="flex-1 bg-surface-card/80 backdrop-blur-xl rounded-3xl p-5 text-center border border-surface-border shadow-inner">
+                                    <div className="text-[10px] font-black text-text-muted uppercase mb-2 tracking-widest">START</div>
+                                    <div className="text-xl font-mono font-bold text-text-secondary">{record.startTime}</div>
                                 </div>
-                                <div className="flex-1 bg-white dark:bg-white/[0.03] backdrop-blur-xl rounded-3xl p-5 text-center border border-slate-100 dark:border-white/[0.08] shadow-sm dark:shadow-inner">
-                                    <div className="text-[10px] font-black text-slate-400 dark:text-white/30 uppercase mb-2 tracking-widest">END</div>
-                                    <div className="text-xl font-mono font-bold text-slate-700 dark:text-white/90">{endTime}</div>
+                                <div className="flex-1 bg-surface-card/80 backdrop-blur-xl rounded-3xl p-5 text-center border border-surface-border shadow-inner">
+                                    <div className="text-[10px] font-black text-text-muted uppercase mb-2 tracking-widest">END</div>
+                                    <div className="text-xl font-mono font-bold text-text-secondary">{endTime}</div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 ) : (
                     <div className="grid grid-cols-2 gap-4">
-                        <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-3xl border border-slate-100 dark:border-white/5 transition-all focus-within:border-emerald-500">
-                             <label className="text-[10px] text-slate-400 font-black uppercase mb-1 flex items-center gap-1"><Clock size={10}/> 开始时间</label>
-                             <input type="time" value={record.startTime} onChange={e => setRecord({...record, startTime: e.target.value})} className="bg-transparent font-mono text-2xl font-bold text-brand-text dark:text-slate-100 outline-none w-full"/>
+                        <div className="bg-surface-muted p-4 rounded-3xl border border-surface-border transition-all focus-within:border-accent">
+                             <label className="text-[10px] text-text-muted font-black uppercase mb-1 flex items-center gap-1"><Clock size={10}/> 开始时间</label>
+                             <input type="time" value={record.startTime} onChange={e => setRecord({...record, startTime: e.target.value})} className="bg-transparent font-mono text-2xl font-bold text-text-primary outline-none w-full"/>
                         </div>
                         {isStepBased ? (
-                             <div className="bg-emerald-50 dark:bg-emerald-900/10 p-4 rounded-3xl border border-emerald-100 dark:border-emerald-900/30">
-                                 <label className="text-[10px] text-emerald-500 font-black uppercase mb-1 flex items-center gap-1"><Footprints size={10}/> 今日步数</label>
-                                 <input type="number" value={record.steps || ''} onChange={e => setRecord({...record, steps: parseInt(e.target.value)})} placeholder="0" className="bg-transparent font-mono text-2xl font-bold text-emerald-600 dark:text-emerald-400 outline-none w-full"/>
+                             <div className="bg-state-success-bg p-4 rounded-3xl border border-state-success-text/25">
+                                 <label className="text-[10px] text-state-success-text font-black uppercase mb-1 flex items-center gap-1"><Footprints size={10}/> 今日步数</label>
+                                 <input type="number" value={record.steps || ''} onChange={e => setRecord({...record, steps: parseInt(e.target.value)})} placeholder="0" className="bg-transparent font-mono text-2xl font-bold text-state-success-text outline-none w-full"/>
                              </div>
                         ) : !isStartMode && (
-                            <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-3xl border border-slate-100 dark:border-white/5">
-                                <label className="text-[10px] text-slate-400 font-black uppercase mb-1 flex items-center gap-1"><Flag size={10}/> 结束时间</label>
-                                <input type="time" value={endTime} onChange={e => handleEndTimeChange(e.target.value)} className="bg-transparent font-mono text-2xl font-bold text-brand-text dark:text-slate-100 outline-none w-full"/>
+                            <div className="bg-surface-muted p-4 rounded-3xl border border-surface-border">
+                                <label className="text-[10px] text-text-muted font-black uppercase mb-1 flex items-center gap-1"><Flag size={10}/> 结束时间</label>
+                                <input type="time" value={endTime} onChange={e => handleEndTimeChange(e.target.value)} className="bg-transparent font-mono text-2xl font-bold text-text-primary outline-none w-full"/>
                             </div>
                         )}
                     </div>
@@ -194,19 +194,19 @@ const ExerciseRecordModal: React.FC<ExerciseRecordModalProps> = ({ isOpen, onClo
                 {!isFinishMode && (
                     <div className="space-y-4">
                         {smartTypeApplied && record.type && (
-                            <div className="flex items-center justify-between gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-[11px] font-bold text-emerald-700 dark:border-emerald-900/50 dark:bg-emerald-900/20 dark:text-emerald-300">
+                            <div className="flex items-center justify-between gap-2 rounded-2xl border border-state-success-text/25 bg-state-success-bg px-4 py-2 text-[11px] font-bold text-state-success-text">
                                 <span className="flex items-center gap-1.5"><Sparkles size={12}/> 智能默认 · {record.type} · 可换</span>
                                 <button
                                     type="button"
                                     onClick={() => { setRecord(r => ({ ...r, type: '' })); setSmartTypeApplied(false); }}
-                                    className="rounded-full px-2 py-0.5 text-[10px] font-black text-emerald-600 underline-offset-2 hover:underline dark:text-emerald-400"
+                                    className="rounded-full px-2 py-0.5 text-[10px] font-black text-state-success-text underline-offset-2 hover:underline"
                                 >清除</button>
                             </div>
                         )}
                         <div className="relative group">
-                            <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-500 transition-colors" size={20} />
+                            <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-accent transition-colors" size={20} />
                             <input 
-                                className="w-full bg-slate-100 dark:bg-slate-800/80 border-none rounded-2xl py-4 pl-14 pr-4 text-sm font-bold focus:ring-2 focus:ring-emerald-500/30 outline-none transition-all"
+                                className="w-full bg-surface-muted border-none rounded-2xl py-4 pl-14 pr-4 text-sm font-bold focus:ring-2 focus:ring-accent/30 outline-none transition-all"
                                 placeholder="查找运动项..."
                                 value={searchTerm}
                                 onChange={e => setSearchTerm(e.target.value)}
@@ -218,15 +218,15 @@ const ExerciseRecordModal: React.FC<ExerciseRecordModalProps> = ({ isOpen, onClo
                                 return (
                                     <div key={cat.name} className="space-y-3">
                                         <button onClick={() => toggleCategory(cat.name)} className="w-full flex items-center justify-between px-1 hover:opacity-80">
-                                            <div className="flex items-center gap-2"><div className="w-1 h-3 bg-emerald-500 rounded-full"></div><h4 className="text-xs font-black text-slate-500 uppercase tracking-widest">{cat.name}</h4></div>
-                                            {!searchTerm && (isExpanded ? <ChevronUp size={14} className="text-slate-300"/> : <ChevronDown size={14} className="text-slate-300"/>)}
+                                            <div className="flex items-center gap-2"><div className="w-1 h-3 bg-state-success-text rounded-full"></div><h4 className="text-xs font-black text-text-muted uppercase tracking-widest">{cat.name}</h4></div>
+                                            {!searchTerm && (isExpanded ? <ChevronUp size={14} className="text-text-muted"/> : <ChevronDown size={14} className="text-text-muted"/>)}
                                         </button>
                                         {isExpanded && (
-                                            <div className="grid grid-cols-2 gap-3 animate-in fade-in slide-in-from-top-1 duration-300">
+                                            <div className="grid grid-cols-2 gap-3 animate-in fade-in slide-in-from-top-1 duration-slow">
                                                 {cat.items.map(item => (
-                                                    <button key={item} onClick={() => { setRecord({...record, type: item}); setSmartTypeApplied(false); }} className={`p-4 rounded-3xl text-[13px] font-bold text-left transition-all flex items-center justify-between border-2 ${record.type === item ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 shadow-md shadow-emerald-500/10' : 'border-transparent bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50'}`}>
+                                                    <button key={item} onClick={() => { setRecord({...record, type: item}); setSmartTypeApplied(false); }} className={`p-4 rounded-3xl text-[13px] font-bold text-left transition-all flex items-center justify-between border-2 ${record.type === item ? 'border-state-success-text bg-state-success-bg text-state-success-text shadow-soft' : 'border-transparent bg-surface-card text-text-secondary hover:bg-surface-muted'}`}>
                                                         <span className="truncate pr-2">{item}</span>
-                                                        {record.type === item && <div className="w-4 h-4 bg-emerald-500 rounded-full flex items-center justify-center"><Check size={10} className="text-white" strokeWidth={4}/></div>}
+                                                        {record.type === item && <div className="w-4 h-4 bg-state-success-text rounded-full flex items-center justify-center"><Check size={10} className="text-text-on-accent" strokeWidth={4}/></div>}
                                                     </button>
                                                 ))}
                                             </div>
@@ -241,12 +241,12 @@ const ExerciseRecordModal: React.FC<ExerciseRecordModalProps> = ({ isOpen, onClo
                 {(isFinishMode || (!isStartMode && record.type)) && !isStepBased && (
                     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4">
                         <div className="space-y-4">
-                            <label className="text-[10px] font-black text-slate-400 dark:text-slate-400 uppercase tracking-widest flex items-center gap-2"><TrendingUp size={12}/> 训练强度评级</label>
+                            <label className="text-[10px] font-black text-text-muted uppercase tracking-widest flex items-center gap-2"><TrendingUp size={12}/> 训练强度评级</label>
                             <div className="flex gap-2">
                                 {INTENSITY_OPTS.map(opt => {
                                     const isSel = record.intensity === opt.value;
                                     return (
-                                        <button key={opt.value} onClick={() => setRecord({...record, intensity: opt.value})} className={`flex-1 py-4 px-2 rounded-2xl transition-all border-2 flex flex-col items-center justify-center gap-0.5 ${isSel ? 'border-brand-accent bg-blue-50 dark:bg-blue-900/20 text-brand-accent shadow-lg shadow-blue-500/10' : 'border-transparent bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-400'}`}>
+                                        <button key={opt.value} onClick={() => setRecord({...record, intensity: opt.value})} className={`flex-1 py-4 px-2 rounded-2xl transition-all border-2 flex flex-col items-center justify-center gap-0.5 ${isSel ? 'border-accent bg-state-info-bg text-accent shadow-soft' : 'border-transparent bg-surface-muted text-text-muted'}`}>
                                             <span className="text-sm font-black">{opt.label}</span>
                                             <span className="text-[9px] font-bold opacity-60">{opt.desc}</span>
                                         </button>
@@ -255,26 +255,26 @@ const ExerciseRecordModal: React.FC<ExerciseRecordModalProps> = ({ isOpen, onClo
                             </div>
                         </div>
                         <div className="space-y-4">
-                            <label className="text-[10px] font-black text-slate-400 dark:text-slate-400 uppercase tracking-widest flex items-center gap-2"><Sparkles size={12}/> 身心恢复感知</label>
+                            <label className="text-[10px] font-black text-text-muted uppercase tracking-widest flex items-center gap-2"><Sparkles size={12}/> 身心恢复感知</label>
                             <div className="grid grid-cols-4 gap-3">
                                 {FEELING_OPTS.map(opt => {
                                     const isSel = record.feeling === opt.value;
                                     return (
-                                        <button key={opt.value} onClick={() => setRecord({...record, feeling: opt.value})} className={`flex flex-col items-center justify-center py-5 rounded-3xl transition-all border-2 ${isSel ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 shadow-md ring-4 ring-emerald-500/5' : 'border-transparent bg-slate-50 dark:bg-slate-800 opacity-60'}`}>
-                                            <opt.icon size={28} className={isSel ? opt.color : 'text-slate-400'} />
-                                            <span className={`text-[10px] font-black mt-2 ${isSel ? 'text-brand-text dark:text-slate-100' : 'text-slate-500 dark:text-slate-600'}`}>{opt.label}</span>
+                                        <button key={opt.value} onClick={() => setRecord({...record, feeling: opt.value})} className={`flex flex-col items-center justify-center py-5 rounded-3xl transition-all border-2 ${isSel ? 'border-state-success-text bg-state-success-bg shadow-soft ring-4 ring-state-success-text/5' : 'border-transparent bg-surface-muted opacity-60'}`}>
+                                            <opt.icon size={28} className={isSel ? opt.color : 'text-text-muted'} />
+                                            <span className={`text-[10px] font-black mt-2 ${isSel ? 'text-text-primary' : 'text-text-muted'}`}>{opt.label}</span>
                                         </button>
                                     );
                                 })}
                             </div>
                         </div>
                         <div className="space-y-4">
-                            <label className="text-[10px] font-black text-slate-400 dark:text-slate-400 uppercase tracking-widest flex items-center gap-2"><Target size={12}/> 重点训练部位 (多选)</label>
+                            <label className="text-[10px] font-black text-text-muted uppercase tracking-widest flex items-center gap-2"><Target size={12}/> 重点训练部位 (多选)</label>
                             <div className="flex flex-wrap gap-2">
                                 {MUSCLE_GROUPS.map(part => {
                                     const isSel = record.bodyParts?.includes(part);
                                     return (
-                                        <button key={part} onClick={() => setRecord(p => ({...p, bodyParts: p.bodyParts?.includes(part) ? p.bodyParts.filter(x => x!==part) : [...(p.bodyParts||[]), part]}))} className={`px-4 py-2.5 rounded-xl text-xs font-bold border-2 transition-all ${isSel ? 'border-brand-accent bg-brand-accent text-white shadow-md' : 'border-transparent bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'}`}>
+                                        <button key={part} onClick={() => setRecord(p => ({...p, bodyParts: p.bodyParts?.includes(part) ? p.bodyParts.filter(x => x!==part) : [...(p.bodyParts||[]), part]}))} className={`px-4 py-2.5 rounded-xl text-xs font-bold border-2 transition-all ${isSel ? 'border-accent bg-accent text-text-on-accent shadow-soft' : 'border-transparent bg-surface-muted text-text-secondary hover:bg-surface-border'}`}>
                                             {part}
                                         </button>
                                     );
@@ -284,8 +284,8 @@ const ExerciseRecordModal: React.FC<ExerciseRecordModalProps> = ({ isOpen, onClo
                     </div>
                 )}
                 <div className="relative group pt-4">
-                    <div className="absolute left-5 top-8 text-slate-400 group-focus-within:text-brand-accent transition-colors"><PenLine size={18} /></div>
-                    <textarea className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-white/5 rounded-[1.5rem] py-4 pl-14 pr-4 text-xs font-medium outline-none focus:border-brand-accent transition-all min-h-[100px]" placeholder="记录你的训练心得或感悟..." value={record.notes || ''} onChange={e => setRecord({...record, notes: e.target.value})}/>
+                    <div className="absolute left-5 top-8 text-text-muted group-focus-within:text-accent transition-colors"><PenLine size={18} /></div>
+                    <textarea className="w-full bg-surface-muted border border-surface-border rounded-[1.5rem] py-4 pl-14 pr-4 text-xs font-medium outline-none focus:border-accent transition-all min-h-[100px]" placeholder="记录你的训练心得或感悟..." value={record.notes || ''} onChange={e => setRecord({...record, notes: e.target.value})}/>
                 </div>
             </div>
         </Modal>

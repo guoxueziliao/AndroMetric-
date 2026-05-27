@@ -24,11 +24,11 @@ export const DiffRow: React.FC<DiffRowProps> = ({ diff }) => {
     const formattedNew = isDeleted ? (newValue === '删除' ? '已删除' : '—') : formatHistoryValue(field, newValue);
 
     return (
-        <div className="flex items-center justify-between py-2.5 border-b border-slate-50 dark:border-slate-800 last:border-0 px-4 hover:bg-slate-50 dark:hover:bg-slate-800/20 transition-colors group">
+        <div className="flex items-center justify-between py-2.5 border-b border-surface-border/50 last:border-0 px-4 hover:bg-surface-muted/60 transition-colors group">
             {/* Field Label */}
             <div className="flex items-center gap-1.5 shrink-0 mr-4">
-                <div className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-600"></div>
-                <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 truncate max-w-[140px]" title={field}>
+                <div className="w-1 h-1 rounded-full bg-surface-border"></div>
+                <span className="text-[11px] font-bold text-text-muted truncate max-w-[140px]" title={field}>
                     {field || '未知字段'}
                 </span>
             </div>
@@ -37,7 +37,7 @@ export const DiffRow: React.FC<DiffRowProps> = ({ diff }) => {
             <div className="flex flex-col items-end gap-0.5 text-right min-w-0 flex-1">
                 {/* Old Value (Top, Gray, Strikethrough) */}
                 {!isAdded && (
-                    <span className="text-[10px] text-slate-400 line-through decoration-slate-300 dark:decoration-slate-600 truncate max-w-full opacity-80">
+                    <span className="text-[10px] text-text-muted line-through decoration-surface-border truncate max-w-full opacity-80">
                         {formattedOld}
                     </span>
                 )}
@@ -45,10 +45,10 @@ export const DiffRow: React.FC<DiffRowProps> = ({ diff }) => {
                 {/* New Value (Bottom, Colored, Bold) */}
                 <div className={`flex items-center justify-end text-xs font-bold truncate max-w-full leading-tight ${
                     isDeleted 
-                        ? 'text-red-500 dark:text-red-400' 
+                        ? 'text-state-danger-text'
                         : isAdded 
-                            ? 'text-blue-600 dark:text-blue-400' 
-                            : 'text-emerald-600 dark:text-emerald-400'
+                            ? 'text-state-info-text'
+                            : 'text-state-success-text'
                 }`}>
                     {/* Semantic Icons */}
                     {isAdded && <Plus size={10} className="mr-1 stroke-[3]" />}

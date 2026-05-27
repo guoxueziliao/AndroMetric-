@@ -1,6 +1,7 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2, Check } from 'lucide-react';
+import { motionDuration } from './motionTokens';
 
 interface AnimatedButtonProps {
   children: React.ReactNode;
@@ -23,10 +24,10 @@ interface Ripple {
 }
 
 const variants = {
-  primary: 'bg-brand-accent text-white hover:bg-brand-accent/90 shadow-lg shadow-brand-accent/30',
-  secondary: 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700',
-  danger: 'bg-red-500 text-white hover:bg-red-600 shadow-lg shadow-red-500/30',
-  ghost: 'bg-transparent text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800/50'
+  primary: 'bg-accent text-text-on-accent hover:bg-accent/90 shadow-lg shadow-accent/30',
+  secondary: 'bg-surface-muted text-text-secondary hover:bg-surface-border',
+  danger: 'bg-state-danger-text text-text-on-accent hover:bg-state-danger-text/90 shadow-lg shadow-state-danger-text/30',
+  ghost: 'bg-transparent text-text-secondary hover:bg-surface-muted/70'
 };
 
 const sizes = {
@@ -110,7 +111,7 @@ const AnimatedButton: React.FC<AnimatedButtonProps> = ({
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
-            transition={{ duration: 0.15 }}
+            transition={{ duration: motionDuration.fast }}
           >
             <Loader2 className="w-5 h-5 animate-spin" />
           </motion.div>
@@ -143,7 +144,7 @@ const AnimatedButton: React.FC<AnimatedButtonProps> = ({
           key={ripple.id}
           initial={{ scale: 0, opacity: 0.5 }}
           animate={{ scale: 4, opacity: 0 }}
-          transition={{ duration: 0.6, ease: 'easeOut' }}
+          transition={{ duration: motionDuration.slow * 2, ease: 'easeOut' }}
           style={{
             position: 'absolute',
             left: ripple.x,

@@ -13,3 +13,4 @@ export { default as AnimatedPage, AnimatedPresence } from './AnimatedPage';
 export { default as RecordCard } from './RecordCard';
 export type { RecordCardTone } from './RecordCard';
 export * from './NoticeSystem';
+export * from './useChartColors';

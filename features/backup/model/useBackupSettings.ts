@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { LogEntry } from '../../../domain';
 import { StorageService, backupService, type BackupMetadata } from '../../../core/storage';
+import type { ImportConflictResolution, ImportPreview, ImportStrategy } from '../../profile/model/importPreview';
+import { buildImportPreview } from '../../profile/model/importPreview';
 
 interface BackupFileSummary {
   name: string;
@@ -21,6 +23,10 @@ export const useBackupSettings = ({ logs }: UseBackupSettingsParams) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [restorePreview, setRestorePreview] = useState<ImportPreview | null>(null);
+  const [restoreStatus, setRestoreStatus] = useState<'idle' | 'importing' | 'preview' | 'success' | 'error'>('idle');
+  const [restoreStrategy, setRestoreStrategy] = useState<ImportStrategy>('overwrite');
+  const [restoreConflictResolution, setRestoreConflictResolution] = useState<ImportConflictResolution>('use-import');
 
   const loadMetadata = useCallback(async () => {
     const meta = await backupService.getMetadata();
@@ -133,8 +139,6 @@ export const useBackupSettings = ({ logs }: UseBackupSettingsParams) => {
   }, [loadMetadata, logs, refreshStatus, showSuccessMessage]);
 
   const handleRestoreBackup = useCallback(async (filename: string) => {
-    if (!confirm('恢复此备份前会先创建当前数据的安全快照，然后覆盖当前数据。确定继续吗？')) return;
-
     setError(null);
     setIsLoading(true);
     try {
@@ -144,17 +148,47 @@ export const useBackupSettings = ({ logs }: UseBackupSettingsParams) => {
         return;
       }
 
-      await StorageService.snapshots.create(`文件系统恢复前自动快照 - ${new Date().toLocaleString('zh-CN')}`);
-      await StorageService.restoreSnapshot(rawText, 'overwrite');
-      showSuccessMessage('备份恢复成功');
-      await loadMetadata();
+      const preview = buildImportPreview(rawText, false, logs || []);
+      setRestorePreview(preview);
+      setRestoreStrategy('overwrite');
+      setRestoreConflictResolution('use-import');
+      setRestoreStatus('preview');
     } catch {
       setError('恢复失败，请确认备份文件未损坏');
     } finally {
       setIsLoading(false);
       refreshStatus();
     }
-  }, [loadMetadata, refreshStatus, showSuccessMessage]);
+  }, [logs, refreshStatus]);
+
+  const handleCancelRestorePreview = useCallback(() => {
+    setRestorePreview(null);
+    setRestoreStatus('idle');
+    setRestoreStrategy('overwrite');
+    setRestoreConflictResolution('use-import');
+  }, []);
+
+  const handleConfirmRestore = useCallback(async () => {
+    if (!restorePreview || restorePreview.versionStatus === 'newer') return;
+
+    setRestoreStatus('importing');
+    setIsLoading(true);
+    try {
+      await StorageService.snapshots.create(`文件系统恢复前自动快照 - ${new Date().toLocaleString('zh-CN')}`, 'auto-safety');
+      await StorageService.restoreSnapshot(restorePreview.rawText, restoreStrategy, restoreConflictResolution);
+      setRestorePreview(null);
+      setRestoreStatus('success');
+      showSuccessMessage('备份恢复成功');
+      await loadMetadata();
+      setTimeout(() => setRestoreStatus('idle'), 2000);
+    } catch {
+      setError('恢复失败，请确认备份文件未损坏');
+      setRestoreStatus('error');
+    } finally {
+      setIsLoading(false);
+      refreshStatus();
+    }
+  }, [loadMetadata, refreshStatus, restoreConflictResolution, restorePreview, restoreStrategy, showSuccessMessage]);
 
   return {
     isEnabled,
@@ -165,6 +199,14 @@ export const useBackupSettings = ({ logs }: UseBackupSettingsParams) => {
     isLoading,
     error,
     successMessage,
+    restorePreview,
+    restoreStatus,
+    restoreStrategy,
+    restoreConflictResolution,
+    onChangeRestoreStrategy: setRestoreStrategy,
+    onChangeRestoreConflictResolution: setRestoreConflictResolution,
+    onCancelRestorePreview: handleCancelRestorePreview,
+    onConfirmRestore: handleConfirmRestore,
     onToggleAutoBackup: handleToggleAutoBackup,
     onChangeDirectory: handleChangeDirectory,
     onReauthorize: handleReauthorize,

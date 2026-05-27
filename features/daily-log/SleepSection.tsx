@@ -101,16 +101,16 @@ const SleepSection: React.FC<SleepSectionProps> = ({ sleep, onChange, onEditNap,
   };
 
   return (
-    <div className={`bg-brand-card dark:bg-slate-900 rounded-card p-5 shadow-soft border ${timeError ? 'border-red-300 dark:border-red-900' : 'border-slate-100 dark:border-slate-800'} space-y-5 transition-colors`}>
+    <div className={`bg-surface-card rounded-card p-5 shadow-soft border ${timeError ? 'border-state-danger-text' : 'border-surface-border'} space-y-5 transition-colors`}>
       <div className="flex justify-between items-center">
-        <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center">
-          <div className="p-1.5 bg-blue-100 dark:bg-blue-900/30 rounded-lg mr-2 text-blue-600">
+        <h3 className="text-sm font-bold text-text-primary flex items-center">
+          <div className="p-1.5 bg-state-info-bg rounded-lg mr-2 text-state-info-text">
             <BedDouble size={16} />
           </div>
           睡眠周期
         </h3>
         {timeError && (
-          <span className="text-xs font-bold text-red-500 flex items-center animate-pulse">
+          <span className="text-xs font-bold text-state-danger-text flex items-center animate-pulse">
             <AlertCircle size={12} className="mr-1"/>
             {timeError}
           </span>
@@ -118,27 +118,27 @@ const SleepSection: React.FC<SleepSectionProps> = ({ sleep, onChange, onEditNap,
       </div>
 
       {showSmartTip && currentDate && (
-        <div className="p-3 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
+        <div className="p-3 bg-gradient-to-r from-state-info-bg to-accent-muted/10 rounded-xl border border-state-info-text/25">
           <div className="flex items-start gap-3">
-            <div className="p-1.5 bg-blue-100 dark:bg-blue-800 rounded-full flex-shrink-0">
-              <Sparkles size={14} className="text-blue-600 dark:text-blue-400" />
+            <div className="p-1.5 bg-state-info-bg rounded-full flex-shrink-0">
+              <Sparkles size={14} className="text-state-info-text" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-blue-800 dark:text-blue-300 mb-1">
+              <p className="text-xs font-medium text-state-info-text mb-1">
                 智能推荐
               </p>
-              <p className="text-xs text-blue-600 dark:text-blue-400 mb-2">
+              <p className="text-xs text-state-info-text/80 mb-2">
                 基于您的历史数据，为您推荐睡眠默认值
               </p>
               <button
                 onClick={handleApplySmartDefaults}
-                className="text-xs px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition-colors"
+                className="text-xs px-3 py-1.5 bg-state-info-text hover:bg-state-info-text/90 text-text-on-accent rounded-lg font-medium transition-colors"
               >
                 一键应用推荐
               </button>
               <button
                 onClick={() => setShowSmartTip(false)}
-                className="ml-2 text-xs px-2 py-1.5 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 transition-colors"
+                className="ml-2 text-xs px-2 py-1.5 text-state-info-text hover:text-text-primary transition-colors"
               >
                 忽略
               </button>
@@ -154,16 +154,16 @@ const SleepSection: React.FC<SleepSectionProps> = ({ sleep, onChange, onEditNap,
 
       <RangeSlider
         leftLabel="质量极差 (1)" rightLabel="睡得超棒 (5)"
-        min={1} max={5} colorClass="accent-blue-500"
+        min={1} max={5} colorClass="accent-accent"
         value={sleep.quality}
         onChange={(v: number) => onChange('quality', v)}
       />
 
       <div className="flex gap-2">
         {[
-          { key: 'naturalAwakening', label: '自然醒', icon: Leaf, color: 'text-green-600' },
-          { key: 'nocturnalEmission', label: '梦遗', icon: CloudDrizzle, color: 'text-blue-600' },
-          { key: 'withPartner', label: '同睡', icon: Heart, color: 'text-pink-600' },
+          { key: 'naturalAwakening', label: '自然醒', icon: Leaf, color: 'text-state-success-text' },
+          { key: 'nocturnalEmission', label: '梦遗', icon: CloudDrizzle, color: 'text-state-info-text' },
+          { key: 'withPartner', label: '同睡', icon: Heart, color: 'text-accent-vivid' },
         ].map((item) => (
           <button
             key={item.key}
@@ -171,19 +171,19 @@ const SleepSection: React.FC<SleepSectionProps> = ({ sleep, onChange, onEditNap,
             onClick={() => onChange(item.key as any, !(sleep as any)[item.key])}
             className={`flex-1 flex flex-col items-center justify-center py-2 px-1 rounded-xl border transition-all ${
               (sleep as any)[item.key]
-              ? 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 shadow-inner'
-              : 'bg-white dark:bg-slate-900 border-transparent hover:bg-slate-50'
+              ? 'bg-surface-muted border-surface-border shadow-inner'
+              : 'bg-surface-card border-transparent hover:bg-surface-muted'
             }`}
           >
-            <item.icon size={18} className={`mb-1 ${(sleep as any)[item.key] ? item.color : 'text-slate-400'}`}/>
-            <span className={`text-[10px] font-bold ${(sleep as any)[item.key] ? 'text-slate-700 dark:text-slate-300' : 'text-slate-400'}`}>{item.label}</span>
+            <item.icon size={18} className={`mb-1 ${(sleep as any)[item.key] ? item.color : 'text-text-muted'}`}/>
+            <span className={`text-[10px] font-bold ${(sleep as any)[item.key] ? 'text-text-secondary' : 'text-text-muted'}`}>{item.label}</span>
           </button>
         ))}
       </div>
 
-      <div className="bg-purple-50 dark:bg-purple-900/10 rounded-xl p-3 border border-purple-100 dark:border-purple-900/30">
+      <div className="bg-chart-tertiary/10 rounded-xl p-3 border border-chart-tertiary/25">
         <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center text-purple-700 dark:text-purple-300 font-bold text-xs uppercase tracking-wider">
+          <div className="flex items-center text-chart-tertiary font-bold text-xs uppercase tracking-wider">
             <Sparkles size={14} className="mr-1.5"/> 梦境记录
           </div>
           <div className="flex items-center">
@@ -196,7 +196,7 @@ const SleepSection: React.FC<SleepSectionProps> = ({ sleep, onChange, onEditNap,
               <button
                 key={t.value}
                 onClick={() => toggleDreamType(t.value)}
-                className={`text-[10px] px-2.5 py-1.5 rounded-lg border font-medium transition-colors ${sleep.dreamTypes?.includes(t.value) ? 'bg-purple-500 text-white border-purple-600 shadow-sm' : 'bg-white dark:bg-slate-800 border-purple-200 dark:border-purple-800 text-slate-500'}`}
+                className={`text-[10px] px-2.5 py-1.5 rounded-lg border font-medium transition-colors ${sleep.dreamTypes?.includes(t.value) ? 'bg-chart-tertiary text-text-on-accent border-chart-tertiary shadow-soft' : 'bg-surface-card border-chart-tertiary/25 text-text-secondary'}`}
               >
                 {t.label}
               </button>
@@ -206,24 +206,24 @@ const SleepSection: React.FC<SleepSectionProps> = ({ sleep, onChange, onEditNap,
       </div>
 
       <div className="space-y-2">
-        <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block pl-1">睡眠环境</label>
+        <label className="text-xs font-bold text-text-muted uppercase tracking-wider block pl-1">睡眠环境</label>
         <div className="flex gap-2">
-          <div className="flex-1 bg-slate-50 dark:bg-slate-800 p-2 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center gap-2">
-            <MapPin size={14} className="text-slate-400"/>
+          <div className="flex-1 bg-surface-muted p-2 rounded-xl border border-surface-border flex items-center gap-2">
+            <MapPin size={14} className="text-text-muted"/>
             <select
               value={sleep.environment?.location || 'home'}
               onChange={e => updateEnv('location', e.target.value)}
-              className="bg-transparent text-xs w-full outline-none text-brand-text dark:text-slate-300 appearance-none font-medium"
+              className="bg-transparent text-xs w-full outline-none text-text-primary appearance-none font-medium"
             >
               {LOCATIONS.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
             </select>
           </div>
-          <div className="flex-1 bg-slate-50 dark:bg-slate-800 p-2 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center gap-2">
-            <Thermometer size={14} className="text-slate-400"/>
+          <div className="flex-1 bg-surface-muted p-2 rounded-xl border border-surface-border flex items-center gap-2">
+            <Thermometer size={14} className="text-text-muted"/>
             <select
               value={sleep.environment?.temperature || 'comfortable'}
               onChange={e => updateEnv('temperature', e.target.value)}
-              className="bg-transparent text-xs w-full outline-none text-brand-text dark:text-slate-300 appearance-none font-medium"
+              className="bg-transparent text-xs w-full outline-none text-text-primary appearance-none font-medium"
             >
               {TEMPS.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
             </select>
@@ -231,29 +231,29 @@ const SleepSection: React.FC<SleepSectionProps> = ({ sleep, onChange, onEditNap,
         </div>
       </div>
 
-      <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+      <div className="pt-2 border-t border-surface-border">
         <div className="flex justify-between items-center mb-3">
-          <h4 className="text-xs font-bold text-slate-400 uppercase flex items-center"><CloudSun size={14} className="mr-1"/>午休</h4>
-          <button type="button" onClick={onAddNap} className="text-[10px] bg-orange-50 text-orange-600 px-2 py-1 rounded-lg font-bold">+ 添加</button>
+          <h4 className="text-xs font-bold text-text-muted uppercase flex items-center"><CloudSun size={14} className="mr-1"/>午休</h4>
+          <button type="button" onClick={onAddNap} className="text-[10px] bg-state-warning-bg text-state-warning-text px-2 py-1 rounded-lg font-bold">+ 添加</button>
         </div>
         <div className="space-y-2">
           {sleep.naps?.map(r => (
-            <div key={r.id} className="bg-orange-50/50 dark:bg-orange-900/20 border border-orange-100 dark:border-orange-900/30 p-2.5 rounded-xl flex justify-between items-center text-sm">
-              <span className="font-bold text-orange-700 dark:text-orange-300 flex items-center">
+            <div key={r.id} className="bg-state-warning-bg/50 border border-state-warning-text/25 p-2.5 rounded-xl flex justify-between items-center text-sm">
+              <span className="font-bold text-state-warning-text flex items-center">
                 <Clock size={14} className="mr-2 opacity-70"/>
                 {r.startTime}
                 <span className="mx-1 opacity-40">-</span>
                 {r.endTime || '...'}
                 <span className="text-xs opacity-60 ml-2 font-normal">({r.ongoing ? '进行中' : `${r.duration}m`})</span>
               </span>
-              <div className="flex gap-2 text-orange-400">
-                <Edit2 size={14} className="cursor-pointer hover:text-orange-600" onClick={() => onEditNap(r)}/>
-                <Trash2 size={14} className="cursor-pointer hover:text-orange-600" onClick={() => onDeleteNap(r.id)}/>
+              <div className="flex gap-2 text-state-warning-text/75">
+                <Edit2 size={14} className="cursor-pointer hover:text-state-warning-text" onClick={() => onEditNap(r)}/>
+                <Trash2 size={14} className="cursor-pointer hover:text-state-warning-text" onClick={() => onDeleteNap(r.id)}/>
               </div>
             </div>
           ))}
           {(!sleep.naps || sleep.naps.length === 0) && (
-            <button type="button" onClick={onAddNap} className="w-full h-12 border-2 border-dashed border-slate-200 rounded-xl flex items-center justify-center text-slate-400 text-xs font-medium hover:border-orange-300 hover:text-orange-500 transition-colors">
+            <button type="button" onClick={onAddNap} className="w-full h-12 border-2 border-dashed border-surface-border rounded-xl flex items-center justify-center text-text-muted text-xs font-medium hover:border-state-warning-text/40 hover:text-state-warning-text transition-colors">
               暂无记录，点击添加
             </button>
           )}

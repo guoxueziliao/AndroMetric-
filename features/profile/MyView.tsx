@@ -1,13 +1,24 @@
 
 import React, { useRef, useState, useMemo, lazy, Suspense } from 'react';
-import { Settings, AlertTriangle, Archive, Database, History, Trash2, Smartphone, Moon, Sun, Share2, Pencil, FolderInput, Stethoscope, CheckCircle, Wrench, RotateCcw, ShieldCheck, ChevronRight, AlertCircle, ArrowRight, Tags, FlaskConical, Fingerprint, LockKeyhole } from 'lucide-react';
-import type { AppLockSettings, AppSettings, LogEntry, TagEntry, TagType } from '../../domain';
+import { Settings, AlertTriangle, Archive, Database, Trash2, Smartphone, Moon, Sun, Share2, Pencil, FolderInput, Stethoscope, CheckCircle, Wrench, RotateCcw, ShieldCheck, ChevronRight, AlertCircle, ArrowRight, Tags, FlaskConical, Fingerprint, LockKeyhole, FileSpreadsheet, FileText, Info } from 'lucide-react';
+import type { AppLockSettings, AppSettings, AutoBackupIntervalHours, AutoSafetySnapshotLimit, AutoSafetySnapshotSizeLimitMB, LogEntry, TagEntry, TagType } from '../../domain';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
 import { Modal } from '../../shared/ui';
 import { canUseWebAuthn, createWebAuthnCredential } from '../../shared/lib';
+import { APP_VERSION } from '../../app/appConfig';
+import {
+  AUTO_BACKUP_INTERVAL_HOUR_OPTIONS,
+  AUTO_SAFETY_SNAPSHOT_LIMIT_OPTIONS,
+  AUTO_SAFETY_SNAPSHOT_SIZE_LIMIT_OPTIONS_MB,
+  normalizeBackupRetention,
+  normalizeBackupSchedule
+} from '../../core/storage';
 import { InstallButton } from '../pwa';
 import PinSetupModal from './PinSetupModal';
 import { useProfileMaintenance } from './model/useProfileMaintenance';
+import ImportPreviewModal from './ui/ImportPreviewModal';
+import AboutModal from './AboutModal';
+import ExportOptionsModal from './ExportOptionsModal';
 
 const TagManager = lazy(() => import('../tags').then((module) => ({ default: module.TagManager })));
 const BackupSettings = lazy(() => import('../backup').then((module) => ({ default: module.BackupSettings })));
@@ -34,7 +45,6 @@ interface MyViewActions {
   onAddOrUpdateTag: (tag: TagEntry) => Promise<void>;
   onDeleteTag: (name: string, category: TagType) => Promise<void>;
   onUpdateSettings: (newSettings: AppSettings) => void;
-  onShowVersionHistory: () => void;
   onNavigateToLog: (date: string) => void;
 }
 
@@ -44,7 +54,7 @@ interface MyViewProps {
 }
 
 const StatBox = ({ label, value, colorClass, bgClass }: { label: string, value: number | string, colorClass: string, bgClass: string }) => (
-    <div className={`aspect-square rounded-3xl p-4 flex flex-col justify-center items-center shadow-sm border border-transparent dark:border-slate-800 ${bgClass}`}>
+    <div className={`aspect-square rounded-3xl p-4 flex flex-col justify-center items-center shadow-sm border border-transparent ${bgClass}`}>
         <span className={`text-xs font-bold opacity-70 mb-1 ${colorClass}`}>{label}</span>
         <span className={`text-3xl font-black ${colorClass}`}>{value}</span>
     </div>
@@ -62,7 +72,6 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
     onAddOrUpdateTag,
     onDeleteTag,
     onUpdateSettings,
-    onShowVersionHistory,
     onNavigateToLog
   } = actions;
 
@@ -74,6 +83,7 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
   const [biometricBusy, setBiometricBusy] = useState(false);
   const [isTagManagerOpen, setIsTagManagerOpen] = useState(false);
   const [isSimulationLabOpen, setIsSimulationLabOpen] = useState(false);
+  const [isAboutOpen, setIsAboutOpen] = useState(false);
   const isDevMode = typeof window !== 'undefined' && window.localStorage?.getItem('devMode') === '1';
   const [userName, setUserName] = useLocalStorage('userName', 'User');
   const [isEditingName, setIsEditingName] = useState(false);
@@ -83,29 +93,47 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
   const [isClearDataModalOpen, setIsClearDataModalOpen] = useState(false);
   const [clearDataConfirmText, setClearDataConfirmText] = useState('');
   const canConfirmClearData = clearDataConfirmText === '删除';
+  const backupRetention = normalizeBackupRetention(settings.backupRetention);
+  const backupSchedule = normalizeBackupSchedule(settings.backupSchedule);
 
   const {
     snapshots,
     dbMeta,
     healthReport,
     isRepairing,
+    isExportOptionsOpen,
+    exportOptions,
+    exportSourceCounts,
+    exportFilteredCounts,
+    exportTagOptions,
+    isExporting,
+    isEncryptedExport,
     importStatus,
     importPreview,
     importStrategy,
+    importConflictResolution,
     snapshotFeedback,
     canUseFileSystem,
     onRunHealthCheck,
     onRepairData,
     onExportClick,
+    onMarkdownExportClick,
+    onCsvExportClick,
     onEncryptedExportClick,
+    onChangeExportOptions,
+    onCloseExportOptions,
+    onConfirmExport,
     onFileSystemBackup,
     onCreateSnapshot,
+    onChangeBackupRetention,
+    onChangeBackupSchedule,
     onRestoreSnapshot,
     onDeleteSnapshot,
     onFileChange,
     onCancelImportPreview,
     onConfirmImport,
     onChangeImportStrategy,
+    onChangeImportConflictResolution,
     backupMetadata,
     backupStatus,
     onClearAllData,
@@ -196,21 +224,6 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
       onNavigateToLog(date);
   };
 
-  const formatImportDate = (value?: string) => {
-    if (!value) return '未知';
-    const time = new Date(value).getTime();
-    if (Number.isNaN(time)) return value;
-    return new Date(time).toLocaleString('zh-CN');
-  };
-
-  const importPreviewRows = importPreview ? [
-    ['日志', importPreview.counts.logs],
-    ['伴侣', importPreview.counts.partners],
-    ['标签', importPreview.counts.tags],
-    ['周期事件', importPreview.counts.cycleEvents],
-    ['怀孕事件', importPreview.counts.pregnancyEvents]
-  ] as const : [];
-
   const formatRelativeDays = (timestamp: number): string => {
     const days = Math.floor((Date.now() - timestamp) / (1000 * 60 * 60 * 24));
     if (days <= 0) return '今天';
@@ -218,6 +231,14 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
     if (days < 30) return `${days} 天前`;
     if (days < 365) return `${Math.floor(days / 30)} 月前`;
     return `${Math.floor(days / 365)} 年前`;
+  };
+
+  const formatRelativeHours = (timestamp: number): string => {
+    if (!timestamp) return '从未';
+    const hours = Math.floor((Date.now() - timestamp) / (1000 * 60 * 60));
+    if (hours <= 0) return '刚刚';
+    if (hours < 24) return `${hours} 小时前`;
+    return formatRelativeDays(timestamp);
   };
 
   const ecosystemHints: string[] = (() => {
@@ -235,20 +256,20 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
   return (
     <>
       <div className="space-y-6">
-        <div className="text-center pt-4 pb-2"><h1 className="text-2xl font-bold text-brand-text dark:text-slate-100 tracking-tight">留在自己空间的记录</h1></div>
+        <div className="text-center pt-4 pb-2"><h1 className="text-2xl font-bold text-text-primary  tracking-tight">留在自己空间的记录</h1></div>
         
         {/* User Card */}
-        <div className="bg-gradient-to-br from-palette-ice to-palette-pink dark:from-slate-800 dark:to-slate-900 rounded-[2rem] p-6 shadow-md relative overflow-hidden text-brand-text dark:text-white">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-white/40 rounded-full -translate-y-1/2 translate-x-1/3 blur-2xl"></div>
+        <div className="bg-gradient-to-br from-surface-muted to-accent-vivid dark:from-surface-muted dark:to-surface-card rounded-[2rem] p-6 shadow-md relative overflow-hidden text-text-primary dark:text-text-on-accent">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-surface-card/40 rounded-full -translate-y-1/2 translate-x-1/3 blur-2xl"></div>
             <div className="relative z-10 flex items-start justify-between">
                 <div className="flex items-center space-x-4">
-                    <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center text-3xl shadow-sm">
+                    <div className="w-16 h-16 bg-surface-card rounded-full flex items-center justify-center text-3xl shadow-sm">
                         🧐
                     </div>
                     <div>
                         <div className="flex items-center space-x-2">
                             {isEditingName ? (
-                                <input autoFocus value={tempName} onChange={e => setTempName(e.target.value)} onBlur={() => {setUserName(tempName); setIsEditingName(false)}} onKeyDown={e => e.key === 'Enter' && (e.target as HTMLInputElement).blur()} className="bg-transparent border-b border-brand-text/50 font-bold text-xl w-24 outline-none"/>
+                                <input autoFocus value={tempName} onChange={e => setTempName(e.target.value)} onBlur={() => {setUserName(tempName); setIsEditingName(false)}} onKeyDown={e => e.key === 'Enter' && (e.target as HTMLInputElement).blur()} className="bg-transparent border-b border-text-primary/50 font-bold text-xl w-24 outline-none"/>
                             ) : (
                                 <h2 className="text-xl font-bold" onClick={() => setIsEditingName(true)}>{userName}</h2>
                             )}
@@ -257,45 +278,45 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
                         <p className="text-sm opacity-70">已坚持记录 {stats.totalDays} 天</p>
                     </div>
                 </div>
-                <button onClick={() => setIsSettingsOpen(true)} className="p-2 bg-white/30 hover:bg-white/50 rounded-full transition-colors"><Settings size={20}/></button>
+                <button onClick={() => setIsSettingsOpen(true)} className="p-2 bg-surface-card/30 hover:bg-surface-card/50 rounded-full transition-colors"><Settings size={20}/></button>
             </div>
         </div>
 
         {/* Stats Grid */}
         <div className="grid grid-cols-3 gap-3">
-            <StatBox label="记录" value={stats.totalDays} colorClass="text-slate-600 dark:text-slate-400" bgClass="bg-slate-100 dark:bg-slate-900"/>
-            <StatBox label="晨勃" value={stats.morningWood} colorClass="text-brand-accent dark:text-blue-400" bgClass="bg-blue-50 dark:bg-blue-900/20"/>
-            <StatBox label="性生活" value={stats.sex} colorClass="text-pink-500 dark:text-pink-400" bgClass="bg-pink-50 dark:bg-pink-900/20"/>
-            <StatBox label="自慰" value={stats.masturbation} colorClass="text-indigo-500 dark:text-indigo-400" bgClass="bg-indigo-50 dark:bg-indigo-900/20"/>
-            <StatBox label="运动" value={stats.exercise} colorClass="text-orange-500 dark:text-orange-400" bgClass="bg-orange-50 dark:bg-orange-900/20"/>
-            <StatBox label="好梦" value={stats.goodSleep} colorClass="text-purple-500 dark:text-purple-400" bgClass="bg-purple-50 dark:bg-purple-900/20"/>
+            <StatBox label="记录" value={stats.totalDays} colorClass="text-text-secondary " bgClass="bg-surface-muted "/>
+            <StatBox label="晨勃" value={stats.morningWood} colorClass="text-accent" bgClass="bg-state-info-bg"/>
+            <StatBox label="性生活" value={stats.sex} colorClass="text-accent-vivid" bgClass="bg-surface-muted"/>
+            <StatBox label="自慰" value={stats.masturbation} colorClass="text-chart-tertiary" bgClass="bg-surface-muted"/>
+            <StatBox label="运动" value={stats.exercise} colorClass="text-state-warning-text" bgClass="bg-state-warning-bg"/>
+            <StatBox label="好梦" value={stats.goodSleep} colorClass="text-chart-quaternary" bgClass="bg-surface-muted"/>
         </div>
 
         {/* Menu Items */}
         <div className="space-y-3">
-            <button onClick={() => setIsSettingsOpen(true)} className="w-full bg-white dark:bg-slate-900 p-4 rounded-2xl flex items-center justify-between border border-slate-100 dark:border-slate-800 shadow-sm hover:scale-[1.01] transition-transform">
+            <button onClick={() => setIsSettingsOpen(true)} className="w-full bg-surface-card  p-4 rounded-2xl flex items-center justify-between border border-surface-border  shadow-sm hover:scale-[1.01] transition-transform">
                 <div className="flex items-center space-x-3">
-                    <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-xl"><Database size={20}/></div>
+                    <div className="p-2 bg-state-success-bg text-state-success-text rounded-xl"><Database size={20}/></div>
                     <div className="text-left">
-                        <h3 className="font-bold text-brand-text dark:text-slate-200">设置与数据</h3>
-                        <p className="text-xs text-brand-muted dark:text-slate-400">外观 / 隐私 / 体检 / 备份 / 导入导出</p>
+                        <h3 className="font-bold text-text-primary ">设置与数据</h3>
+                        <p className="text-xs text-text-muted ">外观 / 隐私 / 体检 / 备份 / 导入导出</p>
                     </div>
                 </div>
-                <div className="flex items-center text-slate-400 text-xs">
-                    {isBackedUp ? <span className="flex items-center text-green-500 mr-2"><ShieldCheck size={12} className="mr-1"/>已备份</span> : <span className="flex items-center text-orange-500 mr-2"><AlertTriangle size={12} className="mr-1"/>未备份</span>}
+                <div className="flex items-center text-text-muted text-xs">
+                    {isBackedUp ? <span className="flex items-center text-state-success-text mr-2"><ShieldCheck size={12} className="mr-1"/>已备份</span> : <span className="flex items-center text-state-warning-text mr-2"><AlertTriangle size={12} className="mr-1"/>未备份</span>}
                     <ChevronRight size={18}/>
                 </div>
             </button>
 
-            <button onClick={onShowVersionHistory} className="w-full bg-white dark:bg-slate-900 p-4 rounded-2xl flex items-center justify-between border border-slate-100 dark:border-slate-800 shadow-sm hover:scale-[1.01] transition-transform">
+            <button onClick={() => setIsAboutOpen(true)} className="w-full bg-surface-card  p-4 rounded-2xl flex items-center justify-between border border-surface-border  shadow-sm hover:scale-[1.01] transition-transform">
                 <div className="flex items-center space-x-3">
-                    <div className="p-2 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-xl"><History size={20}/></div>
+                    <div className="p-2 bg-state-info-bg text-state-info-text rounded-xl"><Info size={20}/></div>
                     <div className="text-left">
-                        <h3 className="font-bold text-brand-text dark:text-slate-200">版本记录</h3>
-                        <p className="text-xs text-brand-muted dark:text-slate-400">查看更新与新功能 (v{settings.version})</p>
+                        <h3 className="font-bold text-text-primary ">关于</h3>
+                        <p className="text-xs text-text-muted ">版本 / 数据版本 / 更新历史 (v{APP_VERSION})</p>
                     </div>
                 </div>
-                <ChevronRight size={18} className="text-slate-400"/>
+                <ChevronRight size={18} className="text-text-muted"/>
             </button>
 
 <InstallButton className="w-full" />
@@ -308,17 +329,17 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
               
               {/* 1. Theme Settings */}
               <section>
-                  <h3 className="text-xs font-bold text-brand-muted uppercase tracking-wider mb-3">外观</h3>
-                  <div className="bg-slate-100 dark:bg-slate-800 p-1 rounded-xl flex">
-                      {[
-                          { id: 'system', icon: Smartphone, label: '跟随系统' },
-                          { id: 'light', icon: Sun, label: '浅色' },
-                          { id: 'dark', icon: Moon, label: '深色' }
-                      ].map(opt => (
-                          <button
-                            key={opt.id}
-                            onClick={() => onUpdateSettings({ ...settings, theme: opt.id as any })}
-                            className={`flex-1 py-2 flex items-center justify-center text-xs font-bold rounded-lg transition-all ${settings.theme === opt.id ? 'bg-white dark:bg-slate-700 text-brand-accent shadow-sm' : 'text-slate-500'}`}
+                  <h3 className="text-xs font-bold text-text-muted uppercase tracking-wider mb-3">外观</h3>
+                  <div className="bg-surface-muted  p-1 rounded-xl flex">
+	                      {([
+	                          { id: 'system', icon: Smartphone, label: '跟随系统' },
+	                          { id: 'light', icon: Sun, label: '浅色' },
+	                          { id: 'dark', icon: Moon, label: '深色' }
+	                      ] satisfies Array<{ id: AppSettings['theme']; icon: typeof Smartphone; label: string }>).map(opt => (
+	                          <button
+	                            key={opt.id}
+	                            onClick={() => onUpdateSettings({ ...settings, theme: opt.id })}
+                            className={`flex-1 py-2 flex items-center justify-center text-xs font-bold rounded-lg transition-all ${settings.theme === opt.id ? 'bg-surface-card  text-accent shadow-sm' : 'text-text-muted'}`}
                           >
                               <opt.icon size={14} className="mr-1.5"/>{opt.label}
                           </button>
@@ -328,12 +349,12 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
 
               {/* 1b. Privacy Mode */}
               <section>
-                  <h3 className="text-xs font-bold text-brand-muted uppercase tracking-wider mb-3">隐私</h3>
+                  <h3 className="text-xs font-bold text-text-muted uppercase tracking-wider mb-3">隐私</h3>
                   <div className="space-y-3">
-                    <label className="flex items-center justify-between p-3 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl cursor-pointer">
+                    <label className="flex items-center justify-between p-3 bg-surface-card  border border-surface-border  rounded-2xl cursor-pointer">
                         <div>
-                            <p className="text-sm font-bold text-brand-text dark:text-slate-200">隐私模糊</p>
-                            <p className="text-xs text-brand-muted dark:text-slate-400 mt-0.5">界面整体模糊 + 灰阶,适合在他人附近浏览</p>
+                            <p className="text-sm font-bold text-text-primary ">隐私模糊</p>
+                            <p className="text-xs text-text-muted  mt-0.5">界面整体模糊 + 灰阶,适合在他人附近浏览</p>
                         </div>
                         <span className="relative inline-flex items-center">
                             <input
@@ -342,38 +363,38 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
                                 onChange={(e) => onUpdateSettings({ ...settings, privacyMode: e.target.checked })}
                                 className="sr-only peer"
                             />
-                            <span className="w-11 h-6 bg-slate-200 dark:bg-slate-700 rounded-full peer peer-checked:bg-brand-accent transition-colors"></span>
-                            <span className="absolute left-0.5 top-0.5 w-5 h-5 bg-white rounded-full transition-transform peer-checked:translate-x-5"></span>
+                            <span className="w-11 h-6 bg-surface-border  rounded-full peer peer-checked:bg-accent transition-colors"></span>
+                            <span className="absolute left-0.5 top-0.5 w-5 h-5 bg-surface-card rounded-full transition-transform peer-checked:translate-x-5"></span>
                         </span>
                     </label>
 
-                    <div className="p-3 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl space-y-3">
+                    <div className="p-3 bg-surface-card  border border-surface-border  rounded-2xl space-y-3">
                       <div className="flex items-center justify-between gap-3">
                         <div className="flex items-start gap-3">
-                          <div className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-brand-accent"><LockKeyhole size={18} /></div>
+                          <div className="p-2 rounded-xl bg-surface-muted  text-accent"><LockKeyhole size={18} /></div>
                           <div>
-                            <p className="text-sm font-bold text-brand-text dark:text-slate-200">应用锁</p>
-                            <p className="text-xs text-brand-muted dark:text-slate-400 mt-0.5">离开一段时间后用 4 位 PIN 解锁</p>
+                            <p className="text-sm font-bold text-text-primary ">应用锁</p>
+                            <p className="text-xs text-text-muted  mt-0.5">离开一段时间后用 4 位 PIN 解锁</p>
                           </div>
                         </div>
                         <button
                           type="button"
                           onClick={() => setPinModalMode(settings.appLock?.enabled ? 'disable' : 'enable')}
-                          className={`px-3 py-2 rounded-xl text-xs font-black transition-colors ${settings.appLock?.enabled ? 'bg-red-50 text-red-500 dark:bg-red-900/20 dark:text-red-400' : 'bg-brand-accent text-white'}`}
+                          className={`px-3 py-2 rounded-xl text-xs font-black transition-colors ${settings.appLock?.enabled ? 'bg-state-danger-bg text-state-danger-text' : 'bg-accent text-text-on-accent'}`}
                         >
                           {settings.appLock?.enabled ? '关闭' : '开启'}
                         </button>
                       </div>
                       {settings.appLock?.enabled && (
                         <>
-                          <div className="flex items-center justify-between gap-3 border-t border-slate-100 dark:border-slate-800 pt-3">
-                            <button type="button" onClick={() => setPinModalMode('change')} className="text-xs font-black text-brand-accent">修改 PIN</button>
-                            <label className="flex items-center gap-2 text-xs font-bold text-brand-muted dark:text-slate-400">
+                          <div className="flex items-center justify-between gap-3 border-t border-surface-border  pt-3">
+                            <button type="button" onClick={() => setPinModalMode('change')} className="text-xs font-black text-accent">修改 PIN</button>
+                            <label className="flex items-center gap-2 text-xs font-bold text-text-muted ">
                               自动锁定
                               <select
                                 value={settings.appLock.autoLockMinutes}
                                 onChange={(e) => updateAppLock({ ...settings.appLock!, autoLockMinutes: Number(e.target.value) })}
-                                className="rounded-xl border border-slate-100 bg-slate-50 px-2 py-1 text-xs font-bold text-brand-text outline-none dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200"
+                                className="rounded-xl border border-surface-border bg-surface-muted px-2 py-1 text-xs font-bold text-text-primary outline-none   "
                               >
                                 <option value={1}>1 分钟</option>
                                 <option value={5}>5 分钟</option>
@@ -382,9 +403,9 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
                               </select>
                             </label>
                           </div>
-                          <div className="flex items-center justify-between gap-3 border-t border-slate-100 dark:border-slate-800 pt-3">
-                            <div className="flex items-center gap-2 text-xs font-bold text-brand-muted dark:text-slate-400">
-                              <Fingerprint size={16} className="text-brand-accent" />
+                          <div className="flex items-center justify-between gap-3 border-t border-surface-border  pt-3">
+                            <div className="flex items-center gap-2 text-xs font-bold text-text-muted ">
+                              <Fingerprint size={16} className="text-accent" />
                               生物识别
                             </div>
                             {canUseWebAuthn() ? (
@@ -392,15 +413,15 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
                                 type="button"
                                 onClick={settings.appLock.webAuthnCredentialId ? handleDisableBiometric : handleEnableBiometric}
                                 disabled={biometricBusy}
-                                className="rounded-xl bg-slate-100 px-3 py-2 text-xs font-black text-brand-text transition-colors disabled:opacity-50 dark:bg-slate-800 dark:text-slate-200"
+                                className="rounded-xl bg-surface-muted px-3 py-2 text-xs font-black text-text-primary transition-colors disabled:opacity-50  "
                               >
                                 {biometricBusy ? '处理中...' : settings.appLock.webAuthnCredentialId ? '关闭' : '启用'}
                               </button>
                             ) : (
-                              <span className="text-[11px] font-bold text-slate-400">当前环境不支持</span>
+                              <span className="text-[11px] font-bold text-text-muted">当前环境不支持</span>
                             )}
                           </div>
-                          {biometricStatus && <p className="text-[11px] font-bold text-slate-400">{biometricStatus}</p>}
+                          {biometricStatus && <p className="text-[11px] font-bold text-text-muted">{biometricStatus}</p>}
                         </>
                       )}
                     </div>
@@ -409,49 +430,49 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
 
               {/* 2. Health Check & Repair */}
               <section>
-                  <h3 className="text-xs font-bold text-brand-muted uppercase tracking-wider mb-3 flex items-center">
-                      <Stethoscope size={14} className="mr-1.5 text-green-500"/> 数据健康 (v{dbMeta.dataVersion})
+                  <h3 className="text-xs font-bold text-text-muted uppercase tracking-wider mb-3 flex items-center">
+                      <Stethoscope size={14} className="mr-1.5 text-state-success-text"/> 数据健康 (v{dbMeta.dataVersion})
                   </h3>
-                  <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl p-4 shadow-sm">
+                  <div className="bg-surface-card  border border-surface-border  rounded-2xl p-4 shadow-sm">
                       {!healthReport ? (
                           <div className="text-center py-2">
-                              <p className="text-sm text-brand-muted mb-3">定期检查数据结构，确保记录完整可用。</p>
-                              <button onClick={onRunHealthCheck} className="px-4 py-2 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 font-bold rounded-xl text-sm hover:bg-green-100 dark:hover:bg-green-900/40 transition-colors">
+                              <p className="text-sm text-text-muted mb-3">定期检查数据结构，确保记录完整可用。</p>
+                              <button onClick={onRunHealthCheck} className="px-4 py-2 bg-state-success-bg text-state-success-text font-bold rounded-xl text-sm hover:bg-state-success-bg/80 transition-colors">
                                   开始体检
                               </button>
                           </div>
                       ) : (
                           <div className="space-y-4 animate-in fade-in">
-                              <div className="flex justify-between items-center pb-2 border-b border-slate-100 dark:border-slate-800">
+                              <div className="flex justify-between items-center pb-2 border-b border-surface-border ">
                                   <span className="text-sm font-medium">综合评分</span>
-                                  <span className={`text-xl font-black ${healthReport.score >= 90 ? 'text-green-500' : healthReport.score >= 60 ? 'text-orange-500' : 'text-red-500'}`}>{healthReport.score}</span>
+                                  <span className={`text-xl font-black ${healthReport.score >= 90 ? 'text-state-success-text' : healthReport.score >= 60 ? 'text-state-warning-text' : 'text-state-danger-text'}`}>{healthReport.score}</span>
                               </div>
-                              <div className="text-xs space-y-1 text-slate-500">
+                              <div className="text-xs space-y-1 text-text-muted">
                                   <div className="flex justify-between"><span>总记录数</span><span>{healthReport.totalRecords}</span></div>
-                                  <div className="flex justify-between"><span>发现问题</span><span className={healthReport.issues.length > 0 ? 'text-red-500 font-bold' : 'text-green-500'}>{healthReport.issues.length}</span></div>
+                                  <div className="flex justify-between"><span>发现问题</span><span className={healthReport.issues.length > 0 ? 'text-state-danger-text font-bold' : 'text-state-success-text'}>{healthReport.issues.length}</span></div>
                               </div>
                               <div className="grid grid-cols-3 gap-2 text-center">
-                                  <div className="rounded-xl bg-slate-50 dark:bg-slate-950 p-2 border border-slate-200 dark:border-slate-800">
-                                      <div className="text-[10px] text-slate-400 font-bold">结构</div>
-                                      <div className="text-sm font-black text-slate-700 dark:text-slate-200">{healthReport.scores.structure}</div>
+                                  <div className="rounded-xl bg-surface-muted  p-2 border border-surface-border ">
+                                      <div className="text-[10px] text-text-muted font-bold">结构</div>
+                                      <div className="text-sm font-black text-text-secondary ">{healthReport.scores.structure}</div>
                                   </div>
-                                  <div className="rounded-xl bg-slate-50 dark:bg-slate-950 p-2 border border-slate-200 dark:border-slate-800">
-                                      <div className="text-[10px] text-slate-400 font-bold">完整度</div>
-                                      <div className="text-sm font-black text-slate-700 dark:text-slate-200">{healthReport.scores.completeness}</div>
+                                  <div className="rounded-xl bg-surface-muted  p-2 border border-surface-border ">
+                                      <div className="text-[10px] text-text-muted font-bold">完整度</div>
+                                      <div className="text-sm font-black text-text-secondary ">{healthReport.scores.completeness}</div>
                                   </div>
-                                  <div className="rounded-xl bg-slate-50 dark:bg-slate-950 p-2 border border-slate-200 dark:border-slate-800">
-                                      <div className="text-[10px] text-slate-400 font-bold">分析可用度</div>
-                                      <div className="text-sm font-black text-slate-700 dark:text-slate-200">{healthReport.scores.analytics}</div>
+                                  <div className="rounded-xl bg-surface-muted  p-2 border border-surface-border ">
+                                      <div className="text-[10px] text-text-muted font-bold">分析可用度</div>
+                                      <div className="text-sm font-black text-text-secondary ">{healthReport.scores.analytics}</div>
                                   </div>
                               </div>
-                              <div className="text-xs space-y-1 text-slate-500 rounded-xl bg-slate-50 dark:bg-slate-950 p-3 border border-slate-200 dark:border-slate-800">
+                              <div className="text-xs space-y-1 text-text-muted rounded-xl bg-surface-muted  p-3 border border-surface-border ">
                                   <div className="flex justify-between"><span>已追踪字段</span><span>{healthReport.stats.completeness.trackedFields}</span></div>
                                   <div className="flex justify-between"><span>有效字段</span><span>{healthReport.stats.completeness.recordedFields}</span></div>
                                   <div className="flex justify-between"><span>缺失/默认字段</span><span>{healthReport.stats.completeness.missingFields}</span></div>
                               </div>
-                              <div className="rounded-xl bg-slate-50 dark:bg-slate-950 p-3 border border-slate-200 dark:border-slate-800">
-                                  <h4 className="text-xs font-bold text-slate-500 mb-2">分析样本</h4>
-                                  <div className="space-y-1 text-xs text-slate-500">
+                              <div className="rounded-xl bg-surface-muted  p-3 border border-surface-border ">
+                                  <h4 className="text-xs font-bold text-text-muted mb-2">分析样本</h4>
+                                  <div className="space-y-1 text-xs text-text-muted">
                                       {Object.entries(healthReport.stats.analyticsAvailability).map(([key, item]) => (
                                           <div key={key} className="flex justify-between">
                                               <span>{ANALYTICS_LABELS[key] || key}</span>
@@ -463,9 +484,9 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
                               
                               {/* Display Issues List */}
                               {healthReport.issues.length > 0 && (
-                                  <div className="mt-2 bg-slate-50 dark:bg-slate-950 rounded-xl p-3 border border-slate-200 dark:border-slate-800">
-                                      <h4 className="text-xs font-bold text-slate-500 mb-2 flex items-center">
-                                          <AlertCircle size={12} className="mr-1 text-red-500"/> 
+                                  <div className="mt-2 bg-surface-muted  rounded-xl p-3 border border-surface-border ">
+                                      <h4 className="text-xs font-bold text-text-muted mb-2 flex items-center">
+                                          <AlertCircle size={12} className="mr-1 text-state-danger-text"/>
                                           问题详情 ({healthReport.issues.length})
                                       </h4>
                                       <div className="max-h-60 overflow-y-auto custom-scrollbar space-y-2">
@@ -473,22 +494,22 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
                                               <div 
                                                 key={issue.id} 
                                                 onClick={() => handleJumpToIssue(issue.date)}
-                                                className="bg-white dark:bg-slate-900 p-3 rounded-lg border border-slate-100 dark:border-slate-800 text-xs flex flex-col gap-1.5 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors group"
+                                                className="bg-surface-card  p-3 rounded-lg border border-surface-border  text-xs flex flex-col gap-1.5 cursor-pointer hover:bg-surface-muted dark:hover:bg-surface-muted transition-colors group"
                                               >
                                                   <div className="flex justify-between items-center">
                                                       <div className="flex items-center gap-2">
-                                                          <span className="font-bold text-brand-text dark:text-slate-200 font-mono bg-slate-100 dark:bg-slate-800 px-1.5 rounded text-[10px]">{issue.date}</span>
+                                                          <span className="font-bold text-text-primary  font-mono bg-surface-muted  px-1.5 rounded text-[10px]">{issue.date}</span>
                                                           <span className={`text-[10px] uppercase font-bold px-1.5 rounded ${
-                                                              issue.severity === 'high' ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400' : 
-                                                              issue.severity === 'medium' ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400' : 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
+                                                              issue.severity === 'high' ? 'bg-state-danger-bg text-state-danger-text' :
+                                                              issue.severity === 'medium' ? 'bg-state-warning-bg text-state-warning-text' : 'bg-state-info-bg text-state-info-text'
                                                           }`}>{issue.type}</span>
                                                       </div>
-                                                      <div className="flex items-center text-brand-accent">
+                                                      <div className="flex items-center text-accent">
                                                           <span className="font-bold mr-1">前往修复</span>
                                                           <ArrowRight size={12}/>
                                                       </div>
                                                   </div>
-                                                  <p className="text-slate-600 dark:text-slate-400 leading-tight">{issue.message}</p>
+                                                  <p className="text-text-secondary  leading-tight">{issue.message}</p>
                                               </div>
                                           ))}
                                       </div>
@@ -499,14 +520,14 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
                                   <button 
                                     onClick={onRepairData}
                                     disabled={isRepairing}
-                                    className="w-full py-2 bg-brand-accent text-white font-bold rounded-xl flex items-center justify-center disabled:opacity-50"
+                                    className="w-full py-2 bg-accent text-text-on-accent font-bold rounded-xl flex items-center justify-center disabled:opacity-50"
                                   >
                                       {isRepairing ? <RotateCcw size={16} className="animate-spin mr-2"/> : <Wrench size={16} className="mr-2"/>}
                                       {isRepairing ? '修复中...' : '一键修复'}
                                   </button>
                               )}
                               {!healthReport.canRepair && healthReport.score === 100 && (
-                                  <div className="text-center text-xs text-green-500 font-bold flex items-center justify-center pt-2">
+                                  <div className="text-center text-xs text-state-success-text font-bold flex items-center justify-center pt-2">
                                       <CheckCircle size={14} className="mr-1"/> 数据非常健康
                                   </div>
                               )}
@@ -517,39 +538,39 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
 
               {/* Data Ecosystem Overview */}
               <section>
-                  <h3 className="text-xs font-bold text-brand-muted uppercase tracking-wider mb-3 flex items-center">
-                      <ShieldCheck size={14} className="mr-1.5 text-emerald-500"/> 数据生态
+                  <h3 className="text-xs font-bold text-text-muted uppercase tracking-wider mb-3 flex items-center">
+                      <ShieldCheck size={14} className="mr-1.5 text-state-success-text"/> 数据生态
                   </h3>
-                  <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl p-4 shadow-sm space-y-3">
+                  <div className="bg-surface-card  border border-surface-border  rounded-2xl p-4 shadow-sm space-y-3">
                       <div className="grid grid-cols-2 gap-2 text-center">
-                          <div className="rounded-xl bg-slate-50 dark:bg-slate-950 p-2 border border-slate-200 dark:border-slate-800">
-                              <div className="text-[10px] text-slate-400 font-bold">最近导出</div>
-                              <div className="text-xs font-black text-brand-text dark:text-slate-200">
+                          <div className="rounded-xl bg-surface-muted  p-2 border border-surface-border ">
+                              <div className="text-[10px] text-text-muted font-bold">最近导出</div>
+                              <div className="text-xs font-black text-text-primary ">
                                   {settings.lastExportAt ? formatRelativeDays(settings.lastExportAt) : '从未'}
                               </div>
                           </div>
-                          <div className="rounded-xl bg-slate-50 dark:bg-slate-950 p-2 border border-slate-200 dark:border-slate-800">
-                              <div className="text-[10px] text-slate-400 font-bold">内部快照</div>
-                              <div className="text-xs font-black text-brand-text dark:text-slate-200">{snapshots.length} 个</div>
+                          <div className="rounded-xl bg-surface-muted  p-2 border border-surface-border ">
+                              <div className="text-[10px] text-text-muted font-bold">内部快照</div>
+                              <div className="text-xs font-black text-text-primary ">{snapshots.length} 个</div>
                           </div>
-                          <div className="rounded-xl bg-slate-50 dark:bg-slate-950 p-2 border border-slate-200 dark:border-slate-800">
-                              <div className="text-[10px] text-slate-400 font-bold">自动备份</div>
-                              <div className="text-xs font-black text-brand-text dark:text-slate-200">
+                          <div className="rounded-xl bg-surface-muted  p-2 border border-surface-border ">
+                              <div className="text-[10px] text-text-muted font-bold">自动备份</div>
+                              <div className="text-xs font-black text-text-primary ">
                                   {backupStatus.isReady && backupMetadata?.lastBackupAt
                                       ? formatRelativeDays(backupMetadata.lastBackupAt)
                                       : backupStatus.needsReauthorization ? '需重授权' : '未启用'}
                               </div>
                           </div>
-                          <div className="rounded-xl bg-slate-50 dark:bg-slate-950 p-2 border border-slate-200 dark:border-slate-800">
-                              <div className="text-[10px] text-slate-400 font-bold">数据版本</div>
-                              <div className="text-xs font-black text-brand-text dark:text-slate-200">v{dbMeta.dataVersion}</div>
+                          <div className="rounded-xl bg-surface-muted  p-2 border border-surface-border ">
+                              <div className="text-[10px] text-text-muted font-bold">数据版本</div>
+                              <div className="text-xs font-black text-text-primary ">v{dbMeta.dataVersion}</div>
                           </div>
                       </div>
                       {ecosystemHints.length > 0 && (
-                          <ul className="space-y-1 text-[11px] text-slate-500 dark:text-slate-400">
+                          <ul className="space-y-1 text-[11px] text-text-muted ">
                               {ecosystemHints.map((hint) => (
                                   <li key={hint} className="flex items-start gap-1.5">
-                                      <span className="mt-1 inline-block h-1 w-1 rounded-full bg-brand-accent"/>
+                                      <span className="mt-1 inline-block h-1 w-1 rounded-full bg-accent"/>
                                       <span>{hint}</span>
                                   </li>
                               ))}
@@ -569,18 +590,18 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
       <section>
         <button
           onClick={() => { setIsSettingsOpen(false); setIsTagManagerOpen(true); }}
-          className="w-full p-4 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-sm"
+          className="w-full p-4 bg-surface-card  border border-surface-border  rounded-2xl flex items-center justify-between hover:bg-surface-muted dark:hover:bg-surface-muted transition-colors shadow-sm"
         >
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-xl">
+            <div className="p-2 bg-surface-muted text-chart-tertiary rounded-xl">
               <Tags size={20} />
             </div>
             <div className="text-left">
-              <h3 className="font-bold text-sm text-brand-text dark:text-slate-200">标签管理</h3>
-              <p className="text-xs text-brand-muted dark:text-slate-400">重命名或合并 XP、事件标签</p>
+              <h3 className="font-bold text-sm text-text-primary ">标签管理</h3>
+              <p className="text-xs text-text-muted ">重命名或合并 XP、事件标签</p>
             </div>
           </div>
-          <ChevronRight size={18} className="text-slate-400" />
+          <ChevronRight size={18} className="text-text-muted" />
         </button>
       </section>
 
@@ -588,18 +609,18 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
         <section>
           <button
           onClick={() => { setIsSettingsOpen(false); setIsSimulationLabOpen(true); }}
-          className="w-full p-4 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-sm"
+          className="w-full p-4 bg-surface-card  border border-surface-border  rounded-2xl flex items-center justify-between hover:bg-surface-muted dark:hover:bg-surface-muted transition-colors shadow-sm"
         >
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-sky-100 dark:bg-sky-900/30 text-sky-600 dark:text-sky-400 rounded-xl">
+            <div className="p-2 bg-state-info-bg text-state-info-text rounded-xl">
               <FlaskConical size={20} />
             </div>
             <div className="text-left">
-              <h3 className="font-bold text-sm text-brand-text dark:text-slate-200">虚拟回测实验室</h3>
-              <p className="text-xs text-brand-muted dark:text-slate-400">仅供开发验证的合成人群回测工具</p>
+              <h3 className="font-bold text-sm text-text-primary ">虚拟回测实验室</h3>
+              <p className="text-xs text-text-muted ">仅供开发验证的合成人群回测工具</p>
             </div>
           </div>
-          <ChevronRight size={18} className="text-slate-400" />
+          <ChevronRight size={18} className="text-text-muted" />
         </button>
         </section>
       )}
@@ -607,50 +628,135 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
               {/* 3. Snapshots */}
               <section>
                   <div className="flex justify-between items-end mb-3">
-                      <h3 className="text-xs font-bold text-brand-muted uppercase tracking-wider flex items-center"><Archive size={14} className="mr-1.5 text-blue-500"/> 数据快照</h3>
-                      <button onClick={onCreateSnapshot} className="text-[10px] bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-2 py-1 rounded font-bold hover:bg-blue-100 dark:hover:bg-blue-900/50">+ 创建快照</button>
+                      <h3 className="text-xs font-bold text-text-muted uppercase tracking-wider flex items-center"><Archive size={14} className="mr-1.5 text-state-info-text"/> 数据快照</h3>
+                      <button onClick={onCreateSnapshot} className="text-[10px] bg-state-info-bg text-state-info-text px-2 py-1 rounded font-bold hover:bg-state-info-bg/80">+ 创建快照</button>
                   </div>
-                  <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl p-1 max-h-40 overflow-y-auto custom-scrollbar">
+                  <div className="mb-3 rounded-2xl border border-surface-border bg-surface-card p-3 shadow-sm   space-y-3">
+                      <div className="flex items-center justify-between gap-3">
+                          <div>
+                              <p className="text-sm font-bold text-text-primary ">idle 自动备份</p>
+                              <p className="text-xs text-text-muted  mt-0.5">上次：{formatRelativeHours(dbMeta.lastAutoBackupAt)}</p>
+                          </div>
+                          <span className="relative inline-flex items-center">
+                              <input
+                                type="checkbox"
+                                checked={backupSchedule.enabled}
+                                onChange={(event) => onChangeBackupSchedule({ ...backupSchedule, enabled: event.target.checked })}
+                                className="sr-only peer"
+                              />
+                              <span className="w-11 h-6 bg-surface-border  rounded-full peer peer-checked:bg-accent transition-colors"></span>
+                              <span className="absolute left-0.5 top-0.5 w-5 h-5 bg-surface-card rounded-full transition-transform peer-checked:translate-x-5"></span>
+                          </span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                          <label className="block text-xs font-bold text-text-muted ">
+                              自动间隔
+                              <select
+                                value={backupSchedule.intervalHours}
+                                disabled={!backupSchedule.enabled}
+                                onChange={(event) => onChangeBackupSchedule({ ...backupSchedule, intervalHours: Number(event.target.value) as AutoBackupIntervalHours })}
+                                className="mt-2 min-h-[44px] w-full rounded-xl border border-surface-border bg-surface-muted px-3 text-sm font-black text-text-primary outline-none disabled:opacity-50   "
+                              >
+                                {AUTO_BACKUP_INTERVAL_HOUR_OPTIONS.map((option) => (
+                                  <option key={option} value={option}>{option} 小时</option>
+                                ))}
+                              </select>
+                          </label>
+                          <label className="block text-xs font-bold text-text-muted ">
+                              保留方式
+                              <select
+                                value={backupRetention.mode}
+                                onChange={(event) => onChangeBackupRetention(event.target.value === 'size'
+                                  ? { mode: 'size', autoSafetyMaxMB: 20 }
+                                  : { mode: 'count', autoSafetyMaxCount: 7 })}
+                                className="mt-2 min-h-[44px] w-full rounded-xl border border-surface-border bg-surface-muted px-3 text-sm font-black text-text-primary outline-none   "
+                              >
+                                <option value="count">按个数</option>
+                                <option value="size">按容量</option>
+                              </select>
+                          </label>
+                      </div>
+                      {backupRetention.mode === 'count' ? (
+                        <label className="block text-xs font-bold text-text-muted ">
+                            自动快照保留数
+                            <select
+                              value={backupRetention.autoSafetyMaxCount}
+                              onChange={(event) => onChangeBackupRetention({ mode: 'count', autoSafetyMaxCount: Number(event.target.value) as AutoSafetySnapshotLimit })}
+                              className="mt-2 min-h-[44px] w-full rounded-xl border border-surface-border bg-surface-muted px-3 text-sm font-black text-text-primary outline-none   "
+                            >
+                              {AUTO_SAFETY_SNAPSHOT_LIMIT_OPTIONS.map((option) => (
+                                <option key={option} value={option}>{option} 个</option>
+                              ))}
+                            </select>
+                        </label>
+                      ) : (
+                        <label className="block text-xs font-bold text-text-muted ">
+                            自动快照容量上限
+                            <select
+                              value={backupRetention.autoSafetyMaxMB}
+                              onChange={(event) => onChangeBackupRetention({ mode: 'size', autoSafetyMaxMB: Number(event.target.value) as AutoSafetySnapshotSizeLimitMB })}
+                              className="mt-2 min-h-[44px] w-full rounded-xl border border-surface-border bg-surface-muted px-3 text-sm font-black text-text-primary outline-none   "
+                            >
+                              {AUTO_SAFETY_SNAPSHOT_SIZE_LIMIT_OPTIONS_MB.map((option) => (
+                                <option key={option} value={option}>{option} MB</option>
+                              ))}
+                            </select>
+                        </label>
+                      )}
+                      <p className="text-[11px] font-bold text-text-muted">修复、导入和文件恢复前的安全快照不受此开关影响。</p>
+                  </div>
+                  <div className="bg-surface-card  border border-surface-border  rounded-2xl p-1 max-h-40 overflow-y-auto custom-scrollbar">
                       {snapshots.length === 0 ? (
-                          <div className="text-center py-6 text-xs text-slate-400">暂无快照，建议定期备份。</div>
+                          <div className="text-center py-6 text-xs text-text-muted">暂无快照，建议定期备份。</div>
                       ) : (
                           snapshots.map(snap => (
-                              <div key={snap.id} className="flex items-center justify-between p-3 border-b border-slate-50 dark:border-slate-800 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl group transition-colors">
+                              <div key={snap.id} className="flex items-center justify-between p-3 border-b border-surface-border  last:border-0 hover:bg-surface-muted dark:hover:bg-surface-muted rounded-xl group transition-colors">
                                   <div className="flex-1 min-w-0 pr-2">
-                                      <div className="font-bold text-xs truncate text-brand-text dark:text-slate-300">{snap.description}</div>
-                                      <div className="text-[10px] text-slate-400">{new Date(snap.timestamp).toLocaleString()} • v{snap.dataVersion}</div>
+                                      <div className="font-bold text-xs truncate text-text-primary ">
+                                        {snap.description}
+                                        {snap.kind === 'auto-safety' && <span className="ml-2 rounded-full bg-state-info-bg px-1.5 py-0.5 text-[9px] font-black text-state-info-text">自动</span>}
+                                      </div>
+                                      <div className="text-[10px] text-text-muted">{new Date(snap.timestamp).toLocaleString()} • v{snap.dataVersion}</div>
                                   </div>
                                   <div className="flex gap-2">
-                                      <button onClick={() => onRestoreSnapshot(snap.id!)} aria-label="还原快照" className="p-2 bg-blue-50 dark:bg-blue-900/30 text-blue-600 rounded-lg min-w-[44px] min-h-[44px] flex items-center justify-center" title="还原"><RotateCcw size={14}/></button>
-                                      <button onClick={() => onDeleteSnapshot(snap.id!)} aria-label="删除快照" className="p-2 bg-red-50 dark:bg-red-900/30 text-red-600 rounded-lg min-w-[44px] min-h-[44px] flex items-center justify-center" title="删除"><Trash2 size={14}/></button>
+                                      <button onClick={() => onRestoreSnapshot(snap.id!)} aria-label="还原快照" className="p-2 bg-state-info-bg text-state-info-text rounded-lg min-w-[44px] min-h-[44px] flex items-center justify-center" title="还原"><RotateCcw size={14}/></button>
+                                      <button onClick={() => onDeleteSnapshot(snap.id!)} aria-label="删除快照" className="p-2 bg-state-danger-bg text-state-danger-text rounded-lg min-w-[44px] min-h-[44px] flex items-center justify-center" title="删除"><Trash2 size={14}/></button>
                                   </div>
                               </div>
                           ))
                       )}
                   </div>
-                  {snapshotFeedback && <p className="text-xs text-green-500 text-center mt-2 animate-fade-in">{snapshotFeedback}</p>}
+                  {snapshotFeedback && <p className="text-xs text-state-success-text text-center mt-2 animate-fade-in">{snapshotFeedback}</p>}
               </section>
 
               {/* 4. Import / Export */}
               <section>
-                  <h3 className="text-xs font-bold text-brand-muted uppercase tracking-wider mb-3">迁移与备份</h3>
+                  <h3 className="text-xs font-bold text-text-muted uppercase tracking-wider mb-3">迁移与备份</h3>
                   <div className="grid grid-cols-2 gap-3">
-                      <button onClick={onExportClick} className="flex flex-col items-center justify-center p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl hover:border-brand-accent transition-colors">
-                          <Share2 size={24} className="text-brand-accent mb-2"/>
-                          <span className="text-xs font-bold text-brand-text dark:text-slate-300">导出 JSON</span>
+                      <button onClick={onExportClick} className="flex flex-col items-center justify-center p-4 bg-surface-card  border border-surface-border  rounded-2xl hover:border-accent transition-colors">
+                          <Share2 size={24} className="text-accent mb-2"/>
+                          <span className="text-xs font-bold text-text-primary ">导出 JSON</span>
                       </button>
-                      <button onClick={onEncryptedExportClick} className="flex flex-col items-center justify-center p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl hover:border-brand-accent transition-colors">
-                          <ShieldCheck size={24} className="text-emerald-500 mb-2"/>
-                          <span className="text-xs font-bold text-brand-text dark:text-slate-300">加密导出</span>
+                      <button onClick={onEncryptedExportClick} className="flex flex-col items-center justify-center p-4 bg-surface-card  border border-surface-border  rounded-2xl hover:border-accent transition-colors">
+                          <ShieldCheck size={24} className="text-state-success-text mb-2"/>
+                          <span className="text-xs font-bold text-text-primary ">加密导出</span>
                       </button>
-                      <button onClick={handleImportClick} className="flex flex-col items-center justify-center p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl hover:border-brand-accent transition-colors">
-                          {importStatus === 'importing' ? <RotateCcw className="animate-spin text-brand-accent mb-2" size={24}/> : <FolderInput size={24} className="text-brand-accent mb-2"/>}
-                          <span className="text-xs font-bold text-brand-text dark:text-slate-300">{importStatus === 'success' ? '导入成功' : '导入 JSON'}</span>
+                      <button onClick={onCsvExportClick} className="flex flex-col items-center justify-center p-4 bg-surface-card  border border-surface-border  rounded-2xl hover:border-accent transition-colors">
+                          <FileSpreadsheet size={24} className="text-state-success-text mb-2"/>
+                          <span className="text-xs font-bold text-text-primary ">导出 CSV</span>
+                      </button>
+                      <button onClick={onMarkdownExportClick} className="flex flex-col items-center justify-center p-4 bg-surface-card  border border-surface-border  rounded-2xl hover:border-accent transition-colors">
+                          <FileText size={24} className="text-chart-tertiary mb-2"/>
+                          <span className="text-xs font-bold text-text-primary ">导出 Markdown</span>
+                      </button>
+                      <button onClick={handleImportClick} className="flex flex-col items-center justify-center p-4 bg-surface-card  border border-surface-border  rounded-2xl hover:border-accent transition-colors">
+                          {importStatus === 'importing' ? <RotateCcw className="animate-spin text-accent mb-2" size={24}/> : <FolderInput size={24} className="text-accent mb-2"/>}
+                          <span className="text-xs font-bold text-text-primary ">{importStatus === 'success' ? '导入成功' : '导入 JSON'}</span>
                       </button>
                       <input type="file" ref={fileInputRef} onChange={onFileChange} accept=".json,.hdenc.json" className="hidden" />
                       
                       {canUseFileSystem && (
-                          <button onClick={onFileSystemBackup} className="col-span-2 flex items-center justify-center p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700">
+                          <button onClick={onFileSystemBackup} className="col-span-2 flex items-center justify-center p-3 bg-surface-muted  border border-surface-border  rounded-2xl text-xs font-bold text-text-secondary  hover:bg-surface-muted dark:hover:bg-surface-muted">
                               <Archive size={16} className="mr-2"/> 保存到本地文件系统
                           </button>
                       )}
@@ -659,13 +765,13 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
 
               {/* 5. Danger Zone */}
               <section>
-                  <button onClick={() => setIsClearDataModalOpen(true)} className="w-full py-3 text-xs font-bold text-red-500 bg-red-50 dark:bg-red-900/20 rounded-xl hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors">
+                  <button onClick={() => setIsClearDataModalOpen(true)} className="w-full py-3 text-xs font-bold text-state-danger-text bg-state-danger-bg rounded-xl hover:bg-state-danger-bg/80 transition-colors">
                       清除所有数据
                   </button>
               </section>
               
-              <div className="text-center text-[10px] text-slate-300 pt-4">
-                  Hardness Diary v{settings.version} • Local Storage
+              <div className="text-center text-[10px] text-text-muted pt-4">
+                  Hardness Diary v{APP_VERSION} • Local Storage
               </div>
           </div>
       </Modal>
@@ -707,79 +813,51 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
         onComplete={handlePinComplete}
       />
 
-      <Modal
-        isOpen={!!importPreview}
+      <ImportPreviewModal
+        preview={importPreview}
+        status={importStatus}
+        strategy={importStrategy}
+        conflictResolution={importConflictResolution}
         onClose={onCancelImportPreview}
-        title="导入预览"
-        footer={
-          <div className="flex gap-3 w-full">
-            <button onClick={onCancelImportPreview} className="flex-1 py-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-sm font-bold">取消</button>
-            <button onClick={onConfirmImport} disabled={importStatus === 'importing'} className="flex-1 py-3 rounded-xl bg-brand-accent text-white text-sm font-bold disabled:opacity-50">
-              {importStatus === 'importing' ? '导入中...' : '确认导入'}
-            </button>
-          </div>
-        }
-      >
-        {importPreview && (
-          <div className="space-y-4 py-2">
-            <div className="rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-4 space-y-2 text-xs text-slate-500 dark:text-slate-400">
-              <div className="flex justify-between"><span>文件类型</span><span className="font-bold text-brand-text dark:text-slate-200">{importPreview.encrypted ? '加密备份' : '普通 JSON'}</span></div>
-              <div className="flex justify-between"><span>导出时间</span><span className="font-bold text-brand-text dark:text-slate-200">{formatImportDate(importPreview.exportDate)}</span></div>
-              <div className="flex justify-between"><span>应用版本</span><span className="font-bold text-brand-text dark:text-slate-200">{importPreview.appVersion || '未知'}</span></div>
-              <div className="flex justify-between"><span>数据版本</span><span className="font-bold text-brand-text dark:text-slate-200">{importPreview.dataVersion ?? '未知'}</span></div>
-            </div>
+        onConfirm={onConfirmImport}
+        onChangeStrategy={onChangeImportStrategy}
+        onChangeConflictResolution={onChangeImportConflictResolution}
+      />
 
-            <div className="grid grid-cols-2 gap-2">
-              {importPreviewRows.map(([label, value]) => (
-                <div key={label} className="rounded-xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-3 text-center">
-                  <div className="text-[10px] font-bold text-slate-400">{label}</div>
-                  <div className="text-lg font-black text-brand-text dark:text-slate-200">{value}</div>
-                </div>
-              ))}
-            </div>
+      <ExportOptionsModal
+        isOpen={isExportOptionsOpen}
+        options={exportOptions}
+        sourceCounts={exportSourceCounts}
+        filteredCounts={exportFilteredCounts}
+        tagOptions={exportTagOptions}
+        isExporting={isExporting}
+        encrypted={isEncryptedExport}
+        onChange={onChangeExportOptions}
+        onClose={onCloseExportOptions}
+        onConfirm={onConfirmExport}
+      />
 
-            <div className="rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-3 space-y-3">
-              <div className="flex items-center justify-between text-xs font-bold text-slate-500 dark:text-slate-400">
-                <span>包含设置</span>
-                <span className={importPreview.includesSettings ? 'text-green-500' : 'text-slate-400'}>{importPreview.includesSettings ? '是' : '否'}</span>
-              </div>
-              <div className="flex items-center justify-between text-xs font-bold text-slate-500 dark:text-slate-400">
-                <span>包含用户名</span>
-                <span className={importPreview.includesUserName ? 'text-green-500' : 'text-slate-400'}>{importPreview.includesUserName ? '是' : '否'}</span>
-              </div>
-              <label className="block text-xs font-bold text-slate-500 dark:text-slate-400">
-                导入策略
-                <select
-                  value={importStrategy}
-                  onChange={(e) => onChangeImportStrategy(e.target.value as typeof importStrategy)}
-                  className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-brand-text outline-none dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200"
-                >
-                  <option value="merge">合并：保留现有数据，覆盖同 ID/同日期记录</option>
-                  <option value="overwrite">覆盖：清空当前数据后导入</option>
-                </select>
-              </label>
-            </div>
-
-            <p className="text-xs leading-relaxed text-slate-400 dark:text-slate-500">确认后会先创建一个“导入前自动快照”，再执行导入。</p>
-          </div>
-        )}
-      </Modal>
+      <AboutModal
+        isOpen={isAboutOpen}
+        onClose={() => setIsAboutOpen(false)}
+        dataVersion={dbMeta.dataVersion}
+      />
 
       {/* Clear Data Confirmation */}
       <Modal isOpen={isClearDataModalOpen} onClose={() => { setIsClearDataModalOpen(false); setClearDataConfirmText(''); }} title="⚠️ 危险操作" footer={
           <div className="flex flex-col w-full gap-2">
-              <button onClick={handleExportAndClear} disabled={!canConfirmClearData} className="w-full min-h-[44px] py-3 bg-brand-accent text-white font-bold rounded-xl disabled:opacity-40 disabled:cursor-not-allowed">先备份，再清除 (推荐)</button>
-              <button onClick={handleClearAnyway} disabled={!canConfirmClearData} className="w-full min-h-[44px] py-3 bg-transparent text-slate-400 font-medium text-xs hover:text-red-500 disabled:opacity-40 disabled:cursor-not-allowed">不备份，直接清除</button>
+              <button onClick={handleExportAndClear} disabled={!canConfirmClearData} className="w-full min-h-[44px] py-3 bg-accent text-text-on-accent font-bold rounded-xl disabled:opacity-40 disabled:cursor-not-allowed">先备份，再清除 (推荐)</button>
+              <button onClick={handleClearAnyway} disabled={!canConfirmClearData} className="w-full min-h-[44px] py-3 bg-transparent text-text-muted font-medium text-xs hover:text-state-danger-text disabled:opacity-40 disabled:cursor-not-allowed">不备份，直接清除</button>
           </div>
       }>
           <div className="text-center py-4 space-y-4">
-              <AlertTriangle size={48} className="mx-auto text-red-500" />
+              <AlertTriangle size={48} className="mx-auto text-state-danger-text" />
               <div>
-                <p className="text-sm text-brand-text dark:text-slate-200 font-bold mb-1">您确定要清除所有数据吗？</p>
-                <p className="text-xs text-brand-muted">此操作将删除所有日志、设置及伴侣档案，且<span className="text-red-500 font-bold">无法撤销</span>。</p>
+                <p className="text-sm text-text-primary  font-bold mb-1">您确定要清除所有数据吗？</p>
+                <p className="text-xs text-text-muted">此操作将删除所有日志、设置及伴侣档案，且<span className="text-state-danger-text font-bold">无法撤销</span>。</p>
               </div>
-              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-3 rounded-lg text-left">
-                  <label className="block text-xs font-bold text-red-600 dark:text-red-400 mb-1">
+              <div className="bg-state-danger-bg border border-state-danger-text/20 p-3 rounded-lg text-left">
+                  <label className="block text-xs font-bold text-state-danger-text mb-1">
                       请输入 "删除" 以解锁操作
                   </label>
                   <input
@@ -787,7 +865,7 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
                       value={clearDataConfirmText}
                       onChange={e => setClearDataConfirmText(e.target.value)}
                       placeholder="删除"
-                      className="w-full min-h-[44px] bg-white dark:bg-slate-900 border border-red-300 dark:border-red-700 rounded p-2 text-sm outline-none focus:ring-2 focus:ring-red-500"
+                      className="w-full min-h-[44px] bg-surface-card border border-state-danger-text/30 rounded p-2 text-sm outline-none focus:ring-2 focus:ring-state-danger-text"
                   />
               </div>
           </div>

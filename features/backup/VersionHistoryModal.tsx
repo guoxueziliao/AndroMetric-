@@ -110,21 +110,21 @@ const COMING_SOON = [
 
 const TypeIcon: React.FC<{ type: ChangeType }> = ({ type }) => {
     switch (type) {
-        case 'new': return <Sparkles size={14} className="text-green-500" />;
-        case 'opt': return <Zap size={14} className="text-blue-500" />;
-        case 'fix': return <Bug size={14} className="text-red-500" />;
-        case 'ui': return <Layout size={14} className="text-purple-500" />;
-        case 'data': return <Database size={14} className="text-orange-500" />;
+        case 'new': return <Sparkles size={14} className="text-state-success-text" />;
+        case 'opt': return <Zap size={14} className="text-state-info-text" />;
+        case 'fix': return <Bug size={14} className="text-state-danger-text" />;
+        case 'ui': return <Layout size={14} className="text-chart-tertiary" />;
+        case 'data': return <Database size={14} className="text-state-warning-text" />;
     }
 };
 
 const TypeBadge: React.FC<{ type: ChangeType }> = ({ type }) => {
     const config = {
-        new: { label: '新增', color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' },
-        opt: { label: '优化', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' },
-        fix: { label: '修复', color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' },
-        ui: { label: '界面', color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' },
-        data: { label: '数据', color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' },
+        new: { label: '新增', color: 'bg-state-success-bg text-state-success-text' },
+        opt: { label: '优化', color: 'bg-state-info-bg text-state-info-text' },
+        fix: { label: '修复', color: 'bg-state-danger-bg text-state-danger-text' },
+        ui: { label: '界面', color: 'bg-surface-muted text-chart-tertiary' },
+        data: { label: '数据', color: 'bg-state-warning-bg text-state-warning-text' },
     };
     return (
         <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${config[type].color}`}>
@@ -140,9 +140,9 @@ const VersionCard: React.FC<{ entry: VersionEntry, isLatest: boolean }> = ({ ent
     const types = Array.from(new Set(entry.changes.map(c => c.type)));
 
     return (
-        <div className="relative pl-6 pb-8 border-l-2 border-slate-100 dark:border-slate-800 last:border-0 last:pb-0 group">
+        <div className="relative pl-6 pb-8 border-l-2 border-surface-border last:border-0 last:pb-0 group">
             {/* Timeline Dot */}
-            <div className={`absolute -left-[9px] top-0 w-4 h-4 rounded-full border-4 border-white dark:border-slate-900 transition-colors z-10 ${isLatest ? 'bg-brand-accent shadow-[0_0_0_2px_rgba(59,130,246,0.2)]' : 'bg-slate-200 dark:bg-slate-700'}`}></div>
+            <div className={`absolute -left-[9px] top-0 w-4 h-4 rounded-full border-4 border-surface-card transition-colors z-10 ${isLatest ? 'bg-accent shadow-glow' : 'bg-surface-border'}`}></div>
             
             <div className="flex flex-col gap-2">
                 {/* Header Row */}
@@ -151,19 +151,19 @@ const VersionCard: React.FC<{ entry: VersionEntry, isLatest: boolean }> = ({ ent
                     onClick={() => setIsExpanded(!isExpanded)}
                 >
                     <div className="flex items-center gap-2">
-                        <span className="text-xl font-black text-brand-text dark:text-slate-100 tracking-tight">v{entry.version}</span>
+                        <span className="text-xl font-black text-text-primary tracking-tight">v{entry.version}</span>
                         {entry.isHotfix && (
-                            <span className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800">
+                            <span className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-state-danger-bg text-state-danger-text border border-state-danger-text/20">
                                 <AlertCircle size={10}/> HOTFIX
                             </span>
                         )}
-                        <span className="text-xs text-brand-muted font-mono mt-1 ml-1 opacity-70">{entry.date}</span>
+                        <span className="text-xs text-text-muted font-mono mt-1 ml-1 opacity-70">{entry.date}</span>
                     </div>
-                    {isExpanded ? <ChevronDown size={16} className="text-slate-400"/> : <ChevronRight size={16} className="text-slate-400"/>}
+                    {isExpanded ? <ChevronDown size={16} className="text-text-muted"/> : <ChevronRight size={16} className="text-text-muted"/>}
                 </div>
                 
                 {/* Summary */}
-                <div className="text-sm font-bold text-slate-600 dark:text-slate-300 leading-snug">
+                <div className="text-sm font-bold text-text-secondary leading-snug">
                     {entry.summary}
                 </div>
 
@@ -176,16 +176,16 @@ const VersionCard: React.FC<{ entry: VersionEntry, isLatest: boolean }> = ({ ent
 
                 {/* Expanded Details */}
                 {isExpanded && (
-                    <div className="mt-3 bg-slate-50 dark:bg-slate-800 rounded-xl p-4 border border-slate-100 dark:border-slate-800/50 animate-in slide-in-from-top-2 duration-200">
+                    <div className="mt-3 bg-surface-muted rounded-xl p-4 border border-surface-border animate-in slide-in-from-top-2 duration-normal">
                         {entry.changes.length === 0 ? (
-                            <div className="text-xs text-slate-400 italic">暂无详细记录</div>
+                            <div className="text-xs text-text-muted italic">暂无详细记录</div>
                         ) : (
                             entry.changes.map((change, i) => (
                                 <div key={i} className="flex items-start gap-3 mb-2.5 last:mb-0">
-                                    <div className="mt-0.5 flex-shrink-0 bg-white dark:bg-slate-800 p-1 rounded-md shadow-sm border border-slate-100 dark:border-slate-700">
+                                    <div className="mt-0.5 flex-shrink-0 bg-surface-card p-1 rounded-md shadow-sm border border-surface-border">
                                         <TypeIcon type={change.type} />
                                     </div>
-                                    <span className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+                                    <span className="text-sm text-text-secondary leading-relaxed">
                                         {change.text}
                                     </span>
                                 </div>
@@ -207,27 +207,27 @@ const VersionHistoryModal: React.FC<VersionHistoryModalProps> = ({ isOpen, onClo
             onClose={onClose}
             title="版本记录"
             footer={
-                <button onClick={onClose} className="w-full py-3 bg-slate-100 dark:bg-slate-800 text-brand-text dark:text-slate-200 font-bold rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+                <button onClick={onClose} className="w-full py-3 bg-surface-muted text-text-primary font-bold rounded-xl hover:bg-surface-border transition-colors">
                     关闭
                 </button>
             }
         >
             <div className="space-y-8 py-2">
                 {/* Coming Soon Block */}
-                <div className="bg-gradient-to-r from-violet-50 to-fuchsia-50 dark:from-violet-900/20 dark:to-fuchsia-900/20 p-4 rounded-2xl border border-violet-100 dark:border-violet-800 relative overflow-hidden">
+                <div className="bg-gradient-to-r from-surface-muted to-state-info-bg p-4 rounded-2xl border border-chart-tertiary/20 relative overflow-hidden">
                     <div className="absolute top-0 right-0 p-2 opacity-10">
                         <Construction size={64} />
                     </div>
                     <div className="flex items-center gap-2 mb-3 relative z-10">
-                        <span className="flex items-center justify-center w-6 h-6 rounded-full bg-violet-500 text-white text-xs">
+                        <span className="flex items-center justify-center w-6 h-6 rounded-full bg-chart-tertiary text-text-on-accent text-xs">
                             <GitCommit size={14}/>
                         </span>
-                        <h3 className="font-bold text-violet-700 dark:text-violet-300 text-sm">正在开发 / 下个版本</h3>
+                        <h3 className="font-bold text-chart-tertiary text-sm">正在开发 / 下个版本</h3>
                     </div>
                     <ul className="space-y-2 relative z-10">
                         {COMING_SOON.map((item, idx) => (
-                            <li key={idx} className="flex items-center text-xs text-violet-600 dark:text-violet-400 font-medium">
-                                <span className="w-1.5 h-1.5 rounded-full bg-violet-400 mr-2"></span>
+                            <li key={idx} className="flex items-center text-xs text-chart-tertiary font-medium">
+                                <span className="w-1.5 h-1.5 rounded-full bg-chart-tertiary mr-2"></span>
                                 {item}
                             </li>
                         ))}

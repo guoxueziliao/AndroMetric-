@@ -7,7 +7,7 @@ import React from 'react';
 export const Card: React.FC<{ children: React.ReactNode; className?: string; onClick?: () => void }> = ({ children, className = '', onClick }) => (
   <div
     onClick={onClick}
-    className={`bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm rounded-2xl ${className}`}
+    className={`bg-surface-card  border border-surface-border  shadow-sm rounded-2xl ${className}`}
   >
     {children}
   </div>
@@ -16,10 +16,10 @@ export const Card: React.FC<{ children: React.ReactNode; className?: string; onC
 export const Chip: React.FC<{ label: string; active: boolean; onClick: () => void; color?: string }> = ({ label, active, onClick }) => (
   <button
     onClick={(e) => { e.preventDefault(); e.stopPropagation(); onClick(); }}
-    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 active:scale-95 whitespace-nowrap border ${
+    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-normal active:scale-95 whitespace-nowrap border ${
       active
-        ? 'bg-brand-accent text-white border-brand-accent shadow-sm'
-        : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-brand-accent/50'
+        ? 'bg-accent text-text-on-accent border-accent shadow-sm'
+        : 'bg-surface-muted  text-text-secondary  border-surface-border  hover:border-accent/50'
     }`}
   >
     {label}
@@ -30,7 +30,7 @@ export const TabButton: React.FC<{ active: boolean; onClick: () => void; icon: R
   <button
     onClick={onClick}
     className={`flex flex-col items-center justify-center py-2 px-1 rounded-xl transition-all flex-1 relative
-      ${active ? 'text-brand-accent bg-blue-50 dark:bg-slate-800' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+      ${active ? 'text-accent bg-blue-50 ' : 'text-text-muted hover:text-text-secondary dark:hover:text-text-muted'}`}
   >
     <div className="p-2 rounded-full mb-1">
       <Icon size={18} />

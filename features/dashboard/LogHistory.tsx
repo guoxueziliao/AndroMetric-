@@ -35,10 +35,10 @@ const CATEGORY_LABELS: Record<HistoryCategory | 'meta', string> = {
     system: '系统'
 };
 
-const EVENT_TYPE_CONFIG: Record<HistoryEventType, { label: string, color: string, icon: React.ElementType }> = {
-    manual: { label: '详细', color: 'bg-blue-500', icon: PenTool },
-    quick: { label: '快速', color: 'bg-purple-500', icon: Zap },
-    auto: { label: '修复', color: 'bg-slate-500', icon: Wrench },
+const EVENT_TYPE_CONFIG: Record<HistoryEventType, { label: string, bg: string, text: string, icon: React.ElementType }> = {
+    manual: { label: '详细', bg: 'bg-state-info-text', text: 'text-state-info-text', icon: PenTool },
+    quick: { label: '快速', bg: 'bg-chart-tertiary', text: 'text-chart-tertiary', icon: Zap },
+    auto: { label: '修复', bg: 'bg-text-muted', text: 'text-text-muted', icon: Wrench },
 };
 
 export const LogHistory: React.FC<LogHistoryProps> = ({ log }) => {
@@ -89,7 +89,7 @@ export const LogHistory: React.FC<LogHistoryProps> = ({ log }) => {
 
     if (!log.changeHistory || log.changeHistory.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center py-16 text-slate-400">
+            <div className="flex flex-col items-center justify-center py-16 text-text-muted">
                 <History size={48} className="mb-4 opacity-20"/>
                 <span className="text-sm">暂无修改记录</span>
             </div>
@@ -99,12 +99,12 @@ export const LogHistory: React.FC<LogHistoryProps> = ({ log }) => {
     return (
         <div className="space-y-4 pt-2">
             {/* Filter Bar */}
-            <div className="space-y-2 pb-2 border-b border-slate-100 dark:border-slate-800">
+            <div className="space-y-2 pb-2 border-b border-surface-border">
                 {/* Type Filter */}
                 <div className="flex gap-2">
                     <button 
                         onClick={() => setTypeFilter('all')}
-                        className={`px-3 py-1 text-[10px] font-bold rounded-full transition-colors border ${typeFilter === 'all' ? 'bg-slate-800 text-white border-slate-800 dark:bg-white dark:text-slate-900' : 'bg-transparent text-slate-500 border-slate-200 dark:border-slate-700'}`}
+                        className={`px-3 py-1 text-[10px] font-bold rounded-full transition-colors border ${typeFilter === 'all' ? 'bg-surface-inverted text-text-inverted border-surface-inverted' : 'bg-transparent text-text-muted border-surface-border'}`}
                     >
                         全部类型
                     </button>
@@ -115,7 +115,7 @@ export const LogHistory: React.FC<LogHistoryProps> = ({ log }) => {
                             <button
                                 key={t}
                                 onClick={() => setTypeFilter(t)}
-                                className={`px-3 py-1 text-[10px] font-bold rounded-full transition-colors flex items-center border ${typeFilter === t ? `${conf.color} text-white border-transparent` : 'bg-transparent text-slate-500 border-slate-200 dark:border-slate-700'}`}
+                                className={`px-3 py-1 text-[10px] font-bold rounded-full transition-colors flex items-center border ${typeFilter === t ? `${conf.bg} text-text-on-accent border-transparent` : 'bg-transparent text-text-muted border-surface-border'}`}
                             >
                                 <Icon size={10} className="mr-1"/> {conf.label}
                             </button>
@@ -127,7 +127,7 @@ export const LogHistory: React.FC<LogHistoryProps> = ({ log }) => {
                 <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
                     <button 
                         onClick={() => setCategoryFilter('all')}
-                        className={`shrink-0 px-3 py-1 text-[10px] font-bold rounded-full transition-colors border ${categoryFilter === 'all' ? 'bg-slate-800 text-white border-slate-800 dark:bg-white dark:text-slate-900' : 'bg-transparent text-slate-500 border-slate-200 dark:border-slate-700'}`}
+                        className={`shrink-0 px-3 py-1 text-[10px] font-bold rounded-full transition-colors border ${categoryFilter === 'all' ? 'bg-surface-inverted text-text-inverted border-surface-inverted' : 'bg-transparent text-text-muted border-surface-border'}`}
                     >
                         全部模块
                     </button>
@@ -138,7 +138,7 @@ export const LogHistory: React.FC<LogHistoryProps> = ({ log }) => {
                             <button
                                 key={cat}
                                 onClick={() => setCategoryFilter(cat)}
-                                className={`shrink-0 px-3 py-1 text-[10px] font-bold rounded-full transition-colors border ${categoryFilter === cat ? 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-800' : 'bg-transparent text-slate-500 border-slate-200 dark:border-slate-700'}`}
+                                className={`shrink-0 px-3 py-1 text-[10px] font-bold rounded-full transition-colors border ${categoryFilter === cat ? 'bg-state-info-bg text-state-info-text border-state-info-text/30' : 'bg-transparent text-text-muted border-surface-border'}`}
                             >
                                 {CATEGORY_LABELS[cat]}
                             </button>
@@ -148,9 +148,9 @@ export const LogHistory: React.FC<LogHistoryProps> = ({ log }) => {
             </div>
 
             {/* Timeline */}
-            <div className="relative border-l-2 border-slate-200 dark:border-slate-800 ml-4 space-y-6 pb-4">
+            <div className="relative border-l-2 border-surface-border ml-4 space-y-6 pb-4">
                 {filteredItems.length === 0 ? (
-                    <div className="pl-6 py-4 text-xs text-slate-400 italic">
+                    <div className="pl-6 py-4 text-xs text-text-muted italic">
                         没有符合筛选条件的记录
                     </div>
                 ) : (
@@ -164,7 +164,7 @@ export const LogHistory: React.FC<LogHistoryProps> = ({ log }) => {
                         return (
                             <div key={i} className="relative pl-6 animate-in slide-in-from-bottom-2 fade-in" style={{animationDelay: `${Math.min(i * 30, 300)}ms`}}>
                                 {/* Timeline Dot */}
-                                <div className={`absolute -left-[9px] top-0 w-5 h-5 rounded-full border-2 border-white dark:border-slate-900 flex items-center justify-center shadow-sm z-10 ${typeConf.color} text-white`}>
+                                <div className={`absolute -left-[9px] top-0 w-5 h-5 rounded-full border-2 border-surface-card flex items-center justify-center shadow-sm z-10 ${typeConf.bg} text-text-on-accent`}>
                                     <CategoryIcon size={12}/>
                                 </div>
                                 
@@ -172,24 +172,24 @@ export const LogHistory: React.FC<LogHistoryProps> = ({ log }) => {
                                 <div className="flex flex-col gap-1">
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-2">
-                                            <span className="text-sm font-bold text-brand-text dark:text-slate-200">{record.summary}</span>
-                                            <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 flex items-center`}>
+                                            <span className="text-sm font-bold text-text-primary">{record.summary}</span>
+                                            <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold bg-surface-muted text-text-muted flex items-center`}>
                                                 {catLabel}
                                             </span>
                                         </div>
                                         <div className="flex items-center gap-2">
-                                            <span className={`flex items-center gap-1 text-[10px] font-bold ${typeConf.color.replace('bg-', 'text-')}`}>
+                                            <span className={`flex items-center gap-1 text-[10px] font-bold ${typeConf.text}`}>
                                                 {React.createElement(typeConf.icon, { size: 10 })}
                                                 {typeConf.label}
                                             </span>
-                                            <span className="text-[10px] text-brand-muted font-mono">
+                                            <span className="text-[10px] text-text-muted font-mono">
                                                 {new Date(record.timestamp).toLocaleTimeString('zh-CN', {hour: '2-digit', minute:'2-digit', hour12: false})}
                                             </span>
                                         </div>
                                     </div>
                                     
                                     {record.details && record.details.length > 0 && (
-                                        <div className="mt-1 bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden">
+                                        <div className="mt-1 bg-surface-card rounded-xl border border-surface-border shadow-sm overflow-hidden">
                                             {record.details.map((d, idx) => (
                                                 d ? <DiffRow key={idx} diff={d} /> : null
                                             ))}
@@ -200,7 +200,7 @@ export const LogHistory: React.FC<LogHistoryProps> = ({ log }) => {
                         );
                     })
                 )}
-                <div className="absolute -left-[5px] bottom-0 w-3 h-3 rounded-full bg-slate-200 dark:bg-slate-800"></div>
+                <div className="absolute -left-[5px] bottom-0 w-3 h-3 rounded-full bg-surface-border"></div>
             </div>
         </div>
     );

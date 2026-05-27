@@ -23,7 +23,7 @@ export const FORCE_LEVELS = [
 ];
 
 export const ORGASM_LABELS: Record<number, { label: string; color: string }> = {
-  1: { label: '无感', color: 'text-slate-400' },
+  1: { label: '无感', color: 'text-text-muted' },
   2: { label: '一般', color: 'text-blue-400' },
   3: { label: '舒服', color: 'text-amber-500' },
   4: { label: '很爽', color: 'text-orange-500' },
@@ -31,7 +31,7 @@ export const ORGASM_LABELS: Record<number, { label: string; color: string }> = {
 };
 
 export const SATISFACTION_LEVELS = [
-  { lvl: 1, label: '毫无感觉', desc: '还是憋得慌', color: 'bg-slate-400' },
+  { lvl: 1, label: '毫无感觉', desc: '还是憋得慌', color: 'bg-surface-border' },
   { lvl: 2, label: '解压一般', desc: '完成了任务', color: 'bg-blue-300' },
   { lvl: 3, label: '基本达标', desc: '不怎么想了', color: 'bg-blue-400' },
   { lvl: 4, label: '非常舒爽', desc: '完全放松', color: 'bg-blue-500' },

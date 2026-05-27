@@ -54,7 +54,6 @@ interface MainViewRouterActions {
   onSaveLog: (log: LogEntry) => void;
   onDirtyStateChange: (isDirty: boolean) => void;
   onUpdateSettings: (settings: AppSettings | ((current: AppSettings) => AppSettings)) => void;
-  onShowVersionHistory: () => void;
   onFinishExercise: (record: ExerciseRecord) => void;
   onFinishMasturbation: (record: MasturbationRecordDetails) => void;
   onFinishNap: (record: NapRecord) => void;
@@ -103,7 +102,6 @@ const MainViewRouter: React.FC<MainViewRouterProps> = ({
     onSaveLog,
     onDirtyStateChange,
     onUpdateSettings,
-    onShowVersionHistory,
     onFinishExercise,
     onFinishMasturbation,
     onFinishNap,
@@ -167,7 +165,6 @@ const MainViewRouter: React.FC<MainViewRouterProps> = ({
                   onAddOrUpdateTag,
                   onDeleteTag,
                   onUpdateSettings,
-                  onShowVersionHistory,
                   onNavigateToLog: onEdit
                 }}
               />

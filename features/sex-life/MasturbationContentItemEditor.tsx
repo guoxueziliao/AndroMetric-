@@ -57,9 +57,9 @@ const MasturbationContentItemEditor: React.FC<MasturbationContentItemEditorProps
   return (
     <Modal isOpen={!!editingItem} onClose={onClose} title="编辑素材详情">
       {editingItem && (
-        <div className="flex flex-col h-[75vh] -mx-4 -mt-4 bg-white dark:bg-slate-950 overflow-hidden">
-          <div className="flex-none p-4 border-b border-slate-100 dark:border-slate-800">
-            <button onClick={onClose} className="flex items-center gap-1 text-slate-400 hover:text-brand-accent text-sm font-bold mb-4">
+        <div className="flex flex-col h-[75vh] -mx-4 -mt-4 bg-surface-card  overflow-hidden">
+          <div className="flex-none p-4 border-b border-surface-border ">
+            <button onClick={onClose} className="flex items-center gap-1 text-text-muted hover:text-accent text-sm font-bold mb-4">
               <ChevronLeft size={18} /> 返回
             </button>
             <div className="space-y-2">
@@ -72,17 +72,17 @@ const MasturbationContentItemEditor: React.FC<MasturbationContentItemEditorProps
                       <div className="text-[10px] text-amber-600/70 dark:text-amber-400/50">分类统计失效</div>
                     </div>
                   </div>
-                  <button onClick={scrollToTypePicker} className="text-[10px] font-black text-amber-700 border border-amber-200 px-2 py-1 rounded bg-white">去选择</button>
+                  <button onClick={scrollToTypePicker} className="text-[10px] font-black text-amber-700 border border-amber-200 px-2 py-1 rounded bg-surface-card">去选择</button>
                 </div>
               )}
             </div>
           </div>
           <div className="flex-1 overflow-y-auto custom-scrollbar p-5 space-y-6">
             <div ref={typePickerRef} className="space-y-3 scroll-mt-4">
-              <label className="text-xs font-black text-slate-400 uppercase tracking-widest">素材类型 (必选)</label>
+              <label className="text-xs font-black text-text-muted uppercase tracking-widest">素材类型 (必选)</label>
               <div className="grid grid-cols-4 gap-2">
                 {CONTENT_TYPES.map(t => (
-                  <button key={t} onClick={() => setEditingItem({ ...editingItem, type: t })} className={`py-2.5 rounded-xl text-xs font-bold transition-all border ${editingItem.type === t ? 'bg-brand-accent text-white border-brand-accent shadow-sm' : 'bg-slate-50 dark:bg-slate-900 text-slate-500 border-slate-200 dark:border-slate-700'}`}>
+                  <button key={t} onClick={() => setEditingItem({ ...editingItem, type: t })} className={`py-2.5 rounded-xl text-xs font-bold transition-all border ${editingItem.type === t ? 'bg-accent text-text-on-accent border-accent shadow-sm' : 'bg-surface-muted  text-text-muted border-surface-border '}`}>
                     {t}
                   </button>
                 ))}
@@ -90,10 +90,10 @@ const MasturbationContentItemEditor: React.FC<MasturbationContentItemEditorProps
             </div>
             {!['回忆', '幻想'].includes(editingItem.type || '') && (
               <div className="space-y-3">
-                <label className="text-xs font-black text-slate-400 uppercase tracking-widest">来源平台</label>
+                <label className="text-xs font-black text-text-muted uppercase tracking-widest">来源平台</label>
                 <div className="grid grid-cols-3 gap-2">
                   {PLATFORMS.map(p => (
-                    <button key={p} onClick={() => setEditingItem({ ...editingItem, platform: p })} className={`py-2 rounded-xl text-[11px] font-bold transition-all border ${editingItem.platform === p ? 'bg-slate-800 text-white dark:bg-white dark:text-slate-900 border-slate-800' : 'bg-slate-50 dark:bg-slate-900 text-slate-500 border-slate-200 dark:border-slate-700'}`}>
+                    <button key={p} onClick={() => setEditingItem({ ...editingItem, platform: p })} className={`py-2 rounded-xl text-[11px] font-bold transition-all border ${editingItem.platform === p ? 'bg-surface-muted text-text-on-accent dark:bg-surface-card  border-surface-border' : 'bg-surface-muted  text-text-muted border-surface-border '}`}>
                       {p}
                     </button>
                   ))}
@@ -102,39 +102,39 @@ const MasturbationContentItemEditor: React.FC<MasturbationContentItemEditorProps
             )}
             <div className="space-y-4">
               <div className="space-y-2">
-                <label className="text-xs font-black text-slate-400 uppercase tracking-widest">标题 / 编号</label>
+                <label className="text-xs font-black text-text-muted uppercase tracking-widest">标题 / 编号</label>
                 <div className="relative group">
-                  <div className="absolute left-3 top-3.5 text-slate-300 font-bold">#</div>
-                  <input value={editingItem.title || ''} onChange={e => setEditingItem({ ...editingItem, title: e.target.value })} placeholder="输入标题、编号或链接..." className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl py-3 pl-8 pr-4 text-sm font-bold outline-none focus:ring-2 focus:ring-brand-accent/20 transition-all" />
+                  <div className="absolute left-3 top-3.5 text-text-muted font-bold">#</div>
+                  <input value={editingItem.title || ''} onChange={e => setEditingItem({ ...editingItem, title: e.target.value })} placeholder="输入标题、编号或链接..." className="w-full bg-surface-muted  border border-surface-border  rounded-2xl py-3 pl-8 pr-4 text-sm font-bold outline-none focus:ring-2 focus:ring-accent/20 transition-all" />
                 </div>
               </div>
               <div className="space-y-2">
-                <label className="text-xs font-black text-slate-400 uppercase tracking-widest">主演 / 角色</label>
+                <label className="text-xs font-black text-text-muted uppercase tracking-widest">主演 / 角色</label>
                 <div className="relative group">
-                  <User size={16} className="absolute left-3 top-3.5 text-slate-300" />
-                  <input value={editingItem.actors?.join(' ') || ''} onChange={e => setEditingItem({ ...editingItem, actors: e.target.value.split(/\s+/) })} placeholder="多个演员用空格分隔..." className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl py-3 pl-9 pr-4 text-sm font-bold outline-none focus:ring-2 focus:ring-brand-accent/20 transition-all" />
+                  <User size={16} className="absolute left-3 top-3.5 text-text-muted" />
+                  <input value={editingItem.actors?.join(' ') || ''} onChange={e => setEditingItem({ ...editingItem, actors: e.target.value.split(/\s+/) })} placeholder="多个演员用空格分隔..." className="w-full bg-surface-muted  border border-surface-border  rounded-2xl py-3 pl-9 pr-4 text-sm font-bold outline-none focus:ring-2 focus:ring-accent/20 transition-all" />
                 </div>
               </div>
             </div>
-            <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
+            <div className="pt-4 border-t border-surface-border ">
               <div className="flex justify-between items-center mb-4">
-                <label className="text-xs font-black text-slate-400 uppercase tracking-widest">XP 标签 ({editingItem.xpTags?.length || 0})</label>
-                <button onClick={() => setIsTagManagerOpen(true)} className="p-1.5 bg-blue-50 dark:bg-blue-900/30 text-brand-accent rounded-lg flex items-center gap-1 text-[10px] font-black"><Settings size={12} /> 管理</button>
+                <label className="text-xs font-black text-text-muted uppercase tracking-widest">XP 标签 ({editingItem.xpTags?.length || 0})</label>
+                <button onClick={() => setIsTagManagerOpen(true)} className="p-1.5 bg-blue-50 dark:bg-blue-900/30 text-accent rounded-lg flex items-center gap-1 text-[10px] font-black"><Settings size={12} /> 管理</button>
               </div>
 
               <div className="mb-4">
                 <div className="relative group">
-                  <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-brand-accent transition-colors" />
+                  <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-accent transition-colors" />
                   <input
                     value={tagSearch}
                     onChange={e => setTagSearch(e.target.value)}
                     placeholder="搜索或输入新标签..."
-                    className="w-full bg-slate-50 dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl py-3 pl-11 pr-12 text-sm font-bold outline-none focus:ring-2 focus:ring-brand-accent/20 focus:border-brand-accent transition-all"
+                    className="w-full bg-surface-muted  border-2 border-surface-border  rounded-2xl py-3 pl-11 pr-12 text-sm font-bold outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
                   />
                   {tagSearch.trim() && !displayTags.includes(tagSearch.trim()) && activeTagTab !== '常用' && (
                     <button
                       onClick={onQuickCreateTag}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-brand-accent text-white rounded-xl shadow-sm animate-in fade-in zoom-in duration-200"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-accent text-text-on-accent rounded-xl shadow-sm animate-in fade-in zoom-in duration-normal"
                       title="作为新标签创建"
                     >
                       <Plus size={16} strokeWidth={3} />
@@ -143,11 +143,11 @@ const MasturbationContentItemEditor: React.FC<MasturbationContentItemEditorProps
                 </div>
               </div>
 
-              <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-1 mb-4 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-1 mb-4 border-b border-surface-border ">
                 {['常用', ...XP_DIMENSIONS_LIST].map(tab => (
-                  <button key={tab} onClick={() => { setActiveTagTab(tab); setTagSearch(''); }} className={`pb-2 px-1 text-xs font-black transition-all relative whitespace-nowrap ${activeTagTab === tab ? 'text-brand-accent' : 'text-slate-400'}`}>
+                  <button key={tab} onClick={() => { setActiveTagTab(tab); setTagSearch(''); }} className={`pb-2 px-1 text-xs font-black transition-all relative whitespace-nowrap ${activeTagTab === tab ? 'text-accent' : 'text-text-muted'}`}>
                     {tab}
-                    {activeTagTab === tab && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-brand-accent rounded-full"></div>}
+                    {activeTagTab === tab && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-accent rounded-full"></div>}
                   </button>
                 ))}
               </div>
@@ -157,23 +157,23 @@ const MasturbationContentItemEditor: React.FC<MasturbationContentItemEditorProps
                   displayTags.map(tag => {
                     const isSel = editingItem.xpTags?.includes(tag);
                     return (
-                      <button key={tag} onClick={() => toggleXpTag(tag)} className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${isSel ? 'bg-blue-500 text-white border-blue-600 shadow-sm' : 'bg-white dark:bg-slate-900 text-slate-500 border-slate-200 dark:border-slate-700'}`}>
+                      <button key={tag} onClick={() => toggleXpTag(tag)} className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${isSel ? 'bg-blue-500 text-text-on-accent border-blue-600 shadow-sm' : 'bg-surface-card  text-text-muted border-surface-border '}`}>
                         {tag.replace(/^#/, '')}
                       </button>
                     );
                   })
                 ) : (
-                  <div className="w-full text-center py-6 text-slate-400 text-xs italic">
+                  <div className="w-full text-center py-6 text-text-muted text-xs italic">
                     {tagSearch ? '未找到匹配标签' : '该维度暂无标签，请先创建'}
                   </div>
                 )}
               </div>
             </div>
           </div>
-          <div className="flex-none p-5 bg-white dark:bg-slate-950 border-t border-slate-100 dark:border-slate-800">
+          <div className="flex-none p-5 bg-surface-card  border-t border-surface-border ">
             <button
               onClick={onSave}
-              className="w-full py-4 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-[1.5rem] font-black text-sm shadow-xl active:scale-[0.98] transition-all"
+              className="w-full py-4 bg-surface-card dark:bg-surface-muted text-text-on-accent  rounded-[1.5rem] font-black text-sm shadow-xl active:scale-[0.98] transition-all"
             >
               保存素材信息
             </button>

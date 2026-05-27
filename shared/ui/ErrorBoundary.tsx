@@ -37,21 +37,21 @@ class ErrorBoundary extends React.Component<Props, State> {
     const { children } = (this as React.Component<Props, State>).props;
     if (this.state.hasError) {
       return (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-center m-4">
+        <div className="bg-state-danger-bg border border-state-danger-text/30 text-state-danger-text px-4 py-3 rounded-lg text-center m-4">
           <div className="flex items-center justify-center">
              <AlertTriangle className="mr-2" />
              <h3 className="font-bold">组件加载失败</h3>
           </div>
           <p className="text-sm mt-1">系统已记录此错误。请尝试刷新页面。</p>
           {this.state.error && (
-            <div className="mt-2 p-2 bg-red-100 rounded text-left overflow-auto max-h-32 text-xs font-mono">
+            <div className="mt-2 p-2 bg-state-danger-text/10 rounded text-left overflow-auto max-h-32 text-xs font-mono">
               <p className="font-bold">{this.state.error.toString()}</p>
               {this.state.errorInfo && <pre>{this.state.errorInfo.componentStack}</pre>}
             </div>
           )}
           <button 
             onClick={() => window.location.reload()} 
-            className="mt-3 px-4 py-1.5 bg-red-100 hover:bg-red-200 rounded text-xs font-bold transition-colors"
+            className="mt-3 px-4 py-1.5 bg-state-danger-text/10 hover:bg-state-danger-text/20 rounded text-xs font-bold transition-colors"
           >
             刷新页面
           </button>

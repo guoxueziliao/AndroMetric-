@@ -4,7 +4,6 @@ import { useLocalStorage } from '../hooks/useLocalStorage';
 import Welcome from './Welcome';
 import { PWAInstallPrompt } from '../features/pwa';
 import { useToast } from '../contexts/ToastContext';
-import { VersionHistoryModal } from '../features/backup';
 import { Modal } from '../shared/ui';
 import type { AppData } from './AppProviders';
 import { defaultSettings } from './appConfig';
@@ -19,6 +18,8 @@ import { useThemeMode } from './useThemeMode';
 import { useWelcomeScreen } from './useWelcomeScreen';
 import type { MainView } from './viewTypes';
 import type { QuickRecordHandlers } from '../features/quick-actions';
+import { useAutoBackup } from '../features/backup/model/useAutoBackup';
+import { useStorageQuotaMonitor } from '../features/backup/model/useStorageQuotaMonitor';
 
 const QuickRecordController = lazy(() => import('../features/quick-actions').then((module) => ({ default: module.QuickRecordController })));
 
@@ -48,9 +49,16 @@ const AppContent: React.FC<{ data: AppData }> = ({ data }) => {
     cancelOngoingMasturbation
   } = data;
   const { showToast } = useToast();
+  useStorageQuotaMonitor();
 
   const [settings, setSettings] = useLocalStorage<AppSettings>('appSettings', defaultSettings);
-  const isDarkMode = useThemeMode(settings.theme);
+  useAutoBackup({
+    isInitializing,
+    logsCount: logs.length,
+    backupSchedule: settings.backupSchedule
+  });
+
+  const { isDarkMode } = useThemeMode(settings.theme);
   const { isBlurred } = useAppBootstrap();
   const { hasSeenWelcome, markWelcomeSeen } = useWelcomeScreen();
   const quickRecordData = useQuickRecordData(data);
@@ -83,7 +91,6 @@ const AppContent: React.FC<{ data: AppData }> = ({ data }) => {
   }, [lockEnabled, appLock?.autoLockMinutes]);
 
   const [activeMainView, setActiveMainView] = useState<MainView>('calendar');
-  const [isVersionHistoryOpen, setIsVersionHistoryOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useLocalStorage('sidebarCollapsed', false);
 
   const safeLogs = useMemo(() => (Array.isArray(logs) ? logs : []), [logs]);
@@ -126,8 +133,7 @@ const AppContent: React.FC<{ data: AppData }> = ({ data }) => {
     onBackToDashboard: handleBackToDashboard,
     onSaveLog: handleSaveLog,
     onDirtyStateChange: setIsFormDirty,
-    onUpdateSettings: setSettings,
-    onShowVersionHistory: () => setIsVersionHistoryOpen(true)
+    onUpdateSettings: setSettings
   }), [
     handleEdit,
     addOrUpdateLog,
@@ -172,11 +178,10 @@ const AppContent: React.FC<{ data: AppData }> = ({ data }) => {
             actions={mainViewActions}
           />
 
-          <Modal isOpen={isConfirmBackModalOpen} onClose={() => setIsConfirmBackModalOpen(false)} title="未保存的更改" footer={<div className="flex gap-3 w-full"><button onClick={() => setIsConfirmBackModalOpen(false)} className="flex-1 py-3 bg-slate-100 dark:bg-slate-800 rounded-xl">继续编辑</button><button onClick={confirmLeaveForm} className="flex-1 py-3 bg-red-50 text-red-500 rounded-xl font-bold">放弃</button></div>}>
+          <Modal isOpen={isConfirmBackModalOpen} onClose={() => setIsConfirmBackModalOpen(false)} title="未保存的更改" footer={<div className="flex gap-3 w-full"><button onClick={() => setIsConfirmBackModalOpen(false)} className="flex-1 py-3 bg-surface-muted text-text-secondary rounded-xl">继续编辑</button><button onClick={confirmLeaveForm} className="flex-1 py-3 bg-state-danger-bg text-state-danger-text rounded-xl font-bold">放弃</button></div>}>
               <p>您有未保存的更改。确定要离开吗？</p>
           </Modal>
 
-          <VersionHistoryModal isOpen={isVersionHistoryOpen} onClose={() => setIsVersionHistoryOpen(false)} />
           <PWAInstallPrompt />
         </div>
       </>
@@ -192,7 +197,7 @@ const AppContent: React.FC<{ data: AppData }> = ({ data }) => {
   }
 
   return (
-    <div className={`min-h-screen bg-brand-bg dark:bg-slate-950 text-brand-text dark:text-slate-200 font-sans transition-all duration-500 safe-area-top safe-area-bottom safe-area-left safe-area-right ${(isBlurred || settings.privacyMode) ? 'blur-md grayscale opacity-50' : ''}`}>
+    <div className={`min-h-screen bg-surface-base text-text-secondary font-sans transition-all duration-slow safe-area-top safe-area-bottom safe-area-left safe-area-right ${(isBlurred || settings.privacyMode) ? 'blur-md saturate-50 opacity-60' : ''}`}>
       {view === 'dashboard' ? (
         <Suspense fallback={renderAppShell(emptyQuickRecordHandlers)}>
           <QuickRecordController data={quickRecordData} isEnabled>

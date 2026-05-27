@@ -42,13 +42,13 @@ const TrendsPanel: React.FC<TrendsPanelProps> = ({ logs }) => {
   }, [logs]);
 
   return (
-    <div className="flex h-60 flex-col rounded-3xl border border-slate-100 bg-white p-5 shadow-soft transition-colors dark:border-white/5 dark:bg-slate-900">
+    <div className="flex h-60 flex-col rounded-3xl border border-surface-border bg-surface-card p-5 shadow-soft transition-colors">
       <div className="mb-4 flex items-center gap-2">
-        <div className="rounded-full bg-violet-50 p-2 text-violet-500 dark:bg-violet-500/10"><TrendingUp size={18}/></div>
-        <span className="text-sm font-bold text-slate-800 dark:text-slate-300">近 7 日趋势</span>
+        <div className="rounded-full bg-chart-tertiary/10 p-2 text-chart-tertiary"><TrendingUp size={18}/></div>
+        <span className="text-sm font-bold text-text-primary">近 7 日趋势</span>
       </div>
       {rows === null ? (
-        <div className="flex flex-1 items-center justify-center rounded-2xl border border-dashed border-slate-200 px-4 py-6 text-center text-xs font-medium text-slate-400 dark:border-slate-800">
+        <div className="flex flex-1 items-center justify-center rounded-2xl border border-dashed border-surface-border px-4 py-6 text-center text-xs font-medium text-text-muted">
           至少需要 3 条记录才能算均线
         </div>
       ) : (
@@ -59,19 +59,19 @@ const TrendsPanel: React.FC<TrendsPanelProps> = ({ logs }) => {
             const isDown = row.delta !== null && row.delta < -0.05;
             const Arrow = isUp ? TrendingUp : isDown ? TrendingDown : Minus;
             const colorClass = isUp
-              ? 'text-emerald-500'
+              ? 'text-state-success-text'
               : isDown
-                ? 'text-rose-500'
-                : 'text-slate-400';
+                ? 'text-state-danger-text'
+                : 'text-text-muted';
             const deltaText = row.delta !== null
               ? `${row.delta > 0 ? '+' : ''}${row.delta.toFixed(row.digits)}`
               : 'n/a';
             return (
               <div key={row.id} className="flex items-center justify-between text-sm">
-                <span className="font-bold text-slate-400">{row.label}</span>
+                <span className="font-bold text-text-muted">{row.label}</span>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-lg font-black tabular-nums text-slate-700 dark:text-slate-200">
-                    {currentText}<span className="text-[10px] font-bold text-slate-400 ml-0.5">{row.unit}</span>
+                  <span className="text-lg font-black tabular-nums text-text-primary">
+                    {currentText}<span className="text-[10px] font-bold text-text-muted ml-0.5">{row.unit}</span>
                   </span>
                   <span className={`flex items-center gap-0.5 text-[10px] font-black tabular-nums ${colorClass}`}>
                     <Arrow size={11}/>{deltaText}
@@ -80,7 +80,7 @@ const TrendsPanel: React.FC<TrendsPanelProps> = ({ logs }) => {
               </div>
             );
           })}
-          <div className="pt-1 text-[10px] text-slate-400 dark:text-slate-400">
+          <div className="pt-1 text-[10px] text-text-muted">
             对比上一个 7 日窗口 · 基于 {METRICS.hardness.label} 等指标
           </div>
         </div>

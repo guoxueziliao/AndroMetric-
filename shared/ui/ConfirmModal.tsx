@@ -29,8 +29,8 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
     };
 
     const confirmClass = tone === 'danger'
-        ? 'bg-red-500 text-white hover:bg-red-600'
-        : 'bg-brand-accent text-white hover:bg-brand-accent-hover';
+        ? 'bg-state-danger-text text-text-on-accent hover:bg-state-danger-text/90'
+        : 'bg-accent text-text-on-accent hover:bg-accent/90';
 
     return (
         <Modal
@@ -42,7 +42,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
                     <button
                         type="button"
                         onClick={onClose}
-                        className="flex-1 min-h-[44px] py-3 bg-slate-100 dark:bg-slate-800 rounded-xl font-bold text-slate-600 dark:text-slate-300"
+                        className="flex-1 min-h-[44px] py-3 bg-surface-muted rounded-xl font-bold text-text-secondary"
                     >
                         {cancelLabel}
                     </button>
@@ -58,9 +58,9 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
         >
             <div className="flex items-start gap-3 py-2">
                 {tone === 'danger' && (
-                    <AlertTriangle size={20} className="text-red-500 mt-0.5 shrink-0" />
+                    <AlertTriangle size={20} className="text-state-danger-text mt-0.5 shrink-0" />
                 )}
-                <div className="text-sm text-brand-text dark:text-slate-200 leading-relaxed">
+                <div className="text-sm text-text-primary leading-relaxed">
                     {message}
                 </div>
             </div>

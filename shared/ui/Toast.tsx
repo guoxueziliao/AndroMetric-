@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { motion, type Variants } from 'framer-motion';
 import { CheckCircle, XCircle, X, Info } from 'lucide-react';
+import { motionDuration, motionEase } from './motionTokens';
 
 export type ToastType = 'success' | 'error' | 'info';
 
@@ -23,15 +24,15 @@ const toastVariants: Variants = {
     y: 0,
     scale: 1,
     transition: {
-      duration: 0.35,
-      ease: [0.34, 1.56, 0.64, 1]
+      duration: motionDuration.slow,
+      ease: motionEase.emphasized
     }
   },
   exit: {
     opacity: 0,
     y: -20,
     scale: 0.95,
-    transition: { duration: 0.25 }
+    transition: { duration: motionDuration.normal }
   }
 };
 
@@ -48,9 +49,9 @@ const Toast: React.FC<ToastProps> = ({
   }, [onClose, duration]);
 
   const styles = {
-    success: 'bg-emerald-500 text-white shadow-emerald-500/30',
-    error: 'bg-red-500 text-white shadow-red-500/30',
-    info: 'bg-blue-500 text-white shadow-blue-500/30'
+    success: 'bg-state-success-text text-text-on-accent shadow-state-success-text/30',
+    error: 'bg-state-danger-text text-text-on-accent shadow-state-danger-text/30',
+    info: 'bg-state-info-text text-text-on-accent shadow-state-info-text/30'
   };
 
   const icons = {
@@ -82,7 +83,7 @@ const Toast: React.FC<ToastProps> = ({
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.95 }}
         onClick={onClose}
-        className="ml-2 opacity-70 hover:opacity-100 transition-opacity p-0.5 rounded-full hover:bg-black/10"
+        className="ml-2 opacity-70 hover:opacity-100 transition-opacity p-0.5 rounded-full hover:bg-surface-inverted/10"
         aria-label="关闭通知"
       >
         <X size={16}/>
@@ -90,7 +91,7 @@ const Toast: React.FC<ToastProps> = ({
 
       {showProgress && (
         <motion.div
-          className="absolute bottom-0 left-0 right-0 h-0.5 bg-white/30 rounded-full"
+          className="absolute bottom-0 left-0 right-0 h-0.5 bg-text-on-accent/30 rounded-full"
           initial={{ scaleX: 1, originX: 0 }}
           animate={{ scaleX: 0, originX: 0 }}
           transition={{ duration: duration / 1000, ease: 'linear' }}

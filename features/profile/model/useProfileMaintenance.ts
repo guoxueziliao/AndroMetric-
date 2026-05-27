@@ -1,11 +1,24 @@
 import { useCallback, useEffect, useMemo, useState, type ChangeEvent } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import type { AppSettings, LogEntry, Snapshot } from '../../../domain';
-import { StorageService, db, backupService } from '../../../core/storage';
+import type { AppSettings, BackupRetentionSettings, BackupScheduleSettings, CycleEvent, ExportSnapshot, LogEntry, PartnerProfile, PregnancyEvent, Snapshot, TagEntry } from '../../../domain';
+import { StorageService, db, backupService, LAST_AUTO_BACKUP_META_KEY, LATEST_VERSION } from '../../../core/storage';
 import { useToast } from '../../../contexts/ToastContext';
 import { decryptSnapshotJson, encryptSnapshotJson, getErrorMessage } from '../../../shared/lib';
-import type { ImportPreview, ImportStrategy } from './importPreview';
+import { APP_VERSION } from '../../../app/appConfig';
+import type { ImportConflictResolution, ImportPreview, ImportStrategy } from './importPreview';
 import { buildImportPreview, getImportFileKind } from './importPreview';
+import { createCsvExportBlobFromDataset } from './csvExport';
+import { buildMarkdownExport } from './markdownExport';
+import {
+  applyExportOptionsToDataset,
+  createDefaultExportOptions,
+  getExportTagOptions,
+  getExportCounts,
+  hasAnyExportData,
+  type ExportDataset,
+  type ExportFormat,
+  type ExportOptions
+} from './exportOptions';
 import type { DataHealthReport } from '../../../utils/dataHealthCheck';
 
 interface UseProfileMaintenanceParams {
@@ -58,6 +71,8 @@ const createTimestamp = () => {
   return `${now.toISOString().split('T')[0]}_${now.toTimeString().slice(0, 8).replace(/:/g, '-')}`;
 };
 
+const createDateStamp = () => new Date().toISOString().slice(0, 10).replace(/-/g, '');
+
 const isAbortError = (error: unknown) => (
   typeof error === 'object'
   && error !== null
@@ -71,26 +86,56 @@ export const useProfileMaintenance = ({
   onUpdateSettings
 }: UseProfileMaintenanceParams) => {
   const { showToast } = useToast();
-  const snapshots = (useLiveQuery(StorageService.snapshots.queries.all) as Snapshot[]) || [];
+  const liveSnapshots = useLiveQuery(StorageService.snapshots.queries.all) as Snapshot[] | undefined;
+  const livePartners = useLiveQuery(StorageService.partners.queries.all) as PartnerProfile[] | undefined;
+  const liveTags = useLiveQuery(StorageService.tags.getAll) as TagEntry[] | undefined;
+  const liveCycleEvents = useLiveQuery(StorageService.cycleEvents.queries.all) as CycleEvent[] | undefined;
+  const livePregnancyEvents = useLiveQuery(StorageService.pregnancyEvents.queries.all) as PregnancyEvent[] | undefined;
+  const snapshots = useMemo(() => liveSnapshots || [], [liveSnapshots]);
+  const partners = useMemo(() => livePartners || [], [livePartners]);
+  const tags = useMemo(() => liveTags || [], [liveTags]);
+  const cycleEvents = useMemo(() => liveCycleEvents || [], [liveCycleEvents]);
+  const pregnancyEvents = useMemo(() => livePregnancyEvents || [], [livePregnancyEvents]);
   const dbMeta = useLiveQuery(async () => {
     const dataVersion = await db.meta.get('dataVersion');
     const dataFixVersion = await db.meta.get('dataFixVersion');
+    const lastAutoBackupAt = await db.meta.get(LAST_AUTO_BACKUP_META_KEY);
 
     return {
       dataVersion: dataVersion?.value || 0,
-      dataFixVersion: dataFixVersion?.value || 0
+      dataFixVersion: dataFixVersion?.value || 0,
+      lastAutoBackupAt: typeof lastAutoBackupAt?.value === 'number' ? lastAutoBackupAt.value : 0
     };
-  }) || { dataVersion: 0, dataFixVersion: 0 };
+  }) || { dataVersion: 0, dataFixVersion: 0, lastAutoBackupAt: 0 };
 
   const [importStatus, setImportStatus] = useState<'idle' | 'importing' | 'preview' | 'success' | 'error'>('idle');
   const [importPreview, setImportPreview] = useState<ImportPreview | null>(null);
   const [importStrategy, setImportStrategy] = useState<ImportStrategy>('merge');
+  const [importConflictResolution, setImportConflictResolution] = useState<ImportConflictResolution>('use-import');
   const [snapshotFeedback, setSnapshotFeedback] = useState('');
   const [healthReport, setHealthReport] = useState<DataHealthReport | null>(null);
   const [isRepairing, setIsRepairing] = useState(false);
   const [isMobile, setIsMobile] = useState(getIsMobileDevice);
+  const [isExportOptionsOpen, setIsExportOptionsOpen] = useState(false);
+  const [exportOptions, setExportOptions] = useState<ExportOptions>(() => createDefaultExportOptions());
+  const [isExporting, setIsExporting] = useState(false);
+  const [isEncryptedExport, setIsEncryptedExport] = useState(false);
   const backupMetadata = useLiveQuery(() => backupService.getMetadata()) || null;
-  const backupStatus = useMemo(() => backupService.getStatus(), [backupMetadata]);
+  const backupStatus = backupService.getStatus();
+  const exportDataset = useMemo<ExportDataset>(() => ({
+    logs,
+    partners,
+    tags,
+    cycleEvents,
+    pregnancyEvents,
+    snapshots
+  }), [cycleEvents, logs, partners, pregnancyEvents, snapshots, tags]);
+  const filteredExportDataset = useMemo(() => (
+    applyExportOptionsToDataset(exportDataset, exportOptions)
+  ), [exportDataset, exportOptions]);
+  const exportSourceCounts = useMemo(() => getExportCounts(exportDataset), [exportDataset]);
+  const exportFilteredCounts = useMemo(() => getExportCounts(filteredExportDataset), [filteredExportDataset]);
+  const exportTagOptions = useMemo(() => getExportTagOptions(exportDataset), [exportDataset]);
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(getIsMobileDevice());
@@ -125,7 +170,7 @@ export const useProfileMaintenance = ({
     setIsRepairing(true);
     try {
       showToast('正在创建安全备份...', 'info');
-      await StorageService.snapshots.create(`系统自动备份 - v${settings.version} 修复前`);
+      await StorageService.snapshots.create(`系统自动备份 - v${APP_VERSION} 修复前`, 'auto-safety');
       const count = await StorageService.repairData();
       await db.meta.put({ key: 'dataFixVersion', value: 1 });
 
@@ -141,9 +186,20 @@ export const useProfileMaintenance = ({
     } finally {
       setIsRepairing(false);
     }
-  }, [runHealthCheck, settings.version, showToast]);
+  }, [runHealthCheck, showToast]);
 
-  const exportData = useCallback(async (exportType: 'export' | 'backup', encrypted = false) => {
+  const downloadBlob = useCallback((blob: Blob, filename: string) => {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.download = filename;
+    link.href = url;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }, []);
+
+  const exportFullSnapshot = useCallback(async (exportType: 'export' | 'backup', encrypted = false) => {
     if (logs.length === 0) {
       showToast('没有数据可导出', 'error');
       return false;
@@ -162,14 +218,7 @@ export const useProfileMaintenance = ({
       const jsonStr = await StorageService.createSnapshot();
       const content = encrypted ? await encryptSnapshotJson(jsonStr, passphrase!) : jsonStr;
       const blob = new Blob([content], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.download = filename;
-      link.href = url;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      downloadBlob(blob, filename);
 
       showToast(encrypted ? '加密备份文件已生成' : exportType === 'backup' ? '备份文件已生成' : '导出成功', 'success');
       return true;
@@ -177,7 +226,41 @@ export const useProfileMaintenance = ({
       showToast(`导出失败: ${getErrorMessage(error, '未知错误')}`, 'error');
       return false;
     }
-  }, [logs, showToast]);
+  }, [downloadBlob, logs, showToast]);
+
+  const buildJsonExport = useCallback((dataset: ExportDataset) => {
+    const snapshot: ExportSnapshot = {
+      appName: '硬度日记',
+      appVersion: APP_VERSION,
+      dataVersion: LATEST_VERSION,
+      exportDate: new Date().toISOString(),
+      settings,
+      userName: localStorage.getItem('userName'),
+      data: {
+        version: LATEST_VERSION,
+        logs: dataset.logs,
+        partners: dataset.partners,
+        tags: dataset.tags,
+        cycleEvents: dataset.cycleEvents,
+        pregnancyEvents: dataset.pregnancyEvents,
+        snapshots: dataset.snapshots
+      }
+    };
+
+    return JSON.stringify(snapshot, null, 2);
+  }, [settings]);
+
+  const openExportOptions = useCallback((format: ExportFormat, encrypted = false) => {
+    setIsEncryptedExport(encrypted);
+    setExportOptions(createDefaultExportOptions(encrypted ? 'json' : format));
+    setIsExportOptionsOpen(true);
+  }, []);
+
+  const handleCloseExportOptions = useCallback(() => {
+    if (isExporting) return;
+    setIsExportOptionsOpen(false);
+    setIsEncryptedExport(false);
+  }, [isExporting]);
 
   const handleClearAllData = useCallback(async () => {
     try {
@@ -192,21 +275,80 @@ export const useProfileMaintenance = ({
   }, [showToast]);
 
   const handleExportAndClear = useCallback(async () => {
-    await exportData('backup');
+    await exportFullSnapshot('backup');
     setTimeout(() => {
       handleClearAllData();
     }, 500);
-  }, [exportData, handleClearAllData]);
+  }, [exportFullSnapshot, handleClearAllData]);
 
-  const handleExportClick = useCallback(async () => {
-    const success = await exportData('export');
-    if (success) onUpdateSettings({ ...settings, lastExportAt: Date.now() });
-  }, [exportData, onUpdateSettings, settings]);
+  const handleExportClick = useCallback(() => openExportOptions('json'), [openExportOptions]);
 
-  const handleEncryptedExportClick = useCallback(async () => {
-    const success = await exportData('export', true);
-    if (success) onUpdateSettings({ ...settings, lastExportAt: Date.now() });
-  }, [exportData, onUpdateSettings, settings]);
+  const handleMarkdownExportClick = useCallback(() => openExportOptions('markdown'), [openExportOptions]);
+
+  const handleCsvExportClick = useCallback(() => openExportOptions('csv'), [openExportOptions]);
+
+  const handleEncryptedExportClick = useCallback(() => openExportOptions('json', true), [openExportOptions]);
+
+  const handleConfirmExport = useCallback(async () => {
+    const dataset = filteredExportDataset;
+    if (!hasAnyExportData(dataset)) {
+      showToast('当前选择没有可导出的内容', 'error');
+      return false;
+    }
+    if (exportOptions.format === 'markdown' && (!exportOptions.dimensions.logs || dataset.logs.length === 0)) {
+      showToast('Markdown 导出需要选择并包含日志数据', 'error');
+      return false;
+    }
+
+    const passphrase = isEncryptedExport ? window.prompt('请输入导出密码。导入时必须使用同一个密码。') : null;
+    if (isEncryptedExport && !passphrase) return false;
+
+    setIsExporting(true);
+    try {
+      const timestamp = createDateStamp();
+      const tagSuffix = exportOptions.tagFilter && exportOptions.tagFilter.length > 0
+        ? `-tags-${exportOptions.tagFilter.length}`
+        : '';
+      if (exportOptions.format === 'json') {
+        const json = buildJsonExport(dataset);
+        const content = isEncryptedExport ? await encryptSnapshotJson(json, passphrase!) : json;
+        const extension = isEncryptedExport ? 'hdenc.json' : 'json';
+        downloadBlob(new Blob([content], { type: 'application/json' }), `hardness-diary${tagSuffix}-${timestamp}.${extension}`);
+        showToast(isEncryptedExport ? '加密导出文件已生成' : 'JSON 导出已生成', 'success');
+      } else if (exportOptions.format === 'csv') {
+        const blob = createCsvExportBlobFromDataset(dataset, exportOptions.dimensions, {
+          appVersion: APP_VERSION,
+          dataVersion: LATEST_VERSION,
+          exportedAt: new Date().toISOString()
+        });
+        downloadBlob(blob, `hardness-diary-csv${tagSuffix}-${timestamp}.zip`);
+        showToast('CSV 导出包已生成', 'success');
+      } else {
+        const markdown = buildMarkdownExport(dataset.logs);
+        downloadBlob(new Blob([markdown], { type: 'text/markdown;charset=utf-8' }), `hardness-diary${tagSuffix}-${timestamp}.md`);
+        showToast('Markdown 导出已生成', 'success');
+      }
+
+      onUpdateSettings({ ...settings, lastExportAt: Date.now() });
+      setIsExportOptionsOpen(false);
+      setIsEncryptedExport(false);
+      return true;
+    } catch (error) {
+      showToast(`导出失败: ${getErrorMessage(error, '未知错误')}`, 'error');
+      return false;
+    } finally {
+      setIsExporting(false);
+    }
+  }, [
+    buildJsonExport,
+    downloadBlob,
+    exportOptions,
+    filteredExportDataset,
+    isEncryptedExport,
+    onUpdateSettings,
+    settings,
+    showToast
+  ]);
 
   const handleFileSystemBackup = useCallback(async () => {
     const fileSystemWindow = window as WindowWithFileSystemAccess;
@@ -256,6 +398,28 @@ export const useProfileMaintenance = ({
     }
   }, [showToast]);
 
+  const handleChangeBackupRetention = useCallback(async (backupRetention: BackupRetentionSettings) => {
+    onUpdateSettings({
+      ...settings,
+      backupRetention
+    });
+
+    try {
+      const prunedCount = await StorageService.snapshots.applyRetention(backupRetention);
+      showToast(prunedCount > 0 ? `已清理 ${prunedCount} 个旧自动快照` : '备份保留策略已更新', 'success');
+    } catch (error) {
+      showToast(`保留策略更新失败: ${getErrorMessage(error, '未知错误')}`, 'error');
+    }
+  }, [onUpdateSettings, settings, showToast]);
+
+  const handleChangeBackupSchedule = useCallback((backupSchedule: BackupScheduleSettings) => {
+    onUpdateSettings({
+      ...settings,
+      backupSchedule
+    });
+    showToast(backupSchedule.enabled ? '自动备份偏好已更新' : '已关闭 idle 自动备份', 'success');
+  }, [onUpdateSettings, settings, showToast]);
+
   const handleRestoreSnapshot = useCallback(async (id: number) => {
     if (!confirm('还原将覆盖当前所有数据。确定要回滚到此版本吗？')) return;
 
@@ -291,9 +455,11 @@ export const useProfileMaintenance = ({
           return;
         }
         const rawText = encrypted ? await decryptSnapshotJson(text, passphrase!) : text;
-        const preview = buildImportPreview(rawText, encrypted);
+        const preview = buildImportPreview(rawText, encrypted, logs);
+        if (preview.versionStatus === 'newer') showToast('此文件来自更新版本的应用，请升级后再试', 'error');
         setImportPreview(preview);
         setImportStrategy('merge');
+        setImportConflictResolution('use-import');
         setImportStatus('preview');
       } catch (error) {
         setImportStatus('error');
@@ -303,21 +469,22 @@ export const useProfileMaintenance = ({
     };
     reader.readAsText(file);
     event.target.value = '';
-  }, [showToast]);
+  }, [logs, showToast]);
 
   const handleCancelImportPreview = useCallback(() => {
     setImportPreview(null);
     setImportStatus('idle');
     setImportStrategy('merge');
+    setImportConflictResolution('use-import');
   }, []);
 
   const handleConfirmImport = useCallback(async () => {
-    if (!importPreview) return;
+    if (!importPreview || importPreview.versionStatus === 'newer') return;
 
     setImportStatus('importing');
     try {
-      await StorageService.snapshots.create(`导入前自动快照 - ${new Date().toLocaleString('zh-CN')}`);
-      await StorageService.restoreSnapshot(importPreview.rawText, importStrategy);
+      await StorageService.snapshots.create(`导入前自动快照 - ${new Date().toLocaleString('zh-CN')}`, 'auto-safety');
+      await StorageService.restoreSnapshot(importPreview.rawText, importStrategy, importConflictResolution);
       setImportPreview(null);
       setImportStatus('success');
       showToast('导入成功，已创建导入前安全快照', 'success');
@@ -327,16 +494,24 @@ export const useProfileMaintenance = ({
       showToast(getErrorMessage(error, '导入失败'), 'error');
       setTimeout(() => setImportStatus('preview'), 3000);
     }
-  }, [importPreview, importStrategy, showToast]);
+  }, [importConflictResolution, importPreview, importStrategy, showToast]);
 
   return {
     snapshots,
     dbMeta,
     healthReport,
     isRepairing,
+    isExportOptionsOpen,
+    exportOptions,
+    exportSourceCounts,
+    exportFilteredCounts,
+    exportTagOptions,
+    isExporting,
+    isEncryptedExport,
     importStatus,
     importPreview,
     importStrategy,
+    importConflictResolution,
     snapshotFeedback,
     canUseFileSystem,
     backupMetadata,
@@ -344,15 +519,23 @@ export const useProfileMaintenance = ({
     onRunHealthCheck: runHealthCheck,
     onRepairData: handleRepairData,
     onExportClick: handleExportClick,
+    onMarkdownExportClick: handleMarkdownExportClick,
+    onCsvExportClick: handleCsvExportClick,
     onEncryptedExportClick: handleEncryptedExportClick,
+    onChangeExportOptions: setExportOptions,
+    onCloseExportOptions: handleCloseExportOptions,
+    onConfirmExport: handleConfirmExport,
     onFileSystemBackup: handleFileSystemBackup,
     onCreateSnapshot: handleCreateSnapshot,
+    onChangeBackupRetention: handleChangeBackupRetention,
+    onChangeBackupSchedule: handleChangeBackupSchedule,
     onRestoreSnapshot: handleRestoreSnapshot,
     onDeleteSnapshot: handleDeleteSnapshot,
     onFileChange: handleFileChange,
     onCancelImportPreview: handleCancelImportPreview,
     onConfirmImport: handleConfirmImport,
     onChangeImportStrategy: setImportStrategy,
+    onChangeImportConflictResolution: setImportConflictResolution,
     onClearAllData: handleClearAllData,
     onExportAndClear: handleExportAndClear
   };

@@ -64,7 +64,7 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
 
     const handleAddPartnerByName = useCallback(async (name: string): Promise<PartnerProfile | null> => {
         if (!onAddOrUpdatePartner) return null;
-        const colors = ['bg-pink-500', 'bg-purple-500', 'bg-blue-500', 'bg-emerald-500', 'bg-amber-500', 'bg-rose-500'];
+        const colors = ['bg-accent-vivid', 'bg-chart-tertiary', 'bg-state-info-text', 'bg-state-success-text', 'bg-state-warning-text', 'bg-state-danger-text'];
         const newPartner: PartnerProfile = {
             id: `partner_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
             name,
@@ -312,9 +312,9 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
 
     return (
         <div className="space-y-6">
-            <div className="bg-white dark:bg-slate-900 rounded-[2rem] p-6 shadow-soft border border-slate-100 dark:border-white/5 flex justify-between items-center">
+            <div className="bg-surface-card rounded-[2rem] p-6 shadow-soft border border-surface-border flex justify-between items-center">
                 <div className="flex-1 pr-4">
-                    <h2 className="text-2xl font-black text-brand-text dark:text-slate-100 leading-tight">
+                    <h2 className="text-2xl font-black text-text-primary leading-tight">
                         {log.date ? formatDateFriendly(log.date).replace(/年|月|日/g, (m) => m === '日' ? '日 ' : m) : '未设置日期'}
                     </h2>
                 </div>
@@ -331,8 +331,8 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
                 onDeleteNap={(id) => removeItem('nap', id)}
             />
 
-            <div className="bg-white dark:bg-slate-900 rounded-[2rem] shadow-soft border border-slate-100 dark:border-white/5 overflow-hidden">
-                <div className="flex bg-slate-50/50 dark:bg-slate-900 border-b border-slate-100 dark:border-white/5">
+            <div className="bg-surface-card rounded-[2rem] shadow-soft border border-surface-border overflow-hidden">
+                <div className="flex bg-surface-muted/50 border-b border-surface-border">
                     {[
                         { id: 'sex', label: '性活动' },
                         { id: 'life', label: '生活' },
@@ -342,17 +342,17 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
                         <button
                             key={t.id}
                             onClick={() => setActiveMidTab(t.id as MidTabType)}
-                            className={`flex-1 py-4 text-sm font-black transition-all relative ${activeMidTab === t.id ? 'text-brand-accent' : 'text-slate-400'}`}
+                            className={`flex-1 py-4 text-sm font-black transition-all relative ${activeMidTab === t.id ? 'text-accent' : 'text-text-muted'}`}
                         >
                             {t.label}
-                            {activeMidTab === t.id && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-1 bg-brand-accent rounded-full animate-in zoom-in duration-300"></div>}
+                            {activeMidTab === t.id && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-1 bg-accent rounded-full animate-in zoom-in duration-slow"></div>}
                         </button>
                     ))}
                 </div>
 
                 <div className="p-6 min-h-[340px]">
                     {activeMidTab === 'sex' && (
-                        <div className="space-y-5 animate-in fade-in duration-300">
+                        <div className="space-y-5 animate-in fade-in duration-slow">
                             <div className="space-y-3">
                                 {log.masturbation?.map(m => (
                                     <RecordCard
@@ -379,82 +379,82 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
                                     />
                                 ))}
                                 {!log.masturbation?.length && !log.sex?.length && (
-                                    <p className="text-[11px] text-slate-300 italic pl-1">今天没有性活动记录</p>
+                                    <p className="text-[11px] text-text-muted/70 italic pl-1">今天没有性活动记录</p>
                                 )}
                             </div>
                             <div className="flex gap-3">
-                                <button onClick={() => { setEditTarget(null); setModalState(s => ({ ...s, sex: true })); }} className="flex-1 py-4 bg-pink-50 dark:bg-pink-900/20 text-pink-600 dark:text-pink-400 rounded-2xl font-black text-xs flex items-center justify-center gap-2 border border-pink-100 dark:border-pink-900/50 active:scale-95 transition-all">
+                                <button onClick={() => { setEditTarget(null); setModalState(s => ({ ...s, sex: true })); }} className="flex-1 py-4 bg-accent-vivid/10 text-accent-vivid rounded-2xl font-black text-xs flex items-center justify-center gap-2 border border-accent-vivid/25 active:scale-95 transition-all">
                                     <Heart size={16} fill="currentColor" fillOpacity={0.2} /> 记录性爱
                                 </button>
-                                <button onClick={() => { setEditTarget(null); setModalState(s => ({ ...s, mb: true })); }} className="flex-1 py-4 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-2xl font-black text-xs flex items-center justify-center gap-2 border border-blue-100 dark:border-blue-900/50 active:scale-95 transition-all">
+                                <button onClick={() => { setEditTarget(null); setModalState(s => ({ ...s, mb: true })); }} className="flex-1 py-4 bg-state-info-bg text-state-info-text rounded-2xl font-black text-xs flex items-center justify-center gap-2 border border-state-info-text/25 active:scale-95 transition-all">
                                     <Hand size={16} /> 记录自慰
                                 </button>
                             </div>
                         </div>
                     )}
                     {activeMidTab === 'life' && (
-                        <div className="space-y-8 animate-in fade-in duration-300">
+                        <div className="space-y-8 animate-in fade-in duration-slow">
                             {/* 饮酒列表 */}
                             <div>
                                 <div className="flex justify-between items-center mb-3">
-                                    <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">饮酒</label>
-                                    <button onClick={() => { setEditTarget(null); setModalState(s => ({ ...s, alc: true })); }} className="text-[11px] text-amber-600 font-black">+ 添加</button>
+                                    <label className="text-[11px] font-black text-text-muted uppercase tracking-widest">饮酒</label>
+                                    <button onClick={() => { setEditTarget(null); setModalState(s => ({ ...s, alc: true })); }} className="text-[11px] text-state-warning-text font-black">+ 添加</button>
                                 </div>
                                 <div className="space-y-2">
                                     {log.alcoholRecords?.map(record => (
-                                        <div key={record.id} className="group flex justify-between items-center bg-white dark:bg-slate-800 p-3.5 rounded-2xl border border-slate-100 dark:border-white/5 shadow-sm">
+                                        <div key={record.id} className="group flex justify-between items-center bg-surface-card p-3.5 rounded-2xl border border-surface-border shadow-soft">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-9 h-9 bg-amber-50 dark:bg-amber-900/30 rounded-xl flex items-center justify-center text-amber-500"><Beer size={18}/></div>
+                                                <div className="w-9 h-9 bg-state-warning-bg rounded-xl flex items-center justify-center text-state-warning-text"><Beer size={18}/></div>
                                                 <div>
-                                                    <div className="text-sm font-black text-slate-700 dark:text-slate-200">
-                                                        {record.totalGrams}克 <span className="text-[10px] text-slate-400">纯酒精</span>
+                                                    <div className="text-sm font-black text-text-secondary">
+                                                        {record.totalGrams}克 <span className="text-[10px] text-text-muted">纯酒精</span>
                                                     </div>
-                                                    <div className="text-[10px] text-slate-400 font-bold mt-0.5 line-clamp-1">{record.items.map(i => i.name).join(', ')} · {record.time}</div>
+                                                    <div className="text-[10px] text-text-muted font-bold mt-0.5 line-clamp-1">{record.items.map(i => i.name).join(', ')} · {record.time}</div>
                                                 </div>
                                             </div>
                                             <div className="flex gap-1.5">
-                                                <button onClick={() => handleEdit('alc', record)} className="p-2 bg-slate-50 dark:bg-slate-700 rounded-xl text-slate-400 hover:text-brand-accent transition-colors"><Edit3 size={15}/></button>
-                                                <button onClick={() => removeItem('alcohol', record.id)} className="p-2 bg-slate-50 dark:bg-slate-700 rounded-xl text-slate-400 hover:text-red-500 transition-colors"><Trash2 size={15}/></button>
+                                                <button onClick={() => handleEdit('alc', record)} className="p-2 bg-surface-muted rounded-xl text-text-muted hover:text-accent transition-colors"><Edit3 size={15}/></button>
+                                                <button onClick={() => removeItem('alcohol', record.id)} className="p-2 bg-surface-muted rounded-xl text-text-muted hover:text-state-danger-text transition-colors"><Trash2 size={15}/></button>
                                             </div>
                                         </div>
                                     ))}
-                                    {(!log.alcoholRecords || log.alcoholRecords.length === 0) && <p className="text-[11px] text-slate-300 italic pl-1">未记录饮酒</p>}
+                                    {(!log.alcoholRecords || log.alcoholRecords.length === 0) && <p className="text-[11px] text-text-muted/70 italic pl-1">未记录饮酒</p>}
                                 </div>
                             </div>
 
                             {/* 提神饮品列表 */}
                             <div>
                                 <div className="flex justify-between items-center mb-3">
-                                    <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">提神饮品</label>
-                                    <button onClick={() => { setEditTarget(null); setModalState(s => ({ ...s, bev: true })); }} className="text-[11px] text-orange-600 font-black">+ 添加</button>
+                                    <label className="text-[11px] font-black text-text-muted uppercase tracking-widest">提神饮品</label>
+                                    <button onClick={() => { setEditTarget(null); setModalState(s => ({ ...s, bev: true })); }} className="text-[11px] text-state-warning-text font-black">+ 添加</button>
                                 </div>
                                 <div className="space-y-2">
                                     {log.caffeineRecord?.items.map(item => (
-                                        <div key={item.id} className="group flex justify-between items-center bg-white dark:bg-slate-800 p-3.5 rounded-2xl border border-slate-100 dark:border-white/5 shadow-sm">
+                                        <div key={item.id} className="group flex justify-between items-center bg-surface-card p-3.5 rounded-2xl border border-surface-border shadow-soft">
                                             <div className="flex items-center gap-3">
-                                                <div className={`w-9 h-9 ${item.isDaily ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-500' : 'bg-orange-50 dark:bg-orange-900/30 text-orange-500'} rounded-xl flex items-center justify-center`}>
+                                                <div className={`w-9 h-9 ${item.isDaily ? 'bg-state-success-bg text-state-success-text' : 'bg-state-warning-bg text-state-warning-text'} rounded-xl flex items-center justify-center`}>
                                                     {item.isDaily ? <RotateCcw size={18} className="animate-spin-slow" /> : <Coffee size={18}/>}
                                                 </div>
                                                 <div>
-                                                    <div className={`text-sm font-black ${item.isDaily ? 'text-emerald-700 dark:text-emerald-300' : 'text-slate-700 dark:text-slate-200'}`}>{item.name}</div>
-                                                    <div className="text-[10px] text-slate-400 font-bold mt-0.5">
+                                                    <div className={`text-sm font-black ${item.isDaily ? 'text-state-success-text' : 'text-text-secondary'}`}>{item.name}</div>
+                                                    <div className="text-[10px] text-text-muted font-bold mt-0.5">
                                                         {item.time} · {item.isDaily ? '全天日常饮用' : `${item.volume}毫升`}
                                                     </div>
                                                 </div>
                                             </div>
                                             <div className="flex gap-1.5">
-                                                <button onClick={() => handleEdit('bev', item)} className="p-2 bg-slate-50 dark:bg-slate-700 rounded-xl text-slate-400 hover:text-brand-accent transition-colors"><Edit3 size={15}/></button>
-                                                <button onClick={() => removeItem('caffeine', item.id)} className="p-2 bg-slate-50 dark:bg-slate-700 rounded-xl text-slate-400 hover:text-red-500 transition-colors"><Trash2 size={15}/></button>
+                                                <button onClick={() => handleEdit('bev', item)} className="p-2 bg-surface-muted rounded-xl text-text-muted hover:text-accent transition-colors"><Edit3 size={15}/></button>
+                                                <button onClick={() => removeItem('caffeine', item.id)} className="p-2 bg-surface-muted rounded-xl text-text-muted hover:text-state-danger-text transition-colors"><Trash2 size={15}/></button>
                                             </div>
                                         </div>
                                     ))}
-                                    {(!log.caffeineRecord || log.caffeineRecord.items.length === 0) && <p className="text-[11px] text-slate-300 italic pl-1">未记录饮品</p>}
+                                    {(!log.caffeineRecord || log.caffeineRecord.items.length === 0) && <p className="text-[11px] text-text-muted/70 italic pl-1">未记录饮品</p>}
                                 </div>
                             </div>
 
                             <div className="space-y-3">
-                                <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">屏幕使用时间</label>
-                                <div className="rounded-[1.5rem] border border-slate-100 bg-slate-50 p-4 dark:border-white/5 dark:bg-slate-900">
+                                <label className="text-[11px] font-black text-text-muted uppercase tracking-widest">屏幕使用时间</label>
+                                <div className="rounded-[1.5rem] border border-surface-border bg-surface-muted p-4">
                                     <div className="flex items-center gap-3">
                                         <input
                                             type="number"
@@ -463,16 +463,16 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
                                             value={log.screenTime?.totalMinutes || ''}
                                             onChange={(event) => setScreenTimeMinutes(event.target.value ? Number(event.target.value) : null)}
                                             placeholder="总分钟"
-                                            className="w-28 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-black text-slate-800 outline-none transition-all focus:border-brand-accent dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                                            className="w-28 rounded-2xl border border-surface-border bg-surface-card px-4 py-3 text-sm font-black text-text-primary outline-none transition-all focus:border-accent"
                                         />
-                                        <span className="text-xs font-bold text-slate-400">分钟 / 手动录入</span>
+                                        <span className="text-xs font-bold text-text-muted">分钟 / 手动录入</span>
                                     </div>
                                     <textarea
                                         value={log.screenTime?.notes || ''}
                                         onChange={(event) => setScreenTimeNotes(event.target.value)}
                                         rows={2}
                                         placeholder="备注（可选）"
-                                        className="mt-3 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs font-bold text-slate-700 outline-none transition-all focus:border-brand-accent dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                                        className="mt-3 w-full rounded-2xl border border-surface-border bg-surface-card px-4 py-3 text-xs font-bold text-text-secondary outline-none transition-all focus:border-accent"
                                     />
                                 </div>
                             </div>
@@ -480,32 +480,32 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
                             {/* 运动列表 */}
                             <div>
                                 <div className="flex justify-between items-center mb-3">
-                                    <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">运动</label>
-                                    <button onClick={() => { setEditTarget(null); setModalState(s => ({ ...s, ex: true })); }} className="text-[11px] text-emerald-600 font-black">+ 添加</button>
+                                    <label className="text-[11px] font-black text-text-muted uppercase tracking-widest">运动</label>
+                                    <button onClick={() => { setEditTarget(null); setModalState(s => ({ ...s, ex: true })); }} className="text-[11px] text-state-success-text font-black">+ 添加</button>
                                 </div>
                                 <div className="space-y-2">
                                     {log.exercise?.map(item => (
-                                        <div key={item.id} className="group flex justify-between items-center bg-white dark:bg-slate-800 p-3.5 rounded-2xl border border-slate-100 dark:border-white/5 shadow-sm">
+                                        <div key={item.id} className="group flex justify-between items-center bg-surface-card p-3.5 rounded-2xl border border-surface-border shadow-soft">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-9 h-9 bg-emerald-50 dark:bg-emerald-900/30 rounded-xl flex items-center justify-center text-emerald-500"><Dumbbell size={18}/></div>
+                                                <div className="w-9 h-9 bg-state-success-bg rounded-xl flex items-center justify-center text-state-success-text"><Dumbbell size={18}/></div>
                                                 <div>
-                                                    <div className="text-sm font-black text-slate-700 dark:text-slate-200">{item.type}</div>
-                                                    <div className="text-[10px] text-slate-400 font-bold mt-0.5">{item.duration}分钟 · {item.startTime}</div>
+                                                    <div className="text-sm font-black text-text-secondary">{item.type}</div>
+                                                    <div className="text-[10px] text-text-muted font-bold mt-0.5">{item.duration}分钟 · {item.startTime}</div>
                                                 </div>
                                             </div>
                                             <div className="flex gap-1.5">
-                                                <button onClick={() => handleEdit('ex', item)} className="p-2 bg-slate-50 dark:bg-slate-700 rounded-xl text-slate-400 hover:text-brand-accent transition-colors"><Edit3 size={15}/></button>
-                                                <button onClick={() => removeItem('exercise', item.id)} className="p-2 bg-slate-50 dark:bg-slate-700 rounded-xl text-slate-400 hover:text-red-500 transition-colors"><Trash2 size={15}/></button>
+                                                <button onClick={() => handleEdit('ex', item)} className="p-2 bg-surface-muted rounded-xl text-text-muted hover:text-accent transition-colors"><Edit3 size={15}/></button>
+                                                <button onClick={() => removeItem('exercise', item.id)} className="p-2 bg-surface-muted rounded-xl text-text-muted hover:text-state-danger-text transition-colors"><Trash2 size={15}/></button>
                                             </div>
                                         </div>
                                     ))}
-                                    {(!log.exercise || log.exercise.length === 0) && <p className="text-[11px] text-slate-300 italic pl-1">未记录运动</p>}
+                                    {(!log.exercise || log.exercise.length === 0) && <p className="text-[11px] text-text-muted/70 italic pl-1">未记录运动</p>}
                                 </div>
                             </div>
 
                             {/* 看片 */}
                             <div>
-                                <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-3 block">看片</label>
+                                <label className="text-[11px] font-black text-text-muted uppercase tracking-widest mb-3 block">看片</label>
                                 <div className="flex gap-2">
                                     {[
                                         { id: 'none', label: '无' },
@@ -516,7 +516,7 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
                                         <button 
                                             key={opt.id}
                                             onClick={() => setField('pornConsumption', opt.id)}
-                                            className={`flex-1 py-3.5 rounded-2xl text-xs font-black border transition-all ${log.pornConsumption === opt.id ? 'bg-blue-50 dark:bg-blue-900/30 text-brand-accent border-brand-accent shadow-sm' : 'bg-slate-50 dark:bg-slate-800 border-transparent text-slate-400 hover:bg-slate-100'}`}
+                                            className={`flex-1 py-3.5 rounded-2xl text-xs font-black border transition-all ${log.pornConsumption === opt.id ? 'bg-accent-vivid/10 text-accent-vivid border-accent-vivid shadow-soft' : 'bg-surface-muted border-transparent text-text-muted hover:bg-surface-border'}`}
                                         >
                                             {opt.label}
                                         </button>
@@ -527,7 +527,7 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
                     )}
 
                     {activeMidTab === 'env' && (
-                        <div className="space-y-8 animate-in fade-in duration-300">
+                        <div className="space-y-8 animate-in fade-in duration-slow">
                             {[
                                 { label: '天气', field: 'weather', options: [
                                     { id: 'sunny', label: '晴', icon: Sun }, { id: 'cloudy', label: '多云', icon: Cloud }, { id: 'rainy', label: '雨', icon: CloudRain }, { id: 'snowy', label: '雪', icon: Snowflake }, { id: 'windy', label: '大风', icon: Wind }, { id: 'foggy', label: '雾', icon: CloudFog }
@@ -540,7 +540,7 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
                                 ]}
                             ].map(group => (
                                 <div key={group.label} className="space-y-3">
-                                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block">{group.label}</label>
+                                    <label className="text-xs font-bold text-text-muted uppercase tracking-wider block">{group.label}</label>
                                     <div className="grid grid-cols-5 gap-2">
                                         {group.options.map(opt => {
                                             const isSelected = group.field === 'sleep_attire' ? log.sleep?.attire === opt.id : (log as any)[group.field] === opt.id;
@@ -548,7 +548,7 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
                                                 <button 
                                                     key={opt.id} 
                                                     onClick={() => group.field === 'sleep_attire' ? handleSleepChange('attire', opt.id) : setField(group.field as any, opt.id)} 
-                                                    className={`flex flex-col items-center gap-2 p-3 rounded-2xl border-2 transition-all active:scale-90 ${isSelected ? 'border-brand-accent bg-blue-50 dark:bg-blue-500/20 text-brand-accent dark:text-blue-400 shadow-md' : 'border-slate-50 dark:border-slate-800/50 bg-white dark:bg-slate-900 text-slate-300 dark:text-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
+                                                    className={`flex flex-col items-center gap-2 p-3 rounded-2xl border-2 transition-all active:scale-90 ${isSelected ? 'border-accent bg-state-info-bg text-accent shadow-soft' : 'border-surface-border bg-surface-card text-text-muted hover:bg-surface-muted'}`}
                                                 >
                                                     <opt.icon size={22} strokeWidth={isSelected ? 2.5 : 2} />
                                                     <span className="text-[10px] font-black">{opt.label}</span>
@@ -562,18 +562,18 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
                     )}
 
                     {activeMidTab === 'health' && (
-                        <div className="space-y-10 animate-in fade-in duration-300">
+                        <div className="space-y-10 animate-in fade-in duration-slow">
                             <div className="space-y-4">
-                                <label className="text-xs font-bold text-slate-400 dark:text-slate-400 uppercase tracking-widest block">心情</label>
+                                <label className="text-xs font-bold text-text-muted uppercase tracking-widest block">心情</label>
                                 <FaceSelector options={MOOD_FACES} value={log.mood || null} onChange={v => setField('mood', v)} />
                             </div>
                             <div className="space-y-4">
-                                <label className="text-xs font-bold text-slate-400 dark:text-slate-400 uppercase tracking-widest block">压力等级</label>
+                                <label className="text-xs font-bold text-text-muted uppercase tracking-widest block">压力等级</label>
                                 <FaceSelector options={STRESS_FACES} value={log.stressLevel || null} onChange={v => setField('stressLevel', v)} />
                             </div>
 
                             <div className="space-y-4">
-                                <label className="text-xs font-bold text-slate-400 dark:text-slate-400 uppercase tracking-widest block">补剂</label>
+                                <label className="text-xs font-bold text-text-muted uppercase tracking-widest block">补剂</label>
                                 <div className="flex flex-wrap gap-2">
                                     {SUPPLEMENT_OPTIONS.map((name) => {
                                         const selected = (log.supplements || []).some(item => item.name === name && item.taken);
@@ -584,8 +584,8 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
                                                 onClick={() => toggleSupplement(name)}
                                                 className={`rounded-xl border px-3 py-2 text-[11px] font-black transition-all ${
                                                     selected
-                                                        ? 'border-emerald-500 bg-emerald-50 text-emerald-700 shadow-sm dark:border-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
-                                                        : 'border-slate-200 bg-white text-slate-500 dark:border-slate-700 dark:bg-slate-900'
+                                                        ? 'border-state-success-text bg-state-success-bg text-state-success-text shadow-soft'
+                                                        : 'border-surface-border bg-surface-card text-text-muted'
                                                 }`}
                                             >
                                                 {name}
@@ -595,9 +595,9 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
                                 </div>
                             </div>
 
-                            <div className="space-y-4 rounded-[1.5rem] border border-slate-100 bg-slate-50/70 p-4 dark:border-white/5 dark:bg-slate-950">
-                                <label className="text-xs font-bold text-slate-400 dark:text-slate-400 uppercase tracking-widest block">周期摘要（兼容）</label>
-                                <p className="text-[11px] font-bold text-slate-400 dark:text-slate-400">
+                            <div className="space-y-4 rounded-[1.5rem] border border-surface-border bg-surface-muted/70 p-4">
+                                <label className="text-xs font-bold text-text-muted uppercase tracking-widest block">周期摘要（兼容）</label>
+                                <p className="text-[11px] font-bold text-text-muted">
                                     建议在首页九宫格的“经期”面板维护周期、备孕和怀孕事件；这里仅保留每日摘要兼容。
                                 </p>
                                 <div className="grid grid-cols-2 gap-2">
@@ -608,8 +608,8 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
                                             onClick={() => setMenstrualStatus(option.id)}
                                             className={`rounded-2xl border px-3 py-3 text-xs font-black transition-all ${
                                                 (log.menstrual?.status || 'unknown') === option.id
-                                                    ? 'border-violet-500 bg-violet-50 text-violet-700 shadow-sm dark:border-violet-700 dark:bg-violet-900/30 dark:text-violet-300'
-                                                    : 'border-slate-200 bg-white text-slate-500 dark:border-slate-700 dark:bg-slate-900'
+                                                    ? 'border-chart-tertiary bg-chart-tertiary/10 text-chart-tertiary shadow-soft'
+                                                    : 'border-surface-border bg-surface-card text-text-muted'
                                             }`}
                                         >
                                             {option.label}
@@ -621,15 +621,15 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
                                     onChange={(event) => setMenstrualNotes(event.target.value)}
                                     rows={2}
                                     placeholder="周期备注（可选）"
-                                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs font-bold text-slate-700 outline-none transition-all focus:border-brand-accent dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                                    className="w-full rounded-2xl border border-surface-border bg-surface-card px-4 py-3 text-xs font-bold text-text-secondary outline-none transition-all focus:border-accent"
                                 />
                             </div>
                             
-                            <div className={`mt-6 rounded-[1.5rem] border transition-all duration-300 overflow-hidden ${log.health?.isSick ? 'bg-red-50/50 dark:bg-red-900/10 border-red-200 dark:border-red-900/30' : 'bg-slate-50/50 dark:bg-slate-950 border-slate-100 dark:border-slate-800'}`}>
+                            <div className={`mt-6 rounded-[1.5rem] border transition-all duration-slow overflow-hidden ${log.health?.isSick ? 'bg-state-danger-bg/50 border-state-danger-text/25' : 'bg-surface-muted/50 border-surface-border'}`}>
                                 <div className="flex items-center justify-between p-5">
                                     <div className="flex items-center gap-4">
-                                        <ShieldAlert className={log.health?.isSick ? 'text-red-500 animate-pulse' : 'text-slate-400 dark:text-slate-600'} size={20}/>
-                                        <span className={`text-sm font-black ${log.health?.isSick ? 'text-red-700 dark:text-red-400' : 'text-slate-600 dark:text-slate-400'}`}>身体不适</span>
+                                        <ShieldAlert className={log.health?.isSick ? 'text-state-danger-text animate-pulse' : 'text-text-muted'} size={20}/>
+                                        <span className={`text-sm font-black ${log.health?.isSick ? 'text-state-danger-text' : 'text-text-secondary'}`}>身体不适</span>
                                     </div>
                                     <input 
                                         type="checkbox" 
@@ -654,10 +654,10 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
                                 </div>
 
                                 {log.health?.isSick && (
-                                    <div className="px-5 pb-6 space-y-6 animate-in slide-in-from-top-2 duration-300">
+                                    <div className="px-5 pb-6 space-y-6 animate-in slide-in-from-top-2 duration-slow">
                                         <div className="space-y-3">
-                                            <label className="text-[10px] font-black text-red-600/70 dark:text-red-400/50 uppercase tracking-widest block">程度评价</label>
-                                            <div className="flex bg-white dark:bg-slate-900 rounded-xl p-1 border border-red-100 dark:border-red-900/30 shadow-sm">
+                                            <label className="text-[10px] font-black text-state-danger-text/70 uppercase tracking-widest block">程度评价</label>
+                                            <div className="flex bg-surface-card rounded-xl p-1 border border-state-danger-text/25 shadow-soft">
                                                 {[
                                                     { v: 'mild', l: '轻微' },
                                                     { v: 'moderate', l: '明显' },
@@ -673,7 +673,7 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
                                                             }));
                                                             markDirty();
                                                         }}
-                                                        className={`flex-1 py-2 text-xs font-black rounded-lg transition-all ${log.health?.discomfortLevel === opt.v ? 'bg-red-500 text-white shadow-md' : 'text-slate-400 hover:bg-red-50 dark:hover:bg-red-900/20'}`}
+                                                        className={`flex-1 py-2 text-xs font-black rounded-lg transition-all ${log.health?.discomfortLevel === opt.v ? 'bg-state-danger-text text-text-on-accent shadow-soft' : 'text-text-muted hover:bg-state-danger-bg'}`}
                                                     >
                                                         {opt.l}
                                                     </button>
@@ -682,7 +682,7 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
                                         </div>
 
                                         <div className="space-y-3">
-                                            <label className="text-[10px] font-black text-red-600/70 dark:text-red-400/50 uppercase tracking-widest block">具体症状</label>
+                                            <label className="text-[10px] font-black text-state-danger-text/70 uppercase tracking-widest block">具体症状</label>
                                             <div className="flex flex-wrap gap-2">
                                                 {['头痛', '喉咙痛', '胃不适', '肌肉酸痛', '腹泻', '发烧', '鼻塞', '乏力', '咳嗽'].map(s => {
                                                     const isSelected = log.health?.symptoms?.includes(s);
@@ -696,7 +696,7 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
                                                                 markPathTouched('health.symptoms');
                                                                 markDirty();
                                                             }}
-                                                            className={`px-3 py-1.5 rounded-xl text-[10px] font-black border transition-all ${isSelected ? 'bg-red-500 text-white border-red-500 shadow-sm' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-500'}`}
+                                                            className={`px-3 py-1.5 rounded-xl text-[10px] font-black border transition-all ${isSelected ? 'bg-state-danger-text text-text-on-accent border-state-danger-text shadow-soft' : 'bg-surface-card border-surface-border text-text-muted'}`}
                                                         >
                                                             {s}
                                                         </button>
@@ -705,8 +705,8 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
                                             </div>
                                         </div>
 
-                                        <div className="space-y-3 pt-2 border-t border-red-100 dark:border-red-900/30">
-                                            <label className="text-[10px] font-black text-slate-400 dark:text-slate-400 uppercase tracking-widest block">用药情况</label>
+                                        <div className="space-y-3 pt-2 border-t border-state-danger-text/20">
+                                            <label className="text-[10px] font-black text-text-muted uppercase tracking-widest block">用药情况</label>
                                             <div className="flex flex-wrap gap-2">
                                                 {['感冒药', '止痛药', '助眠药', '消炎药', '维生素'].map(m => {
                                                     const isSelected = log.health?.medications?.includes(m);
@@ -720,7 +720,7 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
                                                                 markPathTouched('health.medications');
                                                                 markDirty();
                                                             }}
-                                                            className={`px-3 py-1.5 rounded-xl text-[10px] font-black border transition-all ${isSelected ? 'bg-blue-600 text-white border-blue-600 shadow-sm' : 'bg-slate-100 dark:bg-slate-800 border-transparent text-slate-500'}`}
+                                                            className={`px-3 py-1.5 rounded-xl text-[10px] font-black border transition-all ${isSelected ? 'bg-state-info-text text-text-on-accent border-state-info-text shadow-soft' : 'bg-surface-muted border-transparent text-text-muted'}`}
                                                         >
                                                             {m}
                                                         </button>
@@ -736,10 +736,10 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
                 </div>
             </div>
 
-            <div className="bg-white dark:bg-slate-900 rounded-[2rem] p-6 shadow-soft border border-slate-100 dark:border-white/5">
+            <div className="bg-surface-card rounded-[2rem] p-6 shadow-soft border border-surface-border">
                 <div className="flex items-center gap-3 mb-5">
-                    <StickyNote size={18} className="text-brand-muted" />
-                    <h3 className="text-sm font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider">备注与事件</h3>
+                    <StickyNote size={18} className="text-text-muted" />
+                    <h3 className="text-sm font-black text-text-primary uppercase tracking-wider">备注与事件</h3>
                 </div>
                 
                 <div className="flex flex-wrap gap-2 mb-5">
@@ -751,7 +751,7 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
                                 const next = current.includes(evt) ? current.filter(x => x !== evt) : [...current, evt];
                                 setField('dailyEvents', next);
                             }}
-                            className={`px-4 py-2.5 rounded-2xl text-[11px] font-black transition-all ${log.dailyEvents?.includes(evt) ? 'bg-slate-800 text-white dark:bg-white dark:text-slate-900 shadow-md' : 'bg-slate-50 dark:bg-slate-800 text-slate-500 border border-slate-100 dark:border-slate-800 hover:bg-slate-100'}`}
+                            className={`px-4 py-2.5 rounded-2xl text-[11px] font-black transition-all ${log.dailyEvents?.includes(evt) ? 'bg-surface-inverted text-text-inverted shadow-soft' : 'bg-surface-muted text-text-secondary border border-surface-border hover:bg-surface-border'}`}
                         >
                             {evt}
                         </button>
@@ -760,11 +760,11 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
 
                 <div className="relative group mb-4 flex gap-2">
                     <div className="relative flex-1">
-                        <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 dark:text-slate-600" size={16} />
+                        <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-text-muted" size={16} />
                         <input 
                             value={eventSearch}
                             onChange={(e) => setEventSearch(e.target.value)}
-                            className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-2xl py-4 pl-12 pr-4 text-xs font-bold text-slate-700 dark:text-slate-300 placeholder-slate-300 dark:placeholder-slate-600 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+                            className="w-full bg-surface-muted border-none rounded-2xl py-4 pl-12 pr-4 text-xs font-bold text-text-secondary placeholder-text-muted/60 focus:ring-2 focus:ring-accent/20 outline-none transition-all"
                             placeholder="搜索或创建事件标签..."
                             onKeyDown={(e) => e.key === 'Enter' && handleCreateEventTag()}
                         />
@@ -772,7 +772,7 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
                     {eventSearch.trim() && (
                         <button 
                             onClick={handleCreateEventTag}
-                            className="px-6 bg-blue-50 dark:bg-blue-900/30 text-brand-accent rounded-2xl font-black text-xs flex items-center gap-2 border border-blue-100 dark:border-blue-900 animate-in fade-in slide-in-from-right-2 transition-all active:scale-95"
+                            className="px-6 bg-state-info-bg text-accent rounded-2xl font-black text-xs flex items-center gap-2 border border-accent/20 animate-in fade-in slide-in-from-right-2 transition-all active:scale-95"
                         >
                             <Plus size={16} strokeWidth={3} /> 创建
                         </button>
@@ -783,16 +783,16 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
                     value={log.notes || ''}
                     onChange={(e) => setField('notes', e.target.value)}
                     placeholder="今天感觉如何？写点什么吧..."
-                    className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-[1.5rem] p-5 text-sm font-medium text-slate-700 dark:text-slate-300 placeholder-slate-300 dark:placeholder-slate-600 outline-none min-h-[140px] focus:ring-2 focus:ring-blue-500/20 transition-all resize-none"
+                    className="w-full bg-surface-muted border-none rounded-[1.5rem] p-5 text-sm font-medium text-text-secondary placeholder-text-muted/60 outline-none min-h-[140px] focus:ring-2 focus:ring-accent/20 transition-all resize-none"
                 />
             </div>
 
-            <div className="sticky bottom-20 z-20 -mx-4 mt-4 px-4 pt-3 pb-3 bg-brand-bg/90 dark:bg-slate-950/90 backdrop-blur-md border-t border-slate-200/60 dark:border-slate-800/60 flex gap-3">
+            <div className="sticky bottom-20 z-20 -mx-4 mt-4 px-4 pt-3 pb-3 bg-surface-base/90 backdrop-blur-md border-t border-surface-border/60 flex gap-3">
                 <button
                     type="button"
                     onClick={() => performSave('pending')}
                     disabled={isSaving}
-                    className="flex-1 min-h-[48px] py-3 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 font-bold text-sm rounded-2xl shadow-soft border border-slate-100 dark:border-white/5 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 min-h-[48px] py-3 bg-surface-card text-text-secondary font-bold text-sm rounded-2xl shadow-soft border border-surface-border active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     保存草稿
                 </button>
@@ -800,7 +800,7 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
                     type="button"
                     onClick={() => performSave('completed')}
                     disabled={isSaving}
-                    className="flex-[2] min-h-[48px] py-3 bg-brand-accent text-white font-bold text-sm rounded-2xl shadow-xl shadow-blue-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+                    className="flex-[2] min-h-[48px] py-3 bg-accent text-text-on-accent font-bold text-sm rounded-2xl shadow-glow active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                     {isSaving ? (
                         <RotateCcw size={18} className="animate-spin" />

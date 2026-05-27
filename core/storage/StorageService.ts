@@ -10,6 +10,11 @@ import { repairLogUsingHistory } from '../../utils/historyRepair';
 import { backupService } from '../../services/BackupService';
 import { prepareLogForSave } from '../../utils/dataQuality';
 import { APP_VERSION } from '../../app/appConfig';
+import { getSnapshotIdsToPruneForRetention, getSnapshotSizeBytes, normalizeBackupRetention } from './snapshotRetention';
+import { addSnapshotWithReadbackCheck } from './snapshotIntegrity';
+import { getIdleAutoBackupStatus, LAST_AUTO_BACKUP_META_KEY } from './autoBackup';
+import { mergeLogsForImport, type ImportConflictResolution } from './importMerge';
+import { assertStorageCanCreateSnapshot, notifyStorageUsageChanged } from './storageEstimate';
 
 const readSnapshotLocalState = (): Pick<ExportSnapshot, 'settings' | 'userName'> => {
     let settings: AppSettings | null = null;
@@ -41,6 +46,38 @@ const buildSnapshotData = (
     pregnancyEvents
 });
 
+const normalizeImportedSnapshots = (snapshots: unknown[]): Snapshot[] => (
+    snapshots
+        .filter((snapshot): snapshot is Snapshot => (
+            typeof snapshot === 'object'
+            && snapshot !== null
+            && 'timestamp' in snapshot
+            && 'data' in snapshot
+        ))
+        .map((snapshot) => {
+            const { id: _id, ...rest } = snapshot;
+            return {
+                ...rest,
+                timestamp: typeof rest.timestamp === 'number' ? rest.timestamp : Date.now(),
+                dataVersion: typeof rest.dataVersion === 'number' ? rest.dataVersion : LATEST_VERSION,
+                appVersion: typeof rest.appVersion === 'string' ? rest.appVersion : APP_VERSION,
+                description: typeof rest.description === 'string' ? rest.description : '导入的快照',
+                kind: rest.kind === 'auto-safety' ? 'auto-safety' : 'manual',
+                sizeBytes: typeof rest.sizeBytes === 'number' ? rest.sizeBytes : JSON.stringify(rest.data).length,
+                settings: rest.settings ?? null,
+                userName: rest.userName ?? null,
+                data: {
+                    version: typeof rest.data.version === 'number' ? rest.data.version : LATEST_VERSION,
+                    logs: Array.isArray(rest.data.logs) ? rest.data.logs : [],
+                    partners: Array.isArray(rest.data.partners) ? rest.data.partners : [],
+                    tags: Array.isArray(rest.data.tags) ? rest.data.tags : [],
+                    cycleEvents: Array.isArray(rest.data.cycleEvents) ? rest.data.cycleEvents : [],
+                    pregnancyEvents: Array.isArray(rest.data.pregnancyEvents) ? rest.data.pregnancyEvents : []
+                }
+            };
+        })
+);
+
 export const StorageService = {
     async init() {
         try {
@@ -52,7 +89,7 @@ export const StorageService = {
                 const allLogs = await db.logs.toArray();
                 const allPartners = await db.partners.toArray();
                 if (allLogs.length > 0) {
-                    await StorageService.snapshots.create(`系统自动备份: 升级前 (v${currentDbVersion})`);
+                    await StorageService.snapshots.create(`系统自动备份: 升级前 (v${currentDbVersion})`, 'auto-safety');
                     const migrationResult = runMigrations({ version: currentDbVersion || 1, logs: allLogs });
                     const migratedPartners = runPartnerMigrations(allPartners, currentDbVersion || 1);
                     await db.transaction('rw', db.logs, db.partners, db.meta, async () => {
@@ -99,7 +136,11 @@ export const StorageService = {
         return JSON.stringify(snapshot, null, 2);
     },
 
-    async restoreSnapshot(jsonString: string, strategy: 'overwrite' | 'merge' = 'merge'): Promise<void> {
+    async restoreSnapshot(
+        jsonString: string,
+        strategy: 'overwrite' | 'merge' = 'merge',
+        conflictResolution: ImportConflictResolution = 'use-import'
+    ): Promise<void> {
         try {
             const parsed = JSON.parse(jsonString);
             const data = parsed.data || parsed;
@@ -112,9 +153,13 @@ export const StorageService = {
             const newTags = data.tags || [];
             const newCycleEvents = Array.isArray(data.cycleEvents) ? data.cycleEvents : [];
             const newPregnancyEvents = Array.isArray(data.pregnancyEvents) ? data.pregnancyEvents : [];
+            const newSnapshots = normalizeImportedSnapshots(Array.isArray(data.snapshots) ? data.snapshots : []);
+            const logsToImport = strategy === 'merge'
+                ? mergeLogsForImport(await db.logs.toArray(), newLogs, conflictResolution)
+                : newLogs;
 
             // 2. 写入数据库
-            await db.transaction('rw', [db.logs, db.partners, db.tags, db.meta, db.cycle_events, db.pregnancy_events], async () => {
+            await db.transaction('rw', [db.logs, db.partners, db.tags, db.meta, db.cycle_events, db.pregnancy_events, db.snapshots], async () => {
                 if (strategy === 'overwrite') {
                     await db.logs.clear();
                     await db.partners.clear();
@@ -122,11 +167,12 @@ export const StorageService = {
                     await db.cycle_events.clear();
                     await db.pregnancy_events.clear();
                 }
-                await db.logs.bulkPut(newLogs);
+                await db.logs.bulkPut(logsToImport);
                 if (newPartners.length > 0) await db.partners.bulkPut(newPartners);
                 if (newTags.length > 0) await db.tags.bulkPut(newTags);
                 if (newCycleEvents.length > 0) await db.cycle_events.bulkPut(newCycleEvents);
                 if (newPregnancyEvents.length > 0) await db.pregnancy_events.bulkPut(newPregnancyEvents);
+                if (newSnapshots.length > 0) await db.snapshots.bulkAdd(newSnapshots);
 
                 // 同步数据版本号，避免导入后再次触发 migration
                 await db.meta.put({ key: 'dataVersion', value: LATEST_VERSION });
@@ -214,9 +260,49 @@ export const StorageService = {
 
     snapshots: {
         queries: {
-            all: () => db.snapshots.orderBy('timestamp').reverse().toArray()
+            all: async () => {
+                const snapshots = await db.snapshots.orderBy('timestamp').reverse().toArray();
+                const snapshotsMissingSize = snapshots
+                    .filter((snapshot) => typeof snapshot.sizeBytes !== 'number')
+                    .map((snapshot) => ({ ...snapshot, sizeBytes: getSnapshotSizeBytes(snapshot) }));
+
+                if (snapshotsMissingSize.length > 0) {
+                    await db.snapshots.bulkPut(snapshotsMissingSize);
+                    const byId = new Map(snapshotsMissingSize.map((snapshot) => [snapshot.id, snapshot]));
+                    return snapshots.map((snapshot) => byId.get(snapshot.id) || snapshot);
+                }
+
+                return snapshots;
+            }
         },
-        create: async (description: string) => {
+        getIdleAutoBackupStatus: async (intervalHours?: unknown) => {
+            const [logCount, metaEntry, snapshots] = await Promise.all([
+                db.logs.count(),
+                db.meta.get(LAST_AUTO_BACKUP_META_KEY),
+                db.snapshots.toArray()
+            ]);
+            const latestAutoSafetySnapshotAt = snapshots.reduce<number | null>((latest, snapshot) => {
+                if (snapshot.kind !== 'auto-safety') return latest;
+                return latest === null || snapshot.timestamp > latest ? snapshot.timestamp : latest;
+            }, null);
+            const metaTimestamp = typeof metaEntry?.value === 'number' ? metaEntry.value : null;
+            const lastAutoBackupAt = Math.max(metaTimestamp || 0, latestAutoSafetySnapshotAt || 0) || null;
+
+            return getIdleAutoBackupStatus({
+                hasLogs: logCount > 0,
+                lastAutoBackupAt,
+                intervalHours
+            });
+        },
+        createIdleAutoBackup: async (intervalHours?: unknown) => {
+            const status = await StorageService.snapshots.getIdleAutoBackupStatus(intervalHours);
+            if (!status.shouldCreate) return false;
+
+            await StorageService.snapshots.create('24 小时定期自动备份', 'auto-safety');
+            return true;
+        },
+        create: async (description: string, kind: Snapshot['kind'] = 'manual') => {
+            await assertStorageCanCreateSnapshot();
             const logs = await db.logs.toArray();
             const partners = await db.partners.toArray();
             const tags = await db.tags.toArray();
@@ -231,12 +317,26 @@ export const StorageService = {
                 dataVersion,
                 appVersion: APP_VERSION,
                 description,
+                kind,
+                sizeBytes: JSON.stringify(buildSnapshotData(logs, partners, tags, cycleEvents, pregnancyEvents)).length,
                 settings: localState.settings,
                 userName: localState.userName,
                 data: buildSnapshotData(logs, partners, tags, cycleEvents, pregnancyEvents)
             };
 
-            await db.snapshots.add(snapshot);
+            await addSnapshotWithReadbackCheck(snapshot, db.snapshots);
+            notifyStorageUsageChanged('snapshot-created');
+            if (kind === 'auto-safety') {
+                await db.meta.put({ key: LAST_AUTO_BACKUP_META_KEY, value: snapshot.timestamp });
+                const retention = normalizeBackupRetention(localState.settings?.backupRetention);
+                const pruneIds = getSnapshotIdsToPruneForRetention(await db.snapshots.toArray(), retention);
+                if (pruneIds.length > 0) await db.snapshots.bulkDelete(pruneIds);
+            }
+        },
+        applyRetention: async (retention: unknown) => {
+            const pruneIds = getSnapshotIdsToPruneForRetention(await db.snapshots.toArray(), retention);
+            if (pruneIds.length > 0) await db.snapshots.bulkDelete(pruneIds);
+            return pruneIds.length;
         },
         restore: async (id: number) => {
             const snapshot = await db.snapshots.get(id);
@@ -369,6 +469,7 @@ save: async (log: LogEntry, source: DataQualitySource = 'manual') => {
       const hydratedLog = hydrateLog({ ...log, updatedAt: Date.now() });
       const logToSave = prepareLogForSave(hydratedLog, source, Date.now());
       await db.logs.put(logToSave);
+      notifyStorageUsageChanged('log-saved');
 
       const allLogs = await db.logs.toArray();
       pluginManager.notifyDataChange(allLogs);

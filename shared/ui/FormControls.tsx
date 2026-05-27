@@ -11,7 +11,7 @@ export const IconToggleButton = ({ options, selected, onSelect, renderIcon }: { 
                 key={value} 
                 type="button" 
                 onClick={() => onSelect(value)} 
-                className={`flex flex-col items-center justify-center p-2 rounded-lg border transition-all active:scale-95 ${selected === value ? 'bg-blue-50 dark:bg-blue-900/30 text-brand-accent border-brand-accent shadow-sm' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-brand-muted hover:bg-slate-50 dark:hover:bg-slate-700'}`}
+                className={`flex flex-col items-center justify-center p-2 rounded-lg border transition-all active:scale-95 ${selected === value ? 'bg-state-info-bg text-accent border-accent shadow-sm' : 'bg-surface-card border-surface-border text-text-muted hover:bg-surface-muted'}`}
             >
                 {renderIcon(value)}
                 <span className="text-[10px] mt-1 font-medium">{label}</span>
@@ -20,11 +20,11 @@ export const IconToggleButton = ({ options, selected, onSelect, renderIcon }: { 
     </div>
 );
 
-export const RangeSlider = ({ value, min, max, onChange, leftLabel, rightLabel, colorClass = "accent-brand-accent" }: any) => (
+export const RangeSlider = ({ value, min, max, onChange, leftLabel, rightLabel, colorClass = "accent-accent" }: any) => (
     <div className="space-y-1">
-        <div className="flex justify-between text-xs text-brand-muted px-1">
+        <div className="flex justify-between text-xs text-text-muted px-1">
             <span>{leftLabel}</span>
-            <span className="font-bold text-brand-text dark:text-slate-300">{value}</span>
+            <span className="font-bold text-text-primary">{value}</span>
             <span>{rightLabel}</span>
         </div>
         <input 
@@ -33,7 +33,7 @@ export const RangeSlider = ({ value, min, max, onChange, leftLabel, rightLabel, 
             max={max} 
             value={value || min} 
             onChange={(e) => onChange(Number(e.target.value))} 
-            className={`w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer ${colorClass}`}
+            className={`w-full h-2 bg-surface-border rounded-lg appearance-none cursor-pointer ${colorClass}`}
         />
     </div>
 );
@@ -47,12 +47,12 @@ export const FaceSelector = ({ options, value, onChange }: { options: { val: any
                     key={opt.val}
                     type="button"
                     onClick={() => onChange(opt.val)}
-                    className={`flex flex-col items-center transition-all duration-300 ${isSelected ? 'scale-110 -translate-y-1.5' : 'opacity-40 grayscale hover:opacity-100 hover:grayscale-0'}`}
+                    className={`flex flex-col items-center transition-all duration-slow ${isSelected ? 'scale-110 -translate-y-1.5' : 'opacity-40 saturate-50 hover:opacity-100 hover:saturate-100'}`}
                 >
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center text-3xl transition-all ${isSelected ? `shadow-lg ${opt.color} ring-4 ring-white dark:ring-slate-800` : 'bg-transparent'}`}>
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center text-3xl transition-all ${isSelected ? `shadow-lg ${opt.color} ring-4 ring-surface-card` : 'bg-transparent'}`}>
                         {opt.emoji}
                     </div>
-                    <span className={`text-[11px] mt-2 font-black tracking-tighter ${isSelected ? 'text-brand-text dark:text-slate-100' : 'text-slate-400'}`}>
+                    <span className={`text-[11px] mt-2 font-black tracking-tighter ${isSelected ? 'text-text-primary' : 'text-text-muted'}`}>
                         {opt.label}
                     </span>
                 </button>
@@ -64,18 +64,18 @@ export const FaceSelector = ({ options, value, onChange }: { options: { val: any
 // --- Constants (完全同步截图 3 的图标与文本) ---
 
 export const MOOD_FACES: { val: Mood, label: string, emoji: string, color: string }[] = [
-    { val: 'excited', label: '兴奋', emoji: '🤩', color: 'bg-orange-100' },
-    { val: 'happy', label: '开心', emoji: '😆', color: 'bg-yellow-100' },
-    { val: 'neutral', label: '平淡', emoji: '😐', color: 'bg-amber-100' },
-    { val: 'anxious', label: '焦虑', emoji: '😰', color: 'bg-slate-200' },
-    { val: 'sad', label: '低落', emoji: '😭', color: 'bg-blue-100' },
-    { val: 'angry', label: '生气', emoji: '😡', color: 'bg-red-100' },
+    { val: 'excited', label: '兴奋', emoji: '🤩', color: 'bg-state-warning-bg' },
+    { val: 'happy', label: '开心', emoji: '😆', color: 'bg-state-success-bg' },
+    { val: 'neutral', label: '平淡', emoji: '😐', color: 'bg-surface-muted' },
+    { val: 'anxious', label: '焦虑', emoji: '😰', color: 'bg-state-warning-bg' },
+    { val: 'sad', label: '低落', emoji: '😭', color: 'bg-state-info-bg' },
+    { val: 'angry', label: '生气', emoji: '😡', color: 'bg-state-danger-bg' },
 ];
 
 export const STRESS_FACES: { val: StressLevel, label: string, emoji: string, color: string }[] = [
-    { val: 1, label: '放松', emoji: '😌', color: 'bg-green-100' },
-    { val: 2, label: '还好', emoji: '🙂', color: 'bg-lime-100' },
-    { val: 3, label: '一般', emoji: '😐', color: 'bg-amber-100' },
-    { val: 4, label: '压力', emoji: '😓', color: 'bg-orange-100' },
-    { val: 5, label: '崩溃', emoji: '🤯', color: 'bg-red-100' },
+    { val: 1, label: '放松', emoji: '😌', color: 'bg-state-success-bg' },
+    { val: 2, label: '还好', emoji: '🙂', color: 'bg-state-success-bg/70' },
+    { val: 3, label: '一般', emoji: '😐', color: 'bg-surface-muted' },
+    { val: 4, label: '压力', emoji: '😓', color: 'bg-state-warning-bg' },
+    { val: 5, label: '崩溃', emoji: '🤯', color: 'bg-state-danger-bg' },
 ];

@@ -18,11 +18,11 @@ const SelectField = ({
   options: Array<{ value: string; label: string }>;
 }) => (
   <label className="space-y-1.5 block">
-    <span className="text-[11px] font-bold uppercase tracking-wide text-slate-400">{label}</span>
+    <span className="text-[11px] font-bold uppercase tracking-wide text-text-muted">{label}</span>
     <select
       value={value}
       onChange={(event) => onChange(event.target.value)}
-      className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2.5 text-sm font-medium outline-none focus:border-brand-accent"
+      className="w-full rounded-xl border border-surface-border bg-surface-card px-3 py-2.5 text-sm font-medium text-text-primary outline-none focus:border-accent"
     >
       {options.map((option) => (
         <option key={option.value} value={option.value}>{option.label}</option>
@@ -55,14 +55,14 @@ const SimulationLabPanel: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-[1.75rem] border border-sky-200/70 dark:border-sky-900/50 bg-gradient-to-br from-sky-50 to-white dark:from-slate-900 dark:to-slate-950 p-5">
+      <div className="rounded-[1.75rem] border border-state-info-text/20 bg-gradient-to-br from-state-info-bg to-surface-card p-5">
         <div className="flex items-center gap-3">
-          <div className="rounded-2xl bg-sky-500/10 text-sky-600 dark:text-sky-400 p-3">
+          <div className="rounded-2xl bg-state-info-bg text-state-info-text p-3">
             <FlaskConical size={20} />
           </div>
           <div>
-            <h3 className="text-lg font-black text-slate-900 dark:text-slate-100">虚拟回测实验室</h3>
-            <p className="text-sm text-slate-500 dark:text-slate-400">只使用种子化虚拟人群，不读取真实日志。</p>
+            <h3 className="text-lg font-black text-text-primary">虚拟回测实验室</h3>
+            <p className="text-sm text-text-secondary">只使用种子化虚拟人群，不读取真实日志。</p>
           </div>
         </div>
       </div>
@@ -87,12 +87,12 @@ const SimulationLabPanel: React.FC = () => {
           options={Object.values(SCENARIO_SPECS).map((scenario) => ({ value: scenario.id, label: scenario.label }))}
         />
         <label className="space-y-1.5 block">
-          <span className="text-[11px] font-bold uppercase tracking-wide text-slate-400">种子</span>
+          <span className="text-[11px] font-bold uppercase tracking-wide text-text-muted">种子</span>
           <input
             type="number"
             value={seed}
             onChange={(event) => setSeed(Number(event.target.value) || 1001)}
-            className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2.5 text-sm font-medium outline-none focus:border-brand-accent"
+            className="w-full rounded-xl border border-surface-border bg-surface-card px-3 py-2.5 text-sm font-medium text-text-primary outline-none focus:border-accent"
           />
         </label>
       </div>
@@ -114,46 +114,46 @@ const SimulationLabPanel: React.FC = () => {
       </label>
 
       <div className="grid grid-cols-2 gap-3">
-        <StatCard label="当前状态" value={result.analysis.currentState.label} tone="bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100" />
-        <StatCard label="置信度" value={result.analysis.confidence.level.toUpperCase()} tone="bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900 text-emerald-700 dark:text-emerald-300" />
-        <StatCard label="方向正确率" value={`${Math.round(result.evaluation.directionCorrectness * 100)}%`} tone="bg-sky-50 dark:bg-sky-950/20 border-sky-200 dark:border-sky-900 text-sky-700 dark:text-sky-300" />
-        <StatCard label="排序稳定性" value={`${Math.round(result.evaluation.factorRankingStability * 100)}%`} tone="bg-violet-50 dark:bg-violet-950/20 border-violet-200 dark:border-violet-900 text-violet-700 dark:text-violet-300" />
+        <StatCard label="当前状态" value={result.analysis.currentState.label} tone="bg-surface-muted border-surface-border text-text-primary" />
+        <StatCard label="置信度" value={result.analysis.confidence.level.toUpperCase()} tone="bg-state-success-bg border-state-success-text/20 text-state-success-text" />
+        <StatCard label="方向正确率" value={`${Math.round(result.evaluation.directionCorrectness * 100)}%`} tone="bg-state-info-bg border-state-info-text/20 text-state-info-text" />
+        <StatCard label="排序稳定性" value={`${Math.round(result.evaluation.factorRankingStability * 100)}%`} tone="bg-surface-muted border-chart-tertiary/30 text-chart-tertiary" />
       </div>
 
-      <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-4">
-        <div className="flex items-center gap-2 text-slate-700 dark:text-slate-200 font-bold">
+      <div className="rounded-3xl border border-surface-border bg-surface-card p-4 space-y-4">
+        <div className="flex items-center gap-2 text-text-secondary font-bold">
           <Sparkles size={16} />
           7 天预测摘要
         </div>
-        <div className="text-sm text-slate-500 dark:text-slate-400">{result.analysis.forecast.weeklySummary.summary}</div>
+        <div className="text-sm text-text-secondary">{result.analysis.forecast.weeklySummary.summary}</div>
         <div className="grid grid-cols-2 gap-3 text-sm">
-          <div className="rounded-2xl bg-slate-50 dark:bg-slate-950 p-3">
-            <div className="text-[11px] font-bold uppercase tracking-wide text-slate-400">高峰窗</div>
+          <div className="rounded-2xl bg-surface-muted p-3">
+            <div className="text-[11px] font-bold uppercase tracking-wide text-text-muted">高峰窗</div>
             <div className="mt-1 font-bold">{result.analysis.forecast.weeklySummary.peakWindow}</div>
           </div>
-          <div className="rounded-2xl bg-slate-50 dark:bg-slate-950 p-3">
-            <div className="text-[11px] font-bold uppercase tracking-wide text-slate-400">风险窗</div>
+          <div className="rounded-2xl bg-surface-muted p-3">
+            <div className="text-[11px] font-bold uppercase tracking-wide text-text-muted">风险窗</div>
             <div className="mt-1 font-bold">{result.analysis.forecast.weeklySummary.riskWindow}</div>
           </div>
         </div>
       </div>
 
-      <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-4">
-        <div className="flex items-center gap-2 text-slate-700 dark:text-slate-200 font-bold">
+      <div className="rounded-3xl border border-surface-border bg-surface-card p-4 space-y-4">
+        <div className="flex items-center gap-2 text-text-secondary font-bold">
           <Radar size={16} />
           因素排行
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div className="rounded-2xl bg-emerald-50 dark:bg-emerald-950/20 p-3">
-            <div className="text-[11px] font-bold uppercase tracking-wide text-emerald-600 dark:text-emerald-300">正向 Top 5</div>
+          <div className="rounded-2xl bg-state-success-bg p-3">
+            <div className="text-[11px] font-bold uppercase tracking-wide text-state-success-text">正向 Top 5</div>
             <div className="mt-2 space-y-1 text-sm">
               {result.analysis.influencingFactors.positiveTop5.map((item) => (
                 <div key={item.key}>{item.label}</div>
               ))}
             </div>
           </div>
-          <div className="rounded-2xl bg-rose-50 dark:bg-rose-950/20 p-3">
-            <div className="text-[11px] font-bold uppercase tracking-wide text-rose-600 dark:text-rose-300">负向 Top 5</div>
+          <div className="rounded-2xl bg-state-danger-bg p-3">
+            <div className="text-[11px] font-bold uppercase tracking-wide text-state-danger-text">负向 Top 5</div>
             <div className="mt-2 space-y-1 text-sm">
               {result.analysis.influencingFactors.negativeTop5.map((item) => (
                 <div key={item.key}>{item.label}</div>
@@ -163,26 +163,26 @@ const SimulationLabPanel: React.FC = () => {
         </div>
       </div>
 
-      <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-4">
-        <div className="flex items-center gap-2 text-slate-700 dark:text-slate-200 font-bold">
+      <div className="rounded-3xl border border-surface-border bg-surface-card p-4 space-y-4">
+        <div className="flex items-center gap-2 text-text-secondary font-bold">
           <ShieldCheck size={16} />
           可用性与回测
         </div>
         <div className="grid grid-cols-2 gap-3 text-sm">
-          <div className="rounded-2xl bg-slate-50 dark:bg-slate-950 p-3">
-            <div className="text-[11px] font-bold uppercase tracking-wide text-slate-400">校准误差</div>
+          <div className="rounded-2xl bg-surface-muted p-3">
+            <div className="text-[11px] font-bold uppercase tracking-wide text-text-muted">校准误差</div>
             <div className="mt-1 font-bold">{result.evaluation.forecastCalibrationError ?? '--'}</div>
           </div>
-          <div className="rounded-2xl bg-slate-50 dark:bg-slate-950 p-3">
-            <div className="text-[11px] font-bold uppercase tracking-wide text-slate-400">误报代理</div>
+          <div className="rounded-2xl bg-surface-muted p-3">
+            <div className="text-[11px] font-bold uppercase tracking-wide text-text-muted">误报代理</div>
             <div className="mt-1 font-bold">{result.evaluation.reminderFalsePositiveProxy}</div>
           </div>
         </div>
         <div className="space-y-2">
           {Object.entries(result.availabilitySummary).map(([metricId, summary]) => (
-            <div key={metricId} className="flex items-center justify-between text-sm rounded-2xl bg-slate-50 dark:bg-slate-950 px-3 py-2">
+            <div key={metricId} className="flex items-center justify-between text-sm rounded-2xl bg-surface-muted px-3 py-2">
               <span className="font-medium">{metricId}</span>
-              <span className="text-slate-500 dark:text-slate-400">
+              <span className="text-text-secondary">
                 usable {Math.round(summary.usableRate * 100)}% / none {summary.noneDays} / miss {summary.missingDays}
               </span>
             </div>

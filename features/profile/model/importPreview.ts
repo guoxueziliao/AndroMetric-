@@ -1,6 +1,11 @@
+import { LATEST_VERSION } from '../../../core/storage/migration';
+import { computeLogConflicts, type LogImportConflict } from '../../../core/storage/importMerge';
+import type { LogEntry } from '../../../domain';
 import { isEncryptedSnapshotJson } from '../../../shared/lib';
 
 export type ImportStrategy = 'merge' | 'overwrite';
+export type ImportVersionStatus = 'match' | 'older' | 'newer';
+export type { ImportConflictResolution, LogImportConflict } from '../../../core/storage/importMerge';
 
 export interface ImportPreview {
   rawText: string;
@@ -8,6 +13,7 @@ export interface ImportPreview {
   appVersion?: string;
   exportDate?: string;
   dataVersion?: number;
+  versionStatus: ImportVersionStatus;
   includesSettings: boolean;
   includesUserName: boolean;
   counts: {
@@ -16,12 +22,21 @@ export interface ImportPreview {
     tags: number;
     cycleEvents: number;
     pregnancyEvents: number;
+    snapshots: number;
   };
+  conflicts: LogImportConflict[];
 }
 
 const getArrayLength = (value: unknown): number => Array.isArray(value) ? value.length : 0;
 
-export const buildImportPreview = (rawText: string, encrypted: boolean): ImportPreview => {
+const getVersionStatus = (dataVersion?: number): ImportVersionStatus => {
+  if (typeof dataVersion !== 'number') return 'match';
+  if (dataVersion < LATEST_VERSION) return 'older';
+  if (dataVersion > LATEST_VERSION) return 'newer';
+  return 'match';
+};
+
+export const buildImportPreview = (rawText: string, encrypted: boolean, currentLogs: LogEntry[] = []): ImportPreview => {
   const parsed = JSON.parse(rawText) as {
     appVersion?: unknown;
     exportDate?: unknown;
@@ -32,14 +47,18 @@ export const buildImportPreview = (rawText: string, encrypted: boolean): ImportP
   };
   const data = (parsed.data && typeof parsed.data === 'object') ? parsed.data as Record<string, unknown> : parsed as Record<string, unknown>;
 
+  const dataVersion = typeof parsed.dataVersion === 'number'
+    ? parsed.dataVersion
+    : typeof data.version === 'number' ? data.version : undefined;
+  const incomingLogs = Array.isArray(data.logs) ? data.logs as Partial<LogEntry>[] : [];
+
   return {
     rawText,
     encrypted,
     appVersion: typeof parsed.appVersion === 'string' ? parsed.appVersion : undefined,
     exportDate: typeof parsed.exportDate === 'string' ? parsed.exportDate : undefined,
-    dataVersion: typeof parsed.dataVersion === 'number'
-      ? parsed.dataVersion
-      : typeof data.version === 'number' ? data.version : undefined,
+    dataVersion,
+    versionStatus: getVersionStatus(dataVersion),
     includesSettings: parsed.settings !== undefined && parsed.settings !== null,
     includesUserName: typeof parsed.userName === 'string' && parsed.userName.length > 0,
     counts: {
@@ -47,8 +66,10 @@ export const buildImportPreview = (rawText: string, encrypted: boolean): ImportP
       partners: getArrayLength(data.partners),
       tags: getArrayLength(data.tags),
       cycleEvents: getArrayLength(data.cycleEvents),
-      pregnancyEvents: getArrayLength(data.pregnancyEvents)
-    }
+      pregnancyEvents: getArrayLength(data.pregnancyEvents),
+      snapshots: getArrayLength(data.snapshots)
+    },
+    conflicts: computeLogConflicts(currentLogs, incomingLogs)
   };
 };
 

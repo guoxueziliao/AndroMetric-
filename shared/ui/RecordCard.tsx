@@ -15,46 +15,46 @@ interface RecordCardProps {
 
 const TONE: Record<RecordCardTone, { surface: string; iconBox: string; iconText: string; title: string; subline: string }> = {
   blue: {
-    surface: 'bg-blue-50/50 dark:bg-blue-900/10 border-blue-100 dark:border-blue-900/30',
-    iconBox: 'bg-white dark:bg-slate-800 text-blue-500',
-    iconText: 'text-blue-500',
-    title: 'text-blue-700 dark:text-blue-400',
-    subline: 'text-blue-500/70'
+    surface: 'bg-state-info-bg/60 border-state-info-text/25',
+    iconBox: 'bg-surface-card text-state-info-text',
+    iconText: 'text-state-info-text',
+    title: 'text-state-info-text',
+    subline: 'text-state-info-text/70'
   },
   pink: {
-    surface: 'bg-pink-50/50 dark:bg-pink-900/10 border-pink-100 dark:border-pink-900/30',
-    iconBox: 'bg-white dark:bg-slate-800 text-pink-500',
-    iconText: 'text-pink-500',
-    title: 'text-pink-700 dark:text-pink-400',
-    subline: 'text-pink-500/70'
+    surface: 'bg-accent-vivid/10 border-accent-vivid/30',
+    iconBox: 'bg-surface-card text-accent-vivid',
+    iconText: 'text-accent-vivid',
+    title: 'text-accent-vivid',
+    subline: 'text-accent-vivid/70'
   },
   amber: {
-    surface: 'bg-amber-50/50 dark:bg-amber-900/10 border-amber-100 dark:border-amber-900/30',
-    iconBox: 'bg-white dark:bg-slate-800 text-amber-500',
-    iconText: 'text-amber-500',
-    title: 'text-amber-700 dark:text-amber-400',
-    subline: 'text-amber-500/70'
+    surface: 'bg-state-warning-bg/60 border-state-warning-text/25',
+    iconBox: 'bg-surface-card text-state-warning-text',
+    iconText: 'text-state-warning-text',
+    title: 'text-state-warning-text',
+    subline: 'text-state-warning-text/70'
   },
   emerald: {
-    surface: 'bg-emerald-50/50 dark:bg-emerald-900/10 border-emerald-100 dark:border-emerald-900/30',
-    iconBox: 'bg-white dark:bg-slate-800 text-emerald-500',
-    iconText: 'text-emerald-500',
-    title: 'text-emerald-700 dark:text-emerald-400',
-    subline: 'text-emerald-500/70'
+    surface: 'bg-state-success-bg/60 border-state-success-text/25',
+    iconBox: 'bg-surface-card text-state-success-text',
+    iconText: 'text-state-success-text',
+    title: 'text-state-success-text',
+    subline: 'text-state-success-text/70'
   },
   violet: {
-    surface: 'bg-violet-50/50 dark:bg-violet-900/10 border-violet-100 dark:border-violet-900/30',
-    iconBox: 'bg-white dark:bg-slate-800 text-violet-500',
-    iconText: 'text-violet-500',
-    title: 'text-violet-700 dark:text-violet-400',
-    subline: 'text-violet-500/70'
+    surface: 'bg-chart-tertiary/10 border-chart-tertiary/30',
+    iconBox: 'bg-surface-card text-chart-tertiary',
+    iconText: 'text-chart-tertiary',
+    title: 'text-chart-tertiary',
+    subline: 'text-chart-tertiary/70'
   },
   slate: {
-    surface: 'bg-slate-50 dark:bg-slate-900 border-slate-100 dark:border-slate-800',
-    iconBox: 'bg-white dark:bg-slate-800 text-slate-500',
-    iconText: 'text-slate-500',
-    title: 'text-slate-700 dark:text-slate-300',
-    subline: 'text-slate-500/70'
+    surface: 'bg-surface-muted border-surface-border',
+    iconBox: 'bg-surface-card text-text-muted',
+    iconText: 'text-text-muted',
+    title: 'text-text-secondary',
+    subline: 'text-text-muted'
   }
 };
 
@@ -77,12 +77,12 @@ const RecordCard: React.FC<RecordCardProps> = ({ icon, tone, title, meta, sublin
       {(onEdit || onDelete) && (
         <div className="flex gap-1.5 shrink-0">
           {onEdit && (
-            <button onClick={onEdit} aria-label="编辑" className="p-2 bg-white dark:bg-slate-700 rounded-xl text-slate-400 hover:text-brand-accent transition-colors shadow-sm">
+            <button onClick={onEdit} aria-label="编辑" className="p-2 bg-surface-card rounded-xl text-text-muted hover:text-accent transition-colors shadow-sm">
               <Edit3 size={16}/>
             </button>
           )}
           {onDelete && (
-            <button onClick={onDelete} aria-label="删除" className="p-2 bg-white dark:bg-slate-700 rounded-xl text-slate-400 hover:text-red-500 transition-colors shadow-sm">
+            <button onClick={onDelete} aria-label="删除" className="p-2 bg-surface-card rounded-xl text-text-muted hover:text-state-danger-text transition-colors shadow-sm">
               <Trash2 size={16}/>
             </button>
           )}

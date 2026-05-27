@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { buildImportPreview, getImportFileKind } from '../features/profile/model/importPreview';
+import { LATEST_VERSION } from '../core/storage';
 
 const sampleSnapshot = {
   appName: '硬度日记',
@@ -14,7 +15,8 @@ const sampleSnapshot = {
     partners: [{ id: 'p1' }],
     tags: [{ name: 'gym', category: 'exercise' }],
     cycleEvents: [{ id: 'c1' }],
-    pregnancyEvents: []
+    pregnancyEvents: [],
+    snapshots: [{ id: 1, timestamp: 1 }]
   }
 };
 
@@ -32,7 +34,8 @@ describe('buildImportPreview', () => {
       partners: 1,
       tags: 1,
       cycleEvents: 1,
-      pregnancyEvents: 0
+      pregnancyEvents: 0,
+      snapshots: 1
     });
   });
 
@@ -51,6 +54,7 @@ describe('buildImportPreview', () => {
     expect(preview.includesUserName).toBe(false);
     expect(preview.counts.logs).toBe(1);
     expect(preview.counts.partners).toBe(0);
+    expect(preview.counts.snapshots).toBe(0);
   });
 
   it('handles top-level objects without a data wrapper', () => {
@@ -59,18 +63,39 @@ describe('buildImportPreview', () => {
       partners: [{}],
       tags: [],
       cycleEvents: [{}],
-      pregnancyEvents: [{}]
+      pregnancyEvents: [{}],
+      snapshots: [{}, {}]
     };
     const preview = buildImportPreview(JSON.stringify(flat), false);
     expect(preview.counts.logs).toBe(3);
     expect(preview.counts.partners).toBe(1);
     expect(preview.counts.cycleEvents).toBe(1);
+    expect(preview.counts.snapshots).toBe(2);
     expect(preview.dataVersion).toBeUndefined();
   });
 
-  it('marks encrypted flag when caller declares it', () => {
-    const preview = buildImportPreview(JSON.stringify(sampleSnapshot), true);
-    expect(preview.encrypted).toBe(true);
+  it('classifies data versions against the current app data version', () => {
+    const createSnapshotWithVersion = (version: number) => JSON.stringify({
+      ...sampleSnapshot,
+      dataVersion: version,
+      data: { ...sampleSnapshot.data, version }
+    });
+
+    expect(buildImportPreview(createSnapshotWithVersion(LATEST_VERSION - 1), false).versionStatus).toBe('older');
+    expect(buildImportPreview(createSnapshotWithVersion(LATEST_VERSION), false).versionStatus).toBe('match');
+    expect(buildImportPreview(createSnapshotWithVersion(LATEST_VERSION + 1), false).versionStatus).toBe('newer');
+  });
+
+  it('does not use appVersion for compatibility decisions', () => {
+    const preview = buildImportPreview(JSON.stringify({
+      ...sampleSnapshot,
+      appVersion: '99.0.0',
+      dataVersion: LATEST_VERSION,
+      data: { ...sampleSnapshot.data, version: LATEST_VERSION }
+    }), false);
+
+    expect(preview.appVersion).toBe('99.0.0');
+    expect(preview.versionStatus).toBe('match');
   });
 });
 

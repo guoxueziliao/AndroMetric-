@@ -166,46 +166,46 @@ const TagHealthCheck: React.FC<TagHealthCheckProps> = ({ logs, onNavigateToTag }
         <div className="space-y-6 animate-in fade-in pb-10">
             {/* 1. Overview Section */}
             <div className="grid grid-cols-2 gap-3">
-                <div className="bg-brand-primary dark:bg-slate-800 p-4 rounded-2xl flex flex-col justify-between">
-                    <div className="text-xs font-bold text-brand-muted dark:text-slate-400 uppercase">标签总数</div>
-                    <div className="text-3xl font-black text-brand-text dark:text-slate-100">{analysis.stats.total}</div>
+                <div className="bg-surface-muted p-4 rounded-2xl flex flex-col justify-between">
+                    <div className="text-xs font-bold text-text-muted uppercase">标签总数</div>
+                    <div className="text-3xl font-black text-text-primary">{analysis.stats.total}</div>
                     <div className="flex gap-2 mt-2">
-                        <span className="text-[10px] bg-white/50 dark:bg-black/20 px-1.5 py-0.5 rounded flex items-center text-purple-600 dark:text-purple-400 font-bold"><Tag size={10} className="mr-1"/>{analysis.stats.xp}</span>
-                        <span className="text-[10px] bg-white/50 dark:bg-black/20 px-1.5 py-0.5 rounded flex items-center text-blue-600 dark:text-blue-400 font-bold"><Activity size={10} className="mr-1"/>{analysis.stats.event}</span>
-                        <span className="text-[10px] bg-white/50 dark:bg-black/20 px-1.5 py-0.5 rounded flex items-center text-red-600 dark:text-red-400 font-bold"><ShieldAlert size={10} className="mr-1"/>{analysis.stats.symptom}</span>
+                        <span className="text-[10px] bg-surface-card/50 px-1.5 py-0.5 rounded flex items-center text-chart-tertiary font-bold"><Tag size={10} className="mr-1"/>{analysis.stats.xp}</span>
+                        <span className="text-[10px] bg-surface-card/50 px-1.5 py-0.5 rounded flex items-center text-state-info-text font-bold"><Activity size={10} className="mr-1"/>{analysis.stats.event}</span>
+                        <span className="text-[10px] bg-surface-card/50 px-1.5 py-0.5 rounded flex items-center text-state-danger-text font-bold"><ShieldAlert size={10} className="mr-1"/>{analysis.stats.symptom}</span>
                     </div>
                 </div>
-                <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-4 rounded-2xl flex flex-col justify-between">
-                    <div className="text-xs font-bold text-brand-muted dark:text-slate-400 uppercase">体检报告</div>
+                <div className="bg-surface-card border border-surface-border p-4 rounded-2xl flex flex-col justify-between">
+                    <div className="text-xs font-bold text-text-muted uppercase">体检报告</div>
                     <div>
                         <div className="flex items-baseline gap-1">
-                            <span className={`text-2xl font-black ${analysis.issues.length > 0 ? 'text-orange-500' : 'text-green-500'}`}>{analysis.issues.length}</span>
-                            <span className="text-xs text-slate-400 font-bold">个问题</span>
+                            <span className={`text-2xl font-black ${analysis.issues.length > 0 ? 'text-state-warning-text' : 'text-state-success-text'}`}>{analysis.issues.length}</span>
+                            <span className="text-xs text-text-muted font-bold">个问题</span>
                         </div>
-                        <div className="text-[10px] text-slate-300 mt-1">最近检查: {lastCheckTime}</div>
+                        <div className="text-[10px] text-text-muted mt-1">最近检查: {lastCheckTime}</div>
                     </div>
                 </div>
             </div>
 
             {/* Risk Distribution Bar */}
             {analysis.issues.length > 0 && (
-                <div className="flex h-2 rounded-full overflow-hidden w-full bg-slate-100 dark:bg-slate-800">
-                    <div className="bg-red-500 transition-all duration-500" style={{ flex: analysis.stats.highRisk }}></div>
-                    <div className="bg-orange-400 transition-all duration-500" style={{ flex: analysis.stats.medRisk }}></div>
-                    <div className="bg-blue-300 transition-all duration-500" style={{ flex: analysis.stats.lowRisk }}></div>
+                <div className="flex h-2 rounded-full overflow-hidden w-full bg-surface-muted">
+                    <div className="bg-state-danger-text transition-all duration-slow" style={{ flex: analysis.stats.highRisk }}></div>
+                    <div className="bg-state-warning-text transition-all duration-slow" style={{ flex: analysis.stats.medRisk }}></div>
+                    <div className="bg-state-info-text transition-all duration-slow" style={{ flex: analysis.stats.lowRisk }}></div>
                 </div>
             )}
 
             {/* 2. Issues List */}
             {analysis.issues.length === 0 ? (
-                <div className="text-center py-16 flex flex-col items-center text-green-500 bg-white dark:bg-slate-900 rounded-3xl border border-dashed border-green-200 dark:border-green-900/50">
+                <div className="text-center py-16 flex flex-col items-center text-state-success-text bg-surface-card rounded-3xl border border-dashed border-state-success-text/20">
                     <ShieldCheck size={48} className="mb-4 opacity-50"/>
                     <span className="font-bold text-lg">系统非常纯净</span>
-                    <p className="text-xs text-green-600/70 mt-2 max-w-[200px]">未发现语义冲突、命名不规范或冗余标签。</p>
+                    <p className="text-xs text-state-success-text/70 mt-2 max-w-[200px]">未发现语义冲突、命名不规范或冗余标签。</p>
                 </div>
             ) : (
                 <div className="space-y-3">
-                    <h4 className="text-xs font-bold text-slate-400 uppercase ml-1 flex items-center">
+                    <h4 className="text-xs font-bold text-text-muted uppercase ml-1 flex items-center">
                         <Info size={14} className="mr-1.5"/> 待处理项 ({analysis.issues.length})
                     </h4>
                     
@@ -213,51 +213,51 @@ const TagHealthCheck: React.FC<TagHealthCheckProps> = ({ logs, onNavigateToTag }
                         <div 
                             key={issue.id} 
                             onClick={() => onNavigateToTag(issue.tag, issue.type)}
-                            className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-4 rounded-2xl group hover:border-brand-accent/50 transition-all shadow-sm cursor-pointer active:scale-[0.99]"
+                            className="bg-surface-card border border-surface-border p-4 rounded-2xl group hover:border-accent/50 transition-all shadow-sm cursor-pointer active:scale-[0.99]"
                         >
                             <div className="flex items-start justify-between mb-2">
                                 <div className="flex items-center gap-2">
                                     {/* Severity Badge */}
                                     <span className={`text-[10px] font-black px-1.5 py-0.5 rounded uppercase ${
-                                        issue.severity === 'High' ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400' :
-                                        issue.severity === 'Medium' ? 'bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400' :
-                                        'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
+                                        issue.severity === 'High' ? 'bg-state-danger-bg text-state-danger-text' :
+                                        issue.severity === 'Medium' ? 'bg-state-warning-bg text-state-warning-text' :
+                                        'bg-state-info-bg text-state-info-text'
                                     }`}>
                                         {issue.severity === 'High' ? '高风险' : issue.severity === 'Medium' ? '中风险' : '低风险'}
                                     </span>
                                     
                                     {/* Issue Type */}
-                                    <span className="text-[10px] font-bold text-slate-400 border border-slate-200 dark:border-slate-700 px-1.5 py-0.5 rounded">
+                                    <span className="text-[10px] font-bold text-text-muted border border-surface-border px-1.5 py-0.5 rounded">
                                         {issue.issueType}
                                     </span>
                                 </div>
-                                <div className="text-brand-accent flex items-center text-xs font-bold">
+                                <div className="text-accent flex items-center text-xs font-bold">
                                     管理 <ArrowRight size={12} className="ml-1"/>
                                 </div>
                             </div>
 
                             <div className="flex items-center gap-2 mb-1">
-                                <span className="font-black text-base text-brand-text dark:text-slate-200">{issue.tag}</span>
+                                <span className="font-black text-base text-text-primary">{issue.tag}</span>
                                 <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider ${
-                                    issue.type === 'xp' ? 'bg-purple-50 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400' :
-                                    issue.type === 'event' ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400' :
-                                    'bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400'
+                                    issue.type === 'xp' ? 'bg-surface-muted text-chart-tertiary' :
+                                    issue.type === 'event' ? 'bg-state-info-bg text-state-info-text' :
+                                    'bg-state-danger-bg text-state-danger-text'
                                 }`}>
                                     {issue.type}
                                 </span>
-                                <span className="text-[10px] text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded-full">{issue.count}次</span>
+                                <span className="text-[10px] text-text-muted bg-surface-muted px-1.5 py-0.5 rounded-full">{issue.count}次</span>
                             </div>
 
-                            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                            <p className="text-xs text-text-secondary leading-relaxed">
                                 {issue.message}。
-                                {issue.suggestion && <span className="font-bold text-brand-accent ml-1">{issue.suggestion}</span>}
+                                {issue.suggestion && <span className="font-bold text-accent ml-1">{issue.suggestion}</span>}
                             </p>
                         </div>
                     ))}
                 </div>
             )}
 
-            <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-xl text-[10px] text-slate-400 leading-relaxed border border-slate-100 dark:border-slate-800">
+            <div className="bg-surface-muted p-4 rounded-xl text-[10px] text-text-muted leading-relaxed border border-surface-border">
                 <p className="font-bold mb-1">💡 为什么体检很重要？</p>
                 <p>随着记录增多，标签系统容易出现熵增（混乱）。定期体检能防止“人妻”和“人妻出轨”同时存在，或“SP”和“打屁股”混用，确保长期统计的准确性。系统只提供建议，所有修改权在您手中。</p>
             </div>

@@ -6,8 +6,20 @@ export interface AppLockSettings {
     webAuthnCredentialId?: string;
 }
 
+export type AutoSafetySnapshotLimit = 3 | 7 | 15 | 30;
+export type AutoBackupIntervalHours = 6 | 12 | 24 | 48;
+export type AutoSafetySnapshotSizeLimitMB = 5 | 20 | 50 | 100;
+
+export type BackupRetentionSettings =
+    | { mode: 'count'; autoSafetyMaxCount: AutoSafetySnapshotLimit }
+    | { mode: 'size'; autoSafetyMaxMB: AutoSafetySnapshotSizeLimitMB };
+
+export interface BackupScheduleSettings {
+    enabled: boolean;
+    intervalHours: AutoBackupIntervalHours;
+}
+
 export interface AppSettings {
-    version: string;
     theme: 'system' | 'light' | 'dark';
     privacyMode: boolean;
     enableNotifications: boolean;
@@ -15,6 +27,8 @@ export interface AppSettings {
     hiddenFields: string[];
     lastExportAt?: number;
     appLock?: AppLockSettings;
+    backupRetention?: BackupRetentionSettings;
+    backupSchedule?: BackupScheduleSettings;
 }
 
 export interface BackupState {

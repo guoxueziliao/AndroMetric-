@@ -252,26 +252,26 @@ const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave
 
   const getPartnerAvatar = (name: string) => {
       const p = partners.find(p => p.name === name);
-      if (p) return <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-sm ${p.avatarColor || 'bg-slate-400'}`}>{p.name[0]}</div>;
-      return <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-xs text-slate-500 font-bold">?</div>;
+      if (p) return <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold text-text-on-accent shadow-sm ${p.avatarColor || 'bg-surface-border'}`}>{p.name[0]}</div>;
+      return <div className="w-10 h-10 rounded-full bg-surface-border  flex items-center justify-center text-xs text-text-muted font-bold">?</div>;
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-brand-bg dark:bg-slate-950 text-brand-text dark:text-slate-100 flex flex-col h-full font-sans overflow-hidden">
+    <div className="fixed inset-0 z-50 bg-brand-bg  text-text-primary  flex flex-col h-full font-sans overflow-hidden">
         
         {/* --- Header --- */}
-        <div className="flex-none px-4 py-3 flex items-center justify-between bg-white dark:bg-slate-900 sticky top-0 z-10 border-b border-slate-200 dark:border-slate-800 shadow-sm">
-            <button onClick={onClose} className="p-2 -ml-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-brand-muted transition-colors">
+        <div className="flex-none px-4 py-3 flex items-center justify-between bg-surface-card  sticky top-0 z-10 border-b border-surface-border  shadow-sm">
+            <button onClick={onClose} className="p-2 -ml-2 rounded-full hover:bg-surface-muted dark:hover:bg-surface-muted text-text-muted transition-colors">
                 <X size={24} />
             </button>
-            <span className="font-bold text-lg tracking-wide text-brand-text dark:text-white">
+            <span className="font-bold text-lg tracking-wide text-text-primary dark:text-text-on-accent">
                 {initialData ? '编辑记录' : '新增记录'}
             </span>
             <button 
                 onClick={handleSave} 
-                className="bg-brand-accent hover:bg-brand-accent-hover text-white px-5 py-2 rounded-full text-sm font-bold shadow-md transition-all active:scale-95"
+                className="bg-accent hover:bg-accent-hover text-text-on-accent px-5 py-2 rounded-full text-sm font-bold shadow-md transition-all active:scale-95"
             >
                 保存
             </button>
@@ -284,22 +284,22 @@ const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave
                 {/* 1. Stats Summary Cards */}
                 <div className="flex gap-4 mb-8">
                     <Card className="flex-1 p-4 flex flex-col items-center justify-center">
-                        <span className="text-[10px] text-brand-muted mb-1 z-10 font-bold uppercase tracking-widest">开始时间</span>
+                        <span className="text-[10px] text-text-muted mb-1 z-10 font-bold uppercase tracking-widest">开始时间</span>
                         <input 
                             type="time" 
                             value={data.startTime} 
                             onChange={e => setData({...data, startTime: e.target.value})}
-                            className="bg-transparent text-center w-full outline-none focus:text-brand-accent text-2xl font-mono font-bold z-10 text-brand-text dark:text-slate-200"
+                            className="bg-transparent text-center w-full outline-none focus:text-accent text-2xl font-mono font-bold z-10 text-text-primary "
                         />
                     </Card>
                     <Card className="flex-1 p-4 flex flex-col items-center justify-center">
-                        <span className="text-[10px] text-brand-muted mb-1 z-10 font-bold uppercase tracking-widest">持续时长 (分)</span>
+                        <span className="text-[10px] text-text-muted mb-1 z-10 font-bold uppercase tracking-widest">持续时长 (分)</span>
                         <div className="flex items-baseline gap-1 z-10">
                             <input 
                                 type="number" 
                                 value={data.duration} 
                                 onChange={e => setData({...data, duration: parseInt(e.target.value) || 0})}
-                                className="bg-transparent text-center w-16 text-3xl font-black text-brand-accent outline-none"
+                                className="bg-transparent text-center w-16 text-3xl font-black text-accent outline-none"
                             />
                         </div>
                     </Card>
@@ -308,34 +308,34 @@ const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave
                 {/* 2. Timeline Flow */}
                 <div className="relative">
                     {/* Vertical Connecting Line */}
-                    <div className="absolute left-[19px] top-6 bottom-0 w-0.5 bg-slate-300 dark:bg-slate-700 rounded-full"></div>
+                    <div className="absolute left-[19px] top-6 bottom-0 w-0.5 bg-surface-border  rounded-full"></div>
 
                     <div className="space-y-6">
                         {data.interactions.map((interaction, idx) => (
-                            <div key={interaction.id} className="relative pl-12 group animate-in slide-in-from-bottom-5 duration-500" style={{ animationDelay: `${idx * 100}ms` }}>
+                            <div key={interaction.id} className="relative pl-12 group animate-in slide-in-from-bottom-5 duration-slow" style={{ animationDelay: `${idx * 100}ms` }}>
                                 {/* Timeline Node */}
-                                <div className="absolute left-[10px] top-6 w-5 h-5 rounded-full bg-white dark:bg-slate-900 border-4 border-brand-accent z-10 flex items-center justify-center">
+                                <div className="absolute left-[10px] top-6 w-5 h-5 rounded-full bg-surface-card  border-4 border-accent z-10 flex items-center justify-center">
                                 </div>
-                                <div className="absolute -left-1 top-6 text-[10px] font-mono text-brand-muted w-8 text-right opacity-0">
+                                <div className="absolute -left-1 top-6 text-[10px] font-mono text-text-muted w-8 text-right opacity-0">
                                     {idx + 1}
                                 </div>
                                 
                                 {/* Stage Card */}
                                 <Card 
                                     onClick={() => { setEditingInteractionId(interaction.id); setActiveTab('action'); }}
-                                    className="p-4 cursor-pointer hover:border-brand-accent transition-all duration-300 active:scale-[0.99]"
+                                    className="p-4 cursor-pointer hover:border-accent transition-all duration-slow active:scale-[0.99]"
                                 >
                                     {/* Header Row */}
                                     <div className="flex justify-between items-start mb-3 relative z-10">
                                         <div className="flex items-center gap-3">
                                             {getPartnerAvatar(interaction.partner)}
                                             <div>
-                                                <div className={`text-sm font-bold ${interaction.partner ? 'text-brand-text dark:text-slate-200' : 'text-slate-400 italic'}`}>
+                                                <div className={`text-sm font-bold ${interaction.partner ? 'text-text-primary ' : 'text-text-muted italic'}`}>
                                                     {interaction.partner || '点击选择伴侣'}
                                                 </div>
                                                 <div className="flex items-center gap-2 mt-0.5">
                                                     {interaction.location && (
-                                                        <span className="text-[10px] text-slate-500 bg-slate-100 dark:bg-slate-800 px-1.5 rounded flex items-center">
+                                                        <span className="text-[10px] text-text-muted bg-surface-muted  px-1.5 rounded flex items-center">
                                                             <MapPin size={10} className="mr-1"/>{interaction.location}
                                                         </span>
                                                     )}
@@ -349,9 +349,9 @@ const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave
                                         </div>
                                         <div className="flex gap-2">
                                              {data.interactions.length > 1 && (
-                                                <button onClick={(e) => removeInteraction(interaction.id, e)} className="p-2 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-400 hover:text-red-500 transition-colors"><Trash2 size={14}/></button>
+                                                <button onClick={(e) => removeInteraction(interaction.id, e)} className="p-2 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 text-text-muted hover:text-red-500 transition-colors"><Trash2 size={14}/></button>
                                              )}
-                                             <button className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-brand-accent transition-colors"><ChevronRight size={16}/></button>
+                                             <button className="p-2 rounded-full hover:bg-surface-muted dark:hover:bg-surface-muted text-text-muted hover:text-accent transition-colors"><ChevronRight size={16}/></button>
                                         </div>
                                     </div>
                                     
@@ -360,7 +360,7 @@ const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave
                                         {interaction.chain.length > 0 ? (
                                             interaction.chain.map((a, i) => (
                                                 <div key={a.id} className="flex items-center">
-                                                    {(i > 0) && <ArrowRight size={12} className="text-slate-300 dark:text-slate-600 mx-1.5" />}
+                                                    {(i > 0) && <ArrowRight size={12} className="text-text-muted  mx-1.5" />}
                                                     <span className={`text-xs px-2.5 py-1 rounded-md font-bold border ${
                                                         a.type === 'act' 
                                                         ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-300 border-purple-100 dark:border-purple-800' 
@@ -371,7 +371,7 @@ const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave
                                                 </div>
                                             ))
                                         ) : (
-                                            <div className="flex items-center text-xs text-slate-400 italic py-1 border border-dashed border-slate-300 dark:border-slate-700 px-3 rounded-lg w-full justify-center">
+                                            <div className="flex items-center text-xs text-text-muted italic py-1 border border-dashed border-surface-border  px-3 rounded-lg w-full justify-center">
                                                 <Plus size={12} className="mr-1"/> 添加动作流程...
                                             </div>
                                         )}
@@ -379,7 +379,7 @@ const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave
 
                                     {/* Tags Row (Costume/Toys) */}
                                     {(interaction.costumes?.length > 0 || interaction.toys?.length > 0) && (
-                                        <div className="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+                                        <div className="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-surface-border ">
                                             {interaction.costumes?.map(c => <span key={c} className="text-[10px] px-1.5 py-0.5 rounded bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-900/30 flex items-center"><Shirt size={8} className="mr-1"/>{c}</span>)}
                                             {interaction.toys?.map(t => <span key={t} className="text-[10px] px-1.5 py-0.5 rounded bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-300 border border-orange-100 dark:border-orange-900/30 flex items-center"><Zap size={8} className="mr-1"/>{t}</span>)}
                                         </div>
@@ -393,9 +393,9 @@ const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave
                     <div className="pl-12 mt-8">
                         <button 
                             onClick={addInteraction}
-                            className="w-full py-3 rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-700 text-slate-400 hover:border-brand-accent hover:text-brand-accent hover:bg-blue-50 dark:hover:bg-blue-900/10 transition-all flex items-center justify-center gap-2 text-sm font-bold group"
+                            className="w-full py-3 rounded-xl border-2 border-dashed border-surface-border  text-text-muted hover:border-accent hover:text-accent hover:bg-blue-50 dark:hover:bg-blue-900/10 transition-all flex items-center justify-center gap-2 text-sm font-bold group"
                         >
-                            <div className="w-6 h-6 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center group-hover:bg-brand-accent group-hover:text-white transition-colors">
+                            <div className="w-6 h-6 rounded-full bg-surface-border  flex items-center justify-center group-hover:bg-accent group-hover:text-text-on-accent transition-colors">
                                 <Plus size={14} /> 
                             </div>
                             添加下一阶段
@@ -408,37 +408,37 @@ const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave
         {/* --- Editor Drawer (Sliding Overlay) --- */}
         {/* Backdrop for Drawer */}
         <div 
-            className={`fixed inset-0 bg-black/30 backdrop-blur-[2px] z-[60] transition-opacity duration-300 ${editingInteractionId ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+            className={`fixed inset-0 bg-overlay-scrim/30 backdrop-blur-[2px] z-[60] transition-opacity duration-slow ${editingInteractionId ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
             onClick={() => setEditingInteractionId(null)}
         />
         
         <div 
-            className={`fixed inset-x-0 bottom-0 z-[70] bg-white dark:bg-slate-900 rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.1)] transition-transform duration-300 ease-out flex flex-col h-[85vh] ${editingInteractionId ? 'translate-y-0' : 'translate-y-full'}`}
+            className={`fixed inset-x-0 bottom-0 z-[70] bg-surface-card  rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.1)] transition-transform duration-slow ease-out flex flex-col h-[85vh] ${editingInteractionId ? 'translate-y-0' : 'translate-y-full'}`}
         >
              {/* Drawer Handle */}
-             <div className="w-full h-6 flex items-center justify-center flex-none cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 active:bg-slate-100 dark:active:bg-slate-700 rounded-t-3xl border-b border-slate-100 dark:border-slate-800" onClick={() => setEditingInteractionId(null)}>
-                 <div className="w-12 h-1 bg-slate-300 dark:bg-slate-600 rounded-full"></div>
+             <div className="w-full h-6 flex items-center justify-center flex-none cursor-pointer hover:bg-surface-muted dark:hover:bg-surface-muted active:bg-surface-muted dark:active:bg-surface-muted rounded-t-3xl border-b border-surface-border " onClick={() => setEditingInteractionId(null)}>
+                 <div className="w-12 h-1 bg-surface-border dark:bg-surface-muted rounded-full"></div>
              </div>
 
              {activeInteraction && (
                  <>
                      {/* Drawer Header & Tabs */}
-                     <div className="flex-none px-4 pb-2 border-b border-slate-100 dark:border-slate-800">
+                     <div className="flex-none px-4 pb-2 border-b border-surface-border ">
                          <div className="flex items-center justify-between my-3">
                              <div>
-                                 <h3 className="text-lg font-bold text-brand-text dark:text-slate-100 flex items-center gap-2">
-                                    <span className="w-6 h-6 rounded-full bg-brand-accent flex items-center justify-center text-xs text-white">
+                                 <h3 className="text-lg font-bold text-text-primary  flex items-center gap-2">
+                                    <span className="w-6 h-6 rounded-full bg-accent flex items-center justify-center text-xs text-text-on-accent">
                                         {data.interactions.findIndex(i => i.id === activeInteraction.id) + 1}
                                     </span>
                                     阶段编辑
                                  </h3>
                              </div>
-                             <button onClick={() => setEditingInteractionId(null)} className="px-4 py-1.5 bg-slate-100 dark:bg-slate-800 text-brand-text dark:text-slate-200 rounded-full text-xs font-bold hover:bg-slate-200 dark:hover:bg-slate-700">
+                             <button onClick={() => setEditingInteractionId(null)} className="px-4 py-1.5 bg-surface-muted  text-text-primary  rounded-full text-xs font-bold hover:bg-surface-border dark:hover:bg-surface-muted">
                                  完成
                              </button>
                          </div>
 
-                         <div className="flex bg-slate-50 dark:bg-slate-950 rounded-xl p-1 border border-slate-200 dark:border-slate-800">
+                         <div className="flex bg-surface-muted  rounded-xl p-1 border border-surface-border ">
                             <TabButton active={activeTab === 'action'} onClick={() => setActiveTab('action')} icon={Activity} label="动作流程" />
                             <TabButton active={activeTab === 'context'} onClick={() => setActiveTab('context')} icon={User} label="伴侣场景" />
                             <TabButton active={activeTab === 'props'} onClick={() => setActiveTab('props')} icon={Tag} label="氛围道具" />
@@ -447,7 +447,7 @@ const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave
 
                      {/* Recommendations Bar */}
                      {recommendations.length > 0 && (
-                         <div className="flex-none px-4 py-3 bg-gradient-to-r from-blue-50/50 to-indigo-50/50 dark:from-blue-900/10 dark:to-indigo-900/10 border-b border-slate-100 dark:border-slate-800">
+                         <div className="flex-none px-4 py-3 bg-gradient-to-r from-blue-50/50 to-indigo-50/50 dark:from-blue-900/10 dark:to-indigo-900/10 border-b border-surface-border ">
                              <div className="flex items-center gap-2 mb-2">
                                  <Sparkles size={12} className="text-blue-500" />
                                  <span className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest">智能推荐 (Smart Suggest)</span>
@@ -457,30 +457,30 @@ const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave
                                      <button 
                                          key={`${rec.type}-${rec.value}`}
                                          onClick={() => handleApplyRecommendation(rec)}
-                                         className="flex-shrink-0 px-3 py-1.5 bg-white dark:bg-slate-800 text-[10px] font-bold text-slate-600 dark:text-slate-300 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex items-center gap-1.5 hover:text-blue-500 hover:border-blue-200 transition-all active:scale-95"
+                                         className="flex-shrink-0 px-3 py-1.5 bg-surface-card  text-[10px] font-bold text-text-secondary  rounded-xl shadow-sm border border-surface-border  flex items-center gap-1.5 hover:text-blue-500 hover:border-blue-200 transition-all active:scale-95"
                                      >
                                          <span>{rec.value}</span>
-                                         <span className="text-[8px] text-slate-400 bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded-md">{rec.type === 'position' ? '姿势' : rec.type === 'toy' ? '玩具' : '服饰'}</span>
+                                         <span className="text-[8px] text-text-muted bg-surface-muted  px-1.5 py-0.5 rounded-md">{rec.type === 'position' ? '姿势' : rec.type === 'toy' ? '玩具' : '服饰'}</span>
                                      </button>
                                  ))}
                              </div>
                          </div>
                      )}
 
-                     <div className="flex-1 overflow-y-auto p-5 custom-scrollbar bg-white dark:bg-slate-900">
+                     <div className="flex-1 overflow-y-auto p-5 custom-scrollbar bg-surface-card ">
                          
                          {/* TAB 1: ACTION FLOW */}
                          {activeTab === 'action' && (
                              <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 h-full flex flex-col">
                                  
                                  {/* Timeline Flow (Vertical) */}
-                                 <div className="flex-1 min-h-[120px] bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 relative overflow-hidden">
-                                     <div className="absolute left-[22px] top-6 bottom-6 w-0.5 bg-slate-300 dark:bg-slate-700 rounded-full"></div>
-                                     <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 pl-10">动作时间轴</div>
+                                 <div className="flex-1 min-h-[120px] bg-surface-muted  rounded-2xl border border-surface-border  p-4 relative overflow-hidden">
+                                     <div className="absolute left-[22px] top-6 bottom-6 w-0.5 bg-surface-border  rounded-full"></div>
+                                     <div className="text-[10px] font-bold text-text-muted uppercase tracking-widest mb-3 pl-10">动作时间轴</div>
 
                                      <div id="timeline-flow" className="space-y-3 overflow-y-auto max-h-[300px] custom-scrollbar pr-2 relative">
                                         {activeInteraction.chain.length === 0 ? (
-                                            <div className="flex flex-col items-center justify-center py-10 text-slate-400 text-xs italic">
+                                            <div className="flex flex-col items-center justify-center py-10 text-text-muted text-xs italic">
                                                 <Activity size={24} className="mb-2 opacity-50"/>
                                                 点击下方添加动作
                                             </div>
@@ -491,12 +491,12 @@ const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave
                                                     className="relative pl-10"
                                                 >
                                                     {/* Dot */}
-                                                    <div className="absolute left-[3px] top-1/2 -translate-y-1/2 w-3 h-3 rounded-full border-2 border-slate-50 dark:border-slate-950 bg-slate-400 z-10"></div>
+                                                    <div className="absolute left-[3px] top-1/2 -translate-y-1/2 w-3 h-3 rounded-full border-2 border-surface-border  bg-surface-border z-10"></div>
 
                                                     {/* Card */}
-                                                    <div className={`flex items-center justify-between p-3 rounded-xl border bg-white dark:bg-slate-900 shadow-sm ${a.type === 'act' ? 'border-purple-200 dark:border-purple-900' : 'border-blue-200 dark:border-blue-900'}`}>
+                                                    <div className={`flex items-center justify-between p-3 rounded-xl border bg-surface-card  shadow-sm ${a.type === 'act' ? 'border-purple-200 dark:border-purple-900' : 'border-blue-200 dark:border-blue-900'}`}>
                                                         <div className="flex flex-col flex-1 min-w-0">
-                                                            <span className="font-bold text-sm text-brand-text dark:text-slate-200 truncate">{a.name}</span>
+                                                            <span className="font-bold text-sm text-text-primary  truncate">{a.name}</span>
                                                             <span className={`text-[10px] uppercase font-bold ${a.type === 'act' ? 'text-purple-500' : 'text-blue-500'}`}>
                                                                 {a.type === 'act' ? '行为' : '体位'}
                                                             </span>
@@ -507,7 +507,7 @@ const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave
                                                                 onClick={() => moveChainItem(i, -1)}
                                                                 disabled={i === 0}
                                                                 aria-label="上移"
-                                                                className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-brand-accent disabled:opacity-30 disabled:hover:bg-transparent"
+                                                                className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-text-muted hover:bg-surface-muted dark:hover:bg-surface-muted hover:text-accent disabled:opacity-30 disabled:hover:bg-transparent"
                                                             >
                                                                 <ChevronUp size={16}/>
                                                             </button>
@@ -516,7 +516,7 @@ const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave
                                                                 onClick={() => moveChainItem(i, 1)}
                                                                 disabled={i === activeInteraction.chain.length - 1}
                                                                 aria-label="下移"
-                                                                className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-brand-accent disabled:opacity-30 disabled:hover:bg-transparent"
+                                                                className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-text-muted hover:bg-surface-muted dark:hover:bg-surface-muted hover:text-accent disabled:opacity-30 disabled:hover:bg-transparent"
                                                             >
                                                                 <ChevronDown size={16}/>
                                                             </button>
@@ -524,7 +524,7 @@ const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave
                                                                 type="button"
                                                                 onClick={() => removeFromChain(a.id)}
                                                                 aria-label="删除"
-                                                                className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-500"
+                                                                className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-text-muted hover:bg-red-50 hover:text-red-500"
                                                             >
                                                                 <Trash2 size={16}/>
                                                             </button>
@@ -557,7 +557,7 @@ const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave
                          {activeTab === 'context' && (
                              <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2">
                                 <div>
-                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 block">选择伴侣</label>
+                                    <label className="text-xs font-bold text-text-muted uppercase tracking-wider mb-3 block">选择伴侣</label>
                                     {smartPartnerApplied && activeInteraction.partner && (
                                         <div className="mb-3 flex items-center justify-between gap-2 rounded-2xl border border-pink-200 bg-pink-50 px-4 py-2 text-[11px] font-bold text-pink-700 dark:border-pink-900/50 dark:bg-pink-900/20 dark:text-pink-300">
                                             <span className="flex items-center gap-1.5"><Sparkles size={12}/> 智能默认 · {activeInteraction.partner} · 可换</span>
@@ -575,17 +575,17 @@ const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave
                                                 <button 
                                                     key={p.id}
                                                     onClick={() => updateActive('partner', p.name)}
-                                                    className={`flex-shrink-0 flex flex-col items-center gap-2 transition-all duration-300 ${isActive ? 'opacity-100 scale-110' : 'opacity-60 hover:opacity-100'}`}
+                                                    className={`flex-shrink-0 flex flex-col items-center gap-2 transition-all duration-slow ${isActive ? 'opacity-100 scale-110' : 'opacity-60 hover:opacity-100'}`}
                                                 >
-                                                    <div className={`w-14 h-14 rounded-full flex items-center justify-center text-base font-bold shadow-md ring-2 ${isActive ? 'ring-brand-accent ring-offset-2 dark:ring-offset-slate-900' : 'ring-transparent'} ${p.avatarColor || 'bg-slate-400'} text-white`}>
+                                                    <div className={`w-14 h-14 rounded-full flex items-center justify-center text-base font-bold shadow-md ring-2 ${isActive ? 'ring-brand-accent ring-offset-2 dark:ring-offset-slate-900' : 'ring-transparent'} ${p.avatarColor || 'bg-surface-border'} text-text-on-accent`}>
                                                         {p.name[0]}
                                                     </div>
-                                                    <span className={`text-[10px] font-medium ${isActive ? 'text-brand-accent' : 'text-slate-500'}`}>{p.name}</span>
+                                                    <span className={`text-[10px] font-medium ${isActive ? 'text-accent' : 'text-text-muted'}`}>{p.name}</span>
                                                 </button>
                                             );
                                         })}
                                         {/* Manual Input Fallback */}
-                                        <div className="w-[1px] h-14 bg-slate-200 dark:bg-slate-800 mx-2"></div>
+                                        <div className="w-[1px] h-14 bg-surface-border  mx-2"></div>
                                         {onAddPartner && (
                                             <button
                                                 type="button"
@@ -593,33 +593,33 @@ const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave
                                                 className="flex-shrink-0 flex flex-col items-center gap-2 opacity-90 hover:opacity-100"
                                                 aria-label="新增伴侣"
                                             >
-                                                <div className="w-14 h-14 rounded-full bg-blue-50 dark:bg-blue-900/30 border-2 border-dashed border-brand-accent flex items-center justify-center">
-                                                    <Plus size={22} className="text-brand-accent" strokeWidth={3}/>
+                                                <div className="w-14 h-14 rounded-full bg-blue-50 dark:bg-blue-900/30 border-2 border-dashed border-accent flex items-center justify-center">
+                                                    <Plus size={22} className="text-accent" strokeWidth={3}/>
                                                 </div>
-                                                <span className="text-[10px] font-bold text-brand-accent">新建</span>
+                                                <span className="text-[10px] font-bold text-accent">新建</span>
                                             </button>
                                         )}
                                         <div className="flex flex-col items-center justify-center gap-2">
-                                            <div className="w-14 h-14 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 flex items-center justify-center">
-                                                <User size={20} className="text-slate-400"/>
+                                            <div className="w-14 h-14 rounded-full bg-surface-muted  border border-surface-border  flex items-center justify-center">
+                                                <User size={20} className="text-text-muted"/>
                                             </div>
                                             <input
                                                 placeholder="临时伴侣"
                                                 value={activeInteraction.partner}
                                                 onChange={e => updateActive('partner', e.target.value)}
-                                                className="bg-transparent border-b border-slate-300 dark:border-slate-700 text-center text-xs w-16 focus:border-brand-accent outline-none text-brand-text dark:text-slate-300 pb-1"
+                                                className="bg-transparent border-b border-surface-border  text-center text-xs w-16 focus:border-accent outline-none text-text-primary  pb-1"
                                             />
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+                                <div className="space-y-4 pt-4 border-t border-surface-border ">
                                     <div>
-                                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 block">地点</label>
+                                        <label className="text-xs font-bold text-text-muted uppercase tracking-wider mb-3 block">地点</label>
                                         <div className="space-y-3">
                                             {Object.entries(LOCATION_GROUPS).map(([group, locs]) => (
                                                 <div key={group} className="flex flex-wrap gap-2 items-center">
-                                                    <span className="text-[10px] text-slate-400 w-8">{group}</span>
+                                                    <span className="text-[10px] text-text-muted w-8">{group}</span>
                                                     {locs.map(l => (
                                                         <Chip 
                                                             key={l} label={l} color="teal"
@@ -633,7 +633,7 @@ const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave
                                     </div>
 
                                     <div>
-                                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 block">角色扮演</label>
+                                        <label className="text-xs font-bold text-text-muted uppercase tracking-wider mb-3 block">角色扮演</label>
                                         <div className="flex flex-wrap gap-2">
                                             {ROLE_OPTIONS.map(r => (
                                                 <Chip 
@@ -684,19 +684,19 @@ const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave
 
 
         {/* --- Bottom Global Controls (Expandable) --- */}
-        <div className={`fixed bottom-0 inset-x-0 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 transition-transform duration-300 ${editingInteractionId ? 'translate-y-full' : 'translate-y-0'}`}>
+        <div className={`fixed bottom-0 inset-x-0 z-50 bg-surface-card/95 /95 backdrop-blur-md border-t border-surface-border  transition-transform duration-slow ${editingInteractionId ? 'translate-y-full' : 'translate-y-0'}`}>
              
              {/* Collapsed Bar */}
              <button 
                 onClick={() => setIsGlobalPanelOpen(!isGlobalPanelOpen)} 
-                className="w-full px-5 py-3 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                className="w-full px-5 py-3 flex items-center justify-between hover:bg-surface-muted dark:hover:bg-surface-muted transition-colors"
              >
                  <div className="flex items-center gap-3">
-                     <span className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2">
+                     <span className="text-xs font-bold text-text-muted uppercase tracking-wider flex items-center gap-2">
                          <GripHorizontal size={14}/> 全局设定
                      </span>
                      <div className="flex gap-2">
-                        <span className={`text-[10px] px-1.5 py-0.5 rounded border ${data.ejaculation ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-300 border-blue-200 dark:border-blue-800' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 border-transparent'}`}>
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded border ${data.ejaculation ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-300 border-blue-200 dark:border-blue-800' : 'bg-surface-muted  text-text-muted border-transparent'}`}>
                             {data.ejaculation ? '已射精' : '未射精'}
                         </span>
                         <span className={`text-[10px] px-1.5 py-0.5 rounded border ${data.protection !== '无保护措施' ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-300 border-green-200 dark:border-green-800' : 'bg-red-50 dark:bg-red-900/20 text-red-500 dark:text-red-400 border-red-200 dark:border-red-800'}`}>
@@ -708,66 +708,66 @@ const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave
                     {/* Mini Indicators */}
                     {data.indicators.orgasm && <Flame size={12} className="text-red-500"/>}
                     {data.indicators.partnerOrgasm && <Sparkles size={12} className="text-pink-500"/>}
-                    <ChevronDown size={16} className={`text-slate-400 transition-transform duration-300 ${isGlobalPanelOpen ? 'rotate-180' : ''}`}/>
+                    <ChevronDown size={16} className={`text-text-muted transition-transform duration-slow ${isGlobalPanelOpen ? 'rotate-180' : ''}`}/>
                  </div>
              </button>
 
              {/* Expanded Content */}
              {isGlobalPanelOpen && (
-                 <div className="p-5 pb-8 space-y-6 animate-in slide-in-from-bottom-5 max-h-[60vh] overflow-y-auto custom-scrollbar bg-slate-50 dark:bg-slate-950">
+                 <div className="p-5 pb-8 space-y-6 animate-in slide-in-from-bottom-5 max-h-[60vh] overflow-y-auto custom-scrollbar bg-surface-muted ">
                      
                      {/* 1. Safety & State */}
                      <div className="grid grid-cols-2 gap-4">
                          <div className="space-y-2">
-                             <label className="text-[10px] text-slate-500 uppercase font-bold">保护措施</label>
+                             <label className="text-[10px] text-text-muted uppercase font-bold">保护措施</label>
                              <div className="relative">
                                  <select 
                                     value={data.protection}
                                     onChange={e => updateGlobal('protection', e.target.value)}
-                                    className="w-full bg-white dark:bg-slate-900 text-brand-text dark:text-slate-200 text-xs rounded-xl p-3 outline-none border border-slate-200 dark:border-slate-700 focus:border-brand-accent appearance-none"
+                                    className="w-full bg-surface-card  text-text-primary  text-xs rounded-xl p-3 outline-none border border-surface-border  focus:border-accent appearance-none"
                                 >
                                     {PROTECTION_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
                                 </select>
-                                <ChevronDown size={12} className="absolute right-3 top-3.5 text-slate-500 pointer-events-none"/>
+                                <ChevronDown size={12} className="absolute right-3 top-3.5 text-text-muted pointer-events-none"/>
                              </div>
                          </div>
                          <div className="space-y-2">
-                             <label className="text-[10px] text-slate-500 uppercase font-bold">自身状态</label>
+                             <label className="text-[10px] text-text-muted uppercase font-bold">自身状态</label>
                              <div className="relative">
                                  <select 
                                     value={data.state}
                                     onChange={e => updateGlobal('state', e.target.value)}
-                                    className="w-full bg-white dark:bg-slate-900 text-brand-text dark:text-slate-200 text-xs rounded-xl p-3 outline-none border border-slate-200 dark:border-slate-700 focus:border-brand-accent appearance-none"
+                                    className="w-full bg-surface-card  text-text-primary  text-xs rounded-xl p-3 outline-none border border-surface-border  focus:border-accent appearance-none"
                                 >
                                     <option value="">正常</option>
                                     {STATE_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
                                 </select>
-                                <ChevronDown size={12} className="absolute right-3 top-3.5 text-slate-500 pointer-events-none"/>
+                                <ChevronDown size={12} className="absolute right-3 top-3.5 text-text-muted pointer-events-none"/>
                              </div>
                          </div>
                      </div>
 
                      {/* 2. Ejaculation Control */}
-                     <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800 space-y-4 shadow-sm">
+                     <div className="bg-surface-card  rounded-xl p-4 border border-surface-border  space-y-4 shadow-sm">
                         <div className="flex items-center justify-between">
-                            <span className="text-sm font-bold text-brand-text dark:text-slate-200 flex items-center gap-2"><Droplets size={16} className="text-blue-500"/> 射精详情</span>
+                            <span className="text-sm font-bold text-text-primary  flex items-center gap-2"><Droplets size={16} className="text-blue-500"/> 射精详情</span>
                             <button 
                                 onClick={() => updateGlobal('ejaculation', !data.ejaculation)}
-                                className={`w-12 h-6 rounded-full relative transition-colors ${data.ejaculation ? 'bg-blue-600' : 'bg-slate-300 dark:bg-slate-600'}`}
+                                className={`w-12 h-6 rounded-full relative transition-colors ${data.ejaculation ? 'bg-blue-600' : 'bg-surface-border dark:bg-surface-muted'}`}
                             >
-                                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform shadow-sm ${data.ejaculation ? 'left-7' : 'left-1'}`}></div>
+                                <div className={`absolute top-1 w-4 h-4 bg-surface-card rounded-full transition-transform shadow-sm ${data.ejaculation ? 'left-7' : 'left-1'}`}></div>
                             </button>
                         </div>
                         
                         {data.ejaculation && (
-                            <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-3 animate-in fade-in">
-                                <label className="text-[10px] text-slate-500 uppercase font-bold">位置</label>
+                            <div className="pt-2 border-t border-surface-border  space-y-3 animate-in fade-in">
+                                <label className="text-[10px] text-text-muted uppercase font-bold">位置</label>
                                 <div className="flex flex-wrap gap-2">
                                     {EJACULATION_LOCATIONS.map(loc => (
                                         <button 
                                             key={loc}
                                             onClick={() => updateGlobal('ejaculationLocation', loc)}
-                                            className={`text-[10px] px-3 py-1.5 rounded-lg border font-medium transition-all ${data.ejaculationLocation === loc ? 'bg-blue-600 text-white border-blue-600 shadow-md scale-105' : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-slate-400'}`}
+                                            className={`text-[10px] px-3 py-1.5 rounded-lg border font-medium transition-all ${data.ejaculationLocation === loc ? 'bg-blue-600 text-text-on-accent border-blue-600 shadow-md scale-105' : 'bg-surface-muted  text-text-secondary  border-surface-border  hover:border-surface-border'}`}
                                         >
                                             {loc}
                                         </button>
@@ -776,7 +776,7 @@ const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave
                                 {data.ejaculationLocation?.includes('口') && (
                                      <div className="flex items-center gap-2 mt-2">
                                          <input id="swallow" type="checkbox" checked={data.semenSwallowed} onChange={e => updateGlobal('semenSwallowed', e.target.checked)} className="accent-pink-500 w-4 h-4 rounded"/>
-                                         <label htmlFor="swallow" className="text-xs text-slate-600 dark:text-slate-300 font-bold">吞精</label>
+                                         <label htmlFor="swallow" className="text-xs text-text-secondary  font-bold">吞精</label>
                                      </div>
                                 )}
                             </div>
@@ -785,7 +785,7 @@ const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave
 
                      {/* 3. Indicators Grid */}
                      <div className="space-y-2">
-                         <span className="text-[10px] text-slate-500 uppercase font-bold">高潮与特殊标记</span>
+                         <span className="text-[10px] text-text-muted uppercase font-bold">高潮与特殊标记</span>
                          <div className="grid grid-cols-2 gap-3">
                              {[
                                  { k: 'orgasm', l: '我高潮了', i: Flame, c: 'text-red-500' }, 
@@ -796,26 +796,26 @@ const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave
                                  <button 
                                     key={k}
                                     onClick={() => updateIndicator(k as any, !data.indicators[k as keyof typeof data.indicators])}
-                                    className={`p-3 rounded-xl border flex items-center justify-between font-bold transition-all ${data.indicators[k as keyof typeof data.indicators] ? `bg-white dark:bg-slate-800 border-brand-accent shadow-sm ring-1 ring-brand-accent` : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-500'}`}
+                                    className={`p-3 rounded-xl border flex items-center justify-between font-bold transition-all ${data.indicators[k as keyof typeof data.indicators] ? `bg-surface-card  border-accent shadow-sm ring-1 ring-brand-accent` : 'bg-surface-card  border-surface-border  text-text-muted'}`}
                                  >
-                                     <span className="text-xs text-brand-text dark:text-slate-200">{l}</span>
-                                     <Icon size={16} className={data.indicators[k as keyof typeof data.indicators] ? c : 'text-slate-300'}/>
+                                     <span className="text-xs text-text-primary ">{l}</span>
+                                     <Icon size={16} className={data.indicators[k as keyof typeof data.indicators] ? c : 'text-text-muted'}/>
                                  </button>
                              ))}
                          </div>
                      </div>
                      
                      {/* 4. Aftercare & Rating */}
-                     <div className="space-y-3 pb-6 border-t border-slate-200 dark:border-slate-800 pt-4">
+                     <div className="space-y-3 pb-6 border-t border-surface-border  pt-4">
                         {/* Rating */}
-                        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 flex justify-between items-center shadow-sm">
-                            <span className="text-xs font-bold text-slate-500">伴侣满意度 / 表现评分</span>
+                        <div className="bg-surface-card  border border-surface-border  rounded-xl p-3 flex justify-between items-center shadow-sm">
+                            <span className="text-xs font-bold text-text-muted">伴侣满意度 / 表现评分</span>
                             <div className="flex gap-1">
                                 {[1, 2, 3, 4, 5].map(star => (
                                     <button 
                                         key={star}
                                         onClick={() => updateGlobal('partnerScore', star)}
-                                        className={`${(data.partnerScore || 0) >= star ? 'text-yellow-400' : 'text-slate-300 dark:text-slate-700'} hover:text-yellow-300 transition-colors`}
+                                        className={`${(data.partnerScore || 0) >= star ? 'text-yellow-400' : 'text-text-muted '} hover:text-yellow-300 transition-colors`}
                                     >
                                         <Star size={18} fill={(data.partnerScore || 0) >= star ? "currentColor" : "none"} />
                                     </button>
@@ -823,13 +823,13 @@ const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave
                             </div>
                         </div>
 
-                        <span className="text-[10px] text-slate-500 uppercase font-bold mt-2 block">善后 / 贤者时间</span>
+                        <span className="text-[10px] text-text-muted uppercase font-bold mt-2 block">善后 / 贤者时间</span>
                         <div className="flex flex-wrap gap-2">
                             {POST_SEX_OPTIONS.map(opt => (
                                 <button
                                     key={opt}
                                     onClick={() => updateGlobal('postSexActivity', data.postSexActivity?.includes(opt) ? data.postSexActivity.filter(x => x!==opt) : [...(data.postSexActivity||[]), opt])}
-                                    className={`text-[10px] px-3 py-1.5 rounded transition-all ${data.postSexActivity?.includes(opt) ? 'bg-teal-50 dark:bg-teal-900/20 text-teal-600 dark:text-teal-300 border border-teal-200 dark:border-teal-800 shadow-sm' : 'bg-white dark:bg-slate-900 text-slate-500 border border-slate-200 dark:border-slate-800 hover:border-slate-400'}`}
+                                    className={`text-[10px] px-3 py-1.5 rounded transition-all ${data.postSexActivity?.includes(opt) ? 'bg-teal-50 dark:bg-teal-900/20 text-teal-600 dark:text-teal-300 border border-teal-200 dark:border-teal-800 shadow-sm' : 'bg-surface-card  text-text-muted border border-surface-border  hover:border-surface-border'}`}
                                 >
                                     {opt}
                                 </button>
@@ -848,18 +848,18 @@ const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave
             confirmLabel="删除"
         />
         {isAddPartnerOpen && (
-            <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => { setIsAddPartnerOpen(false); setNewPartnerName(''); }}>
-                <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-sm p-5 space-y-4" onClick={e => e.stopPropagation()}>
+            <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-overlay-scrim/50 backdrop-blur-sm animate-in fade-in duration-normal" onClick={() => { setIsAddPartnerOpen(false); setNewPartnerName(''); }}>
+                <div className="bg-surface-card  rounded-2xl shadow-2xl w-full max-w-sm p-5 space-y-4" onClick={e => e.stopPropagation()}>
                     <div>
-                        <h3 className="text-base font-black text-brand-text dark:text-slate-100">新建伴侣</h3>
-                        <p className="text-[11px] text-slate-400 font-bold mt-1">仅保存名字,详细资料可稍后在「我的」-「伴侣管理」补充</p>
+                        <h3 className="text-base font-black text-text-primary ">新建伴侣</h3>
+                        <p className="text-[11px] text-text-muted font-bold mt-1">仅保存名字,详细资料可稍后在「我的」-「伴侣管理」补充</p>
                     </div>
                     <input
                         autoFocus
                         value={newPartnerName}
                         onChange={e => setNewPartnerName(e.target.value)}
                         placeholder="名字 / 称呼"
-                        className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm font-bold outline-none focus:border-brand-accent transition-colors"
+                        className="w-full bg-surface-muted  border border-surface-border  rounded-xl p-3 text-sm font-bold outline-none focus:border-accent transition-colors"
                         onKeyDown={e => {
                             if (e.key === 'Enter' && newPartnerName.trim() && onAddPartner) {
                                 onAddPartner(newPartnerName.trim()).then(p => {
@@ -873,7 +873,7 @@ const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave
                     <div className="flex gap-2">
                         <button
                             onClick={() => { setIsAddPartnerOpen(false); setNewPartnerName(''); }}
-                            className="flex-1 min-h-[44px] py-2 bg-slate-100 dark:bg-slate-800 text-slate-500 font-bold rounded-xl"
+                            className="flex-1 min-h-[44px] py-2 bg-surface-muted  text-text-muted font-bold rounded-xl"
                         >
                             取消
                         </button>
@@ -886,7 +886,7 @@ const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave
                                 setNewPartnerName('');
                                 setIsAddPartnerOpen(false);
                             }}
-                            className="flex-[2] min-h-[44px] py-2 bg-brand-accent text-white font-black rounded-xl disabled:opacity-50"
+                            className="flex-[2] min-h-[44px] py-2 bg-accent text-text-on-accent font-black rounded-xl disabled:opacity-50"
                         >
                             添加并选择
                         </button>

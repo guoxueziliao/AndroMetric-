@@ -25,7 +25,7 @@ export const TYPE_CONFIG: Record<PartnerType, { label: string; color: string; de
   stable: { label: '固定伴侣', color: 'bg-pink-500 border-pink-600', desc: '老婆/女友/长期' },
   dating: { label: '约会/炮友', color: 'bg-purple-500 border-purple-600', desc: '情人/Py/Dating' },
   casual: { label: '露水/偶遇', color: 'bg-blue-500 border-blue-600', desc: '一夜情/捡尸/艳遇' },
-  service: { label: '服务/交易', color: 'bg-slate-600 border-slate-700', desc: '技师/外围/交易' }
+  service: { label: '服务/交易', color: 'bg-surface-muted border-surface-border', desc: '技师/外围/交易' }
 };
 
 export const ORIGIN_PRESETS = [
@@ -42,12 +42,12 @@ export interface PartnerCategory {
 }
 
 export const getPartnerCategory = (p: PartnerProfile): PartnerCategory | null => {
-  if (p.isMarried) return { label: '人妻', color: 'bg-rose-50 text-white' };
+  if (p.isMarried) return { label: '人妻', color: 'bg-rose-50 text-text-on-accent' };
 
   if (p.age !== undefined) {
-    if (p.age < 25) return { label: '少女', color: 'bg-pink-400 text-white' };
-    if (p.age <= 35) return { label: '少妇', color: 'bg-purple-500 text-white' };
-    return { label: '熟妇', color: 'bg-amber-600 text-white' };
+    if (p.age < 25) return { label: '少女', color: 'bg-pink-400 text-text-on-accent' };
+    if (p.age <= 35) return { label: '少妇', color: 'bg-purple-500 text-text-on-accent' };
+    return { label: '熟妇', color: 'bg-amber-600 text-text-on-accent' };
   }
   return null;
 };

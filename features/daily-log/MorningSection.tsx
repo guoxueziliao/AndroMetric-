@@ -49,43 +49,43 @@ const MorningSection: React.FC<MorningSectionProps> = ({ morning, onChange, logs
   };
 
   const renderRetentionIcon = (v: string) => {
-    if (v === 'instant') return <Zap size={20} className="text-red-500"/>;
-    if (v === 'brief') return <Hourglass size={20} className="text-orange-500"/>;
-    if (v === 'normal') return <BatteryMedium size={20} className="text-green-500"/>;
-    return <Battery size={20} className="text-blue-500"/>;
+    if (v === 'instant') return <Zap size={20} className="text-state-danger-text"/>;
+    if (v === 'brief') return <Hourglass size={20} className="text-state-warning-text"/>;
+    if (v === 'normal') return <BatteryMedium size={20} className="text-state-success-text"/>;
+    return <Battery size={20} className="text-state-info-text"/>;
   };
 
   return (
-    <div className="bg-brand-card dark:bg-slate-900 rounded-card p-5 shadow-soft border border-slate-100 dark:border-slate-800">
-      <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center mb-4">
-        <div className="p-1.5 bg-amber-100 dark:bg-amber-900/30 rounded-lg mr-2 text-amber-600">
+    <div className="bg-surface-card rounded-card p-5 shadow-soft border border-surface-border">
+      <h3 className="text-sm font-bold text-text-primary flex items-center mb-4">
+        <div className="p-1.5 bg-state-warning-bg rounded-lg mr-2 text-state-warning-text">
           <SunMedium size={16} />
         </div>
         晨间状态
       </h3>
 
       {showSmartTip && currentDate && (
-        <div className="mb-4 p-3 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-xl border border-amber-200 dark:border-amber-800">
+        <div className="mb-4 p-3 bg-gradient-to-r from-state-warning-bg to-state-warning-bg/60 rounded-xl border border-state-warning-text/25">
           <div className="flex items-start gap-3">
-            <div className="p-1.5 bg-amber-100 dark:bg-amber-800 rounded-full flex-shrink-0">
-              <Sparkles size={14} className="text-amber-600 dark:text-amber-400" />
+            <div className="p-1.5 bg-state-warning-bg rounded-full flex-shrink-0">
+              <Sparkles size={14} className="text-state-warning-text" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-amber-800 dark:text-amber-300 mb-1">
+              <p className="text-xs font-medium text-state-warning-text mb-1">
                 智能推荐
               </p>
-              <p className="text-xs text-amber-600 dark:text-amber-400 mb-2">
+              <p className="text-xs text-state-warning-text/80 mb-2">
                 基于您的历史数据，为您推荐今日默认值
               </p>
               <button
                 onClick={handleApplySmartDefaults}
-                className="text-xs px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-medium transition-colors"
+                className="text-xs px-3 py-1.5 bg-state-warning-text hover:bg-state-warning-text/90 text-text-on-accent rounded-lg font-medium transition-colors"
               >
                 一键应用推荐
               </button>
               <button
                 onClick={() => setShowSmartTip(false)}
-                className="ml-2 text-xs px-2 py-1.5 text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-200 transition-colors"
+                className="ml-2 text-xs px-2 py-1.5 text-state-warning-text hover:text-text-primary transition-colors"
               >
                 忽略
               </button>
@@ -95,12 +95,12 @@ const MorningSection: React.FC<MorningSectionProps> = ({ morning, onChange, logs
       )}
 
       <div className="space-y-2 mb-4">
-        <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider pl-1">有晨勃吗？</label>
+        <label className="text-xs font-bold text-text-muted uppercase tracking-wider pl-1">有晨勃吗？</label>
         <div className="grid grid-cols-3 gap-2">
           {[
-            { value: true, label: '有', cls: 'bg-amber-500 text-white border-amber-500' },
-            { value: false, label: '没有', cls: 'bg-slate-600 text-white border-slate-600' },
-            { value: null, label: '未记录', cls: 'bg-slate-200 dark:bg-slate-700 text-slate-500 border-slate-200 dark:border-slate-700' },
+            { value: true, label: '有', cls: 'bg-state-warning-text text-text-on-accent border-state-warning-text' },
+            { value: false, label: '没有', cls: 'bg-surface-inverted text-text-inverted border-surface-inverted' },
+            { value: null, label: '未记录', cls: 'bg-surface-muted text-text-muted border-surface-border' },
           ].map(opt => {
             const isSel = morning.wokeWithErection === opt.value;
             return (
@@ -108,7 +108,7 @@ const MorningSection: React.FC<MorningSectionProps> = ({ morning, onChange, logs
                 key={String(opt.value)}
                 type="button"
                 onClick={() => onChange('wokeWithErection', opt.value)}
-                className={`min-h-[44px] py-2 rounded-xl text-sm font-black border-2 transition-all ${isSel ? opt.cls + ' shadow-md' : 'bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-400'}`}
+                className={`min-h-[44px] py-2 rounded-xl text-sm font-black border-2 transition-all ${isSel ? opt.cls + ' shadow-soft' : 'bg-surface-card border-surface-border text-text-muted'}`}
               >
                 {opt.label}
               </button>
@@ -125,7 +125,7 @@ const MorningSection: React.FC<MorningSectionProps> = ({ morning, onChange, logs
           />
 
           <div className="space-y-2">
-            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider pl-1">维持时间</label>
+            <label className="text-xs font-bold text-text-muted uppercase tracking-wider pl-1">维持时间</label>
             <IconToggleButton
               options={RETENTION_OPTS}
               selected={morning.retention || 'normal'}
@@ -134,15 +134,15 @@ const MorningSection: React.FC<MorningSectionProps> = ({ morning, onChange, logs
             />
           </div>
 
-          <label className="flex items-center space-x-3 p-3 rounded-xl border border-slate-100 hover:bg-slate-50 transition-colors cursor-pointer">
+          <label className="flex items-center space-x-3 p-3 rounded-xl border border-surface-border hover:bg-surface-muted transition-colors cursor-pointer">
             <input
               type="checkbox"
               id="woken"
               checked={morning.wokenByErection}
               onChange={e => onChange('wokenByErection', e.target.checked)}
-              className="w-5 h-5 rounded text-brand-accent focus:ring-brand-accent border-gray-300"
+              className="w-5 h-5 rounded text-accent focus:ring-accent border-surface-border"
             />
-            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">被勃起弄醒 (雄激素旺盛)</span>
+            <span className="text-sm font-medium text-text-secondary">被勃起弄醒 (雄激素旺盛)</span>
           </label>
         </div>
       )}

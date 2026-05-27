@@ -43,17 +43,17 @@ const getCalendarDays = (currentDate: Date) => {
 const getVisualsForCompleted = (level: number) => {
     switch (level) {
         case 1:
-            return { bg: 'bg-rose-50 dark:bg-rose-900/20', border: 'border-rose-200 dark:border-rose-800', text: 'text-rose-500', score: 'text-rose-600 dark:text-rose-400' };
+            return { bg: 'bg-state-danger-bg/70', border: 'border-state-danger-text/25', text: 'text-state-danger-text', score: 'text-state-danger-text' };
         case 2:
-            return { bg: 'bg-orange-50 dark:bg-orange-900/20', border: 'border-orange-200 dark:border-orange-800', text: 'text-orange-500', score: 'text-orange-600 dark:text-orange-400' };
+            return { bg: 'bg-state-warning-bg/70', border: 'border-state-warning-text/25', text: 'text-state-warning-text', score: 'text-state-warning-text' };
         case 3:
-            return { bg: 'bg-amber-50 dark:bg-amber-900/20', border: 'border-amber-200 dark:border-amber-800', text: 'text-amber-600', score: 'text-amber-600 dark:text-amber-400' };
+            return { bg: 'bg-state-warning-bg/50', border: 'border-state-warning-text/20', text: 'text-state-warning-text', score: 'text-state-warning-text' };
         case 4:
-            return { bg: 'bg-emerald-50 dark:bg-emerald-900/20', border: 'border-emerald-200 dark:border-emerald-800', text: 'text-emerald-500', score: 'text-emerald-600 dark:text-emerald-400' };
+            return { bg: 'bg-state-success-bg/70', border: 'border-state-success-text/25', text: 'text-state-success-text', score: 'text-state-success-text' };
         case 5:
-            return { bg: 'bg-blue-50 dark:bg-blue-900/20', border: 'border-blue-200 dark:border-blue-800', text: 'text-blue-500', score: 'text-blue-600 dark:text-blue-400' };
+            return { bg: 'bg-state-info-bg/70', border: 'border-state-info-text/25', text: 'text-state-info-text', score: 'text-state-info-text' };
         default:
-            return { bg: 'bg-slate-50 dark:bg-slate-800', border: 'border-slate-200 dark:border-slate-700', text: 'text-slate-400', score: 'text-slate-500' };
+            return { bg: 'bg-surface-muted', border: 'border-surface-border', text: 'text-text-muted', score: 'text-text-muted' };
     }
 };
 
@@ -130,7 +130,7 @@ const CalendarHeatmap: React.FC<ActivityCalendarProps> = ({ logs, onDateClick })
 
     const getMetricVisuals = (metric: HeatmapMetric, value: number | null) => {
         if (value === null) {
-            return { bg: 'bg-slate-50 dark:bg-slate-800', border: 'border-slate-200 dark:border-slate-700', text: 'text-slate-400', score: 'text-slate-500', label: '--' };
+            return { bg: 'bg-surface-muted', border: 'border-surface-border', text: 'text-text-muted', score: 'text-text-muted', label: '--' };
         }
 
         if (metric === 'hardness') {
@@ -150,20 +150,20 @@ const CalendarHeatmap: React.FC<ActivityCalendarProps> = ({ logs, onDateClick })
 
         if (metric === 'sexLoad') {
             const tone = level >= 4
-                ? { bg: 'bg-rose-50 dark:bg-rose-900/25', border: 'border-rose-200 dark:border-rose-800', text: 'text-rose-500', score: 'text-rose-600 dark:text-rose-400' }
+                ? { bg: 'bg-state-danger-bg/70', border: 'border-state-danger-text/25', text: 'text-state-danger-text', score: 'text-state-danger-text' }
                 : level === 3
-                    ? { bg: 'bg-orange-50 dark:bg-orange-900/25', border: 'border-orange-200 dark:border-orange-800', text: 'text-orange-500', score: 'text-orange-600 dark:text-orange-400' }
-                    : { bg: 'bg-emerald-50 dark:bg-emerald-900/25', border: 'border-emerald-200 dark:border-emerald-800', text: 'text-emerald-500', score: 'text-emerald-600 dark:text-emerald-400' };
+                    ? { bg: 'bg-state-warning-bg/70', border: 'border-state-warning-text/25', text: 'text-state-warning-text', score: 'text-state-warning-text' }
+                    : { bg: 'bg-accent-vivid/10', border: 'border-accent-vivid/25', text: 'text-accent-vivid', score: 'text-accent-vivid' };
             return { ...tone, label: value.toFixed(1) };
         }
 
         const palette = level >= 4
-            ? { bg: 'bg-emerald-50 dark:bg-emerald-900/25', border: 'border-emerald-200 dark:border-emerald-800', text: 'text-emerald-500', score: 'text-emerald-600 dark:text-emerald-400' }
+            ? { bg: 'bg-state-success-bg/70', border: 'border-state-success-text/25', text: 'text-state-success-text', score: 'text-state-success-text' }
             : level === 3
-                ? { bg: 'bg-blue-50 dark:bg-blue-900/25', border: 'border-blue-200 dark:border-blue-800', text: 'text-blue-500', score: 'text-blue-600 dark:text-blue-400' }
+                ? { bg: 'bg-state-info-bg/70', border: 'border-state-info-text/25', text: 'text-state-info-text', score: 'text-state-info-text' }
                 : level === 2
-                    ? { bg: 'bg-amber-50 dark:bg-amber-900/25', border: 'border-amber-200 dark:border-amber-800', text: 'text-amber-500', score: 'text-amber-600 dark:text-amber-400' }
-                    : { bg: 'bg-slate-50 dark:bg-slate-800', border: 'border-slate-200 dark:border-slate-700', text: 'text-slate-400', score: 'text-slate-500' };
+                    ? { bg: 'bg-state-warning-bg/70', border: 'border-state-warning-text/25', text: 'text-state-warning-text', score: 'text-state-warning-text' }
+                    : { bg: 'bg-surface-muted', border: 'border-surface-border', text: 'text-text-muted', score: 'text-text-muted' };
 
         return {
             ...palette,
@@ -197,14 +197,14 @@ const CalendarHeatmap: React.FC<ActivityCalendarProps> = ({ logs, onDateClick })
             if (sleepAnalysis?.isInsufficient || sleepAnalysis?.isLate) isBadSleep = true;
         }
 
-        let containerClass = "bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 text-slate-300 dark:text-slate-600";
-        let dateClass = "text-slate-400";
+        let containerClass = "bg-surface-card border-surface-border text-text-muted";
+        let dateClass = "text-text-muted";
         let scoreClass = "hidden";
 
         if (status === 'draft') {
-            containerClass = "bg-yellow-50/50 dark:bg-yellow-900/10 border-dashed border-yellow-200 dark:border-yellow-800";
-            dateClass = "text-yellow-700 dark:text-yellow-500 font-medium";
-            scoreClass = "text-yellow-600/50 dark:text-yellow-500/50 text-[9px]";
+            containerClass = "bg-state-warning-bg/50 border-dashed border-state-warning-text/25";
+            dateClass = "text-state-warning-text font-medium";
+            scoreClass = "text-state-warning-text/60 text-[9px]";
         } else if (status === 'completed') {
             const visuals = getMetricVisuals(activeMetric, metricValue);
             containerClass = `${visuals.bg} ${visuals.border}`;
@@ -212,21 +212,21 @@ const CalendarHeatmap: React.FC<ActivityCalendarProps> = ({ logs, onDateClick })
             scoreClass = `${visuals.score} text-[10px] font-black`;
         }
 
-        if (isToday) containerClass += " ring-2 ring-brand-accent z-10 shadow-md";
+        if (isToday) containerClass += " ring-2 ring-accent z-10 shadow-soft";
 
         return (
             <div
                 key={dateStr}
                 onClick={() => onDateClick && onDateClick(dateStr)}
-                className={`relative aspect-square rounded-2xl p-1 flex flex-col justify-between cursor-pointer transition-all duration-300 hover:scale-105 active:scale-95 border ${containerClass}`}
+                className={`relative aspect-square rounded-2xl p-1 flex flex-col justify-between cursor-pointer transition-all duration-slow hover:scale-105 active:scale-95 border ${containerClass}`}
             >
                 <div className="flex justify-between items-start">
                     <span className={`text-[10px] leading-none ml-0.5 mt-0.5 ${dateClass}`}>{day.getDate()}</span>
                     {(isSick || isStressed || isBadSleep) && (
                         <div className="flex gap-[1px] mt-0.5 mr-0.5">
-                            {isSick && <ShieldAlert size={10} className="text-red-500" strokeWidth={3} />}
-                            {isStressed && !isSick && <Zap size={10} className="text-orange-500" strokeWidth={3} fill="currentColor" />}
-                            {isBadSleep && !isSick && !isStressed && <Moon size={10} className="text-purple-500" strokeWidth={3} />}
+                            {isSick && <ShieldAlert size={10} className="text-state-danger-text" strokeWidth={3} />}
+                            {isStressed && !isSick && <Zap size={10} className="text-state-warning-text" strokeWidth={3} fill="currentColor" />}
+                            {isBadSleep && !isSick && !isStressed && <Moon size={10} className="text-chart-tertiary" strokeWidth={3} />}
                         </div>
                     )}
                 </div>
@@ -238,13 +238,13 @@ const CalendarHeatmap: React.FC<ActivityCalendarProps> = ({ logs, onDateClick })
     };
 
     const DashItem = ({ label, value, sub, icon: Icon, colorClass }: DashItemProps) => (
-        <div className="flex flex-col bg-white dark:bg-slate-900 p-3 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm">
+        <div className="flex flex-col bg-surface-card p-3 rounded-2xl border border-surface-border shadow-soft">
             <div className="flex justify-between items-start mb-1">
-                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{label}</span>
+                <span className="text-[10px] text-text-muted font-bold uppercase tracking-wider">{label}</span>
                 <Icon size={14} className={colorClass} />
             </div>
             <div className={`text-lg font-black ${colorClass}`}>{value}</div>
-            <div className="text-[10px] text-slate-400 font-medium">{sub}</div>
+            <div className="text-[10px] text-text-muted font-medium">{sub}</div>
         </div>
     );
 
@@ -261,16 +261,16 @@ const CalendarHeatmap: React.FC<ActivityCalendarProps> = ({ logs, onDateClick })
                     <button
                         onClick={prevMonth}
                         aria-label="上个月"
-                        className="min-h-[44px] min-w-[44px] flex items-center justify-center text-slate-400 hover:text-brand-text dark:hover:text-slate-100 transition-colors"
+                        className="min-h-[44px] min-w-[44px] flex items-center justify-center text-text-muted hover:text-text-primary transition-colors"
                     >
                         <ChevronLeft size={20}/>
                     </button>
 
                     <label className="relative flex flex-col items-start px-2 min-w-[90px] cursor-pointer">
-                        <span className="text-[10px] font-bold text-slate-400 leading-tight">月度视图</span>
+                        <span className="text-[10px] font-bold text-text-muted leading-tight">月度视图</span>
                         <div className="flex items-center gap-1.5">
-                            <span className="text-sm font-black text-brand-text dark:text-slate-100 tracking-tight">{dateInfo.full}</span>
-                            <CalendarIcon size={14} className="text-brand-accent"/>
+                            <span className="text-sm font-black text-text-primary tracking-tight">{dateInfo.full}</span>
+                            <CalendarIcon size={14} className="text-accent"/>
                         </div>
                         <input
                             type="month"
@@ -284,7 +284,7 @@ const CalendarHeatmap: React.FC<ActivityCalendarProps> = ({ logs, onDateClick })
                     <button
                         onClick={nextMonth}
                         aria-label="下个月"
-                        className="min-h-[44px] min-w-[44px] flex items-center justify-center text-slate-400 hover:text-brand-text dark:hover:text-slate-100 transition-colors"
+                        className="min-h-[44px] min-w-[44px] flex items-center justify-center text-text-muted hover:text-text-primary transition-colors"
                     >
                         <ChevronRight size={20}/>
                     </button>
@@ -298,8 +298,8 @@ const CalendarHeatmap: React.FC<ActivityCalendarProps> = ({ logs, onDateClick })
                         onClick={() => setActiveMetric(option.id)}
                         className={`min-h-[44px] rounded-full border px-3 text-xs font-bold whitespace-nowrap transition-all ${
                             activeMetric === option.id
-                                ? 'bg-brand-accent text-white border-brand-accent shadow-sm'
-                                : 'bg-white dark:bg-slate-900 text-slate-500 border-slate-200 dark:border-slate-800'
+                                ? 'bg-accent text-text-on-accent border-accent shadow-soft'
+                                : 'bg-surface-card text-text-secondary border-surface-border'
                         }`}
                     >
                         {option.label}
@@ -309,7 +309,7 @@ const CalendarHeatmap: React.FC<ActivityCalendarProps> = ({ logs, onDateClick })
 
             <div>
                 <div className="grid grid-cols-7 gap-2 mb-3 text-center px-1">
-                    {['一', '二', '三', '四', '五', '六', '日'].map(d => <span key={d} className="text-[10px] font-bold text-slate-300 dark:text-slate-600 uppercase">{d}</span>)}
+                    {['一', '二', '三', '四', '五', '六', '日'].map(d => <span key={d} className="text-[10px] font-bold text-text-muted/70 uppercase">{d}</span>)}
                 </div>
                 <div className="grid grid-cols-7 gap-2">
                     {calendarDays.map((day, idx) => renderCell(day, idx))}
@@ -321,12 +321,12 @@ const CalendarHeatmap: React.FC<ActivityCalendarProps> = ({ logs, onDateClick })
                     label="月均指标"
                     icon={Zap}
                     value={monthlyStats.averageMetric > 0 ? (activeMetric === 'sleep' ? monthlyStats.averageMetric.toFixed(1) : Math.round(monthlyStats.averageMetric)) : '--'}
-                    sub={<span className="flex items-center text-slate-400">{activeMetric === 'healthScore' ? <TrendingUp size={10} className="mr-1"/> : <Minus size={10} className="mr-1"/>}{METRIC_OPTIONS.find(item => item.id === activeMetric)?.label}</span>}
-                    colorClass="text-brand-accent dark:text-blue-400"
+                    sub={<span className="flex items-center text-text-muted">{activeMetric === 'healthScore' ? <TrendingUp size={10} className="mr-1"/> : <Minus size={10} className="mr-1"/>}{METRIC_OPTIONS.find(item => item.id === activeMetric)?.label}</span>}
+                    colorClass="text-accent"
                 />
-                <DashItem label="平均睡眠" icon={Moon} value={monthlyStats.avgSleepHours > 0 ? `${monthlyStats.avgSleepHours.toFixed(1)}h` : '--'} sub="夜间睡眠" colorClass="text-blue-500 dark:text-blue-400"/>
-                <DashItem label="运动总量" icon={Dumbbell} value={monthlyStats.exerciseMinutes > 0 ? `${monthlyStats.exerciseMinutes}分` : '--'} sub="月内累计" colorClass="text-emerald-500 dark:text-emerald-400"/>
-                <DashItem label="屏幕时间" icon={BrainCircuit} value={monthlyStats.avgScreenMinutes > 0 ? formatMinutes(Math.round(monthlyStats.avgScreenMinutes)) : '--'} sub="日均时长" colorClass="text-purple-500 dark:text-purple-400"/>
+                <DashItem label="平均睡眠" icon={Moon} value={monthlyStats.avgSleepHours > 0 ? `${monthlyStats.avgSleepHours.toFixed(1)}h` : '--'} sub="夜间睡眠" colorClass="text-state-info-text"/>
+                <DashItem label="运动总量" icon={Dumbbell} value={monthlyStats.exerciseMinutes > 0 ? `${monthlyStats.exerciseMinutes}分` : '--'} sub="月内累计" colorClass="text-state-success-text"/>
+                <DashItem label="屏幕时间" icon={BrainCircuit} value={monthlyStats.avgScreenMinutes > 0 ? formatMinutes(Math.round(monthlyStats.avgScreenMinutes)) : '--'} sub="日均时长" colorClass="text-chart-tertiary"/>
             </div>
         </div>
     );

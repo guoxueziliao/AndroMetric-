@@ -134,8 +134,8 @@ const PartnerManager: React.FC<PartnerManagerProps> = ({ isOpen, onClose, data, 
                 onDeleteRequest={handleDeleteRequest}
               />
             </div>
-            <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
-              <button onClick={() => setView('list')} className="w-full py-3 bg-slate-100 dark:bg-slate-800 text-brand-text dark:text-slate-200 font-bold rounded-xl">返回列表</button>
+            <div className="pt-4 border-t border-surface-border ">
+              <button onClick={() => setView('list')} className="w-full py-3 bg-surface-muted  text-text-primary  font-bold rounded-xl">返回列表</button>
             </div>
           </div>
         )}

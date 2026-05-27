@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { AlcoholAnalysisPlugin } from '../plugins/CoreAnalysis';
 import { pluginManager } from '../services/PluginManager';
-import { registerServiceWorker } from '../hooks/usePWA';
 import { backupService } from '../services/BackupService';
 
 export const useAppBootstrap = () => {
@@ -20,7 +19,6 @@ export const useAppBootstrap = () => {
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
-    registerServiceWorker();
 
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);

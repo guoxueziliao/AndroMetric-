@@ -91,14 +91,14 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({ label, value, onChange,
 
     return (
         <div>
-            <label className="block text-sm font-medium text-brand-muted mb-1">{label}</label>
+            <label className="block text-sm font-medium text-text-muted mb-1">{label}</label>
             <button
                 type="button"
                 onClick={openModal}
-                className="w-full bg-slate-50 border border-slate-300 rounded-lg p-3 text-left focus:ring-brand-accent focus:border-brand-accent flex justify-between items-center"
+                className="w-full bg-surface-muted border border-surface-border rounded-lg p-3 text-left focus:ring-accent focus:border-accent flex justify-between items-center"
             >
-                <span className="text-brand-text font-medium">{formatRelativeDateTime(value)}</span>
-                <Calendar size={20} className="text-brand-muted" />
+                <span className="text-text-primary font-medium">{formatRelativeDateTime(value)}</span>
+                <Calendar size={20} className="text-text-muted" />
             </button>
             <Modal
                 isOpen={isModalOpen}
@@ -106,15 +106,15 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({ label, value, onChange,
                 title={`设置${label}`}
                 footer={
                     <>
-                        <button onClick={() => setIsModalOpen(false)} className="px-4 py-2 rounded-md bg-slate-100 hover:bg-slate-200">取消</button>
-                        <button onClick={handleConfirm} className="px-4 py-2 rounded-md bg-brand-accent hover:bg-brand-accent-hover text-white font-semibold">确认</button>
+                        <button onClick={() => setIsModalOpen(false)} className="px-4 py-2 rounded-md bg-surface-muted hover:bg-surface-border text-text-secondary">取消</button>
+                        <button onClick={handleConfirm} className="px-4 py-2 rounded-md bg-accent hover:bg-accent/90 text-text-on-accent font-semibold">确认</button>
                     </>
                 }
             >
                 <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-2">
-                        <input type="date" value={tempDate} onChange={(e) => setTempDate(e.target.value)} className="bg-slate-50 border border-slate-300 rounded-md p-3 min-h-[44px] focus:ring-brand-accent focus:border-brand-accent"/>
-                        <input type="time" value={tempTime} onChange={(e) => setTempTime(e.target.value)} className="bg-slate-50 border border-slate-300 rounded-md p-3 min-h-[44px] focus:ring-brand-accent focus:border-brand-accent"/>
+                        <input type="date" value={tempDate} onChange={(e) => setTempDate(e.target.value)} className="bg-surface-muted border border-surface-border rounded-md p-3 min-h-[44px] text-text-primary focus:ring-accent focus:border-accent"/>
+                        <input type="time" value={tempTime} onChange={(e) => setTempTime(e.target.value)} className="bg-surface-muted border border-surface-border rounded-md p-3 min-h-[44px] text-text-primary focus:ring-accent focus:border-accent"/>
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                         {[
@@ -132,7 +132,7 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({ label, value, onChange,
                                     setTempDate(parts.date);
                                     setTempTime(parts.time);
                                 }}
-                                className="min-h-[44px] flex items-center justify-center gap-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-md text-xs font-bold text-brand-muted"
+                                className="min-h-[44px] flex items-center justify-center gap-1.5 bg-surface-muted hover:bg-surface-border rounded-md text-xs font-bold text-text-muted"
                             >
                                 <Clock size={14}/> {preset.label}
                             </button>
@@ -140,14 +140,14 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({ label, value, onChange,
                     </div>
                     {quickOptions && quickOptions.length > 0 && (
                         <div>
-                            <p className="text-xs text-brand-muted mb-2">快捷选项:</p>
+                            <p className="text-xs text-text-muted mb-2">快捷选项:</p>
                             <div className="flex flex-wrap gap-2">
                                 {quickOptions.map(opt => (
                                     <button
                                         key={opt.label}
                                         type="button"
                                         onClick={() => handleQuickOption(opt.date)}
-                                        className="px-3 py-1.5 text-sm bg-blue-100 text-brand-accent rounded-full hover:bg-blue-200 transition-colors"
+                                        className="px-3 py-1.5 text-sm bg-state-info-bg text-state-info-text rounded-full hover:bg-state-info-bg/80 transition-colors"
                                     >
                                         {opt.label}
                                     </button>
