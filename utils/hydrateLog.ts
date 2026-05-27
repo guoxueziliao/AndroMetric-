@@ -187,5 +187,10 @@ export const hydrateLog = (raw: any): LogEntry => {
         dataQuality: raw.dataQuality || buildDataQualityForLog(log, 'migration')
     }, raw);
 
+    // Preserve touchedPaths so prepareLogForSave can distinguish user-set values from defaults
+    if (Array.isArray(raw.touchedPaths)) {
+        (log as any).touchedPaths = raw.touchedPaths;
+    }
+
     return log;
 };
