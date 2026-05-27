@@ -262,17 +262,9 @@ export const StorageService = {
         queries: {
             all: async () => {
                 const snapshots = await db.snapshots.orderBy('timestamp').reverse().toArray();
-                const snapshotsMissingSize = snapshots
-                    .filter((snapshot) => typeof snapshot.sizeBytes !== 'number')
-                    .map((snapshot) => ({ ...snapshot, sizeBytes: getSnapshotSizeBytes(snapshot) }));
-
-                if (snapshotsMissingSize.length > 0) {
-                    await db.snapshots.bulkPut(snapshotsMissingSize);
-                    const byId = new Map(snapshotsMissingSize.map((snapshot) => [snapshot.id, snapshot]));
-                    return snapshots.map((snapshot) => byId.get(snapshot.id) || snapshot);
-                }
-
-                return snapshots;
+                return snapshots.map((snapshot) => (
+                    typeof snapshot.sizeBytes === 'number' ? snapshot : { ...snapshot, sizeBytes: getSnapshotSizeBytes(snapshot) }
+                ));
             }
         },
         getIdleAutoBackupStatus: async (intervalHours?: unknown) => {
