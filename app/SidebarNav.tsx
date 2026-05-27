@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { motionDuration, motionEase } from '../shared/ui/motionTokens';
 import {
   Calendar, Activity, Heart, User,
   ChevronLeft, ChevronRight
@@ -31,11 +32,11 @@ const SidebarNav: React.FC<SidebarNavProps> = ({
     <motion.aside
       initial={false}
       animate={{ width: isCollapsed ? 72 : 240 }}
-      transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-      className="hidden lg:flex flex-col h-screen bg-white dark:bg-slate-900 border-r border-slate-100 dark:border-slate-800 fixed left-0 top-0 z-40"
+      transition={{ duration: motionDuration.slow, ease: motionEase.standard }}
+      className="hidden lg:flex flex-col h-screen bg-white dark:bg-surface-muted border-r border-surface-border dark:border-surface-border fixed left-0 top-0 z-40"
     >
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-slate-800">
+      <div className="flex items-center justify-between p-4 border-b border-surface-border dark:border-surface-border">
         <motion.div
           animate={{ opacity: isCollapsed ? 0 : 1 }}
           className="font-black text-xl text-brand-accent whitespace-nowrap overflow-hidden"
@@ -47,7 +48,7 @@ const SidebarNav: React.FC<SidebarNavProps> = ({
           whileTap={{ scale: 0.95 }}
           onClick={onToggleCollapse}
           aria-label={isCollapsed ? '展开侧栏' : '收起侧栏'}
-          className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+          className="p-2 rounded-xl hover:bg-surface-muted dark:hover:bg-surface-muted transition-colors"
         >
           {isCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
         </motion.button>
@@ -66,7 +67,7 @@ const SidebarNav: React.FC<SidebarNavProps> = ({
               className={`relative w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all ${
                 isActive
                   ? 'bg-brand-accent text-white shadow-lg shadow-brand-accent/30'
-                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                  : 'text-text-muted dark:text-text-muted hover:bg-surface-muted dark:hover:bg-surface-muted'
               }`}
             >
               <item.icon size={22} />

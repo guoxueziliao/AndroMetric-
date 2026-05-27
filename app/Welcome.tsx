@@ -8,11 +8,11 @@ interface WelcomeProps {
 
 const FeatureCard: React.FC<{ icon: React.ElementType, title: string, description: string }> = ({ icon: Icon, title, description }) => (
     <div className="flex items-start space-x-4">
-        <div className="flex-shrink-0 bg-blue-100 text-brand-accent p-3 rounded-full">
+        <div className="flex-shrink-0 bg-accent text-brand-accent p-3 rounded-full">
             <Icon size={24} />
         </div>
         <div>
-            <h3 className="font-semibold text-lg text-brand-text dark:text-slate-100">{title}</h3>
+            <h3 className="font-semibold text-lg text-brand-text dark:text-text-muted">{title}</h3>
             <p className="text-brand-muted">{description}</p>
         </div>
     </div>
@@ -20,7 +20,7 @@ const FeatureCard: React.FC<{ icon: React.ElementType, title: string, descriptio
 
 const Welcome: React.FC<WelcomeProps> = ({ onGetStarted }) => {
     return (
-        <div className="min-h-screen bg-brand-bg dark:bg-slate-950 text-brand-text flex flex-col items-center justify-center p-6 text-center animate-fade-in">
+        <div className="min-h-screen bg-brand-bg dark:bg-surface-muted text-brand-text flex flex-col items-center justify-center p-6 text-center animate-fade-in">
             <main className="max-w-md w-full">
                 <Flame size={64} className="mx-auto text-brand-accent mb-4" />
                 <h1 className="text-4xl font-bold text-brand-accent mb-2">欢迎使用 硬度日记</h1>

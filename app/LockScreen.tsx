@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Fingerprint, Lock, Delete } from 'lucide-react';
 import { canUseWebAuthn, verifyPin, verifyWebAuthnCredential } from '../shared/lib';
+import { motionDuration } from '../shared/ui/motionTokens';
 import type { AppLockSettings } from '../domain';
 
 interface LockScreenProps {
@@ -73,13 +74,13 @@ const LockScreen: React.FC<LockScreenProps> = ({ appLock, onUnlock }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-[200] flex flex-col items-center justify-center bg-brand-bg dark:bg-slate-950 px-6 safe-area-top safe-area-bottom">
+    <div className="fixed inset-0 z-[200] flex flex-col items-center justify-center bg-brand-bg dark:bg-surface-muted px-6 safe-area-top safe-area-bottom">
       <div className="mb-8 flex flex-col items-center gap-3">
         <div className="rounded-full bg-brand-accent/10 p-4">
           <Lock size={32} className="text-brand-accent" />
         </div>
-        <h1 className="text-xl font-black text-brand-text dark:text-slate-100">输入 PIN</h1>
-        <p className="text-xs text-brand-muted dark:text-slate-400">
+        <h1 className="text-xl font-black text-brand-text dark:text-text-muted">输入 PIN</h1>
+        <p className="text-xs text-brand-muted dark:text-text-muted">
           {attempts === 0 ? (canUseBiometric ? '使用生物识别或 4 位 PIN 解锁' : '请输入 4 位 PIN 解锁') : `已输错 ${attempts} 次,继续重试`}
         </p>
       </div>
@@ -98,7 +99,7 @@ const LockScreen: React.FC<LockScreenProps> = ({ appLock, onUnlock }) => {
 
       <motion.div
         animate={shake ? { x: [-8, 8, -6, 6, -3, 3, 0] } : { x: 0 }}
-        transition={{ duration: 0.35 }}
+        transition={{ duration: motionDuration.slow }}
         className="mb-10 flex gap-3"
       >
         {Array.from({ length: PIN_LENGTH }).map((_, i) => {
@@ -106,7 +107,7 @@ const LockScreen: React.FC<LockScreenProps> = ({ appLock, onUnlock }) => {
           return (
             <div
               key={i}
-              className={`h-3 w-3 rounded-full transition-all ${filled ? 'bg-brand-accent scale-110' : 'bg-slate-200 dark:bg-slate-700'}`}
+              className={`h-3 w-3 rounded-full transition-all ${filled ? 'bg-brand-accent scale-110' : 'bg-surface-muted dark:bg-surface-muted'}`}
             />
           );
         })}
@@ -119,7 +120,7 @@ const LockScreen: React.FC<LockScreenProps> = ({ appLock, onUnlock }) => {
             type="button"
             onClick={() => press(d)}
             disabled={verifying}
-            className="aspect-square rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 text-2xl font-black text-brand-text dark:text-slate-100 active:scale-95 transition-all shadow-soft disabled:opacity-50"
+            className="aspect-square rounded-2xl bg-white dark:bg-surface-muted border border-surface-border dark:border-surface-border text-2xl font-black text-brand-text dark:text-text-muted active:scale-95 transition-all shadow-soft disabled:opacity-50"
           >
             {d}
           </button>
@@ -129,7 +130,7 @@ const LockScreen: React.FC<LockScreenProps> = ({ appLock, onUnlock }) => {
           type="button"
           onClick={() => press('0')}
           disabled={verifying}
-          className="aspect-square rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 text-2xl font-black text-brand-text dark:text-slate-100 active:scale-95 transition-all shadow-soft disabled:opacity-50"
+          className="aspect-square rounded-2xl bg-white dark:bg-surface-muted border border-surface-border dark:border-surface-border text-2xl font-black text-brand-text dark:text-text-muted active:scale-95 transition-all shadow-soft disabled:opacity-50"
         >
           0
         </button>
@@ -137,7 +138,7 @@ const LockScreen: React.FC<LockScreenProps> = ({ appLock, onUnlock }) => {
           type="button"
           onClick={backspace}
           disabled={verifying || pin.length === 0}
-          className="aspect-square rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 active:scale-95 transition-all disabled:opacity-30"
+          className="aspect-square rounded-2xl bg-surface-muted dark:bg-surface-muted border border-surface-border dark:border-surface-border flex items-center justify-center text-text-muted dark:text-text-muted active:scale-95 transition-all disabled:opacity-30"
           aria-label="删除"
         >
           <Delete size={20} />

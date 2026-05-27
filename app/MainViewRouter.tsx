@@ -176,7 +176,7 @@ const MainViewRouter: React.FC<MainViewRouterProps> = ({
       {view === 'form' && (
         <main className="animate-in slide-in-from-right duration-300">
           <div className="flex items-center mb-6 pt-2">
-            <button onClick={onBackToDashboard} className="mr-4 p-3 bg-white dark:bg-slate-800 rounded-full shadow-sm">
+            <button onClick={onBackToDashboard} className="mr-4 p-3 bg-white dark:bg-surface-muted rounded-full shadow-sm">
               <ArrowLeft size={20} />
             </button>
             <h2 className="text-2xl font-black tracking-tight">{editingLogDate ? '编辑记录' : '新记录'}</h2>

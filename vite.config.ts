@@ -49,7 +49,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'prompt',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
+      includeAssets: ['favicon.ico'],
       devOptions: {
         enabled: true, // Enable PWA in dev mode for testing
         type: 'module',
@@ -60,22 +60,38 @@ export default defineConfig({
         description: "一款私密、专业的日记应用，帮助您记录每日硬度，探索生活方式与身体活力之间的联系。",
         icons: [
           {
-            src: "/icon-192x192.png",
+            src: "/icons/icon-192x192.png",
             type: "image/png",
             sizes: "192x192",
             purpose: "any"
           },
           {
-            src: "/icon-512x512.png",
+            src: "/icons/icon-512x512.png",
             type: "image/png",
             sizes: "512x512",
             purpose: "any"
           },
           {
-            src: "/icon-512x512.png",
+            src: "/icons/icon-512x512.png",
             type: "image/png",
             sizes: "512x512",
             purpose: "maskable"
+          }
+        ],
+        screenshots: [
+          {
+            src: "/screenshots/mobile-home.png",
+            sizes: "1280x720",
+            type: "image/png",
+            form_factor: "narrow",
+            label: "Dashboard view"
+          },
+          {
+            src: "/screenshots/mobile-stats.png",
+            sizes: "1280x720",
+            type: "image/png",
+            form_factor: "narrow",
+            label: "Stats view"
           }
         ],
         start_url: "/?source=pwa",
