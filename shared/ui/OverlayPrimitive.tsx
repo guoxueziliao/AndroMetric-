@@ -31,13 +31,9 @@ interface OverlayPrimitiveProps {
   closeOnBackdrop?: boolean;
   closeOnEsc?: boolean;
   variant?: OverlayVariant;
-  /** Visual layout of the overlay container: centered modal or bottom-anchored sheet. */
   layout?: 'center' | 'bottom';
-  /** Additional className on the outer backdrop layer. */
   backdropClassName?: string;
-  /** Additional className on the inner content wrapper. */
   contentClassName?: string;
-  /** Variants for the content layer motion. Defaults to modal-style scale+fade. */
   contentVariants?: Variants;
   'aria-label'?: string;
   'aria-labelledby'?: string;
@@ -80,7 +76,6 @@ const OverlayPrimitive: React.FC<OverlayPrimitiveProps> = ({
   children,
   closeOnBackdrop = true,
   closeOnEsc = true,
-  variant: _variant = 'default',
   layout = 'center',
   backdropClassName,
   contentClassName,
@@ -101,10 +96,13 @@ const OverlayPrimitive: React.FC<OverlayPrimitiveProps> = ({
     return () => window.removeEventListener('keydown', handleEsc);
   }, [isOpen, closeOnEsc, onClose]);
 
-  // Scroll lock (ref-counted)
+  // Scroll lock (ref-counted, acquire only when transitioning closed→open)
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && lockIdRef.current === null) {
       lockIdRef.current = acquireScrollLock();
+    } else if (!isOpen && lockIdRef.current !== null) {
+      releaseScrollLock(lockIdRef.current);
+      lockIdRef.current = null;
     }
     return () => {
       if (lockIdRef.current !== null) {

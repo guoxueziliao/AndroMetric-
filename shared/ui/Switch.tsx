@@ -15,14 +15,16 @@ interface SwitchProps {
 
 const sizeConfig = {
   sm: {
-    track: 'w-8 h-4',
-    knob: 'w-3 h-3',
-    translateX: 16,
+    track: 'w-9 h-5',
+    knob: 'w-3.5 h-3.5',
+    knobOffset: 2,        // px from left edge
+    knobTravel: 16,       // px the knob moves when checked
   },
   md: {
     track: 'w-12 h-[1.6rem]',
     knob: 'w-[1.2rem] h-[1.2rem]',
-    translateX: 22.4,
+    knobOffset: 3,
+    knobTravel: 24,
   },
 } as const;
 
@@ -65,16 +67,14 @@ const Switch: React.FC<SwitchProps> = ({
       `}
     >
       <motion.span
-        layout
-        transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-        className={`
-          block rounded-full bg-white shadow-sm
-          ${config.knob}
-        `}
+        className="block rounded-full bg-white shadow-sm"
         style={{
-          marginLeft: checked ? `calc(100% - ${config.translateX / 16}rem)` : 2,
-          marginRight: checked ? 2 : undefined,
+          width: size === 'sm' ? 14 : 19.2,
+          height: size === 'sm' ? 14 : 19.2,
         }}
+        animate={{ x: checked ? config.knobTravel : config.knobOffset }}
+        initial={{ x: config.knobOffset }}
+        transition={{ type: 'spring', stiffness: 500, damping: 30 }}
       />
     </button>
   );

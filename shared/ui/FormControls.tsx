@@ -5,7 +5,7 @@ import type { Mood, StressLevel } from '../../domain';
 // --- Reusable Controls ---
 
 interface IconToggleButtonProps<T extends string = string> {
-  options: { value: string; label: string }[];
+  options: { value: T; label: string }[];
   selected: T;
   onSelect: (val: T) => void;
   renderIcon: (val: T) => React.ReactNode;
@@ -22,10 +22,10 @@ export const IconToggleButton = <T extends string = string>({
       <button
         key={value}
         type="button"
-        onClick={() => onSelect(value as T)}
+        onClick={() => onSelect(value)}
         className={`flex flex-col items-center justify-center p-2 rounded-lg border transition-all active:scale-95 ${selected === value ? 'bg-state-info-bg text-accent border-accent shadow-sm' : 'bg-surface-card border-surface-border text-text-muted hover:bg-surface-muted'}`}
       >
-        {renderIcon(value as T)}
+        {renderIcon(value)}
         <span className="text-[10px] mt-1 font-medium">{label}</span>
       </button>
     ))}
@@ -80,7 +80,7 @@ export const FaceSelector = <T,>({ options, value, onChange }: FaceSelectorProps
       const isSelected = value === opt.val;
       return (
         <button
-          key={opt.val as string}
+          key={String(opt.val)}
           type="button"
           onClick={() => onChange(opt.val)}
           className={`flex flex-col items-center transition-all duration-slow ${isSelected ? 'scale-110 -translate-y-1.5' : 'opacity-40 saturate-50 hover:opacity-100 hover:saturate-100'}`}

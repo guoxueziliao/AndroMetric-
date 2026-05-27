@@ -13,7 +13,6 @@ export const IconErection: React.FC<IconProps> = ({ size = 24, className }) => (
     <line x1="8" y1="10" x2="12" y2="10" opacity="0.5" />
     <line x1="8" y1="14" x2="12" y2="14" opacity="0.5" />
     <path d="M12 18 L12 22" />
-    <circle cx="12" cy="22" r="0" fill="currentColor" />
   </svg>
 );
 

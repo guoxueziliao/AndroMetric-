@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { AlertTriangle } from 'lucide-react';
 import Modal, { type ModalVariant } from './Modal';
 
@@ -36,6 +36,11 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
   variant,
 }) => {
   const [inputText, setInputText] = useState('');
+
+  // Reset input when modal closes (handles parent-driven close without onClose call)
+  useEffect(() => {
+    if (!isOpen) setInputText('');
+  }, [isOpen]);
 
   const effectiveRequireText = severity === 'critical'
     ? (requireText ?? '确认')

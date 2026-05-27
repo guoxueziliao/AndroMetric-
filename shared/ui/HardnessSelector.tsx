@@ -144,7 +144,7 @@ const HardnessSelector: React.FC<HardnessSelectorProps> = ({
             animate={{ opacity: 1, y: 0 }}
             className="text-[11px] font-bold text-accent"
           >
-            {LEVELS[value - 1]?.description}
+            {LEVELS[Math.max(0, Math.min(LEVELS.length - 1, value - 1))]?.description}
           </motion.span>
         </div>
       )}

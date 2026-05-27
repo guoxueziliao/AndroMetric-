@@ -49,6 +49,7 @@ const Modal: React.FC<ModalProps> = ({
       closeOnBackdrop={resolvedCloseOnBackdrop}
       closeOnEsc
       variant={variant}
+      aria-label={title ? undefined : '对话框'}
       aria-labelledby={title ? 'modal-title' : undefined}
     >
       <div

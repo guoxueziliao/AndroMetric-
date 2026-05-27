@@ -7,7 +7,7 @@ import OverlayPrimitive from './OverlayPrimitive';
 interface BottomSheetProps {
   isOpen: boolean;
   onClose: () => void;
-  title: string;
+  title?: string;
   children: React.ReactNode;
   footer?: React.ReactNode;
   /** Max height of the sheet content area. Default '65vh'. */
@@ -51,12 +51,13 @@ const BottomSheet: React.FC<BottomSheetProps> = ({
       layout="bottom"
       backdropClassName="fixed inset-0 z-50 flex items-end justify-center bg-overlay-scrim/45 backdrop-blur-sm"
       contentVariants={sheetVariants}
-      aria-labelledby="bottom-sheet-title"
+      aria-label={title ? undefined : '底部面板'}
+      aria-labelledby={title ? 'bottom-sheet-title' : undefined}
     >
       <div className="w-full max-w-lg rounded-t-[2rem] bg-surface-card border-t border-surface-border shadow-2xl">
         <div className="mx-auto mt-3 h-1.5 w-14 rounded-full bg-surface-border" />
         <div className="flex items-center justify-between px-6 py-4">
-          <h2 id="bottom-sheet-title" className="text-lg font-black text-text-primary">{title}</h2>
+          {title && <h2 id="bottom-sheet-title" className="text-lg font-black text-text-primary">{title}</h2>}
           <button
             onClick={onClose}
             className="rounded-full p-2 text-text-muted transition-colors hover:bg-surface-muted hover:text-text-primary"

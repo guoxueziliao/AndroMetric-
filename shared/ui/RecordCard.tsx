@@ -161,7 +161,7 @@ const kindToTone: Record<RecordKind, DataCardTone> = {
 export type LegacyRecordCardTone = 'blue' | 'pink' | 'amber' | 'emerald' | 'violet' | 'slate';
 
 const legacyToneMap: Record<LegacyRecordCardTone, DataCardTone> = {
-  blue: 'activity',
+  blue: 'adult',
   pink: 'adult',
   amber: 'stimulant',
   emerald: 'health',
