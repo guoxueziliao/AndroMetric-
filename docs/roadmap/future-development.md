@@ -14,7 +14,7 @@
 
 - 项目定位：隐私优先、本地优先的男性健康与性健康数据 PWA。
 - 架构基线：遵循 `docs/architecture.md` 的分层边界。
-- 近期主线：0.2.0 视觉系统骨架与 0.2.1 应用层视觉/交互已完成；下一条实现线是 0.2.2。
+- 近期主线：0.2.2 代码实现已完成，当前 Claude 开发线是 0.2.3 洞察与复盘增强。
 - 生理日规则：03:00 前事件归属前一天，后续功能必须保持一致。
 - 存储约束：无后端；IndexedDB schema 改动必须配套 migration。
 
@@ -26,19 +26,20 @@
 - 当前状态：开发完成并归档，剩余只保留品牌命名插刀可能带来的文案/资产同步。
 - 已完成方向：应用层视觉与交互，包括 overlay、反馈、布尔控件、DataCard / RecordCard、HardnessSelector、图标与动效规则。
 
-### 0.2.2 执行草案
+### 0.2.2 实现完成
 
 - 文档：[`docs/planned/plan-0.2.2.md`](../planned/plan-0.2.2.md)
 - 专题索引：[`docs/planned/0.2.2/README.md`](../planned/0.2.2/README.md)
-- 当前状态：执行草案，刀 40 数据模型文档集已完成，下一步进入刀 41 schema / migration / domain types。
+- 当前状态：代码实现完成，待发布 / 归档。
 - 主方向：把成人行为和色情使用记录补成可复盘的健康数据闭环。
 - 候选支线：洞察与复盘增强、数据安全/备份/恢复约束、品牌命名与产品身份落地。
+- 2026-05-28：0.2.2 刀 41 - 刀 49 代码实现完成；后续不再扩 0.2.2 范围，发布后按 docs 维护规则迁移到 `completed/`。
 
-### 0.2.3 执行草案
+### 0.2.3 当前开发线
 
 - 文档：[`docs/planned/plan-0.2.3.md`](../planned/plan-0.2.3.md)
 - 专题索引：[`docs/planned/0.2.3/README.md`](../planned/0.2.3/README.md)
-- 当前状态：执行草案 / 待实现。
+- 当前状态：当前开发线 / Claude 正在实现。
 - 主方向：洞察与复盘增强。
 - 暂定基调：让成人行为、色情使用和健康状态形成可解释的复盘系统。
 - 2026-05-28：为避免单个计划文档过长，0.2.3 已拆分为短入口和多个专题文档。
@@ -50,6 +51,7 @@
 - 2026-05-28：完成 0.2.3 全文一致性审计，修正 roadmap 中“轻量养成 v0”仍挂在 0.2.3 的范围冲突；完整训练建议和轻目标系统归 0.2.4。
 - 2026-05-28：补齐 0.2.3 刀 51 - 刀 58 逐刀执行拆解文档，覆盖 review input adapter、timeline/window facts、confidence gating、weak insights、review home UI、reports/Markdown、安全文案审计和版本收口。
 - 2026-05-28：补充 0.2.3 实现交接摘要，作为实现窗口的一页交接单；真实代码入口、最终文件名和具体 UI 组件拆分仍留给刀 50 根据当前代码确认。
+- 2026-05-28：0.2.2 实现完成后，0.2.3 进入 Claude 开发窗口；规划窗口只维护文档状态和后续范围，不直接修改产品代码。
 
 ### 0.2.4 执行草案
 
@@ -84,10 +86,12 @@
 - 当前状态：执行草案 / 待实现。
 - 主方向：数据安全与长期数据承诺。
 - 基调：让复杂本地数据长期可信、可检查、可恢复。
-- 2026-05-28：新增 0.2.6 短入口和专题文档，范围包括 JSON backup 完整契约、dataVersion、import preview、snapshot integrity、linked ids / orphan / one-way relation、training goal / check-in 完整性、只读恢复预检、CSV / Markdown 可读导出边界和 Safety / Privacy Rails。
-- 2026-05-28：补齐 0.2.6 刀 1 - 刀 6 执行文档和实现交接摘要，覆盖数据契约审计、Import Preview 风险矩阵、Snapshot Integrity 扩展、只读恢复预检、CSV / Markdown 可读导出边界和 Safety / Privacy 审计。0.2.6 实现必须先完成刀 1；如果 0.2.2 - 0.2.5 数据尚未真实落地，应按真实代码状态缩小范围。
+- 2026-05-28：新增 0.2.6 短入口和专题文档，范围包括 JSON backup 完整契约、dataVersion、import preview、snapshot integrity、linked ids / orphan / one-way relation、真实落地后的 training goal / check-in 完整性、只读恢复预检、CSV 可读导出边界、Markdown 导出移除和 Safety / Privacy Rails。
+- 2026-05-28：补齐 0.2.6 刀 1 - 刀 6 执行文档和实现交接摘要，覆盖数据契约审计、Import Preview 风险矩阵、Snapshot Integrity 扩展、只读恢复预检、CSV 可读导出与 Markdown 移除边界、Safety / Privacy 审计。0.2.6 实现必须先完成刀 1；如果 0.2.2 - 0.2.5 数据尚未真实落地，应按真实代码状态缩小范围。
+- 2026-05-28：用户确认 Markdown 导出没有实际价值，0.2.6 决策为移除或隐藏 Markdown 导出入口；JSON backup 仍是完整迁移格式，CSV 是唯一保留可读导出。
 - 2026-05-28：纳入用户反馈插刀：导出默认必须是全部导出，日期区间只是可选筛选；数据生态提示“一键修复”时必须闭合到按钮或下一步动作；数据健康问题不能只跳转当天表单，必须展示具体字段 / 子项定位。
 - 2026-05-28：将用户反馈升级为 0.2.6 插刀 0，优先于数据契约审计执行；候选代码入口包括导出选项弹窗、export options model、profile maintenance、MyView 和 data health check。
+- 2026-05-28：补齐刀 5 当前 CSV 导出矩阵，确认当前代码仍有 Markdown 入口 / model / 测试残留，CSV 默认 notes 存在敏感全文风险；training CSV 只在真实 store / 类型落地后出现。
 
 ## 候选方向
 
@@ -162,11 +166,12 @@
 - 2026-05-26：将 0.2.2 推进为执行草案，并定下事件关系模型：Porn use、Masturbation、Sex event 全部使用稳定独立事件 ID，允许多对多关联；不用通用 `relatedEventIds` 作为主方案，采用类型化 linked ids；支持创建流程内自动关联和用户手动关联；不做级联删除、复杂自动推断或云端同步。第一刀必须产 `docs/planned/0.2.2/adult-behavior-data-model.md`，把产品决策转成 TypeScript 类型、Dexie schema、migration、导入导出、快照完整性和测试清单。
 - 2026-05-26：定下 0.2.2 刀序：刀 40 数据模型文档；刀 41 schema/migration/domain types；刀 42 storage/import/export/snapshot integrity；刀 43 Porn use event model；刀 44 Masturbation event alignment；刀 45 Sex event mapping/adapter；刀 46 UI entry points + minimal forms；刀 47 Event linking UI；刀 48 Basic review loop；刀 49 golden path + docs + version close。
 - 2026-05-26：0.2.2 文档收尾，新增收尾结论和决策清单，进入可接手执行草案状态。后续不再扩展 0.2.2 产品范围，新想法进入 0.2.3+；下一步从刀 40 的数据模型文档开始。
-- 2026-05-28：刀 40 数据模型文档集完成，`docs/planned/0.2.2/adult-behavior-data-model.md` 从占位推进为执行草案 / 待实现入口，并拆分为类型字段、schema/migration、导入导出与完整性、事件关联、测试验收 5 个专题文档。已定三张独立事件表 `porn_use_events` / `masturbation_events` / `sex_events`、共同基础字段、PornUseEvent / MasturbationEvent / SexEvent 类型草案、Dexie schema v7、migration 方案、导入导出和 snapshot integrity 策略、事件关联策略与测试清单。新增 `docs/planned/0.2.2/knife-41.md` 作为刀 41 执行拆解。0.2.2 下一步进入刀 41：schema / migration / domain types；实现前必须重新检查当前代码状态和 dirty worktree。
-- 2026-05-28：0.2.2 刀 41 - 刀 49 均已拆出独立执行文档，覆盖 schema/migration/domain types、storage/import-export/snapshot integrity、三类事件模型、最小 UI、事件关联 UI、基础复盘和版本收口。短期实现仍从刀 41 开始，不越过边界。
+- 2026-05-28：刀 40 数据模型文档集完成，`docs/planned/0.2.2/adult-behavior-data-model.md` 从占位推进为实现入口，并拆分为类型字段、schema/migration、导入导出与完整性、事件关联、测试验收 5 个专题文档。已定三张独立事件表 `porn_use_events` / `masturbation_events` / `sex_events`、共同基础字段、PornUseEvent / MasturbationEvent / SexEvent 类型草案、Dexie schema v7、migration 方案、导入导出和 snapshot integrity 策略、事件关联策略与测试清单。新增 `docs/planned/0.2.2/knife-41.md` 作为刀 41 执行拆解。
+- 2026-05-28：0.2.2 刀 41 - 刀 49 均已拆出独立执行文档，覆盖 schema/migration/domain types、storage/import-export/snapshot integrity、三类事件模型、最小 UI、事件关联 UI、基础复盘和版本收口；后续实际代码实现也已完成。
+- 2026-05-28：0.2.2 随后完成刀 41 - 刀 49 代码实现；以上条目保留为历史过程，当前状态以“代码实现完成，待发布 / 归档”为准。
 - 2026-05-26：新增 `docs/planned/plan-0.2.3.md`，主方向定为洞察与复盘增强。0.2.3 承接 0.2.2 的成人行为与色情使用结构化数据，目标是让硬度、性行为、自淫/自慰、色情使用、射精、睡眠、酒精、运动、压力、疲劳和满意度形成可解释复盘系统。
 - 2026-05-26：定下 0.2.3 统计模型边界：允许新增轻量 `adult behavior review engine`，用于时间关系、趋势、共现、样本量和弱相关观察；不做医学诊断、成瘾判定、道德判断、强因果结论、云端模型或复杂黑箱模型。
 - 2026-05-26：定下 0.2.3 复盘中心：做综合“成人行为复盘”入口，但首屏主指标围绕硬度/勃起质量和恢复。色情使用、自淫/自慰、性行为、射精、边缘控制等作为解释健康状态的关键上下文，不把产品做成单纯色情使用统计器。
-- 2026-05-27：定下 0.2.3 周报/月报方向：做滚动 7/14/30 天复盘、自然周周报和自然月月报；报告包含本期摘要、成人行为摘要、硬度与恢复、可能关联、样本不足提示和记录缺口；允许本地 Markdown 导出并使用成人直白词；永远不做分享图。
+- 2026-05-27：定下 0.2.3 周报/月报方向：做滚动 7/14/30 天复盘、自然周周报和自然月月报；报告包含本期摘要、成人行为摘要、硬度与恢复、可能关联、样本不足提示和记录缺口；当时曾允许本地 Markdown 导出，但 2026-05-28 已由 0.2.6 决策取消；永远不做分享图。
 - 2026-05-27：定下 0.2.3 样本量与可信度规则：所有洞察必须带 `sampleSize` 和 `confidence: none | low | medium | high`；样本不足只展示事实；0.2.3 默认最多输出到 medium；禁止医学诊断、成瘾判定、强因果结论、道德化评价、羞辱语言和样本不足时包装洞察。
 - 2026-05-27：新增 `docs/planned/plan-0.2.4.md`，主方向暂定为养成系与关系/表现训练。已定养成范围：先做“训练建议 + 进度反馈 + 轻目标”，不做完整游戏化等级系统；允许目标集中在记录质量、恢复、表现稳定性、射精控制观察和关系沟通，禁止多伴侣/性次数/射精次数/色情使用时长挑战。

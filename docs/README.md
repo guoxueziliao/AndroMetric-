@@ -24,16 +24,17 @@
 
 当前开发线：
 
-- 0.2.2 代码实现完成（刀 41-49），待发布。下一步进入 0.2.3。
+- 0.2.3 正在开发（Claude 窗口）。
+- 0.2.2 代码实现完成（刀 41-49），待发布 / 归档。
 
 ## Planned
 
 已讨论或正在讨论、待后续执行的版本计划：
 
-- [planned/plan-0.2.2.md](./planned/plan-0.2.2.md)：成人行为与色情使用记录闭环。
+- [planned/plan-0.2.2.md](./planned/plan-0.2.2.md)：成人行为与色情使用记录闭环（实现完成，待发布 / 归档）。
 - [planned/0.2.2/README.md](./planned/0.2.2/README.md)：0.2.2 专题文档与刀 41 - 刀 49 索引。
-- [planned/0.2.2/knife-41.md](./planned/0.2.2/knife-41.md)：刀 41 执行拆解（已完成，schema / migration / domain types）。
-- [planned/plan-0.2.3.md](./planned/plan-0.2.3.md)：洞察与复盘增强文档集入口。
+- [planned/0.2.2/knife-41.md](./planned/0.2.2/knife-41.md)：刀 41 执行拆解（已完成）。
+- [planned/plan-0.2.3.md](./planned/plan-0.2.3.md)：洞察与复盘增强文档集入口（当前开发线）。
 - [planned/0.2.3/README.md](./planned/0.2.3/README.md)：0.2.3 专题文档索引。
 - [planned/plan-0.2.4.md](./planned/plan-0.2.4.md)：养成系与关系/表现训练文档集入口。
 - [planned/0.2.4/README.md](./planned/0.2.4/README.md)：0.2.4 专题文档索引。

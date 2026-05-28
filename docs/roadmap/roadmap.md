@@ -26,7 +26,7 @@
 | 0.2.0 | done | 视觉系统骨架 | [plan](../completed/plan-0.2.0.md) |
 | 0.2.1 | done | 应用层视觉与交互 | [plan](../completed/plan-0.2.1.md) |
 | 0.2.2 | done | 成人行为与色情使用记录闭环 | [plan](../planned/plan-0.2.2.md) |
-| 0.2.3 | planned | 洞察与复盘增强 | [plan](../planned/plan-0.2.3.md) |
+| 0.2.3 | done | 洞察与复盘增强 | [plan](../planned/plan-0.2.3.md) |
 | 0.2.4 | planned | 养成系与关系/表现训练 | [plan](../planned/plan-0.2.4.md) |
 | 0.2.5 | planned | 训练中心与长期目标历史 | [plan](../planned/plan-0.2.5.md) |
 | 0.2.6 | planned | 数据安全与长期数据承诺 | [plan](../planned/plan-0.2.6.md) |
@@ -94,47 +94,13 @@
 
 ## Active
 
-当前暂无实现中的版本计划。下一条代码实现线是 0.2.2，开发应从刀 41 的 schema / migration / domain types 开始。
-
-### 下一步：0.2.2 刀 41
-
-状态：
-
-- 0.2.2 产品方向和边界已定稿为执行草案。
-- 刀 40 数据模型文档集已产出，入口：`docs/planned/0.2.2/adult-behavior-data-model.md`。
-- 0.2.2 详细文档索引：[`docs/planned/0.2.2/README.md`](../planned/0.2.2/README.md)。
-
-已完成：
-
-- 把 Porn use / Masturbation / Sex event 的产品决策转成 TypeScript 类型草案。
-- 明确 Dexie schema、migration、旧数据兼容和默认值。
-- 明确导入 / 导出 / 快照完整性策略。
-- 明确事件关联策略和测试清单。
-
-下一步：
-
-- 按 [刀 41 执行拆解](../planned/0.2.2/knife-41.md) 进入 schema / migration / domain types。
-- 刀 41 完成后，按 [刀 42 执行拆解](../planned/0.2.2/knife-42.md) 进入 storage / import-export / snapshot integrity。
-- 刀 42 完成后，按 [刀 43 执行拆解](../planned/0.2.2/knife-43.md) 进入 Porn use event model + tests。
-- 刀 43 完成后，按 [刀 44 执行拆解](../planned/0.2.2/knife-44.md) 进入 Masturbation event alignment。
-- 刀 44 完成后，按 [刀 45 执行拆解](../planned/0.2.2/knife-45.md) 进入 Sex event mapping / adapter。
-- 刀 45 完成后，按 [刀 46 执行拆解](../planned/0.2.2/knife-46.md) 进入 UI entry points + minimal forms。
-- 刀 46 完成后，按 [刀 47 执行拆解](../planned/0.2.2/knife-47.md) 进入 Event linking UI。
-- 刀 47 完成后，按 [刀 48 执行拆解](../planned/0.2.2/knife-48.md) 进入 Basic review loop。
-- 刀 48 完成后，按 [刀 49 执行拆解](../planned/0.2.2/knife-49.md) 进入 golden path + docs + version close。
-- 实现前重新检查当前代码状态、dirty worktree 和现有 migration / storage 入口。
-
-不做：
-
-- 越过 0.2.2 边界新增统计模型、云同步、分享或内容收藏能力。
-- 成人内容开关。
-- 全项目卡片统一。
+当前暂无实现中的版本计划。下一条代码实现线是 0.2.4，开发应从训练数据模型文档开始。
 
 ## Planned
 
 ### 0.2.2 — 成人行为与色情使用记录闭环
 
-计划做：
+已完成：
 
 - `PornUseEvent`、`MasturbationEvent`、`SexEvent` 三类事件独立建模。
 - schema / migration。
@@ -143,6 +109,21 @@
 - import/export/snapshot integrity。
 - 最小记录入口、事件关联 UI、基础复盘。
 
+### 0.2.3 — 洞察与复盘增强
+
+文档入口：[`docs/planned/plan-0.2.3.md`](../planned/plan-0.2.3.md)。专题索引：[`docs/planned/0.2.3/README.md`](../planned/0.2.3/README.md)。
+
+已完成：
+
+- 轻量 adult behavior review engine（纯函数，不读 Dexie）。
+- Review input adapter：滚动 7/14/30 天、自然周、自然月。
+- 事实时间线与窗口聚合。
+- 样本量与可信度守门（ReviewConfidence）。
+- 第一批弱相关观察。
+- 复盘入口 UI（StatsView 第4个 tab）。
+- 周报/月报 Markdown 导出。
+- 安全文案与隐私审计。
+
 不做：
 
 - 内容收藏器。
@@ -150,33 +131,6 @@
 - 审核字段。
 - 成瘾布尔。
 - 云同步。
-
-### 0.2.3 — 洞察与复盘增强
-
-文档入口：[`docs/planned/plan-0.2.3.md`](../planned/plan-0.2.3.md)。专题索引：[`docs/planned/0.2.3/README.md`](../planned/0.2.3/README.md)。
-
-状态：执行草案 / 待实现。
-
-计划做：
-
-- `adult behavior review engine`。
-- 综合成人行为复盘入口。
-- 硬度 / 恢复为首屏主轴。
-- 事实时间线和窗口聚合。
-- 刀 50 - 刀 58 的开发顺序。
-- 周报 / 月报应用内复盘；Markdown 导出后续已取消。
-- 样本量和可信度。
-- 五个复盘维度：硬度与勃起质量、性行为表现、色情使用与自淫自慰、身体与生活因素、关系与伴侣。
-
-不做：
-
-- 医学诊断。
-- 成瘾判定。
-- 强因果结论。
-- 分享图。
-- 伴侣评分 / 排名。
-- 新增 schema / migration。
-- 完整训练建议或轻目标系统。
 
 ### 0.2.4 — 养成系与关系/表现训练
 
@@ -261,7 +215,7 @@
 - import preview 扩展。
 - snapshot integrity 扩展。
 - 成人行为事件 linked ids / orphan / one-way relation 检查。
-- training goal / goal check-in 完整性检查。
+- training goal / goal check-in 完整性检查，仅在真实 store / 类型落地后纳入。
 - 只读恢复预检。
 - 备份写后读信心反馈。
 - CSV 可读导出边界整理，并移除 Markdown 导出。
