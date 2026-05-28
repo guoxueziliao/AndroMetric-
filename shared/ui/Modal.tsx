@@ -53,7 +53,7 @@ const Modal: React.FC<ModalProps> = ({
       aria-labelledby={title ? 'modal-title' : undefined}
     >
       <div
-        className={`relative bg-surface-card w-full ${sizeClasses[size]} rounded-[2rem] shadow-2xl dark:shadow-dark-glow flex flex-col max-h-[90vh] overflow-hidden border border-surface-border/60`}
+        className={`relative bg-surface-card w-full ${sizeClasses[size]} rounded-[2rem] shadow-2xl dark:shadow-dark-glow flex flex-col max-h-[90dvh] overflow-hidden border border-surface-border/60`}
       >
         {(title || description) && (
           <div className="flex-none flex items-center justify-between px-6 py-5 border-b border-surface-border/60 bg-surface-card/80 backdrop-blur-md">

@@ -1,29 +1,47 @@
-# 0.2.1 执行草案（应用层视觉与交互）
+# 0.2.1 完成记录（应用层视觉与交互）
 
-> 本文档已从研究草案推进为 0.2.1 执行草案。
-> 0.2.0 完成后，需要按实际代码状态做最终校准，再进入开发执行。
-> 0.2.0 的视觉 token、Tailwind 构建化、dark/light 双值机制、动效 token、manifest / 图标整理是本文前置条件。
+> 本文档最初作为 0.2.1 执行草案，现已按代码实际状态归档为完成记录。
+> 0.2.1 基于 0.2.0 的视觉 token、Tailwind 构建化、dark/light 双值机制、动效 token、manifest / 图标整理完成应用层视觉与交互收口。
 
 ## 状态
 
-- 当前状态：执行草案，待 0.2.0 完成后校准。
+- 当前状态：开发完成，已归档。
 - 版本主题：私密男性健康操作台的应用层定调。
 - 范围边界：只做应用层视觉与交互，不加入新业务功能。
 - 主场景：手机 Chrome 浏览器。
-- 品牌依赖：命名同步 / Welcome v2 等品牌命名拍板后插入；组件主线不被命名阻塞。
+- 品牌依赖：命名同步 / Welcome v2 未阻塞组件主线，后续可作为品牌插刀单独处理。
+
+## 完成结果
+
+0.2.1 已完成应用层视觉与交互主线：
+
+- `OverlayPrimitive` 落地，`Modal` / `BottomSheet` 共用底层 overlay 行为。
+- `Toast` 支持 `success | error | info | warning`，并按类型区分自动消失时长。
+- `ConfirmModal` 支持风险分级和文本确认。
+- `Switch` / `Checkbox` 建立为共享布尔控件，旧 `.toggle-checkbox` CSS 已移除。
+- `DataCard` / `RecordCard` 支持语义 tone，日记编辑中的性活动记录已改用 `kind` 映射。
+- `HardnessSelector` 保留 1-5 存储语义，完成更直白的成人医学/功能表达与 `density` / `readOnly` 接口。
+- 成人/性健康核心本地图标与交互动效规则已落到 `docs/completed/ui-interaction-system.md`。
+- 未引入新业务能力、schema、migration、后端、分享或导出语义变化。
+
+验证记录：
+
+- `npm run typecheck` 通过。
+- `npm run test` 通过，16 files / 76 tests。
+- `npm run build` 通过，PWA manifest / service worker 正常生成。
+- `npm run lint` 通过但保留既有 warnings。
+- `git diff --check` 通过。
 
 ## 收尾结论
 
-0.2.1 的方向讨论已完成，本文档进入收尾状态。
+0.2.1 的方向讨论和开发实现已完成，本文档进入归档状态。
 
-后续不再继续扩展 0.2.1 的产品范围；除非 0.2.0 最终落地结果与本文前置假设冲突，否则 0.2.1 只做校准，不再重新发散。
+后续不再继续扩展 0.2.1 的产品范围。未纳入 0.2.1 的新业务能力进入 0.2.2+ 继续讨论。
 
-0.2.1 下一步动作：
+0.2.1 后续只保留品牌相关插刀可能带来的文案/资产同步：
 
-1. 等 0.2.0 完成后，对照实际代码状态校准本文刀序和调用点。
-2. 从刀 32 开始产 `docs/ui-component-audit-0.2.1.md`。
-3. 按刀 33-39 执行应用层视觉与交互重塑。
-4. 品牌命名拍板后插入“命名同步 / Welcome v2”。
+1. 品牌命名拍板后可插入“命名同步 / Welcome v2”。
+2. 0.2.2 进入代码前，先完成 `docs/planned/adult-behavior-data-model-0.2.2.md`。
 
 未纳入 0.2.1 的新业务能力，进入 0.2.2+ 继续讨论。
 
@@ -40,7 +58,7 @@
 - HardnessSelector v2：保留 1-5 存储值；主标签改成成人医学/功能表达，旧隐喻作为副标签；支持 `density` 和 `readOnly`。
 - Welcome v2：等品牌命名拍板后做；单屏；直接说成人男性健康、硬度/勃起质量、性爱、自淫/自慰、色情使用和健康因素关联；强调本地、无账号、不上传。
 - 图标：保留 `lucide-react` 做通用操作图标；成人/性健康核心语义允许少量本地 SVG React 定制图标。
-- 动效：新增 `docs/ui-interaction-system.md`，沉淀图标范围、成人图标边界、组件级动效 cookbook、禁止动效清单和手机 Chrome 验收点。
+- 动效：新增 `docs/completed/ui-interaction-system.md`，沉淀图标范围、成人图标边界、组件级动效 cookbook、禁止动效清单和手机 Chrome 验收点。
 - 刀序：刀 32 审计；刀 33 Overlay；刀 34 Toast/Confirm；刀 35 Switch/Checkbox；刀 36 DataCard/RecordCard；刀 37 HardnessSelector；刀 38 icons + interaction docs；插刀 A 命名/Welcome；刀 39 收口。
 
 ## 背景
@@ -790,7 +808,7 @@ Welcome v2 走更强品牌 / 成人视觉，而不是通用健康工具介绍页
 
 0.2.1 新增：
 
-- `docs/ui-interaction-system.md`
+- `docs/completed/ui-interaction-system.md`
 
 内容包括：
 
@@ -803,7 +821,7 @@ Welcome v2 走更强品牌 / 成人视觉，而不是通用健康工具介绍页
 - 禁止动效清单。
 - 手机 Chrome 验收点。
 
-不把这部分塞进 `docs/visual-system.md`。`visual-system.md` 管视觉 token 和语义用途，`ui-interaction-system.md` 管交互、图标、动效。
+不把这部分塞进 `docs/completed/visual-system.md`。`visual-system.md` 管视觉 token 和语义用途，`ui-interaction-system.md` 管交互、图标、动效。
 
 ## 0.2.1 的产品目标
 
@@ -824,7 +842,7 @@ Welcome v2 走更强品牌 / 成人视觉，而不是通用健康工具介绍页
 
 ## 当前继承范围
 
-来自 `docs/plan-0.2.0.md` 的推迟项：
+来自 `docs/completed/plan-0.2.0.md` 的推迟项：
 
 - 通用组件接口重塑：`Modal`、`Toast`、`RecordCard`、`HardnessSelector` 等。
 - 组件级动效语言：spring、scale、进退场设计。
@@ -868,7 +886,7 @@ Welcome v2 走更强品牌 / 成人视觉，而不是通用健康工具介绍页
 
 输出：
 
-- `docs/ui-component-audit-0.2.1.md`
+- `docs/completed/ui-component-audit-0.2.1.md`
 - 列出 `Modal`、`BottomSheet`、`Toast`、`RecordCard`、`HardnessSelector`、`FormControls`、`toggle-checkbox` 的所有调用点。
 - 标记每个调用点需要的能力：标题、描述、关闭策略、footer 对齐、危险动作、滚动区域、移动端高度、是否需要 bottom sheet。
 - 给出 v1 API 草案和迁移顺序。
@@ -952,7 +970,7 @@ Welcome v2 走更强品牌 / 成人视觉，而不是通用健康工具介绍页
 
 - 保留 `lucide-react` 作为通用操作图标库。
 - 第一批定制成人 / 性健康核心 SVG React 图标。
-- 新增 `docs/ui-interaction-system.md`。
+- 新增 `docs/completed/ui-interaction-system.md`。
 - 沉淀图标范围、成人图标边界、组件级动效 cookbook、禁止动效清单、手机 Chrome 验收点。
 
 不做：

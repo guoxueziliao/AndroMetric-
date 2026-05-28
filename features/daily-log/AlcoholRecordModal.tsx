@@ -134,7 +134,7 @@ const AlcoholRecordModal: React.FC<AlcoholRecordModalProps> = ({ isOpen, onClose
                 </div>
             }
         >
-            <div className="h-[75vh] flex flex-col -mx-4 -mt-4 bg-surface-card overflow-hidden">
+            <div className="flex h-[min(75dvh,640px)] flex-col -mx-4 -mt-4 bg-surface-card overflow-hidden">
                 {onSwitchToOther && (
                     <div className="flex p-1 mx-4 mt-3 bg-surface-muted rounded-2xl border border-surface-border shrink-0">
                         <button className="flex-1 py-2 text-xs font-black rounded-xl bg-surface-card text-state-warning-text shadow-soft">饮酒</button>

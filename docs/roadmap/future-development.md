@@ -14,38 +14,45 @@
 
 - 项目定位：隐私优先、本地优先的男性健康与性健康数据 PWA。
 - 架构基线：遵循 `docs/architecture.md` 的分层边界。
-- 近期主线：`docs/plan-0.2.0.md` 视觉系统骨架。
+- 近期主线：0.2.0 视觉系统骨架与 0.2.1 应用层视觉/交互已完成；下一条实现线是 0.2.2。
 - 生理日规则：03:00 前事件归属前一天，后续功能必须保持一致。
 - 存储约束：无后端；IndexedDB schema 改动必须配套 migration。
 
 ## 已定方向
 
-### 0.2.1 执行草案
+### 0.2.1 已完成
 
-- 文档：[`docs/plan-0.2.1.md`](./plan-0.2.1.md)
-- 当前状态：执行草案，待 0.2.0 完成后按实际代码校准。
-- 暂定方向：应用层视觉与交互，先做 `shared/ui` contract，再做高频页面接入，最后处理 Welcome、图标/动效文档和版本收口。
+- 文档：[`docs/completed/plan-0.2.1.md`](../completed/plan-0.2.1.md)
+- 当前状态：开发完成并归档，剩余只保留品牌命名插刀可能带来的文案/资产同步。
+- 已完成方向：应用层视觉与交互，包括 overlay、反馈、布尔控件、DataCard / RecordCard、HardnessSelector、图标与动效规则。
 
 ### 0.2.2 研究入口
 
-- 文档：[`docs/plan-0.2.2.md`](./plan-0.2.2.md)
+- 文档：[`docs/planned/plan-0.2.2.md`](../planned/plan-0.2.2.md)
 - 当前状态：执行草案，产品方向和数据边界已可作为后续开发依据。
 - 主方向：把成人行为和色情使用记录补成可复盘的健康数据闭环。
 - 候选支线：洞察与复盘增强、数据安全/备份/恢复约束、品牌命名与产品身份落地。
 
 ### 0.2.3 研究入口
 
-- 文档：[`docs/plan-0.2.3.md`](./plan-0.2.3.md)
+- 文档：[`docs/planned/plan-0.2.3.md`](../planned/plan-0.2.3.md)
 - 当前状态：研究入口。
 - 主方向：洞察与复盘增强。
 - 暂定基调：让成人行为、色情使用和健康状态形成可解释的复盘系统。
+
+### 0.2.4 研究入口
+
+- 文档：[`docs/planned/plan-0.2.4.md`](../planned/plan-0.2.4.md)
+- 当前状态：研究入口。
+- 主方向：养成系与关系/表现训练。
+- 暂定基调：从复盘走向养成，让性健康、做爱表现、恢复和关系质量形成可持续改进路径。
 
 ## 候选方向
 
 ### 0.2.1 应用层视觉与交互
 
-来源：`docs/plan-0.2.0.md` 中明确推迟到 0.2.1 的范围。
-执行草案见 [`docs/plan-0.2.1.md`](./plan-0.2.1.md)。
+来源：`docs/completed/plan-0.2.0.md` 中明确推迟到 0.2.1 的范围。
+完成记录见 [`docs/completed/plan-0.2.1.md`](../completed/plan-0.2.1.md)。
 
 - 通用组件接口重塑：`Modal`、`Toast`、`RecordCard`、`HardnessSelector` 等。
 - 组件级动效语言重设：spring、scale、进退场、状态切换。
@@ -55,7 +62,7 @@
 
 ### 品牌与命名
 
-来源：`docs/plan-0.2.0.md` 的平行 track。
+来源：`docs/completed/plan-0.2.0.md` 的平行 track。
 
 - 产品命名拍板。
 - slogan / 隐私名 / manifest title / PWA 展示名同步。
@@ -90,7 +97,7 @@
 
 ## 待整理记录
 
-- 2026-05-22：开始 0.2.1 讨论研究，新增 `docs/plan-0.2.1.md`。初步结论是 0.2.1 不按页面全量重刷，而按 shared/ui contract、selection controls、RecordCard、HardnessSelector、Welcome、interaction docs 的顺序研究。
+- 2026-05-22：开始 0.2.1 讨论研究，新增 `docs/completed/plan-0.2.1.md`。初步结论是 0.2.1 不按页面全量重刷，而按 shared/ui contract、selection controls、RecordCard、HardnessSelector、Welcome、interaction docs 的顺序研究。
 - 2026-05-22：定下 0.2.1 核心基调：“私密男性健康操作台的应用层定调”。“私密”定义为本地封闭、用户主权、无审查、不羞耻化，不等于低调保守；允许成人、露骨、色情内容作为健康记录的一部分，但产品表达仍以健康监控和自我管理为主。
 - 2026-05-22：定下 0.2.1 范围边界：严格限定为应用层视觉与交互，不加入新业务功能。允许改变已有功能的呈现、操作、反馈、成人表达和组件 API；不新增记录类型、统计模型、schema、后端、分享或导出语义。
 - 2026-05-22：定下 0.2.1 使用场景与 Overlay 方向：以手机 Chrome 浏览器为主；抽底层 `OverlayPrimitive`，公开保留 `Modal` 和 `BottomSheet`；不做移动端自动切换；`closeOnBackdrop` 按风险区分；footer 由组件统一负责；引入 `variant: default | danger | adult | quiet` 和 `size: sm | md | lg | full`；focus trap 不引新依赖，列后续增强。
@@ -100,21 +107,22 @@
 - 2026-05-22：定下 DataCard / RecordCard 方向：从色相 tone 改成语义 tone，并采用收敛版方案 C。`DataCard` 作为通用纯 UI data card，负责布局、tone、density、actions；`RecordCard` 作为记录条目 wrapper，把记录类型映射到 `DataCard` tone。0.2.1 优先覆盖日记编辑和 Dashboard 历史记录，不做全项目卡片统一。
 - 2026-05-22：定下 HardnessSelector v2 方向：保留 1-5 等级和历史数据语义；主标签改成直白成人医学/功能表达，旧“豆腐/剥皮/带皮/冻瓜/铁棒”隐喻保留为副标签；视觉保留硬度增长方向但重做成更稳的分段/刻度；支持 `density` 和 `readOnly`；完整编辑显示长描述，快速记录不显示长句。
 - 2026-05-26：定下 Welcome v2 方向：需要等品牌命名拍板后再做；单屏，不做多步 onboarding；直接说成人男性健康、硬度/勃起质量、性爱、自淫/自慰、色情使用和健康因素关联；强调本地存储、无账号、不上传；不需要单独成人自用提示；视觉走更强品牌/成人方向；命名未定时先用集中占位，避免全应用返工。
-- 2026-05-26：定下图标与动效方向：保留 `lucide-react` 作为通用操作图标库；成人/性健康核心模块允许少量本地 SVG React 定制图标，优先覆盖硬度/勃起质量、性爱、自淫/自慰、色情使用、射精、伴侣；不做写实色情插画或表情包化素材。0.2.1 新增 `docs/ui-interaction-system.md`，沉淀图标范围、成人图标边界、组件级动效 cookbook、禁止动效清单和手机 Chrome 验收点。
+- 2026-05-26：定下图标与动效方向：保留 `lucide-react` 作为通用操作图标库；成人/性健康核心模块允许少量本地 SVG React 定制图标，优先覆盖硬度/勃起质量、性爱、自淫/自慰、色情使用、射精、伴侣；不做写实色情插画或表情包化素材。0.2.1 新增 `docs/completed/ui-interaction-system.md`，沉淀图标范围、成人图标边界、组件级动效 cookbook、禁止动效清单和手机 Chrome 验收点。
 - 2026-05-26：定下 0.2.1 刀序：刀 32 接口审计；刀 33 OverlayPrimitive + Modal/BottomSheet contract；刀 34 Toast/Confirm feedback；刀 35 Switch/Checkbox；刀 36 DataCard/RecordCard；刀 37 HardnessSelector v2；刀 38 custom icons + interaction cookbook；命名同步/Welcome v2 作为插刀 A；刀 39 版本收口。0.2.1 最终定稿等 0.2.0 完成后按实际代码校准。
-- 2026-05-26：将 `docs/plan-0.2.1.md` 从研究草案推进为执行草案，并新增决策清单。剩余动作不是继续发散讨论，而是在 0.2.0 完成后做代码状态校准和具体审计文档。
-- 2026-05-26：0.2.1 文档收尾，标记为方向讨论完成；新增 `docs/plan-0.2.2.md` 作为下一个版本研究入口。
+- 2026-05-26：将 `docs/completed/plan-0.2.1.md` 从研究草案推进为执行草案，并新增决策清单。剩余动作不是继续发散讨论，而是在 0.2.0 完成后做代码状态校准和具体审计文档。
+- 2026-05-26：0.2.1 文档收尾，标记为方向讨论完成；新增 `docs/planned/plan-0.2.2.md` 作为下一个版本研究入口。
 - 2026-05-26：0.2.2 主方向确定为“把成人行为和色情使用记录补成可复盘的健康数据闭环”，文档从研究入口推进为研究草案。下一步优先讨论是否允许 schema/migration，以及色情使用记录是独立模块还是自慰/性行为扩展。
-- 2026-05-26：定下 0.2.2 数据模型边界：允许 schema / migration，但必须先产 `docs/adult-behavior-data-model-0.2.2.md`，再写代码；任何 schema 改动必须同步 Dexie version、migration、导入/导出、快照完整性和测试；不重命名已有字段，不破坏旧数据读取。
+- 2026-05-26：定下 0.2.2 数据模型边界：允许 schema / migration，但必须先产 `docs/planned/adult-behavior-data-model-0.2.2.md`，再写代码；任何 schema 改动必须同步 Dexie version、migration、导入/导出、快照完整性和测试；不重命名已有字段，不破坏旧数据读取。
 - 2026-05-26：基于公开资料调研，定下色情使用建模方向：色情使用作为独立事件建模，同时允许被自慰/性行为记录引用为刺激源或上下文。原因是色情使用可以独立发生，不一定伴随自慰；自慰也可以不伴随色情；性行为也可能伴随色情内容。0.2.2 倾向支持多事件，而不是每天一个简单字段。
 - 2026-05-26：定下 Porn Use Event 字段方向：围绕健康复盘闭环设计，不做内容收藏。MVP 包括开始时间、时长、内容类型、来源类型、兴奋强度、是否进入自慰、是否射精、使用后状态；可选增强包括动机、控制感、超时、边缘控制、高潮强度、疲劳、满意度、睡眠影响、标签、备注和事件关联；明确不记录 URL、缩略图、图片/视频本体、演员名、成瘾布尔、非法内容审核字段或成人内容启用字段。
 - 2026-05-26：定下 Masturbation Event 字段方向：规范自慰事件并支持多次自慰事件。MVP 包括开始时间、时长、是否射精、高潮/射精强度、边缘控制、硬度、兴奋强度、刺激源、事后状态和满意度；可选增强包括疲劳、睡眠影响、控制感、超时、次数、射精次数、关联色情使用/性行为、标签和备注。现有自慰内容 item/editor 暂不强行推翻，先通过 tags/notes/关联能力兼容。
 - 2026-05-26：定下 Sex Event 字段方向：规范性行为事件，但不全面重做 SexRecord 体验。Sex event 与 Porn/Masturbation 对齐，支持多事件、硬度、射精、满意度、事后状态、疲劳、睡眠影响和事件关联；重点新增 `pornInvolved`、`pornUseContext`、`linkedPornUseEventIds`，用于记录性交前/中/后色情刺激或伴侣共同观看。现有 SexRecord 主体结构保留，通过 adapter 或字段映射接入新闭环。
-- 2026-05-26：将 0.2.2 推进为执行草案，并定下事件关系模型：Porn use、Masturbation、Sex event 全部使用稳定独立事件 ID，允许多对多关联；不用通用 `relatedEventIds` 作为主方案，采用类型化 linked ids；支持创建流程内自动关联和用户手动关联；不做级联删除、复杂自动推断或云端同步。第一刀必须产 `docs/adult-behavior-data-model-0.2.2.md`，把产品决策转成 TypeScript 类型、Dexie schema、migration、导入导出、快照完整性和测试清单。
+- 2026-05-26：将 0.2.2 推进为执行草案，并定下事件关系模型：Porn use、Masturbation、Sex event 全部使用稳定独立事件 ID，允许多对多关联；不用通用 `relatedEventIds` 作为主方案，采用类型化 linked ids；支持创建流程内自动关联和用户手动关联；不做级联删除、复杂自动推断或云端同步。第一刀必须产 `docs/planned/adult-behavior-data-model-0.2.2.md`，把产品决策转成 TypeScript 类型、Dexie schema、migration、导入导出、快照完整性和测试清单。
 - 2026-05-26：定下 0.2.2 刀序：刀 40 数据模型文档；刀 41 schema/migration/domain types；刀 42 storage/import/export/snapshot integrity；刀 43 Porn use event model；刀 44 Masturbation event alignment；刀 45 Sex event mapping/adapter；刀 46 UI entry points + minimal forms；刀 47 Event linking UI；刀 48 Basic review loop；刀 49 golden path + docs + version close。
 - 2026-05-26：0.2.2 文档收尾，新增收尾结论和决策清单，进入可接手执行草案状态。后续不再扩展 0.2.2 产品范围，新想法进入 0.2.3+；下一步从刀 40 的数据模型文档开始。
-- 2026-05-26：新增 `docs/plan-0.2.3.md`，主方向定为洞察与复盘增强。0.2.3 承接 0.2.2 的成人行为与色情使用结构化数据，目标是让硬度、性行为、自淫/自慰、色情使用、射精、睡眠、酒精、运动、压力、疲劳和满意度形成可解释复盘系统。
+- 2026-05-26：新增 `docs/planned/plan-0.2.3.md`，主方向定为洞察与复盘增强。0.2.3 承接 0.2.2 的成人行为与色情使用结构化数据，目标是让硬度、性行为、自淫/自慰、色情使用、射精、睡眠、酒精、运动、压力、疲劳和满意度形成可解释复盘系统。
 - 2026-05-26：定下 0.2.3 统计模型边界：允许新增轻量 `adult behavior review engine`，用于时间关系、趋势、共现、样本量和弱相关观察；不做医学诊断、成瘾判定、道德判断、强因果结论、云端模型或复杂黑箱模型。
 - 2026-05-26：定下 0.2.3 复盘中心：做综合“成人行为复盘”入口，但首屏主指标围绕硬度/勃起质量和恢复。色情使用、自淫/自慰、性行为、射精、边缘控制等作为解释健康状态的关键上下文，不把产品做成单纯色情使用统计器。
 - 2026-05-27：定下 0.2.3 周报/月报方向：做滚动 7/14/30 天复盘、自然周周报和自然月月报；报告包含本期摘要、成人行为摘要、硬度与恢复、可能关联、样本不足提示和记录缺口；允许本地 Markdown 导出并使用成人直白词；永远不做分享图。
 - 2026-05-27：定下 0.2.3 样本量与可信度规则：所有洞察必须带 `sampleSize` 和 `confidence: none | low | medium | high`；样本不足只展示事实；0.2.3 默认最多输出到 medium；禁止医学诊断、成瘾判定、强因果结论、道德化评价、羞辱语言和样本不足时包装洞察。
+- 2026-05-27：新增 `docs/planned/plan-0.2.4.md`，主方向暂定为养成系与关系/表现训练。已定养成范围：先做“训练建议 + 进度反馈 + 轻目标”，不做完整游戏化等级系统；允许目标集中在记录质量、恢复、表现稳定性、射精控制观察和关系沟通，禁止多伴侣/性次数/射精次数/色情使用时长挑战。

@@ -13,6 +13,8 @@ export { default as OverlayPrimitive } from './OverlayPrimitive';
 export type { OverlayVariant } from './OverlayPrimitive';
 export { default as Switch, SwitchField } from './Switch';
 export type { SwitchTone, SwitchSize } from './Switch';
+export { default as Checkbox, CheckboxField } from './Checkbox';
+export type { CheckboxTone } from './Checkbox';
 export { default as ErrorBoundary } from './ErrorBoundary';
 export { default as AnimatedButton } from './AnimatedButton';
 export { default as AnimatedPage, AnimatedPresence } from './AnimatedPage';

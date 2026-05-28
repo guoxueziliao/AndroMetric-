@@ -333,7 +333,7 @@ const Dashboard: React.FC<DashboardProps> = ({
       <Modal 
         isOpen={isSummaryModalOpen} 
         onClose={() => setIsSummaryModalOpen(false)} 
-        title=""
+        title={undefined}
         footer={summaryLog && (
             <div className="flex gap-3 w-full px-2 pb-2">
                 <button 

@@ -253,7 +253,7 @@ CSV 导出（0.1.1 刀 6 引入）多份 zip 内附带一个 `meta.json`，写 `
 - `project_0_0_7_status.md`
 - `project_0_0_8_status.md`
 - `project_0_0_9_status.md`
-- 0.1.0 / 0.1.1 凭 git log + 当前 docs/plan-0.1.1.md 现状反推
+- 0.1.0 / 0.1.1 凭 git log + 当前 docs/completed/plan-0.1.1.md 现状反推
 
 每版条目控制在 5-10 行，写"用户能感知的变化"而不是"重构了哪个模块"。
 

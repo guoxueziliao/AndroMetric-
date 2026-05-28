@@ -57,7 +57,7 @@ const MasturbationContentItemEditor: React.FC<MasturbationContentItemEditorProps
   return (
     <Modal isOpen={!!editingItem} onClose={onClose} title="编辑素材详情">
       {editingItem && (
-        <div className="flex flex-col h-[75vh] -mx-4 -mt-4 bg-surface-card  overflow-hidden">
+        <div className="flex h-[min(75dvh,640px)] flex-col -mx-4 -mt-4 bg-surface-card  overflow-hidden">
           <div className="flex-none p-4 border-b border-surface-border ">
             <button onClick={onClose} className="flex items-center gap-1 text-text-muted hover:text-accent text-sm font-bold mb-4">
               <ChevronLeft size={18} /> 返回

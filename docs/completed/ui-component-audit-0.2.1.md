@@ -1,6 +1,17 @@
 # UI Component Audit — 0.2.1
 
-> 刀 32 产出。只列调用点、现状问题和 API 草案，不改代码。
+> 刀 32 产出。本文保留开发前审计、调用点、问题和 API 草案，作为 0.2.1 实施依据。
+> 0.2.1 已完成并归档；最终实现以代码和 `docs/completed/plan-0.2.1.md` 的完成结果为准。
+
+## 完成后校准
+
+- `OverlayPrimitive`、`Modal`、`BottomSheet` 已落地，共享 ESC、backdrop、scroll lock、safe area 和 motion 基础行为。
+- `Toast` 已支持 `warning` 与分类型时长。
+- `ConfirmModal` 已支持 severity 与 `requireText`。
+- `Switch` / `Checkbox` 已进入 `shared/ui`，旧 `.toggle-checkbox` CSS 已移除。
+- `DataCard` / `RecordCard` 已支持语义 tone；日记编辑中的性活动记录已改用 `kind` 映射。
+- `HardnessSelector` 已完成 v2 文案/视觉/API 收口。
+- 审计中列出的旧 `vh` 高度热点已按手机 Chrome 主场景改为 `dvh` / `min(...)` 约束。
 
 ## 1. Modal (23 个直接调用点 + 5 个 ConfirmModal 间接调用)
 

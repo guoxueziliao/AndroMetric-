@@ -113,7 +113,7 @@ const PartnerManager: React.FC<PartnerManagerProps> = ({ isOpen, onClose, data, 
       title={view === 'edit' ? (formData.id ? '编辑档案' : '新建档案') : view === 'detail' ? '伴侣详情' : '伴侣管理'}
       footer={null}
     >
-      <div className="h-[70vh] flex flex-col">
+      <div className="flex h-[min(70dvh,620px)] flex-col">
         {view === 'list' && (
           <PartnerList
             partners={partners}

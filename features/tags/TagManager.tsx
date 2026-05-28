@@ -106,7 +106,7 @@ const TagManager: React.FC<TagManagerProps> = ({
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} title={onSelectTag ? "选择或创建标签" : "标签管理"}>
-            <div className="h-[75vh] flex flex-col -mt-2">
+            <div className="flex h-[min(75dvh,640px)] flex-col -mt-2">
                 <div className="flex bg-surface-muted p-1 rounded-xl mb-3 border border-surface-border shrink-0">
                     <button onClick={() => setActiveTab('xp')} className={`flex-1 py-2 text-xs font-bold rounded-lg flex items-center justify-center gap-2 transition-all ${activeTab === 'xp' ? 'bg-surface-card shadow-sm text-accent' : 'text-text-muted'}`}><TagIcon size={14} /> 题材</button>
                     <button onClick={() => setActiveTab('event')} className={`flex-1 py-2 text-xs font-bold rounded-lg flex items-center justify-center gap-2 transition-all ${activeTab === 'event' ? 'bg-surface-card shadow-sm text-accent' : 'text-text-muted'}`}><Activity size={14} /> 事件</button>

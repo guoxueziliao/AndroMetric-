@@ -2,7 +2,7 @@
 
 > 本文档是 0.2.0 全部刀数（刀 25 - 刀 31）的开发依据。讨论于 2026-05-20 定稿。
 > 后续若有新增/变更，**直接更新本文件**，不开新文档。
-> 软件版本管理约定（Semver / Tag / CHANGELOG / 主版本进升）见 [docs/plan-0.1.2.md](./plan-0.1.2.md)。
+> 软件版本管理约定（Semver / Tag / CHANGELOG / 主版本进升）见 [docs/completed/plan-0.1.2.md](../completed/plan-0.1.2.md)。
 
 ## 背景
 
@@ -33,7 +33,7 @@
 4. **刀 28** — features 重映射 第一批（dashboard / daily-log / quick-actions）
 5. **刀 29** — features 重映射 第二批（stats / sex-life / state / tags / backup / pwa / profile / reproductive / simulation-lab，含 useChartColors 接入）
 6. **刀 30** — app/根/index.html 收尾 + manifest 单源化 + 图标整理 + 末刀整体 golden path + screenshots 截图
-7. **刀 31** — docs/visual-system.md（语义化用途 + 反例）
+7. **刀 31** — docs/completed/visual-system.md（语义化用途 + 反例）
 
 平行 track（不在主线刀序里）：
 - branding-exploration.md（全套 VI 候选 + 全 AI 草图）
@@ -49,7 +49,7 @@
 - **light 模式重设计**：light 是兜底不是产品身份，token 跟随 dark 派生（CSS variable 双值），accent 在 light 下手动加深一档（lightness -10）
 - **使用 Tailwind v4**：v4 是 2025 新版 CSS-first config，骨架阶段就上是赌；用 v3 稳定路径
 - **字体文件引入**：Inter + 系统中文回退，不打包字体文件，PWA 包不撇大
-- **写"token 全表" doc**：长期 doc 容易滞后于代码；docs/visual-system.md 只写"语义化用途 + 反例"，token 全值在 tailwind.config / index.css 中
+- **写"token 全表" doc**：长期 doc 容易滞后于代码；docs/completed/visual-system.md 只写"语义化用途 + 反例"，token 全值在 tailwind.config / index.css 中
 - **codemod 脚本批量替换 token**：手动 + doc 对照表足够，codemod 工程成本不抵收益
 - **feature flag 切回旧视觉**：违反"single source of truth"骨架原则，0.2.x 不开
 
@@ -163,7 +163,7 @@ pastel 7 色（red/orange/yellow/green/blue/purple/pink）现有 `pastel-*` 和 
 
 ### 形态
 
-- 产 `docs/visual-token-audit.md`，不动代码
+- 产 `docs/completed/visual-token-audit.md`，不动代码
 - 列对照表：现有用法（含文件路径 + 行号 + 原值）→ 新 token 名
 
 ### 审计覆盖范围
@@ -206,7 +206,7 @@ pastel 7 色（red/orange/yellow/green/blue/purple/pink）现有 `pastel-*` 和 
 
 ### 实现位置
 
-- `docs/visual-token-audit.md`（新文件）
+- `docs/completed/visual-token-audit.md`（新文件）
 - 不动代码、不动 tailwind config、不动 vite.config.ts
 
 ### 不做
@@ -214,7 +214,7 @@ pastel 7 色（red/orange/yellow/green/blue/purple/pink）现有 `pastel-*` 和 
 - 不做"按 token 类型切大刀"的子拆分（维度已定按文件夹 i）
 - 不写 codemod 脚本（已在显式不做段定）
 - 不预先定新 token 的具体 hex 值（刀 26 实施时定）
-- 不在审计 doc 里做"应该这样设计"的主观建议——审计是事实记录，建议留 visual-system.md
+- 不在审计 doc 里做"应该这样设计"的主观建议——审计是事实记录，建议留 docs/completed/visual-system.md
 
 ---
 
@@ -490,7 +490,7 @@ shared/ui 改完后做一次完整 golden path（12 项 checklist，见验证清
 
 ---
 
-## 刀 31 — docs/visual-system.md
+## 刀 31 — docs/completed/visual-system.md
 
 ### 形态
 
@@ -562,7 +562,7 @@ E6 c 决议落地：写"语义化用途 + 反例"，token 全值在代码里。
 
 ### 实现位置
 
-- `docs/visual-system.md`（新文件）
+- `docs/completed/visual-system.md`（新文件）
 
 ### 不做
 
@@ -693,7 +693,7 @@ F6 决议：c 优先 + b 兜底。
 - Tailwind 切换至构建化模式，运行时注入的 token 体系替代 CDN 配置
 
 ### Added
-- 视觉系统语义文档（docs/visual-system.md）
+- 视觉系统语义文档（docs/completed/visual-system.md）
 - 主题首次启动默认为深色（老用户设置保留）
 
 ### Fixed
@@ -722,7 +722,7 @@ F6 决议：c 优先 + b 兜底。
 - 动效 token 化
 - 隐私态视觉重设
 - manifest / 图标资产整洁
-- visual-system.md 作为长期参照
+- docs/completed/visual-system.md 作为长期参照
 
 0.2.1 应用层将基于此骨架重塑：
 - 通用组件接口重塑（Modal/Toast/RecordCard/HardnessSelector 等）

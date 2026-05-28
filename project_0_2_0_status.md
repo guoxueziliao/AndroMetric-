@@ -1,6 +1,10 @@
 # 0.2.0 状态记录
 
-记录日期：2026-05-26
+记录日期：2026-05-27
+
+## 当前结论
+
+0.2.0 视觉系统骨架已完成，并已作为 0.2.1 应用层视觉与交互的前置交付。本文保留刀 25-28 的过程记录；后续实际状态以 `package.json` 版本、`docs/README.md` 和对应版本计划为准。
 
 ## 版本目标
 
@@ -16,7 +20,7 @@
 
 ### 刀 25：token 审计
 
-- 新增 `docs/visual-token-audit.md`。
+- 新增 `docs/completed/visual-token-audit.md`。
 - 审计 `brand-*`、`pastel-*`、默认 Tailwind 色、硬编码 hex、`index.html` inline CSS、PWA manifest 与 public icon 资产。
 - 当前事实：
   - `brand-*` 实际覆盖 48 个文件。

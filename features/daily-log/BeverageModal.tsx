@@ -165,7 +165,7 @@ const BeverageModal: React.FC<BeverageModalProps> = ({ isOpen, onClose, data, ac
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} title={initialData ? "修改记录" : "记录提神饮品"}>
-            <div className="flex flex-col h-[75vh] -mx-4 -mb-4">
+            <div className="flex h-[min(75dvh,640px)] flex-col -mx-4 -mb-4">
                 {onSwitchToOther && (
                     <div className="flex p-1 mx-4 mt-3 bg-surface-muted rounded-2xl border border-surface-border shrink-0">
                         <button onClick={onSwitchToOther} className="flex-1 py-2 text-xs font-black rounded-xl text-text-muted transition-colors">饮酒</button>

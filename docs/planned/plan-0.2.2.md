@@ -2,12 +2,12 @@
 
 > 本文档用于 0.2.2 开发执行。
 > 当前已确定主方向：把成人行为和色情使用记录补成真正的产品核心闭环。
-> 本文的产品方向和数据边界已可作为后续开发依据；具体字段类型和 migration 细节必须先落到 `docs/adult-behavior-data-model-0.2.2.md`，再进入代码实现。
+> 本文的产品方向和数据边界已可作为后续开发依据；具体字段类型和 migration 细节必须先落到 `docs/planned/adult-behavior-data-model-0.2.2.md`，再进入代码实现。
 
 ## 当前状态
 
 - 状态：执行草案。
-- 前置：0.2.0 视觉系统骨架完成；0.2.1 应用层视觉与交互完成或进入执行。
+- 前置：0.2.0 视觉系统骨架完成；0.2.1 应用层视觉与交互完成。
 - 已定主方向：成人行为与色情使用记录闭环。
 - 已定：允许 schema / migration；三类事件独立建模；Porn use / Masturbation / Sex event 字段方向；事件关系模型。
 - 待细化：具体 TypeScript 类型、Dexie schema、migration 步骤、UI 刀序、测试清单。
@@ -16,7 +16,7 @@
 
 0.2.2 的方向讨论已完成，本文档进入可接手执行草案状态。
 
-后续不再继续扩展 0.2.2 的产品范围；新增想法进入 0.2.3+。0.2.2 的下一步不是继续发散，而是从刀 40 开始，把本文产品决策转成 `docs/adult-behavior-data-model-0.2.2.md`。
+后续不再继续扩展 0.2.2 的产品范围；新增想法进入 0.2.3+。0.2.2 的下一步不是继续发散，而是从刀 40 开始，把本文产品决策转成 `docs/planned/adult-behavior-data-model-0.2.2.md`。
 
 开发顺序必须保持：
 
@@ -33,7 +33,7 @@
 
 - 版本主题：把成人行为和色情使用记录补成可复盘的健康数据闭环。
 - 范围性质：0.2.2 是产品能力版，允许受控 schema / migration。
-- 前置硬要求：第一刀必须产 `docs/adult-behavior-data-model-0.2.2.md`，该文档完成前不进入代码实现。
+- 前置硬要求：第一刀必须产 `docs/planned/adult-behavior-data-model-0.2.2.md`，该文档完成前不进入代码实现。
 - 数据原则：不重命名旧字段，不破坏旧数据读取，新增字段必须有默认值或兼容逻辑。
 - 隐私原则：本地优先，无后端、无账号、无上传；不保存色情内容本体、URL 快照、缩略图、图片、视频、演员名。
 - 事件建模：Porn use event、Masturbation event、Sex event 三类独立事件建模。
@@ -56,7 +56,7 @@
 
 0.2.2 第一刀必须产：
 
-- `docs/adult-behavior-data-model-0.2.2.md`
+- `docs/planned/adult-behavior-data-model-0.2.2.md`
 
 该文档完成前，不进入代码实现。
 
@@ -119,7 +119,7 @@
 
 0.2.2 第一刀应产：
 
-- `docs/adult-behavior-data-model-0.2.2.md`
+- `docs/planned/adult-behavior-data-model-0.2.2.md`
 
 该文档必须先回答：
 
@@ -245,7 +245,7 @@
 
 ### 设计约束
 
-- 具体 schema 仍要在 `docs/adult-behavior-data-model-0.2.2.md` 中定。
+- 具体 schema 仍要在 `docs/planned/adult-behavior-data-model-0.2.2.md` 中定。
 - 倾向支持多事件，而不是每天只有一个色情使用字段。
 - 如果新建事件表，需要评估 Dexie schema、migration、导入导出和快照影响。
 - 如果先扩展现有 `LogEntry`，必须证明能支持同一天多次事件和事件间关联。
@@ -859,7 +859,7 @@ snapshot integrity 需要覆盖：
 
 输出：
 
-- `docs/adult-behavior-data-model-0.2.2.md`
+- `docs/planned/adult-behavior-data-model-0.2.2.md`
 
 必须包含：
 

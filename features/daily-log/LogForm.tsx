@@ -357,7 +357,7 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
                                 {log.masturbation?.map(m => (
                                     <RecordCard
                                         key={m.id}
-                                        tone="blue"
+                                        kind="masturbation"
                                         icon={<Hand size={18}/>}
                                         title={<>自慰记录</>}
                                         meta={`${m.startTime} · ${m.duration}分`}
@@ -369,7 +369,7 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
                                 {log.sex?.map(s => (
                                     <RecordCard
                                         key={s.id}
-                                        tone="pink"
+                                        kind="sex"
                                         icon={<Heart size={18} fill="currentColor" fillOpacity={0.2}/>}
                                         title={s.interactions?.[0]?.partner || '性爱记录'}
                                         meta={`${s.startTime} · ${s.duration}分`}
