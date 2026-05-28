@@ -35,7 +35,10 @@ describe('buildImportPreview', () => {
       tags: 1,
       cycleEvents: 1,
       pregnancyEvents: 0,
-      snapshots: 1
+      snapshots: 1,
+      pornUseEvents: 0,
+      masturbationEvents: 0,
+      sexEvents: 0
     });
   });
 

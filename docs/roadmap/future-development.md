@@ -26,26 +26,68 @@
 - 当前状态：开发完成并归档，剩余只保留品牌命名插刀可能带来的文案/资产同步。
 - 已完成方向：应用层视觉与交互，包括 overlay、反馈、布尔控件、DataCard / RecordCard、HardnessSelector、图标与动效规则。
 
-### 0.2.2 研究入口
+### 0.2.2 执行草案
 
 - 文档：[`docs/planned/plan-0.2.2.md`](../planned/plan-0.2.2.md)
-- 当前状态：执行草案，产品方向和数据边界已可作为后续开发依据。
+- 专题索引：[`docs/planned/0.2.2/README.md`](../planned/0.2.2/README.md)
+- 当前状态：执行草案，刀 40 数据模型文档集已完成，下一步进入刀 41 schema / migration / domain types。
 - 主方向：把成人行为和色情使用记录补成可复盘的健康数据闭环。
 - 候选支线：洞察与复盘增强、数据安全/备份/恢复约束、品牌命名与产品身份落地。
 
-### 0.2.3 研究入口
+### 0.2.3 执行草案
 
 - 文档：[`docs/planned/plan-0.2.3.md`](../planned/plan-0.2.3.md)
-- 当前状态：研究入口。
+- 专题索引：[`docs/planned/0.2.3/README.md`](../planned/0.2.3/README.md)
+- 当前状态：执行草案 / 待实现。
 - 主方向：洞察与复盘增强。
 - 暂定基调：让成人行为、色情使用和健康状态形成可解释的复盘系统。
+- 2026-05-28：为避免单个计划文档过长，0.2.3 已拆分为短入口和多个专题文档。
+- 2026-05-28：0.2.3 开始执行层规划，已定先事实时间线和窗口聚合，再弱相关洞察；入口嵌入现有统计 / 洞察区域，不新增顶级导航；不新增 schema / migration；开发刀序为刀 50 - 刀 58。
+- 2026-05-28：新增 `docs/planned/0.2.3/review-input-and-timeline.md`，定下刀 51 - 刀 52 的 `AdultBehaviorReviewInput`、时间窗口、事实 timeline、窗口聚合和 missing data 契约。
+- 2026-05-28：新增 `docs/planned/0.2.3/report-markdown-template.md`，定下周报 / 月报 Markdown 的文件名、导出前敏感数据提示、章节结构、默认不包含 notes / 平台名 / 内容本体的边界。
+- 2026-05-28：新增 `docs/planned/0.2.3/review-home-information-architecture.md` 和 `docs/planned/0.2.3/weak-correlation-insights.md`，定下复盘首屏信息层级、移动端优先级、第一批弱相关观察指标组合和样本量门槛。
+- 2026-05-28：新增 `docs/planned/0.2.3/knife-50-code-orientation.md`，定下 0.2.3 实现前的代码入口校准清单，覆盖 StatsEngine、UI 入口、数据读取、时间窗口和导出入口。
+- 2026-05-28：完成 0.2.3 全文一致性审计，修正 roadmap 中“轻量养成 v0”仍挂在 0.2.3 的范围冲突；完整训练建议和轻目标系统归 0.2.4。
+- 2026-05-28：补齐 0.2.3 刀 51 - 刀 58 逐刀执行拆解文档，覆盖 review input adapter、timeline/window facts、confidence gating、weak insights、review home UI、reports/Markdown、安全文案审计和版本收口。
+- 2026-05-28：补充 0.2.3 实现交接摘要，作为实现窗口的一页交接单；真实代码入口、最终文件名和具体 UI 组件拆分仍留给刀 50 根据当前代码确认。
 
-### 0.2.4 研究入口
+### 0.2.4 执行草案
 
 - 文档：[`docs/planned/plan-0.2.4.md`](../planned/plan-0.2.4.md)
-- 当前状态：研究入口。
+- 专题索引：[`docs/planned/0.2.4/README.md`](../planned/0.2.4/README.md)
+- 当前状态：执行草案 / 待实现。
 - 主方向：养成系与关系/表现训练。
 - 暂定基调：从复盘走向养成，让性健康、做爱表现、恢复和关系质量形成可持续改进路径。
+- 2026-05-28：为避免单个计划文档过长，0.2.4 已拆分为短入口和范围/模型、性表现/关系、建议/轻目标、Safety Rails、刀序验收、入口/UI、候选归档 7 个专题文档。
+- 2026-05-28：完成 0.2.4 文档一致性审计，当时确认 0.2.4 已形成研究草案；随后继续推进刀 1 数据模型最终审计。
+- 2026-05-28：新增 `docs/planned/0.2.4/knife-1-data-model-final-audit.md`，把刀 1 拆成 schema / migration 前的字段、状态转换、导入导出、snapshot integrity、runtime allowlist 和 Safety Rails 绕过点审计清单。
+- 2026-05-28：完成 0.2.4 刀 1 模型定稿决策，0.2.4 推进为执行草案 / 待实现；未知或禁用 category、非法周期跳过目标并产生 warning，orphan check-in 保留并产生 warning，pause / complete 同步目标状态，adjust 不自动创建新目标。后续若进入 0.2.4 实现，从刀 2 schema / migration / import-export 开始。
+- 2026-05-28：新增 `docs/planned/0.2.4/knife-2-schema-migration-import-export.md`，定下刀 2 持久化闭环：`training_goals` / `goal_checkins` store、空表 migration、JSON `trainingGoals` / `goalCheckins`、import normalize warning、snapshot integrity 和验证样本。
+- 2026-05-28：新增 `docs/planned/0.2.4/knife-3-rule-based-suggestions.md`，定下刀 3 本地规则建议边界：不叫 AI、不持久化 `TrainingSuggestion`、不自动创建目标；输出 1 - 3 条建议和候选轻目标，并通过 Safety Rails 过滤。
+- 2026-05-28：补齐 0.2.4 刀 4 - 刀 7 执行文档和实现交接摘要，覆盖轻目标创建/check-in、训练视图、关系上下文、Safety Rails 审计、实现数据流、文件候选和停下来重谈条件。0.2.4 规划可作为后续实现草案，真正实现前仍需核对当前代码状态和 0.2.3 复盘入口实际形态。
+
+### 0.2.5 执行草案
+
+- 文档：[`docs/planned/plan-0.2.5.md`](../planned/plan-0.2.5.md)
+- 专题索引：[`docs/planned/0.2.5/README.md`](../planned/0.2.5/README.md)
+- 当前状态：执行草案 / 待实现。
+- 主方向：训练中心与长期目标历史。
+- 基调：把轻目标变成可回看的长期自我管理系统，但不做训练游戏、课程平台或 AI 教练。
+- 2026-05-28：新增 0.2.5 短入口和专题文档，范围包括 Training Center 条件、目标历史、跨周期反馈、默认不新增 schema、入口导航、Safety / Privacy Rails、候选刀序和归档候选能力。
+- 2026-05-28：完成 0.2.5 第一轮一致性审计，确认默认不新增 schema；Training Center 先作为复盘 / 统计区域内的二级工作台或 tab，不新增顶级导航；长期反馈只做事实、稳定性和缺口提示，不做评分、排名、打卡压力或诊断。
+- 2026-05-28：补齐 0.2.5 刀 1 - 刀 5 执行文档和实现交接摘要，覆盖代码状态与数据校准、目标历史工作台、跨周期进度反馈、入口 UI / Dashboard、Safety / Privacy 审计。0.2.5 实现必须先完成刀 1；若 0.2.4 训练目标数据尚未真实落地，应停止 0.2.5 实现，回到 0.2.4 或重新规划。
+
+### 0.2.6 执行草案
+
+- 文档：[`docs/planned/plan-0.2.6.md`](../planned/plan-0.2.6.md)
+- 专题索引：[`docs/planned/0.2.6/README.md`](../planned/0.2.6/README.md)
+- 当前状态：执行草案 / 待实现。
+- 主方向：数据安全与长期数据承诺。
+- 基调：让复杂本地数据长期可信、可检查、可恢复。
+- 2026-05-28：新增 0.2.6 短入口和专题文档，范围包括 JSON backup 完整契约、dataVersion、import preview、snapshot integrity、linked ids / orphan / one-way relation、training goal / check-in 完整性、只读恢复预检、CSV / Markdown 可读导出边界和 Safety / Privacy Rails。
+- 2026-05-28：补齐 0.2.6 刀 1 - 刀 6 执行文档和实现交接摘要，覆盖数据契约审计、Import Preview 风险矩阵、Snapshot Integrity 扩展、只读恢复预检、CSV / Markdown 可读导出边界和 Safety / Privacy 审计。0.2.6 实现必须先完成刀 1；如果 0.2.2 - 0.2.5 数据尚未真实落地，应按真实代码状态缩小范围。
+- 2026-05-28：纳入用户反馈插刀：导出默认必须是全部导出，日期区间只是可选筛选；数据生态提示“一键修复”时必须闭合到按钮或下一步动作；数据健康问题不能只跳转当天表单，必须展示具体字段 / 子项定位。
+- 2026-05-28：将用户反馈升级为 0.2.6 插刀 0，优先于数据契约审计执行；候选代码入口包括导出选项弹窗、export options model、profile maintenance、MyView 和 data health check。
 
 ## 候选方向
 
@@ -112,14 +154,16 @@
 - 2026-05-26：将 `docs/completed/plan-0.2.1.md` 从研究草案推进为执行草案，并新增决策清单。剩余动作不是继续发散讨论，而是在 0.2.0 完成后做代码状态校准和具体审计文档。
 - 2026-05-26：0.2.1 文档收尾，标记为方向讨论完成；新增 `docs/planned/plan-0.2.2.md` 作为下一个版本研究入口。
 - 2026-05-26：0.2.2 主方向确定为“把成人行为和色情使用记录补成可复盘的健康数据闭环”，文档从研究入口推进为研究草案。下一步优先讨论是否允许 schema/migration，以及色情使用记录是独立模块还是自慰/性行为扩展。
-- 2026-05-26：定下 0.2.2 数据模型边界：允许 schema / migration，但必须先产 `docs/planned/adult-behavior-data-model-0.2.2.md`，再写代码；任何 schema 改动必须同步 Dexie version、migration、导入/导出、快照完整性和测试；不重命名已有字段，不破坏旧数据读取。
+- 2026-05-26：定下 0.2.2 数据模型边界：允许 schema / migration，但必须先产 `docs/planned/0.2.2/adult-behavior-data-model.md`，再写代码；任何 schema 改动必须同步 Dexie version、migration、导入/导出、快照完整性和测试；不重命名已有字段，不破坏旧数据读取。
 - 2026-05-26：基于公开资料调研，定下色情使用建模方向：色情使用作为独立事件建模，同时允许被自慰/性行为记录引用为刺激源或上下文。原因是色情使用可以独立发生，不一定伴随自慰；自慰也可以不伴随色情；性行为也可能伴随色情内容。0.2.2 倾向支持多事件，而不是每天一个简单字段。
 - 2026-05-26：定下 Porn Use Event 字段方向：围绕健康复盘闭环设计，不做内容收藏。MVP 包括开始时间、时长、内容类型、来源类型、兴奋强度、是否进入自慰、是否射精、使用后状态；可选增强包括动机、控制感、超时、边缘控制、高潮强度、疲劳、满意度、睡眠影响、标签、备注和事件关联；明确不记录 URL、缩略图、图片/视频本体、演员名、成瘾布尔、非法内容审核字段或成人内容启用字段。
 - 2026-05-26：定下 Masturbation Event 字段方向：规范自慰事件并支持多次自慰事件。MVP 包括开始时间、时长、是否射精、高潮/射精强度、边缘控制、硬度、兴奋强度、刺激源、事后状态和满意度；可选增强包括疲劳、睡眠影响、控制感、超时、次数、射精次数、关联色情使用/性行为、标签和备注。现有自慰内容 item/editor 暂不强行推翻，先通过 tags/notes/关联能力兼容。
 - 2026-05-26：定下 Sex Event 字段方向：规范性行为事件，但不全面重做 SexRecord 体验。Sex event 与 Porn/Masturbation 对齐，支持多事件、硬度、射精、满意度、事后状态、疲劳、睡眠影响和事件关联；重点新增 `pornInvolved`、`pornUseContext`、`linkedPornUseEventIds`，用于记录性交前/中/后色情刺激或伴侣共同观看。现有 SexRecord 主体结构保留，通过 adapter 或字段映射接入新闭环。
-- 2026-05-26：将 0.2.2 推进为执行草案，并定下事件关系模型：Porn use、Masturbation、Sex event 全部使用稳定独立事件 ID，允许多对多关联；不用通用 `relatedEventIds` 作为主方案，采用类型化 linked ids；支持创建流程内自动关联和用户手动关联；不做级联删除、复杂自动推断或云端同步。第一刀必须产 `docs/planned/adult-behavior-data-model-0.2.2.md`，把产品决策转成 TypeScript 类型、Dexie schema、migration、导入导出、快照完整性和测试清单。
+- 2026-05-26：将 0.2.2 推进为执行草案，并定下事件关系模型：Porn use、Masturbation、Sex event 全部使用稳定独立事件 ID，允许多对多关联；不用通用 `relatedEventIds` 作为主方案，采用类型化 linked ids；支持创建流程内自动关联和用户手动关联；不做级联删除、复杂自动推断或云端同步。第一刀必须产 `docs/planned/0.2.2/adult-behavior-data-model.md`，把产品决策转成 TypeScript 类型、Dexie schema、migration、导入导出、快照完整性和测试清单。
 - 2026-05-26：定下 0.2.2 刀序：刀 40 数据模型文档；刀 41 schema/migration/domain types；刀 42 storage/import/export/snapshot integrity；刀 43 Porn use event model；刀 44 Masturbation event alignment；刀 45 Sex event mapping/adapter；刀 46 UI entry points + minimal forms；刀 47 Event linking UI；刀 48 Basic review loop；刀 49 golden path + docs + version close。
 - 2026-05-26：0.2.2 文档收尾，新增收尾结论和决策清单，进入可接手执行草案状态。后续不再扩展 0.2.2 产品范围，新想法进入 0.2.3+；下一步从刀 40 的数据模型文档开始。
+- 2026-05-28：刀 40 数据模型文档集完成，`docs/planned/0.2.2/adult-behavior-data-model.md` 从占位推进为执行草案 / 待实现入口，并拆分为类型字段、schema/migration、导入导出与完整性、事件关联、测试验收 5 个专题文档。已定三张独立事件表 `porn_use_events` / `masturbation_events` / `sex_events`、共同基础字段、PornUseEvent / MasturbationEvent / SexEvent 类型草案、Dexie schema v7、migration 方案、导入导出和 snapshot integrity 策略、事件关联策略与测试清单。新增 `docs/planned/0.2.2/knife-41.md` 作为刀 41 执行拆解。0.2.2 下一步进入刀 41：schema / migration / domain types；实现前必须重新检查当前代码状态和 dirty worktree。
+- 2026-05-28：0.2.2 刀 41 - 刀 49 均已拆出独立执行文档，覆盖 schema/migration/domain types、storage/import-export/snapshot integrity、三类事件模型、最小 UI、事件关联 UI、基础复盘和版本收口。短期实现仍从刀 41 开始，不越过边界。
 - 2026-05-26：新增 `docs/planned/plan-0.2.3.md`，主方向定为洞察与复盘增强。0.2.3 承接 0.2.2 的成人行为与色情使用结构化数据，目标是让硬度、性行为、自淫/自慰、色情使用、射精、睡眠、酒精、运动、压力、疲劳和满意度形成可解释复盘系统。
 - 2026-05-26：定下 0.2.3 统计模型边界：允许新增轻量 `adult behavior review engine`，用于时间关系、趋势、共现、样本量和弱相关观察；不做医学诊断、成瘾判定、道德判断、强因果结论、云端模型或复杂黑箱模型。
 - 2026-05-26：定下 0.2.3 复盘中心：做综合“成人行为复盘”入口，但首屏主指标围绕硬度/勃起质量和恢复。色情使用、自淫/自慰、性行为、射精、边缘控制等作为解释健康状态的关键上下文，不把产品做成单纯色情使用统计器。

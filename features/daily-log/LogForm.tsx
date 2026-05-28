@@ -1,18 +1,19 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import {
     Plus, Heart, Hand, Dumbbell,
     StickyNote, Check, Trash2, MapPin,
     Sparkles, Sun, Cloud, CloudRain,
     Snowflake, Wind, CloudFog, Home, Navigation, Hotel, Plane,
-    Shirt, Droplets, ShieldAlert, Search, Coffee, Edit3, Beer, RotateCcw
+    Shirt, Droplets, ShieldAlert, Search, Coffee, Edit3, Beer, RotateCcw, Flame
 } from 'lucide-react';
 import { ConfirmModal, RecordCard, Switch } from '../../shared/ui';
 import BeverageModal from './BeverageModal';
 import ExerciseRecordModal from './ExerciseRecordModal';
 import AlcoholRecordModal from './AlcoholRecordModal';
 import NapRecordModal from './NapRecordModal';
+import PornUseRecordModal from './PornUseRecordModal';
 import { SexRecordModal, MasturbationRecordModal } from '../sex-life';
-import type { LogEntry, PartnerProfile, AlcoholRecord, TagEntry, TagType } from '../../domain';
+import type { LogEntry, PartnerProfile, AlcoholRecord, TagEntry, TagType, PornUseEvent } from '../../domain';
 import MorningSection from './MorningSection';
 import SleepSection from './SleepSection';
 import { FaceSelector, MOOD_FACES, STRESS_FACES } from '../../shared/ui';
@@ -21,6 +22,8 @@ import { calculateDataQuality } from '../../domain';
 import { hydrateLog } from '../../core/storage';
 import { MENSTRUAL_OPTIONS, SUPPLEMENT_OPTIONS, type MidTabType } from './model/logFormData';
 import QualityScoreRing from './QualityScoreRing';
+import { StorageService } from '../../core/storage';
+import AdultBehaviorTimeline from '../sex-life/ui/AdultBehaviorTimeline';
 
 interface LogFormData {
   existingLog: LogEntry | null;
@@ -106,8 +109,15 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
     });
 
     const [activeMidTab, setActiveMidTab] = useState<MidTabType>('sex');
-    const [modalState, setModalState] = useState({ bev: false, sex: false, mb: false, ex: false, alc: false, nap: false });
+    const [modalState, setModalState] = useState({ bev: false, sex: false, mb: false, ex: false, alc: false, nap: false, pu: false });
     const [eventSearch, setEventSearch] = useState('');
+    const [pornUseEvents, setPornUseEvents] = useState<PornUseEvent[]>([]);
+
+    // Load porn use events for the current target date
+    useEffect(() => {
+      if (!log.date) return;
+      StorageService.pornUseEvents.queries.byTargetDate(log.date).then(setPornUseEvents).catch(() => {});
+    }, [log.date]);
     
     // 编辑中的单项数据
     const [editTarget, setEditTarget] = useState<{ type: string, data: any } | null>(null);
@@ -354,6 +364,24 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
                     {activeMidTab === 'sex' && (
                         <div className="space-y-5 animate-in fade-in duration-slow">
                             <div className="space-y-3">
+                                {pornUseEvents.map(pu => (
+                                    <RecordCard
+                                        key={pu.id}
+                                        kind="note"
+                                        icon={<Flame size={18}/>}
+                                        title="色情使用"
+                                        meta={`${pu.startedAt.slice(11, 16)}${pu.durationMinutes ? ` · ${pu.durationMinutes}分` : ''}`}
+                                        subline={pu.contentTypes.length > 0 ? pu.contentTypes.join(', ') : undefined}
+                                        onEdit={() => {
+                                          setEditTarget({ type: 'pu', data: pu });
+                                          setModalState(s => ({ ...s, pu: true }));
+                                        }}
+                                        onDelete={async () => {
+                                          await StorageService.pornUseEvents.delete(pu.id);
+                                          setPornUseEvents(prev => prev.filter(e => e.id !== pu.id));
+                                        }}
+                                    />
+                                ))}
                                 {log.masturbation?.map(m => (
                                     <RecordCard
                                         key={m.id}
@@ -378,17 +406,28 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
                                         onDelete={() => removeItem('sex', s.id)}
                                     />
                                 ))}
-                                {!log.masturbation?.length && !log.sex?.length && (
+                                {!log.masturbation?.length && !log.sex?.length && !pornUseEvents.length && (
                                     <p className="text-[11px] text-text-muted/70 italic pl-1">今天没有性活动记录</p>
                                 )}
                             </div>
                             <div className="flex gap-3">
+                                <button onClick={() => { setEditTarget(null); setModalState(s => ({ ...s, pu: true })); }} className="flex-1 py-4 bg-accent-vivid/10 text-accent-vivid rounded-2xl font-black text-xs flex items-center justify-center gap-2 border border-accent-vivid/25 active:scale-95 transition-all">
+                                    <Flame size={16} /> 色情使用
+                                </button>
                                 <button onClick={() => { setEditTarget(null); setModalState(s => ({ ...s, sex: true })); }} className="flex-1 py-4 bg-accent-vivid/10 text-accent-vivid rounded-2xl font-black text-xs flex items-center justify-center gap-2 border border-accent-vivid/25 active:scale-95 transition-all">
                                     <Heart size={16} fill="currentColor" fillOpacity={0.2} /> 记录性爱
                                 </button>
                                 <button onClick={() => { setEditTarget(null); setModalState(s => ({ ...s, mb: true })); }} className="flex-1 py-4 bg-state-info-bg text-state-info-text rounded-2xl font-black text-xs flex items-center justify-center gap-2 border border-state-info-text/25 active:scale-95 transition-all">
                                     <Hand size={16} /> 记录自慰
                                 </button>
+                            </div>
+
+                            {/* 成人行为时间线 */}
+                            <div>
+                                <div className="flex items-center text-accent-vivid font-bold text-xs uppercase tracking-wider mb-3">
+                                    <Flame size={14} className="mr-1.5"/> 行为时间线
+                                </div>
+                                <AdultBehaviorTimeline targetDate={log.date} />
                             </div>
                         </div>
                     )}
@@ -829,6 +868,19 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
                             touchedPaths: Array.from(new Set([...(prev.touchedPaths || []), 'caffeineRecord.items', 'caffeineRecord.totalCount']))
                         }));
                     }
+                }}
+            />
+            <PornUseRecordModal
+                isOpen={modalState.pu}
+                onClose={() => { setModalState(s => ({ ...s, pu: false })); setEditTarget(null); }}
+                initialData={editTarget?.type === 'pu' ? editTarget.data : undefined}
+                dateStr={log.date}
+                onSave={(event) => {
+                    setPornUseEvents(prev => {
+                        const exists = prev.find(e => e.id === event.id);
+                        return exists ? prev.map(e => e.id === event.id ? event : e) : [...prev, event];
+                    });
+                    setModalState(s => ({ ...s, pu: false }));
                 }}
             />
             <SexRecordModal

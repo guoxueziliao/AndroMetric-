@@ -24,17 +24,23 @@
 
 当前开发线：
 
-- 暂无实现中的版本计划。下一条开发线是 0.2.2，但进入代码前必须先完成数据模型文档。
+- 0.2.2 代码实现完成（刀 41-49），待发布。下一步进入 0.2.3。
 
 ## Planned
 
 已讨论或正在讨论、待后续执行的版本计划：
 
 - [planned/plan-0.2.2.md](./planned/plan-0.2.2.md)：成人行为与色情使用记录闭环。
-- [planned/adult-behavior-data-model-0.2.2.md](./planned/adult-behavior-data-model-0.2.2.md)：0.2.2 开发前置数据模型文档（待产出）。
-- [planned/plan-0.2.3.md](./planned/plan-0.2.3.md)：洞察与复盘增强。
-- [planned/plan-0.2.4.md](./planned/plan-0.2.4.md)：养成系与关系/表现训练。
-- [planned/training-data-model-0.2.4.md](./planned/training-data-model-0.2.4.md)：0.2.4 训练与轻目标数据模型。
+- [planned/0.2.2/README.md](./planned/0.2.2/README.md)：0.2.2 专题文档与刀 41 - 刀 49 索引。
+- [planned/0.2.2/knife-41.md](./planned/0.2.2/knife-41.md)：刀 41 执行拆解（已完成，schema / migration / domain types）。
+- [planned/plan-0.2.3.md](./planned/plan-0.2.3.md)：洞察与复盘增强文档集入口。
+- [planned/0.2.3/README.md](./planned/0.2.3/README.md)：0.2.3 专题文档索引。
+- [planned/plan-0.2.4.md](./planned/plan-0.2.4.md)：养成系与关系/表现训练文档集入口。
+- [planned/0.2.4/README.md](./planned/0.2.4/README.md)：0.2.4 专题文档索引。
+- [planned/plan-0.2.5.md](./planned/plan-0.2.5.md)：训练中心与长期目标历史文档集入口。
+- [planned/0.2.5/README.md](./planned/0.2.5/README.md)：0.2.5 专题文档索引。
+- [planned/plan-0.2.6.md](./planned/plan-0.2.6.md)：数据安全与长期数据承诺文档集入口。
+- [planned/0.2.6/README.md](./planned/0.2.6/README.md)：0.2.6 专题文档索引。
 
 ## Roadmap
 

@@ -1,4 +1,4 @@
-import { CycleEvent, LogEntry, PregnancyEvent, type ExportSnapshot, type PartnerProfile, type TagEntry } from '../types';
+import { CycleEvent, LogEntry, PregnancyEvent, type ExportSnapshot, type PartnerProfile, type TagEntry, type PornUseEvent, type MasturbationEvent, type SexEvent } from '../types';
 import { APP_VERSION } from '../app/appConfig';
 import { LATEST_VERSION } from '../core/storage/migration';
 import { fileSystemService, FileSystemService } from './FileSystemService';
@@ -142,7 +142,10 @@ export class BackupService {
     partners?: PartnerProfile[],
     tags?: TagEntry[],
     cycleEvents?: CycleEvent[],
-    pregnancyEvents?: PregnancyEvent[]
+    pregnancyEvents?: PregnancyEvent[],
+    pornUseEvents?: PornUseEvent[],
+    masturbationEvents?: MasturbationEvent[],
+    sexEvents?: SexEvent[]
   ): Promise<boolean> {
     if (!this.fileSystem.isReady()) {
       Logger.warn('BackupService:BackupSkipped', { reason: 'File system not ready' });
@@ -151,7 +154,7 @@ export class BackupService {
 
     try {
       const filename = this.generateBackupFilename();
-      const data = this.prepareBackupData(logs, partners, tags, cycleEvents, pregnancyEvents);
+      const data = this.prepareBackupData(logs, partners, tags, cycleEvents, pregnancyEvents, pornUseEvents, masturbationEvents, sexEvents);
 
       const success = await this.fileSystem.writeBackupFile(data, filename);
       if (success) {
@@ -176,13 +179,16 @@ export class BackupService {
     partners?: PartnerProfile[],
     tags?: TagEntry[],
     cycleEvents?: CycleEvent[],
-    pregnancyEvents?: PregnancyEvent[]
+    pregnancyEvents?: PregnancyEvent[],
+    pornUseEvents?: PornUseEvent[],
+    masturbationEvents?: MasturbationEvent[],
+    sexEvents?: SexEvent[]
   ): Promise<boolean> {
     if (!this.settings.autoBackupEnabled) {
       return false;
     }
 
-    return this.writeBackup(logs, partners, tags, cycleEvents, pregnancyEvents);
+    return this.writeBackup(logs, partners, tags, cycleEvents, pregnancyEvents, pornUseEvents, masturbationEvents, sexEvents);
   }
 
   async manualBackup(
@@ -190,7 +196,10 @@ export class BackupService {
     partners?: PartnerProfile[],
     tags?: TagEntry[],
     cycleEvents?: CycleEvent[],
-    pregnancyEvents?: PregnancyEvent[]
+    pregnancyEvents?: PregnancyEvent[],
+    pornUseEvents?: PornUseEvent[],
+    masturbationEvents?: MasturbationEvent[],
+    sexEvents?: SexEvent[]
   ): Promise<boolean> {
     if (!this.fileSystem.isReady()) {
       const setupSuccess = await this.setupBackupDirectory();
@@ -199,7 +208,7 @@ export class BackupService {
       }
     }
 
-    return this.writeBackup(logs, partners, tags, cycleEvents, pregnancyEvents);
+    return this.writeBackup(logs, partners, tags, cycleEvents, pregnancyEvents, pornUseEvents, masturbationEvents, sexEvents);
   }
 
   generateBackupFilename(): string {
@@ -215,7 +224,10 @@ export class BackupService {
     partners?: PartnerProfile[],
     tags?: TagEntry[],
     cycleEvents?: CycleEvent[],
-    pregnancyEvents?: PregnancyEvent[]
+    pregnancyEvents?: PregnancyEvent[],
+    pornUseEvents?: PornUseEvent[],
+    masturbationEvents?: MasturbationEvent[],
+    sexEvents?: SexEvent[]
   ): ExportSnapshot {
     return {
       appName: '硬度日记',
@@ -230,7 +242,10 @@ export class BackupService {
         partners: partners || [],
         tags: tags || [],
         cycleEvents: cycleEvents || [],
-        pregnancyEvents: pregnancyEvents || []
+        pregnancyEvents: pregnancyEvents || [],
+        pornUseEvents: pornUseEvents || [],
+        masturbationEvents: masturbationEvents || [],
+        sexEvents: sexEvents || []
       }
     };
   }

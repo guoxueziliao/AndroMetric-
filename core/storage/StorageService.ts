@@ -1,5 +1,5 @@
 import { db } from './db';
-import { CycleEvent, LogEntry, PartnerProfile, PregnancyEvent, Snapshot, TagEntry, DataQualitySource, type AppSettings, type SnapshotData, type ExportSnapshot } from '../../domain';
+import { CycleEvent, LogEntry, PartnerProfile, PregnancyEvent, Snapshot, TagEntry, DataQualitySource, type AppSettings, type SnapshotData, type ExportSnapshot, type PornUseEvent, type MasturbationEvent, type SexEvent } from '../../domain';
 import { validateLogEntry } from '../../utils/validators';
 import { runMigrations, runPartnerMigrations, LATEST_VERSION } from './migration';
 import { pluginManager } from '../../services/PluginManager';
@@ -13,7 +13,14 @@ import { APP_VERSION } from '../../app/appConfig';
 import { getSnapshotIdsToPruneForRetention, getSnapshotSizeBytes, normalizeBackupRetention } from './snapshotRetention';
 import { addSnapshotWithReadbackCheck } from './snapshotIntegrity';
 import { getIdleAutoBackupStatus, LAST_AUTO_BACKUP_META_KEY } from './autoBackup';
-import { mergeLogsForImport, type ImportConflictResolution } from './importMerge';
+
+const autoBackupAll = async (allLogs: LogEntry[], allPartners: PartnerProfile[], allTags: TagEntry[], allCycleEvents: CycleEvent[], allPregnancyEvents: PregnancyEvent[]) => {
+  const [pu, mb, sx] = await Promise.all([db.porn_use_events.toArray(), db.masturbation_events.toArray(), db.sex_events.toArray()]);
+  backupService.autoBackup(allLogs, allPartners, allTags, allCycleEvents, allPregnancyEvents, pu, mb, sx).catch(err => {
+    Logger.warn('StorageService:AutoBackupFailed', err);
+  });
+};
+import { mergeLogsForImport, mergeEventsForImport, type ImportConflictResolution } from './importMerge';
 import { assertStorageCanCreateSnapshot, notifyStorageUsageChanged } from './storageEstimate';
 
 const readSnapshotLocalState = (): Pick<ExportSnapshot, 'settings' | 'userName'> => {
@@ -36,14 +43,20 @@ const buildSnapshotData = (
     partners: PartnerProfile[],
     tags: TagEntry[],
     cycleEvents: CycleEvent[],
-    pregnancyEvents: PregnancyEvent[]
+    pregnancyEvents: PregnancyEvent[],
+    pornUseEvents: PornUseEvent[] = [],
+    masturbationEvents: MasturbationEvent[] = [],
+    sexEvents: SexEvent[] = []
 ): SnapshotData => ({
     version: LATEST_VERSION,
     logs,
     partners,
     tags,
     cycleEvents,
-    pregnancyEvents
+    pregnancyEvents,
+    pornUseEvents,
+    masturbationEvents,
+    sexEvents
 });
 
 const normalizeImportedSnapshots = (snapshots: unknown[]): Snapshot[] => (
@@ -122,6 +135,9 @@ export const StorageService = {
         const tags = await db.tags.toArray();
         const cycleEvents = await db.cycle_events.toArray();
         const pregnancyEvents = await db.pregnancy_events.toArray();
+        const pornUseEvents = await db.porn_use_events.toArray();
+        const masturbationEvents = await db.masturbation_events.toArray();
+        const sexEvents = await db.sex_events.toArray();
         const localState = readSnapshotLocalState();
 
         const snapshot: ExportSnapshot = {
@@ -131,7 +147,7 @@ export const StorageService = {
             exportDate: new Date().toISOString(),
             settings: localState.settings,
             userName: localState.userName,
-            data: buildSnapshotData(logs, partners, tags, cycleEvents, pregnancyEvents)
+            data: buildSnapshotData(logs, partners, tags, cycleEvents, pregnancyEvents, pornUseEvents, masturbationEvents, sexEvents)
         };
         return JSON.stringify(snapshot, null, 2);
     },
@@ -154,18 +170,32 @@ export const StorageService = {
             const newCycleEvents = Array.isArray(data.cycleEvents) ? data.cycleEvents : [];
             const newPregnancyEvents = Array.isArray(data.pregnancyEvents) ? data.pregnancyEvents : [];
             const newSnapshots = normalizeImportedSnapshots(Array.isArray(data.snapshots) ? data.snapshots : []);
+            // 三类成人行为事件（来自 migration 或导入数据）
+            const newPornUseEvents: PornUseEvent[] = migratedData.pornUseEvents ?? [];
+            const newMasturbationEvents: MasturbationEvent[] = migratedData.masturbationEvents ?? [];
+            const newSexEvents: SexEvent[] = migratedData.sexEvents ?? [];
             const logsToImport = strategy === 'merge'
                 ? mergeLogsForImport(await db.logs.toArray(), newLogs, conflictResolution)
                 : newLogs;
+            // 三类事件按 id 合并（merge 时）或直接覆盖
+            const [existingPU, existingMB, existingSX] = strategy === 'merge'
+                ? await Promise.all([db.porn_use_events.toArray(), db.masturbation_events.toArray(), db.sex_events.toArray()])
+                : [[], [], []] as [PornUseEvent[], MasturbationEvent[], SexEvent[]];
+            const puToImport = strategy === 'merge' ? mergeEventsForImport(existingPU, newPornUseEvents, conflictResolution) : newPornUseEvents;
+            const mbToImport = strategy === 'merge' ? mergeEventsForImport(existingMB, newMasturbationEvents, conflictResolution) : newMasturbationEvents;
+            const sxToImport = strategy === 'merge' ? mergeEventsForImport(existingSX, newSexEvents, conflictResolution) : newSexEvents;
 
             // 2. 写入数据库
-            await db.transaction('rw', [db.logs, db.partners, db.tags, db.meta, db.cycle_events, db.pregnancy_events, db.snapshots], async () => {
+            await db.transaction('rw', [db.logs, db.partners, db.tags, db.meta, db.cycle_events, db.pregnancy_events, db.snapshots, db.porn_use_events, db.masturbation_events, db.sex_events], async () => {
                 if (strategy === 'overwrite') {
                     await db.logs.clear();
                     await db.partners.clear();
                     await db.tags.clear();
                     await db.cycle_events.clear();
                     await db.pregnancy_events.clear();
+                    await db.porn_use_events.clear();
+                    await db.masturbation_events.clear();
+                    await db.sex_events.clear();
                 }
                 await db.logs.bulkPut(logsToImport);
                 if (newPartners.length > 0) await db.partners.bulkPut(newPartners);
@@ -173,6 +203,9 @@ export const StorageService = {
                 if (newCycleEvents.length > 0) await db.cycle_events.bulkPut(newCycleEvents);
                 if (newPregnancyEvents.length > 0) await db.pregnancy_events.bulkPut(newPregnancyEvents);
                 if (newSnapshots.length > 0) await db.snapshots.bulkAdd(newSnapshots);
+                if (puToImport.length > 0) await db.porn_use_events.bulkPut(puToImport);
+                if (mbToImport.length > 0) await db.masturbation_events.bulkPut(mbToImport);
+                if (sxToImport.length > 0) await db.sex_events.bulkPut(sxToImport);
 
                 // 同步数据版本号，避免导入后再次触发 migration
                 await db.meta.put({ key: 'dataVersion', value: LATEST_VERSION });
@@ -236,7 +269,7 @@ export const StorageService = {
      * Clears all data from IndexedDB.
      */
     async clearAllData(): Promise<void> {
-        await db.transaction('rw', [db.logs, db.partners, db.meta, db.system_logs, db.snapshots, db.tags, db.cycle_events, db.pregnancy_events], async () => {
+        await db.transaction('rw', [db.logs, db.partners, db.meta, db.system_logs, db.snapshots, db.tags, db.cycle_events, db.pregnancy_events, db.porn_use_events, db.masturbation_events, db.sex_events], async () => {
             await Promise.all([
                 db.logs.clear(),
                 db.partners.clear(),
@@ -245,7 +278,10 @@ export const StorageService = {
                 db.snapshots.clear(),
                 db.tags.clear(),
                 db.cycle_events.clear(),
-                db.pregnancy_events.clear()
+                db.pregnancy_events.clear(),
+                db.porn_use_events.clear(),
+                db.masturbation_events.clear(),
+                db.sex_events.clear()
             ]);
         });
     },
@@ -300,9 +336,13 @@ export const StorageService = {
             const tags = await db.tags.toArray();
             const cycleEvents = await db.cycle_events.toArray();
             const pregnancyEvents = await db.pregnancy_events.toArray();
+            const pornUseEvents = await db.porn_use_events.toArray();
+            const masturbationEvents = await db.masturbation_events.toArray();
+            const sexEvents = await db.sex_events.toArray();
             const meta = await db.meta.get('dataVersion');
             const dataVersion = meta ? meta.value : LATEST_VERSION;
             const localState = readSnapshotLocalState();
+            const snapshotData = buildSnapshotData(logs, partners, tags, cycleEvents, pregnancyEvents, pornUseEvents, masturbationEvents, sexEvents);
 
             const snapshot: Snapshot = {
                 timestamp: Date.now(),
@@ -310,10 +350,10 @@ export const StorageService = {
                 appVersion: APP_VERSION,
                 description,
                 kind,
-                sizeBytes: JSON.stringify(buildSnapshotData(logs, partners, tags, cycleEvents, pregnancyEvents)).length,
+                sizeBytes: JSON.stringify(snapshotData).length,
                 settings: localState.settings,
                 userName: localState.userName,
-                data: buildSnapshotData(logs, partners, tags, cycleEvents, pregnancyEvents)
+                data: snapshotData
             };
 
             await addSnapshotWithReadbackCheck(snapshot, db.snapshots);
@@ -336,17 +376,23 @@ export const StorageService = {
             const data = snapshot.data;
             const normalizedPartners = runPartnerMigrations(data.partners || [], snapshot.dataVersion || LATEST_VERSION);
 
-            await db.transaction('rw', [db.logs, db.partners, db.tags, db.meta, db.cycle_events, db.pregnancy_events], async () => {
+            await db.transaction('rw', [db.logs, db.partners, db.tags, db.meta, db.cycle_events, db.pregnancy_events, db.porn_use_events, db.masturbation_events, db.sex_events], async () => {
                 await db.logs.clear();
                 await db.partners.clear();
                 await db.tags.clear();
                 await db.cycle_events.clear();
                 await db.pregnancy_events.clear();
+                await db.porn_use_events.clear();
+                await db.masturbation_events.clear();
+                await db.sex_events.clear();
                 await db.logs.bulkAdd(data.logs);
                 if (normalizedPartners.length > 0) await db.partners.bulkAdd(normalizedPartners);
                 if (data.tags) await db.tags.bulkAdd(data.tags);
                 if (data.cycleEvents) await db.cycle_events.bulkAdd(data.cycleEvents);
                 if (data.pregnancyEvents) await db.pregnancy_events.bulkAdd(data.pregnancyEvents);
+                if (data.pornUseEvents && data.pornUseEvents.length > 0) await db.porn_use_events.bulkAdd(data.pornUseEvents);
+                if (data.masturbationEvents && data.masturbationEvents.length > 0) await db.masturbation_events.bulkAdd(data.masturbationEvents);
+                if (data.sexEvents && data.sexEvents.length > 0) await db.sex_events.bulkAdd(data.sexEvents);
                 await db.meta.put({ key: 'dataVersion', value: snapshot.dataVersion });
             });
 
@@ -392,9 +438,7 @@ export const StorageService = {
             const allTags = await db.tags.toArray();
             const allCycleEvents = await db.cycle_events.toArray();
             const allPregnancyEvents = await db.pregnancy_events.toArray();
-            backupService.autoBackup(allLogs, allPartners, allTags, allCycleEvents, allPregnancyEvents).catch(err => {
-                Logger.warn('StorageService:AutoBackupFailed', err);
-            });
+            autoBackupAll(allLogs, allPartners, allTags, allCycleEvents, allPregnancyEvents);
         },
         delete: async (id: string) => {
             await db.cycle_events.delete(id);
@@ -404,9 +448,7 @@ export const StorageService = {
             const allTags = await db.tags.toArray();
             const allCycleEvents = await db.cycle_events.toArray();
             const allPregnancyEvents = await db.pregnancy_events.toArray();
-            backupService.autoBackup(allLogs, allPartners, allTags, allCycleEvents, allPregnancyEvents).catch(err => {
-                Logger.warn('StorageService:AutoBackupFailed', err);
-            });
+            autoBackupAll(allLogs, allPartners, allTags, allCycleEvents, allPregnancyEvents);
         },
         bulkImport: (events: CycleEvent[]) => db.cycle_events.bulkPut(events)
     },
@@ -430,9 +472,7 @@ export const StorageService = {
             const allTags = await db.tags.toArray();
             const allCycleEvents = await db.cycle_events.toArray();
             const allPregnancyEvents = await db.pregnancy_events.toArray();
-            backupService.autoBackup(allLogs, allPartners, allTags, allCycleEvents, allPregnancyEvents).catch(err => {
-                Logger.warn('StorageService:AutoBackupFailed', err);
-            });
+            autoBackupAll(allLogs, allPartners, allTags, allCycleEvents, allPregnancyEvents);
         },
         delete: async (id: string) => {
             await db.pregnancy_events.delete(id);
@@ -442,11 +482,57 @@ export const StorageService = {
             const allTags = await db.tags.toArray();
             const allCycleEvents = await db.cycle_events.toArray();
             const allPregnancyEvents = await db.pregnancy_events.toArray();
-            backupService.autoBackup(allLogs, allPartners, allTags, allCycleEvents, allPregnancyEvents).catch(err => {
-                Logger.warn('StorageService:AutoBackupFailed', err);
-            });
+            autoBackupAll(allLogs, allPartners, allTags, allCycleEvents, allPregnancyEvents);
         },
         bulkImport: (events: PregnancyEvent[]) => db.pregnancy_events.bulkPut(events)
+    },
+
+    pornUseEvents: {
+        queries: {
+            all: () => db.porn_use_events.orderBy('startedAt').reverse().toArray(),
+            byTargetDate: (targetDate: string) => db.porn_use_events.where('targetDate').equals(targetDate).sortBy('startedAt'),
+            byId: (id: string) => db.porn_use_events.get(id),
+        },
+        save: async (event: PornUseEvent) => {
+            await db.porn_use_events.put(event);
+        },
+        delete: async (id: string) => {
+            await db.porn_use_events.delete(id);
+        },
+        bulkImport: (events: PornUseEvent[]) => db.porn_use_events.bulkPut(events),
+        clear: () => db.porn_use_events.clear(),
+    },
+
+    masturbationEvents: {
+        queries: {
+            all: () => db.masturbation_events.orderBy('startedAt').reverse().toArray(),
+            byTargetDate: (targetDate: string) => db.masturbation_events.where('targetDate').equals(targetDate).sortBy('startedAt'),
+            byId: (id: string) => db.masturbation_events.get(id),
+        },
+        save: async (event: MasturbationEvent) => {
+            await db.masturbation_events.put(event);
+        },
+        delete: async (id: string) => {
+            await db.masturbation_events.delete(id);
+        },
+        bulkImport: (events: MasturbationEvent[]) => db.masturbation_events.bulkPut(events),
+        clear: () => db.masturbation_events.clear(),
+    },
+
+    sexEvents: {
+        queries: {
+            all: () => db.sex_events.orderBy('startedAt').reverse().toArray(),
+            byTargetDate: (targetDate: string) => db.sex_events.where('targetDate').equals(targetDate).sortBy('startedAt'),
+            byId: (id: string) => db.sex_events.get(id),
+        },
+        save: async (event: SexEvent) => {
+            await db.sex_events.put(event);
+        },
+        delete: async (id: string) => {
+            await db.sex_events.delete(id);
+        },
+        bulkImport: (events: SexEvent[]) => db.sex_events.bulkPut(events),
+        clear: () => db.sex_events.clear(),
     },
 
     logs: {
@@ -471,9 +557,7 @@ save: async (log: LogEntry, source: DataQualitySource = 'manual') => {
       const allCycleEvents = await db.cycle_events.toArray();
       const allPregnancyEvents = await db.pregnancy_events.toArray();
 
-      backupService.autoBackup(allLogs, allPartners, allTags, allCycleEvents, allPregnancyEvents).catch(err => {
-        Logger.warn('StorageService:AutoBackupFailed', err);
-      });
+      autoBackupAll(allLogs, allPartners, allTags, allCycleEvents, allPregnancyEvents);
     },
         delete: async (date: string) => {
             await db.logs.delete(date);

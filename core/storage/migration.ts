@@ -1,9 +1,10 @@
-import { PartnerProfile, ReproductiveProfile, StoredData, LogEntry, SexRecordDetails, MasturbationRecordDetails, SexInteraction, SexAction, ExerciseRecord, MorningRecord, SleepRecord, ContentItem } from '../../domain';
+import { PartnerProfile, ReproductiveProfile, StoredData, LogEntry, SexRecordDetails, MasturbationRecordDetails, SexInteraction, SexAction, ExerciseRecord, MorningRecord, SleepRecord, ContentItem, PornUseEvent, MasturbationEvent, SexEvent } from '../../domain';
 import { buildDataQualityForLog } from '../../utils/dataQuality';
 import { scrubHistoricalDefaultContamination, flagLegacyMasturbationInference } from '../../utils/legacyDataCleanup';
+import { getActivityTargetDate } from '../../shared/lib/targetDate';
 
 // The latest version of our data structure.
-export const LATEST_VERSION = 46;
+export const LATEST_VERSION = 47;
 
 /**
  * MIGRATION UTILITIES
@@ -398,6 +399,188 @@ function migrateV45toV46(logs: any[]): LogEntry[] {
   return logs.map((log: LogEntry) => flagLegacyMasturbationInference(log).log);
 }
 
+// V47 (0.2.2): Build adult behavior event arrays from legacy logs
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Combine a log.date (YYYY-MM-DD) with a startTime (HH:mm) into an ISO datetime string.
+ * Falls back to fallbackTime when startTime is missing or empty.
+ */
+function combineDateAndTime(logDate: string, startTime: string | undefined, fallbackTime: string): string {
+  const time = startTime && startTime.trim() ? startTime : fallbackTime;
+  return `${logDate}T${time}:00`;
+}
+
+/**
+ * Derive the physiological-day targetDate from a combined ISO datetime string.
+ */
+function targetDateFromISO(iso: string): string {
+  return getActivityTargetDate(new Date(iso));
+}
+
+/**
+ * Build MasturbationEvent[] from a log's masturbation array.
+ *
+ * Rules (from adult-behavior-data-model-storage-migration.md):
+ * - id: reuse old record.id when present; otherwise deterministic mig_mb_${log.date}_${index}
+ * - duplicate ids: first keeps original, subsequent get ${id}_dup_${index} suffix
+ * - startTime fallback: '23:00'
+ * - targetDate: 03:00 physiological day rule
+ * - source: 'migration'
+ * - old contentItems/assets/materials/props do NOT generate PornUseEvent
+ */
+export function buildMasturbationEventsFromLogs(logs: LogEntry[]): MasturbationEvent[] {
+  const events: MasturbationEvent[] = [];
+  const seenIds = new Set<string>();
+
+  for (const log of logs) {
+    if (!Array.isArray(log.masturbation)) continue;
+
+    for (let index = 0; index < log.masturbation.length; index++) {
+      const m = log.masturbation[index];
+      const startedAt = combineDateAndTime(log.date, m.startTime, '23:00');
+      const targetDate = targetDateFromISO(startedAt);
+
+      // Resolve stable id
+      let id: string;
+      if (m.id && typeof m.id === 'string' && m.id.trim()) {
+        id = seenIds.has(m.id) ? `${m.id}_dup_${index}` : m.id;
+      } else {
+        id = `mig_mb_${log.date}_${index}`;
+      }
+      seenIds.add(id);
+
+      // Resolve status
+      const status: MasturbationEvent['status'] = m.status === 'inProgress' ? 'in_progress' : 'completed';
+
+      // Resolve timestamps
+      const updatedAt = typeof log.updatedAt === 'number' ? new Date(log.updatedAt).toISOString() : startedAt;
+
+      // Resolve numeric fields (null when not a valid positive number)
+      const durationMinutes = typeof m.duration === 'number' && m.duration > 0 ? m.duration : null;
+      const ejaculated = typeof m.ejaculation === 'boolean' ? m.ejaculation : null;
+      const orgasmIntensity = typeof m.orgasmIntensity === 'number' && m.orgasmIntensity >= 1 && m.orgasmIntensity <= 5
+        ? m.orgasmIntensity as MasturbationEvent['orgasmIntensity']
+        : null;
+      const edging: MasturbationEvent['edging'] =
+        m.edging === 'single' || m.edging === 'multiple' ? m.edging : 'none';
+      const satisfaction = typeof m.satisfactionLevel === 'number' && m.satisfactionLevel >= 1 && m.satisfactionLevel <= 5
+        ? m.satisfactionLevel as MasturbationEvent['satisfaction']
+        : null;
+
+      events.push({
+        id,
+        startedAt,
+        targetDate,
+        createdAt: updatedAt,
+        updatedAt,
+        status,
+        source: 'migration',
+        notes: typeof m.notes === 'string' ? m.notes : undefined,
+        durationMinutes,
+        ejaculated,
+        orgasmIntensity,
+        edging,
+        hardnessLevel: null,
+        arousalLevel: null,
+        stimulationSources: [],
+        afterState: [],
+        satisfaction,
+        sessionCount: 1,
+        ejaculationCount: ejaculated === true ? 1 : null,
+        linkedPornUseEventIds: [],
+        linkedSexEventIds: [],
+      });
+    }
+  }
+
+  return events;
+}
+
+/**
+ * Build SexEvent[] from a log's sex array.
+ *
+ * Rules (from adult-behavior-data-model-storage-migration.md):
+ * - id: reuse old record.id when present; otherwise deterministic mig_sex_${log.date}_${index}
+ * - duplicate ids: first keeps original, subsequent get ${id}_dup_${index} suffix
+ * - startTime fallback: '22:00'
+ * - targetDate: 03:00 physiological day rule
+ * - source: 'migration'
+ * - legacySexRecord: complete old record preserved
+ * - partnerScore is NOT mapped to satisfaction
+ */
+export function buildSexEventsFromLogs(logs: LogEntry[]): SexEvent[] {
+  const events: SexEvent[] = [];
+  const seenIds = new Set<string>();
+
+  for (const log of logs) {
+    if (!Array.isArray(log.sex)) continue;
+
+    for (let index = 0; index < log.sex.length; index++) {
+      const s = log.sex[index];
+      const startedAt = combineDateAndTime(log.date, s.startTime, '22:00');
+      const targetDate = targetDateFromISO(startedAt);
+
+      // Resolve stable id
+      let id: string;
+      if (s.id && typeof s.id === 'string' && s.id.trim()) {
+        id = seenIds.has(s.id) ? `${s.id}_dup_${index}` : s.id;
+      } else {
+        id = `mig_sex_${log.date}_${index}`;
+      }
+      seenIds.add(id);
+
+      // Resolve timestamps
+      const updatedAt = typeof log.updatedAt === 'number' ? new Date(log.updatedAt).toISOString() : startedAt;
+
+      // Resolve numeric fields
+      const durationMinutes = typeof s.duration === 'number' && s.duration > 0 ? s.duration : null;
+      const ejaculated = typeof s.ejaculation === 'boolean' ? s.ejaculation : null;
+
+      // partner: only use as partnerId if it looks like an id (starts with known prefixes),
+      // otherwise leave empty — we cannot safely infer a PartnerProfile id from a name string.
+      const partnerIds: string[] = [];
+
+      events.push({
+        id,
+        startedAt,
+        targetDate,
+        createdAt: updatedAt,
+        updatedAt,
+        status: 'completed',
+        source: 'migration',
+        notes: typeof s.notes === 'string' ? s.notes : undefined,
+        durationMinutes,
+        partnerIds,
+        interactionTypes: [],
+        penetration: 'unknown',
+        hardnessLevel: null,
+        ejaculated,
+        ejaculationContext: null,
+        orgasmIntensity: null,
+        satisfaction: null,
+        afterState: [],
+        pornInvolved: null,
+        legacySexRecord: s,
+        linkedPornUseEventIds: [],
+        linkedMasturbationEventIds: [],
+      });
+    }
+  }
+
+  return events;
+}
+
+// V47 (0.2.2): Adult behavior event table migration
+function migrateV46toV47(data: StoredData): StoredData {
+  return {
+    ...data,
+    pornUseEvents: data.pornUseEvents ?? [],
+    masturbationEvents: data.masturbationEvents ?? buildMasturbationEventsFromLogs(data.logs),
+    sexEvents: data.sexEvents ?? buildSexEventsFromLogs(data.logs),
+  };
+}
+
 /**
  * REPAIR UTILS
  */
@@ -470,11 +653,18 @@ export function runPartnerMigrations(partners: PartnerProfile[], currentVersion:
 export function runMigrations(data: any): StoredData {
   let currentVersion = 1;
   let rawLogs: any[] = [];
+  let existingPornUseEvents: PornUseEvent[] | undefined;
+  let existingMasturbationEvents: MasturbationEvent[] | undefined;
+  let existingSexEvents: SexEvent[] | undefined;
 
   if (typeof data === 'object' && data !== null && 'version' in data && 'logs' in data) {
     currentVersion = data.version;
     if (Array.isArray(data.logs)) rawLogs = data.logs;
     else if (data.logs && Array.isArray(data.logs.logs)) rawLogs = data.logs.logs;
+    // Preserve event arrays from imported data (if present)
+    if (Array.isArray(data.pornUseEvents)) existingPornUseEvents = data.pornUseEvents;
+    if (Array.isArray(data.masturbationEvents)) existingMasturbationEvents = data.masturbationEvents;
+    if (Array.isArray(data.sexEvents)) existingSexEvents = data.sexEvents;
   } else if (Array.isArray(data)) {
     currentVersion = 1;
     rawLogs = data;
@@ -486,7 +676,9 @@ export function runMigrations(data: any): StoredData {
 
   let migratedLogs = sanitizedLogs;
 
-  for (let v = currentVersion + 1; v <= LATEST_VERSION; v++) {
+  // Run log-level migrations (V1–V46)
+  const maxLogMigration = Math.min(LATEST_VERSION - 1, 46);
+  for (let v = currentVersion + 1; v <= maxLogMigration; v++) {
       const migrationFn = MIGRATION_REGISTRY[v];
       if (migrationFn) {
           try {
@@ -501,8 +693,23 @@ export function runMigrations(data: any): StoredData {
 
   migratedLogs = repairLogs(migratedLogs);
 
-  return {
-    version: LATEST_VERSION,
+  // Build base StoredData and run V47 (adult behavior events) if needed
+  const baseData: StoredData = {
+    version: Math.max(currentVersion, maxLogMigration),
     logs: migratedLogs,
+    pornUseEvents: existingPornUseEvents,
+    masturbationEvents: existingMasturbationEvents,
+    sexEvents: existingSexEvents,
+  };
+
+  let result: StoredData = baseData;
+  if (currentVersion < LATEST_VERSION) {
+    console.log(`[Migration] Running V46 -> V47 (adult behavior events)...`);
+    result = migrateV46toV47(baseData);
+  }
+
+  return {
+    ...result,
+    version: LATEST_VERSION,
   };
 }

@@ -2,7 +2,7 @@
 
 > 本文档是 0.2.0 全部刀数（刀 25 - 刀 31）的开发依据。讨论于 2026-05-20 定稿。
 > 后续若有新增/变更，**直接更新本文件**，不开新文档。
-> 软件版本管理约定（Semver / Tag / CHANGELOG / 主版本进升）见 [docs/completed/plan-0.1.2.md](../completed/plan-0.1.2.md)。
+> 软件版本管理约定（Semver / Tag / CHANGELOG / 主版本进升）见 [docs/completed/plan-0.1.2.md](./plan-0.1.2.md)。
 
 ## 背景
 

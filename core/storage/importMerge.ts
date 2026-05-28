@@ -121,3 +121,149 @@ export const mergeLogsForImport = (
     return current ? mergeLogEntryForImport(current, incoming, conflictResolution) : incoming;
   });
 };
+
+// ── Event merge (by id) ─────────────────────────────────────────────────────
+
+/**
+ * Merge incoming adult behavior events into current events by id.
+ *
+ * Rules (from adult-behavior-data-model-import-export-integrity.md):
+ * - id not in current: add
+ * - id in current, content identical: skip
+ * - id in current, content different: apply conflictResolution
+ *   - 'use-import': replace with incoming
+ *   - 'keep-current': keep current
+ *
+ * Does NOT merge by startedAt or targetDate. Only by id.
+ */
+export const mergeEventsForImport = <T extends { id: string }>(
+  currentEvents: T[],
+  incomingEvents: T[],
+  conflictResolution: ImportConflictResolution
+): T[] => {
+  const currentById = new Map(currentEvents.map((e) => [e.id, e]));
+  const result: T[] = [...currentEvents];
+
+  for (const incoming of incomingEvents) {
+    const current = currentById.get(incoming.id);
+    if (!current) {
+      // New event: add
+      result.push(incoming);
+    } else if (JSON.stringify(current) !== JSON.stringify(incoming)) {
+      // Conflict: apply resolution
+      if (conflictResolution === 'use-import') {
+        const index = result.findIndex((e) => e.id === incoming.id);
+        if (index >= 0) result[index] = incoming;
+      }
+      // 'keep-current': do nothing
+    }
+    // Same content: skip
+  }
+
+  return result;
+};
+
+// ── Adult event link issue detection ─────────────────────────────────────────
+
+export type AdultBehaviorSourceType = 'porn_use' | 'masturbation' | 'sex';
+
+export interface AdultEventLinkIssue {
+  severity: 'info' | 'warning' | 'error';
+  kind: 'orphan' | 'one_way' | 'duplicate_id' | 'missing_required_field';
+  sourceType: AdultBehaviorSourceType;
+  sourceId: string;
+  targetType?: AdultBehaviorSourceType;
+  targetId?: string;
+  message: string;
+}
+
+export interface AdultEventLinkInput {
+  pornUseEvents: { id: string; linkedMasturbationEventIds: string[]; linkedSexEventIds: string[] }[];
+  masturbationEvents: { id: string; linkedPornUseEventIds: string[]; linkedSexEventIds: string[] }[];
+  sexEvents: { id: string; linkedPornUseEventIds: string[]; linkedMasturbationEventIds: string[] }[];
+}
+
+/**
+ * Check adult event links for orphan and one-way issues.
+ * Pure function: no Dexie, no React, does not mutate input.
+ */
+export const checkAdultEventLinks = (input: AdultEventLinkInput): AdultEventLinkIssue[] => {
+  const issues: AdultEventLinkIssue[] = [];
+  const puIds = new Set(input.pornUseEvents.map((e) => e.id));
+  const mbIds = new Set(input.masturbationEvents.map((e) => e.id));
+  const sxIds = new Set(input.sexEvents.map((e) => e.id));
+
+  // Check duplicate IDs within each type
+  const checkDuplicates = (events: { id: string }[], sourceType: AdultBehaviorSourceType) => {
+    const seen = new Set<string>();
+    for (const e of events) {
+      if (seen.has(e.id)) {
+        issues.push({ severity: 'error', kind: 'duplicate_id', sourceType, sourceId: e.id, message: `重复 ID: ${e.id}` });
+      }
+      seen.add(e.id);
+    }
+  };
+  checkDuplicates(input.pornUseEvents, 'porn_use');
+  checkDuplicates(input.masturbationEvents, 'masturbation');
+  checkDuplicates(input.sexEvents, 'sex');
+
+  // Orphan: A points to B, but B does not exist
+  const checkOrphan = (
+    sourceId: string,
+    targetIds: string[],
+    sourceType: AdultBehaviorSourceType,
+    targetType: AdultBehaviorSourceType,
+    targetIdSet: Set<string>
+  ) => {
+    for (const targetId of targetIds) {
+      if (!targetIdSet.has(targetId)) {
+        issues.push({ severity: 'warning', kind: 'orphan', sourceType, sourceId, targetType, targetId, message: `${sourceType} ${sourceId} 指向不存在的 ${targetType} ${targetId}` });
+      }
+    }
+  };
+
+  // One-way: A points to B, B exists but does not point back to A
+  const checkOneWay = (
+    sourceId: string,
+    targetIds: string[],
+    sourceType: AdultBehaviorSourceType,
+    targetType: AdultBehaviorSourceType,
+    targetEvents: { id: string; linkedPornUseEventIds?: string[]; linkedMasturbationEventIds?: string[]; linkedSexEventIds?: string[] }[],
+    reverseField: string
+  ) => {
+    for (const targetId of targetIds) {
+      const target = targetEvents.find((e) => e.id === targetId);
+      if (!target) continue; // orphan already reported
+      const reverseIds: string[] = (target as Record<string, unknown>)[reverseField] as string[] ?? [];
+      if (!reverseIds.includes(sourceId)) {
+        issues.push({ severity: 'warning', kind: 'one_way', sourceType, sourceId, targetType, targetId, message: `${sourceType} ${sourceId} 指向 ${targetType} ${targetId}，但反向链接缺失` });
+      }
+    }
+  };
+
+  // Porn use events
+  for (const pu of input.pornUseEvents) {
+    checkOrphan(pu.id, pu.linkedMasturbationEventIds, 'porn_use', 'masturbation', mbIds);
+    checkOrphan(pu.id, pu.linkedSexEventIds, 'porn_use', 'sex', sxIds);
+    checkOneWay(pu.id, pu.linkedMasturbationEventIds, 'porn_use', 'masturbation', input.masturbationEvents, 'linkedPornUseEventIds');
+    checkOneWay(pu.id, pu.linkedSexEventIds, 'porn_use', 'sex', input.sexEvents, 'linkedPornUseEventIds');
+  }
+
+  // Masturbation events
+  for (const mb of input.masturbationEvents) {
+    checkOrphan(mb.id, mb.linkedPornUseEventIds, 'masturbation', 'porn_use', puIds);
+    checkOrphan(mb.id, mb.linkedSexEventIds, 'masturbation', 'sex', sxIds);
+    checkOneWay(mb.id, mb.linkedPornUseEventIds, 'masturbation', 'porn_use', input.pornUseEvents, 'linkedMasturbationEventIds');
+    checkOneWay(mb.id, mb.linkedSexEventIds, 'masturbation', 'sex', input.sexEvents, 'linkedMasturbationEventIds');
+  }
+
+  // Sex events
+  for (const sx of input.sexEvents) {
+    checkOrphan(sx.id, sx.linkedPornUseEventIds, 'sex', 'porn_use', puIds);
+    checkOrphan(sx.id, sx.linkedMasturbationEventIds, 'sex', 'masturbation', mbIds);
+    checkOneWay(sx.id, sx.linkedPornUseEventIds, 'sex', 'porn_use', input.pornUseEvents, 'linkedSexEventIds');
+    checkOneWay(sx.id, sx.linkedMasturbationEventIds, 'sex', 'masturbation', input.masturbationEvents, 'linkedSexEventIds');
+  }
+
+  return issues;
+};

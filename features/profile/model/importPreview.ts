@@ -1,5 +1,5 @@
 import { LATEST_VERSION } from '../../../core/storage/migration';
-import { computeLogConflicts, type LogImportConflict } from '../../../core/storage/importMerge';
+import { computeLogConflicts, checkAdultEventLinks, type LogImportConflict, type AdultEventLinkIssue } from '../../../core/storage/importMerge';
 import type { LogEntry } from '../../../domain';
 import { isEncryptedSnapshotJson } from '../../../shared/lib';
 
@@ -23,8 +23,12 @@ export interface ImportPreview {
     cycleEvents: number;
     pregnancyEvents: number;
     snapshots: number;
+    pornUseEvents: number;
+    masturbationEvents: number;
+    sexEvents: number;
   };
   conflicts: LogImportConflict[];
+  eventLinkIssues: AdultEventLinkIssue[];
 }
 
 const getArrayLength = (value: unknown): number => Array.isArray(value) ? value.length : 0;
@@ -52,6 +56,10 @@ export const buildImportPreview = (rawText: string, encrypted: boolean, currentL
     : typeof data.version === 'number' ? data.version : undefined;
   const incomingLogs = Array.isArray(data.logs) ? data.logs as Partial<LogEntry>[] : [];
 
+  const pornUseEvents = Array.isArray(data.pornUseEvents) ? data.pornUseEvents : [];
+  const masturbationEvents = Array.isArray(data.masturbationEvents) ? data.masturbationEvents : [];
+  const sexEvents = Array.isArray(data.sexEvents) ? data.sexEvents : [];
+
   return {
     rawText,
     encrypted,
@@ -67,9 +75,17 @@ export const buildImportPreview = (rawText: string, encrypted: boolean, currentL
       tags: getArrayLength(data.tags),
       cycleEvents: getArrayLength(data.cycleEvents),
       pregnancyEvents: getArrayLength(data.pregnancyEvents),
-      snapshots: getArrayLength(data.snapshots)
+      snapshots: getArrayLength(data.snapshots),
+      pornUseEvents: pornUseEvents.length,
+      masturbationEvents: masturbationEvents.length,
+      sexEvents: sexEvents.length,
     },
-    conflicts: computeLogConflicts(currentLogs, incomingLogs)
+    conflicts: computeLogConflicts(currentLogs, incomingLogs),
+    eventLinkIssues: checkAdultEventLinks({
+      pornUseEvents,
+      masturbationEvents,
+      sexEvents,
+    }),
   };
 };
 

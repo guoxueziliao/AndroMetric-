@@ -5,9 +5,9 @@
 
 ## Status
 
-- 状态：讨论中。
+- 状态：模型草案 / 刀 1 已定稿。
 - 所属版本：0.2.4。
-- 关联计划：[plan-0.2.4.md](./plan-0.2.4.md)。
+- 关联计划：[plan-0.2.4.md](../plan-0.2.4.md)。
 - 目标：用最小数据模型支撑“训练建议 + 进度反馈 + 轻目标”。
 
 ## Model Principle
@@ -239,6 +239,29 @@ UI 规则：
 - 删除目标不应删除历史成人行为事件或硬度记录。
 - `GoalCheckin` 缺失时，目标仍应可展示和归档。
 
+## Final Audit Decisions
+
+刀 1 已定：
+
+- 需要提供 `TrainingGoal.category` allowlist helper，例如 `isTrainingGoalCategory`。
+- 未知或禁用 `category` 不进入 active 数据；整条 `TrainingGoal` 跳过，并产生 integrity warning。
+- `targetWindowDays` 只允许 7 / 14；其他周期跳过目标并产生 integrity warning。
+- `goalId` 指向不存在目标的 `GoalCheckin` 保留，并标记 orphan integrity warning。
+- `cycleFeeling` 超出 1 - 5 时置空，并产生 integrity warning。
+- `windowStartDate` 晚于 `windowEndDate` 时，两个窗口字段置空，并产生 integrity warning。
+- check-in 选择 `pause` / `complete` 后同步目标状态；`adjust` 只进入编辑流程，不自动创建新目标。
+- JSON export / import 包含 `trainingGoals` 和 `goalCheckins`。
+- Markdown / CSV export 默认不包含训练目标和 check-in 数据。
+- Snapshot integrity 包含目标和 check-in 数量。
+- 新 store 默认空表，不从旧数据生成伪目标。
+
+Schema 候选：
+
+- stores：`training_goals`、`goal_checkins`。
+- `training_goals` indexes：`id`、`status`、`category`、`startDate`、`updatedAt`。
+- `goal_checkins` indexes：`id`、`goalId`、`targetDate`、`createdAt`。
+- JSON fields：`trainingGoals`、`goalCheckins`。
+
 ## Open Questions
 
 1. 0.2.1 收尾后是否有 UI 组件接口变化需要同步到 0.2.4。
@@ -251,10 +274,10 @@ UI 规则：
 
 > 轻目标采用系统推荐、用户手动确认；不自动创建目标。
 
-> 模型细节已确认：日期使用生理日规则；标题模板生成但允许编辑；check-in 支持 1-5 的“本周期感受”；默认周期只做 7 / 14 天；一个目标只关联一个来源 insight。
+> 模型细节已确认：日期使用生理日规则；标题模板生成但允许编辑；check-in 支持 1-5 的“本周期感受”；默认周期只做 7 / 14 天；一个目标只关联一个来源 insight；category 必须走 allowlist。
 
 > UI 暴露已确认：description 只在完整编辑显示；note 只在完整编辑显示；cycleFeeling 非必填。
 
-下一步讨论：
+下一步：
 
-> 如何避免养成系统诱导高风险性行为。
+> 后续若进入实现，先从刀 2 schema / migration / import-export 开始，并对照 [`knife-1-data-model-final-audit.md`](./knife-1-data-model-final-audit.md) 的定稿决策执行。

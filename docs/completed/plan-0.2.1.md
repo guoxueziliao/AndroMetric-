@@ -41,7 +41,7 @@
 0.2.1 后续只保留品牌相关插刀可能带来的文案/资产同步：
 
 1. 品牌命名拍板后可插入“命名同步 / Welcome v2”。
-2. 0.2.2 进入代码前，先完成 `docs/planned/adult-behavior-data-model-0.2.2.md`。
+2. 0.2.2 进入代码前，先完成 `docs/planned/0.2.2/adult-behavior-data-model.md`。
 
 未纳入 0.2.1 的新业务能力，进入 0.2.2+ 继续讨论。
 

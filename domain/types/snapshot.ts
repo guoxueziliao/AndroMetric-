@@ -3,6 +3,7 @@ import type { PartnerProfile } from './partner';
 import type { TagEntry } from './tags';
 import type { CycleEvent, PregnancyEvent } from './reproductive';
 import type { AppSettings } from './settings';
+import type { PornUseEvent, MasturbationEvent, SexEvent } from './adultBehavior';
 
 export interface SnapshotData {
     version: number;
@@ -11,6 +12,9 @@ export interface SnapshotData {
     tags: TagEntry[];
     cycleEvents: CycleEvent[];
     pregnancyEvents: PregnancyEvent[];
+    pornUseEvents?: PornUseEvent[];
+    masturbationEvents?: MasturbationEvent[];
+    sexEvents?: SexEvent[];
     snapshots?: Snapshot[];
 }
 
@@ -44,4 +48,11 @@ export interface Snapshot {
 export interface StoredData {
     version: number;
     logs: LogEntry[];
+    partners?: PartnerProfile[];
+    tags?: TagEntry[];
+    cycleEvents?: CycleEvent[];
+    pregnancyEvents?: PregnancyEvent[];
+    pornUseEvents?: PornUseEvent[];
+    masturbationEvents?: MasturbationEvent[];
+    sexEvents?: SexEvent[];
 }

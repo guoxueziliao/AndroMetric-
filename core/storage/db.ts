@@ -1,5 +1,5 @@
 import Dexie, { Table } from 'dexie';
-import { CycleEvent, LogEntry, PartnerProfile, PregnancyEvent, Snapshot, TagEntry } from '../../domain';
+import { CycleEvent, LogEntry, PartnerProfile, PregnancyEvent, Snapshot, TagEntry, PornUseEvent, MasturbationEvent, SexEvent } from '../../domain';
 
 export interface MetaEntry {
   key: string;
@@ -23,10 +23,28 @@ export type HardnessDiaryDatabase = Dexie & {
   system_logs: Table<SystemLog, number>;
   snapshots: Table<Snapshot, number>;
   tags: Table<TagEntry, [string, string]>; // 复合主键 [name, category]
+  porn_use_events: Table<PornUseEvent, string>;
+  masturbation_events: Table<MasturbationEvent, string>;
+  sex_events: Table<SexEvent, string>;
 };
 
 const dbInstance = new Dexie('HardnessDiaryDB') as HardnessDiaryDatabase;
 
+dbInstance.version(7).stores({
+  logs: '&date, status',
+  partners: '&id',
+  cycle_events: '&id, partnerId, date, kind, source',
+  pregnancy_events: '&id, partnerId, date, kind, source',
+  meta: 'key',
+  system_logs: '++id, timestamp, level, action',
+  snapshots: '++id, timestamp',
+  tags: '[name+category], category, dimension',
+  porn_use_events: '&id, startedAt, targetDate, status, source',
+  masturbation_events: '&id, startedAt, targetDate, status, source',
+  sex_events: '&id, startedAt, targetDate, status, source'
+});
+
+// Version 6: Add cycle_events and pregnancy_events tables
 dbInstance.version(6).stores({
   logs: '&date, status',
   partners: '&id',
