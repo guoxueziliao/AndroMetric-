@@ -448,7 +448,8 @@ export const StorageService = {
 
     partners: {
         queries: {
-            all: () => db.partners.toArray()
+            all: () => db.partners.toArray(),
+            byId: (id: string) => db.partners.get(id)
         },
         save: (partner: PartnerProfile) => db.partners.put(runPartnerMigrations([partner], LATEST_VERSION)[0]),
         delete: (id: string) => db.partners.delete(id),

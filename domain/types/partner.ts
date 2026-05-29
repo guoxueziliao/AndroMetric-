@@ -1,4 +1,5 @@
 import type { ReproductiveProfile } from './reproductive';
+import type { PartnerRelationshipPreferences, PartnerCycleCareSettings } from './relationshipContext';
 
 export type PartnerType = 'stable' | 'dating' | 'casual' | 'service';
 
@@ -32,5 +33,7 @@ export interface PartnerProfile {
     petPeeves?: string;
     notes?: string;
     reproductiveProfile?: ReproductiveProfile;
+    relationshipPreferences?: PartnerRelationshipPreferences;
+    cycleCareSettings?: PartnerCycleCareSettings;
     milestones: Record<string, string>;
 }

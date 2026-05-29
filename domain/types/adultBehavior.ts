@@ -1,4 +1,5 @@
 import type { SexRecordDetails } from './sex';
+import type { RelationshipContext } from './relationshipContext';
 
 // ── Source / Status ─────────────────────────────────────────────────────────
 
@@ -217,4 +218,5 @@ export interface SexEvent extends AdultBehaviorEventBase {
   legacySexRecord?: SexRecordDetails;
   linkedPornUseEventIds: string[];
   linkedMasturbationEventIds: string[];
+  relationshipContext?: RelationshipContext;
 }

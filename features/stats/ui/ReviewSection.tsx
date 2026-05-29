@@ -266,6 +266,21 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({ logs }) => {
     const exportFacts = pendingExport === windowKind ? facts : buildWindowFacts(exportInput);
     const exportInsights = generateReviewInsights(exportFacts, exportInput.dailyLogs);
     const report = buildReviewReport(exportFacts, exportInsights, pendingExport);
+
+    // Add relationship context summary (non-private aggregate only)
+    const exportSxEvents = events.sx;
+    const withCtx = exportSxEvents.filter((e) => e.relationshipContext);
+    if (withCtx.length > 0) {
+      report.relationshipContext = {
+        recordsWithContext: withCtx.length,
+        withCommunication: withCtx.filter((e) => e.relationshipContext?.communicationBefore && e.relationshipContext.communicationBefore !== 'not_recorded').length,
+        withBoundary: withCtx.filter((e) => e.relationshipContext?.boundaryConfirmed && e.relationshipContext.boundaryConfirmed !== 'not_recorded').length,
+        withFeedback: withCtx.filter((e) => e.relationshipContext?.partnerFeedback && e.relationshipContext.partnerFeedback !== 'not_recorded').length,
+        needsFollowUp: withCtx.filter((e) => e.relationshipContext?.needsFollowUp).length,
+        withCycleContext: withCtx.filter((e) => e.relationshipContext?.cycleContext && e.relationshipContext.cycleContext !== 'unknown').length,
+      };
+    }
+
     const md = buildMarkdownReport(report);
     const fileName = buildReportFileName(report.reportType, report.window);
     downloadFile(md, fileName, 'text/markdown;charset=utf-8');
@@ -403,6 +418,35 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({ logs }) => {
               收起
             </button>
           )}
+        </SectionCard>
+      )}
+
+      {/* Relationship context summary */}
+      {events.sx.some((e) => e.relationshipContext) && (
+        <SectionCard title="关系上下文" icon={Heart}>
+          <div className="space-y-1 text-xs text-text-secondary">
+            {(() => {
+              const withCtx = events.sx.filter((e) => e.relationshipContext);
+              const comm = withCtx.filter((e) => e.relationshipContext?.communicationBefore && e.relationshipContext.communicationBefore !== 'not_recorded');
+              const boundary = withCtx.filter((e) => e.relationshipContext?.boundaryConfirmed && e.relationshipContext.boundaryConfirmed !== 'not_recorded');
+              const feedback = withCtx.filter((e) => e.relationshipContext?.partnerFeedback && e.relationshipContext.partnerFeedback !== 'not_recorded');
+              const followUp = withCtx.filter((e) => e.relationshipContext?.needsFollowUp);
+              const cycle = withCtx.filter((e) => e.relationshipContext?.cycleContext && e.relationshipContext.cycleContext !== 'unknown');
+              return (
+                <>
+                  <p>{withCtx.length} 条记录包含关系上下文。</p>
+                  {comm.length > 0 && <p>沟通记录：{comm.length} 条。</p>}
+                  {boundary.length > 0 && <p>边界确认：{boundary.length} 条。</p>}
+                  {feedback.length > 0 && <p>伴侣反馈：{feedback.length} 条。</p>}
+                  {followUp.length > 0 && <p className="text-warning">{followUp.length} 条需要后续沟通。</p>}
+                  {cycle.length > 0 && <p>周期关怀上下文：{cycle.length} 条。</p>}
+                  {withCtx.length < events.sx.length && (
+                    <p className="text-text-muted">{events.sx.length - withCtx.length} 条记录暂无关系上下文。</p>
+                  )}
+                </>
+              );
+            })()}
+          </div>
         </SectionCard>
       )}
 

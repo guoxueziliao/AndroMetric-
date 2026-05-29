@@ -24,6 +24,14 @@ export interface ReviewReportData {
     ejaculationCount: number;
     edgingCount: number;
   };
+  relationshipContext?: {
+    recordsWithContext: number;
+    withCommunication: number;
+    withBoundary: number;
+    withFeedback: number;
+    needsFollowUp: number;
+    withCycleContext: number;
+  };
   insights: GatedInsight[];
   missingData: AdultBehaviorWindowFacts['missingData'];
   timeline: ReviewTimelineDay[];
@@ -165,6 +173,20 @@ export const buildMarkdownReport = (report: ReviewReportData): string => {
         lines.push(`- ${key}：${count}`);
       }
     }
+    lines.push('');
+  }
+
+  // Relationship context
+  if (report.relationshipContext && report.relationshipContext.recordsWithContext > 0) {
+    const rc = report.relationshipContext;
+    lines.push('## 关系上下文');
+    lines.push('');
+    lines.push(`${rc.recordsWithContext} 条记录包含关系上下文。`);
+    if (rc.withCommunication > 0) lines.push(`- 沟通记录：${rc.withCommunication} 条`);
+    if (rc.withBoundary > 0) lines.push(`- 边界确认：${rc.withBoundary} 条`);
+    if (rc.withFeedback > 0) lines.push(`- 伴侣反馈：${rc.withFeedback} 条`);
+    if (rc.needsFollowUp > 0) lines.push(`- 需要后续沟通：${rc.needsFollowUp} 条`);
+    if (rc.withCycleContext > 0) lines.push(`- 周期关怀上下文：${rc.withCycleContext} 条`);
     lines.push('');
   }
 

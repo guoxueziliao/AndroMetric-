@@ -229,5 +229,39 @@ export const checkSnapshotIntegrity = (snapshot: Snapshot): SnapshotIntegrityIss
     });
   }
 
+  // Check orphan partner references
+  const partners = data.partners ?? [];
+  const partnerIds = new Set(partners.map((p: { id: string }) => p.id));
+  const sexEvents = data.sexEvents ?? [];
+  let orphanPartnerCount = 0;
+  for (const e of sexEvents) {
+    if (e.partnerIds) {
+      for (const pid of e.partnerIds) {
+        if (!partnerIds.has(pid)) orphanPartnerCount++;
+      }
+    }
+  }
+  if (orphanPartnerCount > 0) {
+    issues.push({
+      severity: 'warning',
+      kind: 'orphan_partner_ids',
+      message: `${orphanPartnerCount} 条性爱事件引用了不存在的伴侣 ID`,
+    });
+  }
+
+  // Check legacy sex records without stable partner id
+  const legacyWithoutId = partners.length > 0
+    ? (data.logs ?? []).filter((log: { sex?: Array<{ partner?: string }> }) =>
+        log.sex?.some((s) => s.partner && !partners.some((p: { name: string }) => p.name === s.partner))
+      ).length
+    : 0;
+  if (legacyWithoutId > 0) {
+    issues.push({
+      severity: 'info',
+      kind: 'legacy_partner_names',
+      message: `${legacyWithoutId} 条旧记录使用伴侣名称而非稳定 ID`,
+    });
+  }
+
   return issues;
 };

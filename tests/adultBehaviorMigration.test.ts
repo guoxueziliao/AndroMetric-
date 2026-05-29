@@ -335,10 +335,10 @@ describe('buildSexEventsFromLogs', () => {
 // ── runMigrations ───────────────────────────────────────────────────────────
 
 describe('runMigrations', () => {
-  it('returns version LATEST_VERSION (48)', () => {
+  it('returns version LATEST_VERSION (49)', () => {
     const result = runMigrations({ version: 46, logs: [] });
     expect(result.version).toBe(LATEST_VERSION);
-    expect(result.version).toBe(48);
+    expect(result.version).toBe(49);
   });
 
   it('returns empty arrays for all event types on empty data', () => {

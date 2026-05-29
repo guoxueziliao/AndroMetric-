@@ -4,7 +4,7 @@ import { scrubHistoricalDefaultContamination, flagLegacyMasturbationInference } 
 import { getActivityTargetDate } from '../../shared/lib/targetDate';
 
 // The latest version of our data structure.
-export const LATEST_VERSION = 48;
+export const LATEST_VERSION = 49;
 
 /**
  * MIGRATION UTILITIES
@@ -716,6 +716,9 @@ export function runMigrations(data: any): StoredData {
   // V47 -> V48: training_goals + goal_checkins tables added (empty by default).
   // Training data is carried through via existingTrainingGoals/existingGoalCheckins.
   // No data transformation needed — Dexie handles schema upgrade automatically.
+  // V48 -> V49: relationship context types added (RelationshipContext on SexEvent,
+  // relationshipPreferences/cycleCareSettings on PartnerProfile). All fields optional;
+  // no data transformation needed — existing records have undefined fields by default.
 
   return {
     ...result,
