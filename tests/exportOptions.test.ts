@@ -120,7 +120,12 @@ describe('applyExportOptionsToDataset', () => {
       tags: 0,
       cycleEvents: 0,
       pregnancyEvents: 0,
-      snapshots: 0
+      snapshots: 0,
+      pornUseEvents: 0,
+      masturbationEvents: 0,
+      sexEvents: 0,
+      trainingGoals: 0,
+      goalCheckins: 0,
     });
     expect(hasAnyExportData(filtered)).toBe(true);
   });

@@ -102,26 +102,30 @@ export const buildImportPreview = (rawText: string, encrypted: boolean, currentL
       sexEvents,
     }),
     trainingWarnings,
-    integrityIssues: (() => {
-      // Run integrity check on parsed data (read-only, no IndexedDB write)
-      try {
-        const snapshotForCheck: Snapshot = {
-          id: 0,
-          timestamp: Date.now(),
-          dataVersion: dataVersion ?? LATEST_VERSION,
-          appVersion: typeof parsed.appVersion === 'string' ? parsed.appVersion : 'unknown',
-          description: 'preflight',
-          kind: 'manual',
-          settings: null,
-          userName: null,
-          data: data as unknown as Snapshot['data'],
-        };
-        return checkSnapshotIntegrity(snapshotForCheck);
-      } catch {
-        return [];
-      }
-    })(),
+    integrityIssues: buildPreflightIntegrityIssues(data, dataVersion, parsed.appVersion),
   };
+};
+
+const buildPreflightIntegrityIssues = (
+  data: Record<string, unknown>,
+  dataVersion: number | undefined,
+  appVersion: unknown,
+): SnapshotIntegrityIssue[] => {
+  try {
+    const snapshotForCheck: Snapshot = {
+      timestamp: Date.now(),
+      dataVersion: dataVersion ?? LATEST_VERSION,
+      appVersion: typeof appVersion === 'string' ? appVersion : 'unknown',
+      description: 'preflight',
+      kind: 'manual',
+      settings: null,
+      userName: null,
+      data: data as unknown as Snapshot['data'],
+    };
+    return checkSnapshotIntegrity(snapshotForCheck);
+  } catch {
+    return [];
+  }
 };
 
 export const getImportFileKind = (text: string): 'encrypted' | 'plain' => (

@@ -36,6 +36,11 @@ export interface ExportCounts {
   cycleEvents: number;
   pregnancyEvents: number;
   snapshots: number;
+  pornUseEvents: number;
+  masturbationEvents: number;
+  sexEvents: number;
+  trainingGoals: number;
+  goalCheckins: number;
 }
 
 export interface ExportTagOption {
@@ -109,7 +114,12 @@ export const applyExportOptionsToDataset = (
         const snapshotDate = getSnapshotDate(snapshot);
         return snapshotDate ? isDateInRange(snapshotDate, startDate, endDate) : true;
       })
-      : []
+      : [],
+    pornUseEvents: dataset.pornUseEvents,
+    masturbationEvents: dataset.masturbationEvents,
+    sexEvents: dataset.sexEvents,
+    trainingGoals: dataset.trainingGoals,
+    goalCheckins: dataset.goalCheckins,
   };
 };
 
@@ -119,7 +129,12 @@ export const getExportCounts = (dataset: ExportDataset): ExportCounts => ({
   tags: dataset.tags.length,
   cycleEvents: dataset.cycleEvents.length,
   pregnancyEvents: dataset.pregnancyEvents.length,
-  snapshots: dataset.snapshots.length
+  snapshots: dataset.snapshots.length,
+  pornUseEvents: dataset.pornUseEvents?.length ?? 0,
+  masturbationEvents: dataset.masturbationEvents?.length ?? 0,
+  sexEvents: dataset.sexEvents?.length ?? 0,
+  trainingGoals: dataset.trainingGoals?.length ?? 0,
+  goalCheckins: dataset.goalCheckins?.length ?? 0,
 });
 
 export const hasAnyExportData = (dataset: ExportDataset) => (
