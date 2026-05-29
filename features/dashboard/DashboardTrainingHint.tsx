@@ -1,27 +1,15 @@
-import React, { useMemo, useState, useEffect } from 'react';
-import { StorageService } from '../../core/storage';
+import React, { useMemo } from 'react';
 import type { TrainingGoal } from '../../domain';
 import { getActiveGoals, getDueGoals, CATEGORY_LABELS } from '../stats/model/trainingGoalService';
 import { getActivityTargetDate } from '../../shared/lib/targetDate';
 import { Target, ChevronRight, History } from 'lucide-react';
 
 interface DashboardTrainingHintProps {
+  goals: TrainingGoal[];
   onNavigateToReview?: () => void;
 }
 
-const DashboardTrainingHint: React.FC<DashboardTrainingHintProps> = ({ onNavigateToReview }) => {
-  const [goals, setGoals] = useState<TrainingGoal[]>([]);
-
-  useEffect(() => {
-    let cancelled = false;
-    const load = async () => {
-      const g = await StorageService.trainingGoals.queries.all();
-      if (!cancelled) setGoals(g);
-    };
-    load();
-    return () => { cancelled = true; };
-  }, []);
-
+const DashboardTrainingHint: React.FC<DashboardTrainingHintProps> = ({ goals, onNavigateToReview }) => {
   const today = useMemo(() => getActivityTargetDate(new Date()), []);
   const activeGoals = useMemo(() => getActiveGoals(goals), [goals]);
   const dueGoals = useMemo(() => getDueGoals(goals, today), [goals, today]);

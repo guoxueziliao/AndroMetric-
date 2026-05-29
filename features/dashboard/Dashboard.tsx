@@ -1,5 +1,6 @@
-import React, { lazy, Suspense, useMemo, useState } from 'react';
+import React, { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import type { LogEntry } from '../../domain';
+import { StorageService } from '../../core/storage';
 import { 
   Moon, Zap, Activity, Hand, Dumbbell, CloudSun, Beer, ShieldAlert, Edit3,
   Trash2, Coffee, Bed, ArrowRight, Heart, MapPin, BrainCircuit, Film, Smile,
@@ -65,6 +66,15 @@ const Dashboard: React.FC<DashboardProps> = ({
   const logs = useMemo(() => Array.isArray(rawLogs) ? rawLogs : [], [rawLogs]);
   const [activeView, setActiveView] = useState<DashboardView>('day');
   const [selectedTileKey, setSelectedTileKey] = useState<TodayTileKey | null>(null);
+  const [trainingGoals, setTrainingGoals] = useState<import('../../domain').TrainingGoal[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    StorageService.trainingGoals.queries.all().then((g) => {
+      if (!cancelled) setTrainingGoals(g);
+    });
+    return () => { cancelled = true; };
+  }, []);
 
   const {
     isSummaryModalOpen,
@@ -268,7 +278,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         {activeView === 'day' && (
             <>
                 <ImpactFindings logs={logs} />
-                <DashboardTrainingHint onNavigateToReview={onNavigateToReview} />
+                <DashboardTrainingHint goals={trainingGoals} onNavigateToReview={onNavigateToReview} />
                 <DashboardDayView
                     logs={logs}
                     todayLog={todayLog}

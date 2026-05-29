@@ -10,7 +10,7 @@ import {
   getRecentFocusCategories,
   CATEGORY_LABELS,
 } from '../../stats/model/trainingGoalService';
-import { Archive, RotateCcw, ChevronDown, ChevronRight, AlertCircle, TrendingDown } from 'lucide-react';
+import { Archive, RotateCcw, ChevronDown, ChevronRight, AlertCircle, Activity } from 'lucide-react';
 
 // ── Status / filter types ────────────────────────────────────────────────────
 
@@ -193,10 +193,10 @@ const GoalHistorySection: React.FC<GoalHistorySectionProps> = ({ goals, checkins
       </div>
 
       {/* Cross-cycle summary */}
-      {goals.length >= 2 && (
+      {completedCount >= 2 && (
         <div className="p-3 bg-surface-muted rounded-xl border border-surface-border space-y-2">
           <div className="flex items-center gap-1.5">
-            <TrendingDown size={12} className="text-accent" />
+            <Activity size={12} className="text-accent" />
             <span className="text-xs font-bold text-text-primary">阶段摘要</span>
           </div>
 
