@@ -1,5 +1,5 @@
 import { LATEST_VERSION } from '../../../core/storage/migration';
-import { computeLogConflicts, checkAdultEventLinks, type LogImportConflict, type AdultEventLinkIssue } from '../../../core/storage/importMerge';
+import { computeLogConflicts, checkAdultEventLinks, normalizeTrainingGoals, normalizeGoalCheckins, type LogImportConflict, type AdultEventLinkIssue, type TrainingImportWarning } from '../../../core/storage/importMerge';
 import type { LogEntry } from '../../../domain';
 import { isEncryptedSnapshotJson } from '../../../shared/lib';
 
@@ -26,9 +26,12 @@ export interface ImportPreview {
     pornUseEvents: number;
     masturbationEvents: number;
     sexEvents: number;
+    trainingGoals: number;
+    goalCheckins: number;
   };
   conflicts: LogImportConflict[];
   eventLinkIssues: AdultEventLinkIssue[];
+  trainingWarnings: TrainingImportWarning[];
 }
 
 const getArrayLength = (value: unknown): number => Array.isArray(value) ? value.length : 0;
@@ -59,6 +62,14 @@ export const buildImportPreview = (rawText: string, encrypted: boolean, currentL
   const pornUseEvents = Array.isArray(data.pornUseEvents) ? data.pornUseEvents : [];
   const masturbationEvents = Array.isArray(data.masturbationEvents) ? data.masturbationEvents : [];
   const sexEvents = Array.isArray(data.sexEvents) ? data.sexEvents : [];
+  const trainingGoals = Array.isArray(data.trainingGoals) ? data.trainingGoals : [];
+  const goalCheckins = Array.isArray(data.goalCheckins) ? data.goalCheckins : [];
+
+  // Normalize training data to surface warnings in preview
+  const goalNorm = normalizeTrainingGoals(trainingGoals);
+  const goalIds = new Set(goalNorm.goals.map((g: { id: string }) => g.id));
+  const checkinNorm = normalizeGoalCheckins(goalCheckins, goalIds);
+  const trainingWarnings = [...goalNorm.warnings, ...checkinNorm.warnings];
 
   return {
     rawText,
@@ -79,6 +90,8 @@ export const buildImportPreview = (rawText: string, encrypted: boolean, currentL
       pornUseEvents: pornUseEvents.length,
       masturbationEvents: masturbationEvents.length,
       sexEvents: sexEvents.length,
+      trainingGoals: trainingGoals.length,
+      goalCheckins: goalCheckins.length,
     },
     conflicts: computeLogConflicts(currentLogs, incomingLogs),
     eventLinkIssues: checkAdultEventLinks({
@@ -86,6 +99,7 @@ export const buildImportPreview = (rawText: string, encrypted: boolean, currentL
       masturbationEvents,
       sexEvents,
     }),
+    trainingWarnings,
   };
 };
 

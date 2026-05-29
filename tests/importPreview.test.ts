@@ -38,7 +38,9 @@ describe('buildImportPreview', () => {
       snapshots: 1,
       pornUseEvents: 0,
       masturbationEvents: 0,
-      sexEvents: 0
+      sexEvents: 0,
+      trainingGoals: 0,
+      goalCheckins: 0
     });
   });
 

@@ -7,3 +7,4 @@ export * from './settings';
 export * from './snapshot';
 export * from './events';
 export * from './adultBehavior';
+export * from './training';

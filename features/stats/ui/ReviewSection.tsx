@@ -17,6 +17,7 @@ import {
   SENSITIVE_EXPORT_WARNING,
 } from '../model/adultBehaviorReviewReport';
 import { Activity, Zap, Moon, Heart, AlertCircle, TrendingDown, FileText, Download } from 'lucide-react';
+import TrainingSection from './TrainingSection';
 
 // ── Window options ───────────────────────────────────────────────────────────
 
@@ -417,6 +418,9 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({ logs }) => {
           </p>
         </div>
       )}
+
+      {/* Training section */}
+      <TrainingSection facts={facts} insights={insights} />
 
       {/* Report actions */}
       <SectionCard title="报告" icon={FileText}>

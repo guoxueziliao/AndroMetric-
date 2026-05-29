@@ -1,4 +1,11 @@
-import type { LogEntry } from '../../domain';
+import type { LogEntry, TrainingGoal, GoalCheckin } from '../../domain';
+import {
+  isTrainingGoalCategory,
+  isTrainingGoalStatus,
+  isTrainingGoalSource,
+  ALLOWED_GOAL_WINDOWS,
+  isGoalCheckinStatus,
+} from '../../domain';
 
 export type ImportConflictResolution = 'keep-current' | 'use-import';
 
@@ -266,4 +273,126 @@ export const checkAdultEventLinks = (input: AdultEventLinkInput): AdultEventLink
   }
 
   return issues;
+};
+
+// ── Training data import normalize ───────────────────────────────────────────
+
+export interface TrainingImportWarning {
+  kind: 'forbidden_category' | 'invalid_window' | 'invalid_goal_status' | 'invalid_goal_source'
+    | 'invalid_checkin_status' | 'orphan_checkin' | 'invalid_cycle_feeling' | 'inverted_window';
+  entityId: string;
+  entityType: 'goal' | 'checkin';
+  message: string;
+}
+
+export const normalizeTrainingGoals = (
+  goals: TrainingGoal[],
+): { goals: TrainingGoal[]; warnings: TrainingImportWarning[] } => {
+  const warnings: TrainingImportWarning[] = [];
+  const valid: TrainingGoal[] = [];
+
+  for (const goal of goals) {
+    if (!isTrainingGoalCategory(goal.category)) {
+      warnings.push({
+        kind: 'forbidden_category',
+        entityId: goal.id,
+        entityType: 'goal',
+        message: `目标 ${goal.id} 的 category "${goal.category}" 不在允许列表中，已跳过`,
+      });
+      continue;
+    }
+    if (!ALLOWED_GOAL_WINDOWS.has(goal.targetWindowDays)) {
+      warnings.push({
+        kind: 'invalid_window',
+        entityId: goal.id,
+        entityType: 'goal',
+        message: `目标 ${goal.id} 的 targetWindowDays=${goal.targetWindowDays} 不是 7 或 14，已跳过`,
+      });
+      continue;
+    }
+    if (!isTrainingGoalStatus(goal.status)) {
+      warnings.push({
+        kind: 'invalid_goal_status',
+        entityId: goal.id,
+        entityType: 'goal',
+        message: `目标 ${goal.id} 的 status "${goal.status}" 不合法，已跳过`,
+      });
+      continue;
+    }
+    if (!isTrainingGoalSource(goal.source)) {
+      warnings.push({
+        kind: 'invalid_goal_source',
+        entityId: goal.id,
+        entityType: 'goal',
+        message: `目标 ${goal.id} 的 source "${goal.source}" 不合法，已跳过`,
+      });
+      continue;
+    }
+    valid.push(goal);
+  }
+
+  return { goals: valid, warnings };
+};
+
+export const normalizeGoalCheckins = (
+  checkins: GoalCheckin[],
+  validGoalIds: Set<string>,
+): { checkins: GoalCheckin[]; warnings: TrainingImportWarning[] } => {
+  const warnings: TrainingImportWarning[] = [];
+  const valid: GoalCheckin[] = [];
+
+  for (const checkin of checkins) {
+    if (!isGoalCheckinStatus(checkin.status)) {
+      warnings.push({
+        kind: 'invalid_checkin_status',
+        entityId: checkin.id,
+        entityType: 'checkin',
+        message: `签到 ${checkin.id} 的 status "${checkin.status}" 不合法，已跳过`,
+      });
+      continue;
+    }
+
+    // Orphan checkin: keep but warn
+    if (!validGoalIds.has(checkin.goalId)) {
+      warnings.push({
+        kind: 'orphan_checkin',
+        entityId: checkin.id,
+        entityType: 'checkin',
+        message: `签到 ${checkin.id} 的 goalId "${checkin.goalId}" 不存在，已保留`,
+      });
+    }
+
+    // cycleFeeling out of range: null it
+    const checkinCopy = { ...checkin };
+    if (checkinCopy.cycleFeeling !== undefined && checkinCopy.cycleFeeling !== null) {
+      if (typeof checkinCopy.cycleFeeling !== 'number' ||
+          checkinCopy.cycleFeeling < 1 || checkinCopy.cycleFeeling > 5 ||
+          !Number.isInteger(checkinCopy.cycleFeeling)) {
+        warnings.push({
+          kind: 'invalid_cycle_feeling',
+          entityId: checkin.id,
+          entityType: 'checkin',
+          message: `签到 ${checkin.id} 的 cycleFeeling=${checkinCopy.cycleFeeling} 不在 1-5 范围，已置空`,
+        });
+        checkinCopy.cycleFeeling = undefined;
+      }
+    }
+
+    // Inverted window: null both window fields
+    if (checkinCopy.windowStartDate && checkinCopy.windowEndDate &&
+        checkinCopy.windowStartDate > checkinCopy.windowEndDate) {
+      warnings.push({
+        kind: 'inverted_window',
+        entityId: checkin.id,
+        entityType: 'checkin',
+        message: `签到 ${checkin.id} 的 windowStartDate 晚于 windowEndDate，窗口字段已置空`,
+      });
+      checkinCopy.windowStartDate = undefined;
+      checkinCopy.windowEndDate = undefined;
+    }
+
+    valid.push(checkinCopy);
+  }
+
+  return { checkins: valid, warnings };
 };

@@ -1,10 +1,10 @@
-import { PartnerProfile, ReproductiveProfile, StoredData, LogEntry, SexRecordDetails, MasturbationRecordDetails, SexInteraction, SexAction, ExerciseRecord, MorningRecord, SleepRecord, ContentItem, PornUseEvent, MasturbationEvent, SexEvent } from '../../domain';
+import { PartnerProfile, ReproductiveProfile, StoredData, LogEntry, SexRecordDetails, MasturbationRecordDetails, SexInteraction, SexAction, ExerciseRecord, MorningRecord, SleepRecord, ContentItem, PornUseEvent, MasturbationEvent, SexEvent, TrainingGoal, GoalCheckin } from '../../domain';
 import { buildDataQualityForLog } from '../../utils/dataQuality';
 import { scrubHistoricalDefaultContamination, flagLegacyMasturbationInference } from '../../utils/legacyDataCleanup';
 import { getActivityTargetDate } from '../../shared/lib/targetDate';
 
 // The latest version of our data structure.
-export const LATEST_VERSION = 47;
+export const LATEST_VERSION = 48;
 
 /**
  * MIGRATION UTILITIES
@@ -656,6 +656,8 @@ export function runMigrations(data: any): StoredData {
   let existingPornUseEvents: PornUseEvent[] | undefined;
   let existingMasturbationEvents: MasturbationEvent[] | undefined;
   let existingSexEvents: SexEvent[] | undefined;
+  let existingTrainingGoals: TrainingGoal[] | undefined;
+  let existingGoalCheckins: GoalCheckin[] | undefined;
 
   if (typeof data === 'object' && data !== null && 'version' in data && 'logs' in data) {
     currentVersion = data.version;
@@ -665,6 +667,8 @@ export function runMigrations(data: any): StoredData {
     if (Array.isArray(data.pornUseEvents)) existingPornUseEvents = data.pornUseEvents;
     if (Array.isArray(data.masturbationEvents)) existingMasturbationEvents = data.masturbationEvents;
     if (Array.isArray(data.sexEvents)) existingSexEvents = data.sexEvents;
+    if (Array.isArray(data.trainingGoals)) existingTrainingGoals = data.trainingGoals;
+    if (Array.isArray(data.goalCheckins)) existingGoalCheckins = data.goalCheckins;
   } else if (Array.isArray(data)) {
     currentVersion = 1;
     rawLogs = data;
@@ -700,13 +704,18 @@ export function runMigrations(data: any): StoredData {
     pornUseEvents: existingPornUseEvents,
     masturbationEvents: existingMasturbationEvents,
     sexEvents: existingSexEvents,
+    trainingGoals: existingTrainingGoals,
+    goalCheckins: existingGoalCheckins,
   };
 
   let result: StoredData = baseData;
-  if (currentVersion < LATEST_VERSION) {
+  if (currentVersion < 47) {
     console.log(`[Migration] Running V46 -> V47 (adult behavior events)...`);
     result = migrateV46toV47(baseData);
   }
+  // V47 -> V48: training_goals + goal_checkins tables added (empty by default).
+  // Training data is carried through via existingTrainingGoals/existingGoalCheckins.
+  // No data transformation needed — Dexie handles schema upgrade automatically.
 
   return {
     ...result,

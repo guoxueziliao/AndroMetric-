@@ -5,6 +5,8 @@ import type { CycleEvent, PregnancyEvent } from './reproductive';
 import type { AppSettings } from './settings';
 import type { PornUseEvent, MasturbationEvent, SexEvent } from './adultBehavior';
 
+import type { TrainingGoal, GoalCheckin } from './training';
+
 export interface SnapshotData {
     version: number;
     logs: LogEntry[];
@@ -15,6 +17,8 @@ export interface SnapshotData {
     pornUseEvents?: PornUseEvent[];
     masturbationEvents?: MasturbationEvent[];
     sexEvents?: SexEvent[];
+    trainingGoals?: TrainingGoal[];
+    goalCheckins?: GoalCheckin[];
     snapshots?: Snapshot[];
 }
 
@@ -55,4 +59,6 @@ export interface StoredData {
     pornUseEvents?: PornUseEvent[];
     masturbationEvents?: MasturbationEvent[];
     sexEvents?: SexEvent[];
+    trainingGoals?: TrainingGoal[];
+    goalCheckins?: GoalCheckin[];
 }

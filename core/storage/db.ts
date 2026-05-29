@@ -1,5 +1,5 @@
 import Dexie, { Table } from 'dexie';
-import { CycleEvent, LogEntry, PartnerProfile, PregnancyEvent, Snapshot, TagEntry, PornUseEvent, MasturbationEvent, SexEvent } from '../../domain';
+import { CycleEvent, LogEntry, PartnerProfile, PregnancyEvent, Snapshot, TagEntry, PornUseEvent, MasturbationEvent, SexEvent, TrainingGoal, GoalCheckin } from '../../domain';
 
 export interface MetaEntry {
   key: string;
@@ -26,10 +26,29 @@ export type HardnessDiaryDatabase = Dexie & {
   porn_use_events: Table<PornUseEvent, string>;
   masturbation_events: Table<MasturbationEvent, string>;
   sex_events: Table<SexEvent, string>;
+  training_goals: Table<TrainingGoal, string>;
+  goal_checkins: Table<GoalCheckin, string>;
 };
 
 const dbInstance = new Dexie('HardnessDiaryDB') as HardnessDiaryDatabase;
 
+dbInstance.version(8).stores({
+  logs: '&date, status',
+  partners: '&id',
+  cycle_events: '&id, partnerId, date, kind, source',
+  pregnancy_events: '&id, partnerId, date, kind, source',
+  meta: 'key',
+  system_logs: '++id, timestamp, level, action',
+  snapshots: '++id, timestamp',
+  tags: '[name+category], category, dimension',
+  porn_use_events: '&id, startedAt, targetDate, status, source',
+  masturbation_events: '&id, startedAt, targetDate, status, source',
+  sex_events: '&id, startedAt, targetDate, status, source',
+  training_goals: '&id, status, category, startDate, updatedAt',
+  goal_checkins: '&id, goalId, targetDate, createdAt'
+});
+
+// Version 7: Add adult behavior event tables
 dbInstance.version(7).stores({
   logs: '&date, status',
   partners: '&id',

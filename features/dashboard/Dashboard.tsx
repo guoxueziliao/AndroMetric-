@@ -15,6 +15,7 @@ import { useReproductive } from '../../contexts/ReproductiveContext';
 import { attachMenstrualSummary } from '../reproductive/model/p4Derivations';
 import DashboardDayView from './DashboardDayView';
 import ImpactFindings from './ImpactFindings';
+import DashboardTrainingHint from './DashboardTrainingHint';
 
 const GlobalTimeline = lazy(() => import('./GlobalTimeline').then((module) => ({ default: module.GlobalTimeline })));
 const LogHistory = lazy(() => import('./LogHistory').then((module) => ({ default: module.LogHistory })));
@@ -265,6 +266,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         {activeView === 'day' && (
             <>
                 <ImpactFindings logs={logs} />
+                <DashboardTrainingHint />
                 <DashboardDayView
                     logs={logs}
                     todayLog={todayLog}
