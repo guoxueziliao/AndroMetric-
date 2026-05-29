@@ -60,8 +60,11 @@ JSON backup 完整承诺至少覆盖：
 - porn use events。
 - masturbation events。
 - sex events。
-- training goals。
-- goal check-ins。
+
+条件覆盖：
+
+- training goals，仅在真实 store / 类型已落地后纳入。
+- goal check-ins，仅在真实 store / 类型已落地后纳入。
 
 如果实现时发现还有 settings / meta / app state 等已纳入旧备份契约的数据，也必须继续保留。
 
@@ -93,5 +96,5 @@ JSON backup 完整承诺至少覆盖：
 - 不实现 import preview 新 UI。
 - 不实现 repair。
 - 不实现只读恢复预检。
-- 不新增 CSV / Markdown 明细导出。
+- 不新增 Markdown 明细导出；CSV 明细另按刀 5 边界处理。
 - 不修改成人行为、训练、复盘或目标历史业务功能。

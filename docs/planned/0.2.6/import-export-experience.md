@@ -11,8 +11,8 @@ import preview 应继续作为所有恢复入口的前置层。
 - dataVersion 状态。
 - 各数据维度数量。
 - 三类成人行为事件数量。
-- training goal 数量。
-- goal check-in 数量。
+- training goal 数量，仅在真实 store / 类型已落地后展示。
+- goal check-in 数量，仅在真实 store / 类型已落地后展示。
 - linked id warning。
 - orphan check-in warning。
 - high severity blocker。
@@ -45,7 +45,7 @@ import preview 应继续作为所有恢复入口的前置层。
 建议新增或确认维度：
 
 - 成人行为事件。
-- 训练目标与 check-in。
+- 训练目标与 check-in，仅在真实 store / 类型已落地后纳入。
 - 快照。
 
 ## CSV
@@ -56,8 +56,8 @@ CSV 可以新增：
 - masturbation events。
 - sex events。
 - adult event links。
-- training goals。
-- goal check-ins。
+- training goals，仅在真实 store / 类型已落地后加入。
+- goal check-ins，仅在真实 store / 类型已落地后加入。
 
 CSV 默认不包含：
 
@@ -70,7 +70,7 @@ CSV 默认不包含：
 
 允许：
 
-- “此备份包含成人行为事件和训练目标。”
+- “此备份包含成人行为事件。”；若训练数据已真实落地，可追加“并包含训练目标”。
 - “存在关联指向缺失记录，导入后可继续检查。”
 - “CSV 不是完整备份，请保留 JSON backup。”
 - “Markdown 导出已移除，请使用 JSON backup 或 CSV。”

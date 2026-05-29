@@ -129,6 +129,7 @@ const MainViewRouter: React.FC<MainViewRouterProps> = ({
                 onFinishNap,
                 onFinishAlcohol
               }}
+              onNavigateToReview={() => onMainViewChange('state')}
             />
           )}
           <Suspense fallback={<LoadingFallback />}>

@@ -41,12 +41,16 @@ SnapshotData / ExportSnapshot
 
 最新只读审计：[`knife-1-current-contract-audit-2026-05-28.md`](./knife-1-current-contract-audit-2026-05-28.md)。
 
+刀 5 当前矩阵：[`knife-5-current-csv-export-matrix-2026-05-28.md`](./knife-5-current-csv-export-matrix-2026-05-28.md)。
+
 实现窗口需要特别注意：
 
 - 完整备份路径当前已覆盖三类成人行为事件。
 - 选择性 JSON 导出路径当前不覆盖三类成人行为事件。
 - `snapshots?` 在类型和 preview 中存在，但完整备份路径当前不嵌套保存已有快照历史。
 - 训练目标和 check-in 当前没有真实 store / 类型覆盖；只在 0.2.4 存储真实落地后纳入 0.2.6。
+- Markdown 导出已经取消；实现时删除或隐藏入口，不继续补 Markdown 维度。
+- CSV 默认不得静默导出 notes 全文；training CSV 只在真实 store / 类型落地后出现。
 
 ## 刀序交接
 
@@ -55,7 +59,7 @@ SnapshotData / ExportSnapshot
 - 刀 2：Import Preview 风险矩阵；当前矩阵见 [`knife-2-current-preview-risk-matrix-2026-05-28.md`](./knife-2-current-preview-risk-matrix-2026-05-28.md)。
 - 刀 3：Snapshot Integrity 扩展；当前矩阵见 [`knife-3-current-integrity-matrix-2026-05-28.md`](./knife-3-current-integrity-matrix-2026-05-28.md)。
 - 刀 4：只读恢复预检；当前矩阵见 [`knife-4-current-readonly-preflight-matrix-2026-05-28.md`](./knife-4-current-readonly-preflight-matrix-2026-05-28.md)。
-- 刀 5：CSV 可读导出与 Markdown 移除边界。
+- 刀 5：CSV 可读导出与 Markdown 移除边界；当前矩阵见 [`knife-5-current-csv-export-matrix-2026-05-28.md`](./knife-5-current-csv-export-matrix-2026-05-28.md)。
 - 刀 6：Safety / Privacy 审计。
 
 ## 文件候选
@@ -94,16 +98,17 @@ SnapshotData / ExportSnapshot
 
 - JSON backup 包含当前完整数据维度。
 - 旧格式缺少新数组时可导入并补空数组。
-- import preview 展示成人行为事件和训练数据数量。
+- import preview 展示成人行为事件数量；训练数据数量只在真实 store / 类型落地后展示。
 - newer dataVersion 阻止写入。
 - snapshot integrity 能报告 orphan linked ids。
-- snapshot integrity 能报告 orphan check-in。
+- snapshot integrity 只在训练数据真实落地后报告 orphan check-in。
 - 只读恢复预检不写入 IndexedDB。
 - 导出默认范围是全部导出，日期筛选是可选状态。
 - 数据健康问题能定位到具体字段 / 子项。
 - 数据生态修复提示能闭合到可执行动作。
 - CSV 不被描述成完整备份。
 - Markdown 导出入口应移除或隐藏。
+- CSV 默认不静默导出 notes 全文。
 - repair 不自动创造业务事实。
 
 ## 交接结论

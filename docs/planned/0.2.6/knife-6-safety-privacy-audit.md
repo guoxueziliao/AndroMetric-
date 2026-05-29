@@ -16,7 +16,7 @@
 - JSON backup 入口。
 - encrypted backup 入口。
 - CSV export。
-- Markdown export。
+- Markdown export 入口移除或隐藏状态。
 - import preview。
 - FS 备份恢复。
 - snapshot integrity。
@@ -58,7 +58,7 @@
 - repair 不自动创建业务事实。
 - repair 不静默删除 notes。
 - repair 不静默删除成人行为历史。
-- repair 不静默删除训练目标历史。
+- 如果训练数据已真实落地，repair 不静默删除训练目标历史。
 
 ## 验收输出
 

@@ -28,18 +28,21 @@
 - porn use events 数量。
 - masturbation events 数量。
 - sex events 数量。
-- training goals 数量。
-- goal check-ins 数量。
 - linked id warnings。
-- orphan check-in warnings。
 - high severity blockers。
+
+条件展示：
+
+- training goals 数量，仅在真实 store / 类型已落地后展示。
+- goal check-ins 数量，仅在真实 store / 类型已落地后展示。
+- orphan check-in warnings，仅在真实 store / 类型已落地后展示。
 
 ## 风险分级
 
 建议分级：
 
 - info：旧格式缺少新数组，但可安全补空。
-- warning：orphan linked id、one-way relation、orphan check-in、可选字段异常。
+- warning：orphan linked id、one-way relation、可选字段异常；orphan check-in 只在真实训练数据落地后纳入。
 - high：重复 ID、必需字段缺失、不可自动合并的事件冲突。
 - blocker：`dataVersion` 高于当前版本，或写入会覆盖无法选择策略的关键数据。
 
@@ -72,7 +75,7 @@
 
 ## 验收
 
-- preview counts 包含成人行为事件和训练数据。
+- preview counts 包含成人行为事件；训练数据只在真实 store / 类型已落地后展示。
 - 旧格式缺少新数组显示 info，不作为错误。
 - linked id orphan 显示 warning。
 - duplicate id 显示 high 或 blocker，不静默覆盖。

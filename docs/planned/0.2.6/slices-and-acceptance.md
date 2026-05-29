@@ -81,14 +81,18 @@
 - 预检不创建安全快照。
 - 文件导入和文件系统备份恢复复用同一 preflight helper。
 
-### 刀 5：CSV / Markdown 可读导出边界
+### 刀 5：CSV 可读导出与 Markdown 移除边界
 
 执行文档：[`knife-5-readable-export-boundary.md`](./knife-5-readable-export-boundary.md)
 
-- 明确 CSV / Markdown 是否展示新增维度摘要。
+当前矩阵：[`knife-5-current-csv-export-matrix-2026-05-28.md`](./knife-5-current-csv-export-matrix-2026-05-28.md)
+
+- 明确 CSV 是否展示新增维度摘要。
+- 移除或隐藏 Markdown 导出入口。
 - 明确导出默认是全部导出，日期只是可选筛选。
 - 明确 notes / 伴侣私密备注默认不导出。
-- 提示 Markdown 不是完整备份。
+- training CSV 只有真实 store / 类型落地后才出现。
+- 提示 CSV 不是完整备份。
 - JSON backup 地位不被削弱。
 - 默认导出范围不被日期区间误导。
 - 可读导出不泄露默认敏感全文。
@@ -113,10 +117,11 @@
 
 - JSON backup 完整覆盖当前已实现数据维度。
 - import preview 展示新增复杂数据数量和风险。
-- snapshot integrity 能检查成人行为事件和训练数据。
+- snapshot integrity 能检查成人行为事件；训练数据只在真实 store / 类型落地后纳入。
 - 只读恢复预检不写入 IndexedDB。
 - 高版本 dataVersion 不能写入。
-- CSV / Markdown 不被描述成完整迁移格式。
+- CSV 不被描述成完整迁移格式。
+- Markdown 导出入口移除或隐藏。
 - 导出默认支持全部导出，并清楚展示范围。
 - 数据健康问题能定位到具体字段或子项。
 - 数据生态修复提示能闭合到可执行动作。

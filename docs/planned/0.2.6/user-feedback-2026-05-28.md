@@ -79,6 +79,6 @@
 
 这三项并入 0.2.6：
 
-- 全部导出：归刀 5 CSV / Markdown 可读导出边界，同时影响 JSON export UX。
+- 全部导出：归刀 5 CSV 可读导出与 Markdown 移除边界，同时影响 JSON export UX。
 - 修复入口可发现：归刀 3 Snapshot Integrity 扩展和刀 6 Safety / Privacy 审计。
 - 健康问题定位：归刀 3 Snapshot Integrity 扩展，必要时作为 UI 小插刀。

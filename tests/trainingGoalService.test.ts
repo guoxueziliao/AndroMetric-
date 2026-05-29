@@ -132,9 +132,10 @@ describe('canTransitionGoal', () => {
     expect(canTransitionGoal('completed', 'active')).toBe(false);
   });
 
-  it('archived cannot transition', () => {
-    expect(canTransitionGoal('archived', 'active')).toBe(false);
+  it('archived can only restore to active', () => {
+    expect(canTransitionGoal('archived', 'active')).toBe(true);
     expect(canTransitionGoal('archived', 'completed')).toBe(false);
+    expect(canTransitionGoal('archived', 'paused')).toBe(false);
   });
 });
 

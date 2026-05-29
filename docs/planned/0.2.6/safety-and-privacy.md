@@ -21,7 +21,7 @@
 
 - JSON backup 是完整敏感数据。
 - 成人行为事件可能包含性健康记录。
-- training goals 和 check-ins 可能包含私密自我管理信息。
+- 如果训练数据已真实落地，training goals 和 check-ins 可能包含私密自我管理信息。
 - CSV 仍可能包含敏感摘要。
 - Markdown 导出已取消，不应作为敏感数据外流入口保留。
 

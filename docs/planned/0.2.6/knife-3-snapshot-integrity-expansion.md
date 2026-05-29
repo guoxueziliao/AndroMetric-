@@ -1,6 +1,6 @@
 # 0.2.6 刀 3 Snapshot Integrity 扩展
 
-> 本文只规划刀 3：扩展完整性检查，使成人行为事件和训练数据能被结构性检查。
+> 本文只规划刀 3：扩展完整性检查，使成人行为事件能被结构性检查；训练数据只在真实 store / 类型落地后纳入。
 
 ## 状态
 
@@ -29,10 +29,10 @@
 - `targetDate` 与 03:00 生理日规则是否明显冲突。
 - linked ids 是否指向存在事件。
 - one-way relation。
-- training goal 数量。
-- goal check-in 数量。
-- orphan goal check-in。
-- archived goal 是否保留 check-in。
+- training goal 数量，仅在真实 store / 类型已落地后展示。
+- goal check-in 数量，仅在真实 store / 类型已落地后展示。
+- orphan goal check-in，仅在真实 store / 类型已落地后检查。
+- archived goal 是否保留 check-in，仅在真实 store / 类型已落地后检查。
 - 现有数据健康 issue 是否包含可展示定位信息。
 
 ## Repair 边界
@@ -91,7 +91,7 @@
 - integrity 能报告三类事件数量和 ID 问题。
 - integrity 能报告 orphan linked ids。
 - integrity 能报告 one-way relation。
-- integrity 能报告 orphan goal check-in。
+- integrity 只在训练数据真实落地后报告 orphan goal check-in。
 - 健康问题能定位到具体字段 / 子项。
 - 数据生态修复提示能闭合到按钮或下一步动作。
 - repair 不自动创造业务事实。

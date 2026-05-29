@@ -25,7 +25,7 @@
 - import preview 扩展。
 - snapshot integrity 扩展。
 - linked ids / orphan / one-way relation 检查。
-- 训练目标和 check-in 完整性检查。
+- 训练目标和 check-in 完整性检查，仅在真实 store / 类型已落地后纳入。
 - 只读恢复预检。
 - 备份写后读信心反馈。
 - CSV 可读导出边界整理，并移除 Markdown 导出。
@@ -40,7 +40,7 @@
 - 现有 import preview。
 - 现有 snapshot integrity。
 - 0.2.2 三类成人行为事件。
-- 0.2.4 `TrainingGoal` / `GoalCheckin`。
+- 0.2.4 `TrainingGoal` / `GoalCheckin`，仅在真实 store / 类型已落地后复用。
 - 0.2.5 目标历史的运行时派生结果。
 
 如果实现时发现必须新增 schema，应停止本版本规划并重新讨论。
@@ -62,7 +62,7 @@
 
 0.1.1 / 0.1.3：
 
-- 建立 JSON / CSV / Markdown 等导出入口。
+- 建立 JSON / CSV / Markdown 等导出入口；其中 Markdown 后续由 0.2.6 决策取消。
 - 建立导入预览。
 - 建立自动备份、quota、保留策略和安全快照。
 

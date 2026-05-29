@@ -3,9 +3,13 @@ import { StorageService } from '../../core/storage';
 import type { TrainingGoal } from '../../domain';
 import { getActiveGoals, getDueGoals, CATEGORY_LABELS } from '../stats/model/trainingGoalService';
 import { getActivityTargetDate } from '../../shared/lib/targetDate';
-import { Target, ChevronRight } from 'lucide-react';
+import { Target, ChevronRight, History } from 'lucide-react';
 
-const DashboardTrainingHint: React.FC = () => {
+interface DashboardTrainingHintProps {
+  onNavigateToReview?: () => void;
+}
+
+const DashboardTrainingHint: React.FC<DashboardTrainingHintProps> = ({ onNavigateToReview }) => {
   const [goals, setGoals] = useState<TrainingGoal[]>([]);
 
   useEffect(() => {
@@ -44,12 +48,23 @@ const DashboardTrainingHint: React.FC = () => {
       )}
 
       {!nearestDue && nearestActive && (
-        <div className="flex items-center gap-1.5 p-1.5 bg-surface-muted rounded-xl">
+        <div className="flex items-center gap-1.5 p-1.5 bg-surface-muted rounded-xl mb-1">
           <span className="text-xs text-text-secondary">{nearestActive.title}</span>
           <span className="text-[10px] text-text-muted ml-auto">
             {CATEGORY_LABELS[nearestActive.category] ?? nearestActive.category} · {nearestActive.targetWindowDays}天
           </span>
         </div>
+      )}
+
+      {onNavigateToReview && (
+        <button
+          onClick={onNavigateToReview}
+          className="flex items-center gap-1 mt-1.5 text-[10px] text-accent hover:underline"
+        >
+          <History size={10} />
+          查看目标历史
+          <ChevronRight size={10} />
+        </button>
       )}
     </div>
   );

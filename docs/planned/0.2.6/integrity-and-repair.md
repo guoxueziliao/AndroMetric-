@@ -9,7 +9,7 @@
 - 备份是否包含应有数据。
 - 导入后数量是否一致。
 - 事件关联是否还指向存在对象。
-- 训练目标和 check-in 是否仍能对应。
+- 训练目标和 check-in 是否仍能对应，仅在真实 store / 类型已落地后检查。
 - 哪些问题能修，哪些只能提示。
 
 ## 检查范围
@@ -24,10 +24,10 @@
 - one-way relation。
 - `targetDate` 是否存在。
 - `targetDate` 与 03:00 生理日规则是否明显冲突。
-- training goal 数量。
-- goal check-in 数量。
-- orphan goal check-in。
-- archived goal 是否保留 check-in。
+- training goal 数量，仅在真实 store / 类型已落地后展示。
+- goal check-in 数量，仅在真实 store / 类型已落地后展示。
+- orphan goal check-in，仅在真实 store / 类型已落地后检查。
+- archived goal 是否保留 check-in，仅在真实 store / 类型已落地后检查。
 
 其中 training goal / goal check-in 只在真实 store / 类型已经落地后纳入；当前 0.2.6 不为完整性检查单独新增 schema。
 
@@ -82,7 +82,7 @@
 - integrity 能报告三类成人行为事件数量。
 - integrity 能报告 linked id orphan。
 - integrity 能报告 one-way relation。
-- integrity 能报告 goal check-in orphan。
+- integrity 只在训练数据真实落地后报告 goal check-in orphan。
 - 数据健康问题能展示具体字段 / 子项位置。
 - 修复建议必须能直接触发、跳转到按钮或说明为什么暂不可修。
 - repair 不自动创造业务事实。

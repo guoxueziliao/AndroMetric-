@@ -5,11 +5,15 @@
 ## 状态
 
 - 所属版本：0.2.6。
-- 当前阶段：待刀 4 完成后执行。
+- 当前阶段：当前 CSV 导出矩阵已完成，待实现。
 - 前置：[`knife-4-read-only-recovery-preflight.md`](./knife-4-read-only-recovery-preflight.md) 与 [`knife-4-current-readonly-preflight-matrix-2026-05-28.md`](./knife-4-current-readonly-preflight-matrix-2026-05-28.md)。
 - 实现边界：CSV 可读导出边界、Markdown 导出下线和提示，不替代 JSON backup。
 
 ## 核心结论
+
+决策依据：[`decision-markdown-export-removal-2026-05-28.md`](./decision-markdown-export-removal-2026-05-28.md)。
+
+当前矩阵：[`knife-5-current-csv-export-matrix-2026-05-28.md`](./knife-5-current-csv-export-matrix-2026-05-28.md)。
 
 JSON backup 是完整迁移格式。
 
@@ -43,8 +47,13 @@ Markdown 导出已定：砍掉。
 - `masturbation_events.csv`
 - `sex_events.csv`
 - `adult_event_links.csv`
+
+条件项：
+
 - `training_goals.csv`
 - `goal_checkins.csv`
+
+training 相关 CSV 只在真实 store / 类型已经落地后加入，不为 0.2.6 单独虚构 schema。
 
 CSV 默认不包含：
 
@@ -75,6 +84,7 @@ CSV 默认不包含：
 - 默认导出范围是全部导出。
 - 日期筛选有明确开关或状态提示。
 - CSV 不默认包含敏感全文。
+- training CSV 只有真实 store / 类型落地后才出现。
 - 导出入口有敏感数据提示。
 - 不新增分享图。
 - 不新增外部分析入口。

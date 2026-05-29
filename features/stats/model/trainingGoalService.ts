@@ -70,7 +70,7 @@ const VALID_TRANSITIONS: Record<TrainingGoalStatus, TrainingGoalStatus[]> = {
   active: ['paused', 'completed', 'archived'],
   paused: ['active', 'archived'],
   completed: ['archived'],
-  archived: [],
+  archived: ['active'],
 };
 
 export const canTransitionGoal = (current: TrainingGoalStatus, target: TrainingGoalStatus): boolean =>
@@ -181,3 +181,50 @@ export const getCheckinsForGoal = (checkins: GoalCheckin[], goalId: string): Goa
 
 export const archiveGoal = (goal: TrainingGoal): TrainingGoal =>
   transitionGoal(goal, 'archived');
+
+export const restoreGoal = (goal: TrainingGoal): TrainingGoal =>
+  goal.status === 'archived' ? transitionGoal(goal, 'active') : goal;
+
+export const getCompletedGoals = (goals: TrainingGoal[]): TrainingGoal[] =>
+  goals.filter((g) => g.status === 'completed');
+
+export const getArchivedGoals = (goals: TrainingGoal[]): TrainingGoal[] =>
+  goals.filter((g) => g.status === 'archived');
+
+export const getGoalsByCategory = (goals: TrainingGoal[], category: TrainingGoalCategory): TrainingGoal[] =>
+  goals.filter((g) => g.category === category);
+
+export const getOrphanCheckins = (checkins: GoalCheckin[], goals: TrainingGoal[]): GoalCheckin[] => {
+  const goalIds = new Set(goals.map((g) => g.id));
+  return checkins.filter((c) => !goalIds.has(c.goalId));
+};
+
+export const getStatusCounts = (goals: TrainingGoal[]): Record<TrainingGoalStatus, number> => {
+  const counts: Record<TrainingGoalStatus, number> = { active: 0, paused: 0, completed: 0, archived: 0 };
+  for (const g of goals) counts[g.status]++;
+  return counts;
+};
+
+export const getCategoryDistribution = (goals: TrainingGoal[]): Record<string, number> => {
+  const dist: Record<string, number> = {};
+  for (const g of goals) dist[g.category] = (dist[g.category] ?? 0) + 1;
+  return dist;
+};
+
+export const getCheckinCountPerGoal = (checkins: GoalCheckin[], goalId: string): number =>
+  checkins.filter((c) => c.goalId === goalId).length;
+
+export const getGoalsWithCheckins = (goals: TrainingGoal[], checkins: GoalCheckin[]): TrainingGoal[] => {
+  const goalIdsWithCheckins = new Set(checkins.map((c) => c.goalId));
+  return goals.filter((g) => goalIdsWithCheckins.has(g.id));
+};
+
+export const getRecentFocusCategories = (goals: TrainingGoal[], count: number = 4): string[] => {
+  const sorted = [...goals].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+  const seen = new Set<string>();
+  for (const g of sorted) {
+    seen.add(g.category);
+    if (seen.size >= count) break;
+  }
+  return [...seen];
+};

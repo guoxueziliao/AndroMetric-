@@ -26,6 +26,7 @@ const DashboardMonthView = lazy(() => import('./DashboardMonthView'));
 interface DashboardProps {
   logs: LogEntry[];
   actions: DashboardActions;
+  onNavigateToReview?: () => void;
 }
 
 const WEATHER_LABELS: Record<string, string> = { sunny: '晴', cloudy: '多云', rainy: '雨', snowy: '雪', windy: '大风', foggy: '雾' };
@@ -48,7 +49,8 @@ type DashboardView = 'day' | 'week' | 'month';
 
 const Dashboard: React.FC<DashboardProps> = ({
   logs: rawLogs,
-  actions
+  actions,
+  onNavigateToReview
 }) => {
   const {
     onEdit,
@@ -266,7 +268,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         {activeView === 'day' && (
             <>
                 <ImpactFindings logs={logs} />
-                <DashboardTrainingHint />
+                <DashboardTrainingHint onNavigateToReview={onNavigateToReview} />
                 <DashboardDayView
                     logs={logs}
                     todayLog={todayLog}

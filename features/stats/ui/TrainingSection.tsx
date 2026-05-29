@@ -15,10 +15,12 @@ import {
   getCheckinsForGoal,
   getGoalEndDate,
   archiveGoal,
+  restoreGoal,
   CATEGORY_LABELS,
 } from '../../stats/model/trainingGoalService';
 import { getActivityTargetDate } from '../../../shared/lib/targetDate';
-import { Target, ChevronRight, CheckCircle, Pause, Archive, SkipForward } from 'lucide-react';
+import { Target, ChevronRight, CheckCircle, Pause, Archive, SkipForward, History, ChevronDown } from 'lucide-react';
+import GoalHistorySection from './GoalHistorySection';
 
 const MetricPill: React.FC<{
   label: string;
@@ -234,6 +236,7 @@ const TrainingSection: React.FC<TrainingSectionProps> = ({ facts, insights }) =>
   const [checkins, setCheckins] = useState<GoalCheckin[]>([]);
   const [checkinGoal, setCheckinGoal] = useState<TrainingGoal | null>(null);
   const [ignoredIds, setIgnoredIds] = useState<Set<string>>(new Set());
+  const [showHistory, setShowHistory] = useState(false);
 
   const today = useMemo(() => getActivityTargetDate(new Date()), []);
 
@@ -256,6 +259,10 @@ const TrainingSection: React.FC<TrainingSectionProps> = ({ facts, insights }) =>
 
   const activeGoals = useMemo(() => getActiveGoals(goals), [goals]);
   const dueGoals = useMemo(() => getDueGoals(goals, today), [goals, today]);
+  const activeNotDue = useMemo(
+    () => activeGoals.filter((g) => !dueGoals.some((d) => d.id === g.id)),
+    [activeGoals, dueGoals],
+  );
 
   const suggestions = useMemo(() => {
     const input = buildSuggestionInput(facts, insights, activeGoals.length);
@@ -306,12 +313,22 @@ const TrainingSection: React.FC<TrainingSectionProps> = ({ facts, insights }) =>
   };
 
   const handleArchive = async (goal: TrainingGoal) => {
-    const archived = archiveGoal(goal);
+    const current = await StorageService.trainingGoals.queries.byId(goal.id);
+    if (!current) return;
+    const archived = archiveGoal(current);
     await StorageService.trainingGoals.save(archived);
     setGoals((prev) => prev.map((g) => g.id === archived.id ? archived : g));
   };
 
-  const hasContent = suggestions.length > 0 || activeGoals.length > 0 || dueGoals.length > 0;
+  const handleRestore = async (goal: TrainingGoal) => {
+    const current = await StorageService.trainingGoals.queries.byId(goal.id);
+    if (!current || current.status !== 'archived') return;
+    const restored = restoreGoal(current);
+    await StorageService.trainingGoals.save(restored);
+    setGoals((prev) => prev.map((g) => g.id === restored.id ? restored : g));
+  };
+
+  const hasContent = suggestions.length > 0 || activeGoals.length > 0 || dueGoals.length > 0 || goals.length > 0 || checkins.length > 0;
   if (!hasContent) return null;
 
   return (
@@ -355,11 +372,11 @@ const TrainingSection: React.FC<TrainingSectionProps> = ({ facts, insights }) =>
       )}
 
       {/* Active goals (not due) */}
-      {activeGoals.filter((g) => !dueGoals.some((d) => d.id === g.id)).length > 0 && (
+      {activeNotDue.length > 0 && (
         <div>
           <h3 className="text-xs font-bold text-text-primary mb-2">进行中</h3>
           <div className="space-y-2">
-            {activeGoals.filter((g) => !dueGoals.some((d) => d.id === g.id)).map((g) => (
+            {activeNotDue.map((g) => (
               <ActiveGoalCard
                 key={g.id}
                 goal={g}
@@ -401,6 +418,31 @@ const TrainingSection: React.FC<TrainingSectionProps> = ({ facts, insights }) =>
             sample={facts.pornUse.count + facts.masturbation.count + facts.sex.count}
           />
         </div>
+      </div>
+
+      {/* Goal history toggle */}
+      <div>
+        <button
+          onClick={() => setShowHistory(!showHistory)}
+          className="flex items-center gap-1.5 w-full px-3 py-2 text-xs font-bold text-text-secondary bg-surface-muted rounded-xl border border-surface-border hover:text-accent transition-colors"
+        >
+          <History size={12} />
+          目标历史
+          <span className="text-[10px] text-text-muted ml-auto">
+            {goals.length} 个目标 · {checkins.length} 次签到
+          </span>
+          {showHistory ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+        </button>
+        {showHistory && (
+          <div className="mt-2">
+            <GoalHistorySection
+              goals={goals}
+              checkins={checkins}
+              onRestore={handleRestore}
+              onArchive={handleArchive}
+            />
+          </div>
+        )}
       </div>
 
       {/* Check-in modal */}

@@ -11,8 +11,9 @@
 - 0.2.6 默认不新增 schema / migration。
 - 0.2.6 不新增成人行为、训练、洞察或关系功能。
 - JSON backup 是完整迁移格式。
-- CSV / Markdown 是可读导出，不替代 JSON backup。
+- CSV 是可读导出，不替代 JSON backup；Markdown 导出取消。
 - 不引入后端、账号、云同步、外部 API、分享图或外部 AI 分析。
+- training goal / check-in 只在真实 store / 类型已落地后纳入，不为 0.2.6 新增 schema。
 
 ## 已确认一致
 
@@ -22,11 +23,12 @@
 - preview 边界：所有恢复入口先 preview，不因本机备份而绕过。
 - integrity 边界：检查结构性问题，不创造业务事实。
 - repair 边界：可修结构，不自动创建事件、目标或 check-in。
-- 可读导出边界：CSV / Markdown 不默认包含敏感全文，不鼓励分享。
+- 可读导出边界：CSV 不默认包含敏感全文，不鼓励分享；Markdown 入口应移除或隐藏。
 - 导出范围边界：默认全部导出，日期区间只是可选筛选。
 - 修复入口边界：数据生态提示必须能闭合到按钮或下一步动作。
 - 健康定位边界：问题不能只跳转到当天表单，必须展示具体字段 / 子项位置。
 - 隐私边界：本地优先，无账号、无云端、无外部分析。
+- 训练数据边界：当前代码未发现真实 training stores，0.2.6 只做条件覆盖，不凭规划文档虚构。
 
 ## 已修正
 
@@ -34,6 +36,7 @@
 - `slices-and-acceptance.md`：将候选刀序推进为刀 1 - 刀 6 执行顺序。
 - `README.md`：补齐刀 1 - 刀 6、实现交接和一致性审计入口。
 - `roadmap.md` / `future-development.md`：同步 0.2.6 执行草案状态和执行刀序。
+- `knife-5-current-csv-export-matrix-2026-05-28.md`：记录当前 Markdown 残留、CSV 文件、敏感字段和刀 5 实现矩阵。
 
 ## 执行草案收口
 
@@ -44,20 +47,24 @@
 - `knife-0b-repair-entry-flow.md`：数据生态到数据健康的体检 / 修复 / 手动检查状态流。
 - `knife-0c-health-issue-location.md`：issue path 到业务位置的文案映射和跳转行为。
 - `knife-0-validation-matrix.md`：0A / 0B / 0C 的实现顺序、必测场景和失败信号。
+- `decision-markdown-export-removal-2026-05-28.md`：记录 Markdown 导出取消、CSV 成为唯一保留可读导出的产品决策。
 - `knife-1-data-contract-audit.md`：实现前审计完整备份、导入预览和完整性检查覆盖。
 - `knife-1-current-contract-audit-2026-05-28.md`：记录当前代码里 backup、选择性导出、preview 和 integrity 的真实覆盖。
 - `knife-2-import-preview-risk-matrix.md`：preview counts、warning、high severity 和 blocker。
 - `knife-2-current-preview-risk-matrix-2026-05-28.md`：记录当前 preview model / UI 差异和实现矩阵。
-- `knife-3-snapshot-integrity-expansion.md`：成人行为事件和训练数据完整性检查。
+- `knife-3-snapshot-integrity-expansion.md`：成人行为事件完整性检查；训练数据只在真实 store / 类型落地后纳入。
 - `knife-3-current-integrity-matrix-2026-05-28.md`：记录当前 snapshot integrity、data health、issue 定位和修复入口差异。
 - `knife-4-read-only-recovery-preflight.md`：不写入 IndexedDB 的恢复预检。
 - `knife-4-current-readonly-preflight-matrix-2026-05-28.md`：记录当前导入 / 备份恢复 preview 和完整 preflight 缺口。
-- `knife-5-readable-export-boundary.md`：CSV / Markdown 可读导出边界。
+- `knife-5-readable-export-boundary.md`：CSV 可读导出与 Markdown 移除边界。
+- `knife-5-current-csv-export-matrix-2026-05-28.md`：记录当前 CSV 导出文件、Markdown 入口残留、notes 敏感字段和验收要求。
 - `knife-6-safety-privacy-audit.md`：导入、导出、repair、预检和文案审计。
 - `implementation-handoff.md`：进入实现窗口前的一页交接摘要。
 - `user-feedback-2026-05-28.md`：记录全部导出、修复入口可发现、健康问题具体定位三项反馈。
 
-当前已完成刀 1 只读审计、刀 2 当前风险矩阵、刀 3 当前 integrity 矩阵和刀 4 当前只读预检矩阵；实现窗口仍需按最新代码复核。若 0.2.2 - 0.2.5 数据尚未真实落地，应按真实代码状态缩小 0.2.6 范围。
+当前已完成刀 1 只读审计、刀 2 当前风险矩阵、刀 3 当前 integrity 矩阵、刀 4 当前只读预检矩阵和刀 5 当前 CSV 导出矩阵；实现窗口仍需按最新代码复核。若 0.2.2 - 0.2.5 数据尚未真实落地，应按真实代码状态缩小 0.2.6 范围。
+
+刀 5 当前矩阵已压缩为短文档：只记录 Markdown 残留、CSV notes 风险、已落地成人行为事件 CSV 和 training 条件项，不展开长清单。
 
 ## 文档长度
 
@@ -72,5 +79,5 @@
 3. 刀 2：Import Preview 风险矩阵。
 4. 刀 3：Snapshot Integrity 扩展。
 5. 刀 4：只读恢复预检。
-6. 刀 5：CSV / Markdown 可读导出边界。
+6. 刀 5：CSV 可读导出与 Markdown 移除边界。
 7. 刀 6：Safety / Privacy 审计。

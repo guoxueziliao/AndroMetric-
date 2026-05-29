@@ -4,7 +4,7 @@
 
 ## 当前状态
 
-- 状态：执行草案 / 刀 1 当前契约只读审计已完成 / 待实现。
+- 状态：执行草案 / 插刀 0 与刀 1 - 刀 5 当前文档已收口 / 待实现。
 - 前置：0.2.2 成人行为事件、0.2.3 复盘报告、0.2.4 训练目标、0.2.5 目标历史。
 - 主方向：多轮 schema 扩展后的数据安全、导入导出契约、完整性检查和恢复信心。
 - 已定：0.2.6 不新增成人行为、训练、洞察或关系功能。
@@ -40,6 +40,8 @@
   - issue path 到业务位置的文案映射和跳转行为。
 - [插刀 0 验收矩阵](./0.2.6/knife-0-validation-matrix.md)
   - 0A / 0B / 0C 的实现顺序、必测场景和失败信号。
+- [决策：移除 Markdown 导出](./0.2.6/decision-markdown-export-removal-2026-05-28.md)
+  - JSON backup 为完整迁移格式，CSV 为唯一保留可读导出。
 - [刀 1：数据契约审计](./0.2.6/knife-1-data-contract-audit.md)
   - 实现前审计完整备份、导入预览和完整性检查覆盖。
 - [刀 1 当前契约审计结果](./0.2.6/knife-1-current-contract-audit-2026-05-28.md)
@@ -49,7 +51,7 @@
 - [刀 2 当前风险矩阵](./0.2.6/knife-2-current-preview-risk-matrix-2026-05-28.md)
   - 只读记录当前 preview model / UI 差异和实现矩阵。
 - [刀 3：Snapshot Integrity 扩展](./0.2.6/knife-3-snapshot-integrity-expansion.md)
-  - 成人行为事件和训练数据完整性检查。
+  - 成人行为事件完整性检查；训练数据只在真实 store / 类型落地后纳入。
 - [刀 3 当前 Integrity 矩阵](./0.2.6/knife-3-current-integrity-matrix-2026-05-28.md)
   - 只读记录当前 snapshot integrity、data health、issue 定位和修复入口差异。
 - [刀 4：只读恢复预检](./0.2.6/knife-4-read-only-recovery-preflight.md)
@@ -58,6 +60,8 @@
   - 只读记录当前导入 / 备份恢复 preview 和完整 preflight 缺口。
 - [刀 5：CSV 可读导出与 Markdown 移除边界](./0.2.6/knife-5-readable-export-boundary.md)
   - CSV 可读导出边界、Markdown 移除、敏感内容默认排除和 JSON backup 地位。
+- [刀 5 当前 CSV 导出矩阵](./0.2.6/knife-5-current-csv-export-matrix-2026-05-28.md)
+  - 只读记录当前 Markdown 残留、CSV 文件、敏感字段和实现矩阵。
 - [刀 6：Safety / Privacy 审计](./0.2.6/knife-6-safety-privacy-audit.md)
   - 导入、导出、repair、预检和文案审计。
 - [实现交接摘要](./0.2.6/implementation-handoff.md)
@@ -76,7 +80,7 @@
 - 0.2.6 不解决“多设备同步”“云端备份”“账号体系”“自动跨设备 merge”。
 - JSON backup 必须完整承载 0.2.2 - 0.2.5 的新增数据。
 - CSV 可以扩展可读摘要，但不得伪装成完整迁移格式；Markdown 导出取消。
-- import preview 和 snapshot integrity 要把 linked ids、orphan、one-way relation、训练目标和 check-in 作为可见风险。
+- import preview 和 snapshot integrity 要把 linked ids、orphan、one-way relation 作为可见风险；训练目标和 check-in 只在真实 store / 类型已落地后纳入。
 - repair 只能修复结构性问题，不自动创造业务事实。
 - 导出 UX 默认表达为“全部导出”，日期区间只是可选筛选。
 - 数据健康问题必须能定位到具体字段 / 子项，而不是只跳到当天表单。
@@ -97,7 +101,7 @@
 
 ## 下一步
 
-0.2.6 当前已形成执行草案，并完成刀 1 当前契约只读审计、刀 2 当前风险矩阵、刀 3 当前 integrity 矩阵和刀 4 当前只读预检矩阵。后续进入实现窗口时，应按真实代码状态执行：
+0.2.6 当前已形成执行草案，并完成刀 1 当前契约只读审计、刀 2 当前风险矩阵、刀 3 当前 integrity 矩阵、刀 4 当前只读预检矩阵和刀 5 当前 CSV 导出矩阵。后续进入实现窗口时，应按真实代码状态执行：
 
 1. 插刀 0：当前数据 UX 修复。
 2. 刀 1：按最新代码复核数据契约审计结果。
