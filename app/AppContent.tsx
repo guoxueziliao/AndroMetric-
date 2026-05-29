@@ -197,7 +197,7 @@ const AppContent: React.FC<{ data: AppData }> = ({ data }) => {
   }
 
   return (
-    <div className={`min-h-screen bg-surface-base text-text-secondary font-sans transition-all duration-slow safe-area-top safe-area-bottom safe-area-left safe-area-right ${(isBlurred || settings.privacyMode) ? 'blur-md saturate-50 opacity-60' : ''}`}>
+    <div className={`min-h-screen bg-surface-base text-text-secondary font-sans transition-all duration-slow safe-area-top safe-area-bottom safe-area-left safe-area-right ${isBlurred ? 'blur-md saturate-50 opacity-60' : ''}`}>
       {view === 'dashboard' ? (
         <Suspense fallback={renderAppShell(emptyQuickRecordHandlers)}>
           <QuickRecordController data={quickRecordData} isEnabled>

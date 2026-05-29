@@ -21,7 +21,6 @@ export interface BackupScheduleSettings {
 
 export interface AppSettings {
     theme: 'system' | 'light' | 'dark';
-    privacyMode: boolean;
     enableNotifications: boolean;
     notificationTime: { morning: string; evening: string };
     hiddenFields: string[];

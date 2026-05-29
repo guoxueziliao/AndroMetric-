@@ -97,7 +97,6 @@ Heavy views (`StatsView`, `SexLifeView`, `features/profile/MyView`) are loaded w
 - TypeScript `strict: true` plus `noUnusedLocals` / `noUnusedParameters` — both error. Do not introduce `any`; do not suppress these flags.
 - Module config: `ESNext` with `allowImportingTsExtensions: true` (imports may include `.ts`/`.tsx`).
 - Tailwind brand tokens: `brand-bg`, `brand-text`, `brand-accent`, `brand-muted`. Prefer Tailwind classes over inline styles.
-- Privacy mode (`settings.privacyMode`) applies `blur-md grayscale opacity-50` to the app container — keep this hook intact for any new top-level layout work.
 
 ## Things to avoid
 
