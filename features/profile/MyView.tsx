@@ -1,10 +1,10 @@
 
 import React, { useRef, useState, useMemo, lazy, Suspense } from 'react';
-import { Settings, AlertTriangle, Archive, Database, Trash2, Smartphone, Moon, Sun, Share2, Pencil, FolderInput, Stethoscope, CheckCircle, Wrench, RotateCcw, ShieldCheck, ChevronRight, AlertCircle, ArrowRight, Tags, FlaskConical, Fingerprint, LockKeyhole, FileSpreadsheet, FileText, Info } from 'lucide-react';
+import { Settings, AlertTriangle, Archive, Database, Trash2, Smartphone, Moon, Sun, Share2, Pencil, FolderInput, Stethoscope, CheckCircle, Wrench, RotateCcw, ShieldCheck, ChevronRight, AlertCircle, ArrowRight, Tags, FlaskConical, Fingerprint, LockKeyhole, FileSpreadsheet, Info } from 'lucide-react';
 import type { AppLockSettings, AppSettings, AutoBackupIntervalHours, AutoSafetySnapshotLimit, AutoSafetySnapshotSizeLimitMB, LogEntry, TagEntry, TagType } from '../../domain';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
 import { Modal } from '../../shared/ui';
-import { canUseWebAuthn, createWebAuthnCredential } from '../../shared/lib';
+import { canUseWebAuthn, createWebAuthnCredential, pathToLabel } from '../../shared/lib';
 import { APP_VERSION } from '../../app/appConfig';
 import {
   AUTO_BACKUP_INTERVAL_HOUR_OPTIONS,
@@ -117,7 +117,6 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
     onRunHealthCheck,
     onRepairData,
     onExportClick,
-    onMarkdownExportClick,
     onCsvExportClick,
     onEncryptedExportClick,
     onChangeExportOptions,
@@ -249,7 +248,8 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
     if (exportDays > 30) hints.push('已超过 30 天未导出，建议手动备份一次。');
     if (snapshots.length === 0) hints.push('暂无内部快照，重要操作前可创建一个保护点。');
     if (backupStatus.needsReauthorization) hints.push('自动备份目录授权失效，请到下方重新授权。');
-    if (healthReport && healthReport.score < 80) hints.push(`数据健康分 ${healthReport.score}，建议运行一键修复。`);
+    if (healthReport && healthReport.canRepair) hints.push('发现可自动修复的数据问题，建议运行一键修复。');
+    if (healthReport && !healthReport.canRepair && healthReport.issues.length > 0) hints.push('发现需要手动检查的数据问题。');
     return hints;
   })();
 
@@ -347,27 +347,10 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
                   </div>
               </section>
 
-              {/* 1b. Privacy Mode */}
+              {/* 1b. Privacy Settings */}
               <section>
                   <h3 className="text-xs font-bold text-text-muted uppercase tracking-wider mb-3">隐私</h3>
                   <div className="space-y-3">
-                    <label className="flex items-center justify-between p-3 bg-surface-card  border border-surface-border  rounded-2xl cursor-pointer">
-                        <div>
-                            <p className="text-sm font-bold text-text-primary ">隐私模糊</p>
-                            <p className="text-xs text-text-muted  mt-0.5">界面整体模糊 + 灰阶,适合在他人附近浏览</p>
-                        </div>
-                        <span className="relative inline-flex items-center">
-                            <input
-                                type="checkbox"
-                                checked={!!settings.privacyMode}
-                                onChange={(e) => onUpdateSettings({ ...settings, privacyMode: e.target.checked })}
-                                className="sr-only peer"
-                            />
-                            <span className="w-11 h-6 bg-surface-border  rounded-full peer peer-checked:bg-accent transition-colors"></span>
-                            <span className="absolute left-0.5 top-0.5 w-5 h-5 bg-surface-card rounded-full transition-transform peer-checked:translate-x-5"></span>
-                        </span>
-                    </label>
-
                     <div className="p-3 bg-surface-card  border border-surface-border  rounded-2xl space-y-3">
                       <div className="flex items-center justify-between gap-3">
                         <div className="flex items-start gap-3">
@@ -491,8 +474,8 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
                                       </h4>
                                       <div className="max-h-60 overflow-y-auto custom-scrollbar space-y-2">
                                           {healthReport.issues.map((issue) => (
-                                              <div 
-                                                key={issue.id} 
+                                              <div
+                                                key={issue.id}
                                                 onClick={() => handleJumpToIssue(issue.date)}
                                                 className="bg-surface-card  p-3 rounded-lg border border-surface-border  text-xs flex flex-col gap-1.5 cursor-pointer hover:bg-surface-muted dark:hover:bg-surface-muted transition-colors group"
                                               >
@@ -510,6 +493,11 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
                                                       </div>
                                                   </div>
                                                   <p className="text-text-secondary  leading-tight">{issue.message}</p>
+                                                  {issue.path && (
+                                                      <p className="text-[10px] text-accent font-medium">
+                                                          需要检查：{pathToLabel(issue.path)}
+                                                      </p>
+                                                  )}
                                               </div>
                                           ))}
                                       </div>
@@ -526,9 +514,14 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
                                       {isRepairing ? '修复中...' : '一键修复'}
                                   </button>
                               )}
-                              {!healthReport.canRepair && healthReport.score === 100 && (
+                              {!healthReport.canRepair && healthReport.issues.length > 0 && (
+                                  <div className="text-center text-xs text-state-warning-text font-bold flex items-center justify-center pt-2">
+                                      <AlertCircle size={14} className="mr-1"/> 发现需要手动检查的问题
+                                  </div>
+                              )}
+                              {!healthReport.canRepair && healthReport.issues.length === 0 && (
                                   <div className="text-center text-xs text-state-success-text font-bold flex items-center justify-center pt-2">
-                                      <CheckCircle size={14} className="mr-1"/> 数据非常健康
+                                      <CheckCircle size={14} className="mr-1"/> 数据健康，无需修复
                                   </div>
                               )}
                           </div>
@@ -744,10 +737,6 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
                       <button onClick={onCsvExportClick} className="flex flex-col items-center justify-center p-4 bg-surface-card  border border-surface-border  rounded-2xl hover:border-accent transition-colors">
                           <FileSpreadsheet size={24} className="text-state-success-text mb-2"/>
                           <span className="text-xs font-bold text-text-primary ">导出 CSV</span>
-                      </button>
-                      <button onClick={onMarkdownExportClick} className="flex flex-col items-center justify-center p-4 bg-surface-card  border border-surface-border  rounded-2xl hover:border-accent transition-colors">
-                          <FileText size={24} className="text-chart-tertiary mb-2"/>
-                          <span className="text-xs font-bold text-text-primary ">导出 Markdown</span>
                       </button>
                       <button onClick={handleImportClick} className="flex flex-col items-center justify-center p-4 bg-surface-card  border border-surface-border  rounded-2xl hover:border-accent transition-colors">
                           {importStatus === 'importing' ? <RotateCcw className="animate-spin text-accent mb-2" size={24}/> : <FolderInput size={24} className="text-accent mb-2"/>}

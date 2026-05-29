@@ -1,12 +1,14 @@
-import type { CycleEvent, LogEntry, PartnerProfile, PregnancyEvent, Snapshot, TagEntry } from '../../../domain';
+import type { CycleEvent, GoalCheckin, LogEntry, MasturbationEvent, PartnerProfile, PregnancyEvent, PornUseEvent, SexEvent, Snapshot, TagEntry, TrainingGoal } from '../../../domain';
 
-export type ExportFormat = 'json' | 'csv' | 'markdown';
+export type ExportFormat = 'json' | 'csv';
 export type ExportDimension = 'logs' | 'partners' | 'tags' | 'cycleEvents' | 'pregnancyEvents' | 'snapshots';
+export type ExportRangeMode = 'all' | 'date';
 
 export type ExportDimensions = Record<ExportDimension, boolean>;
 
 export interface ExportOptions {
   format: ExportFormat;
+  rangeMode: ExportRangeMode;
   startDate?: string;
   endDate?: string;
   tagFilter?: string[];
@@ -20,6 +22,11 @@ export interface ExportDataset {
   cycleEvents: CycleEvent[];
   pregnancyEvents: PregnancyEvent[];
   snapshots: Snapshot[];
+  pornUseEvents?: PornUseEvent[];
+  masturbationEvents?: MasturbationEvent[];
+  sexEvents?: SexEvent[];
+  trainingGoals?: TrainingGoal[];
+  goalCheckins?: GoalCheckin[];
 }
 
 export interface ExportCounts {
@@ -47,6 +54,7 @@ export const DEFAULT_EXPORT_DIMENSIONS: ExportDimensions = {
 
 export const createDefaultExportOptions = (format: ExportFormat = 'json'): ExportOptions => ({
   format,
+  rangeMode: 'all',
   startDate: '',
   endDate: '',
   dimensions: { ...DEFAULT_EXPORT_DIMENSIONS }
@@ -80,22 +88,24 @@ export const applyExportOptionsToDataset = (
   dataset: ExportDataset,
   options: ExportOptions
 ): ExportDataset => {
-  const { startDate, endDate, dimensions } = options;
+  const { rangeMode, startDate, endDate, dimensions } = options;
+  const useDateFilter = rangeMode === 'date';
 
   return {
     logs: dimensions.logs
-      ? dataset.logs.filter((log) => isDateInRange(log.date, startDate, endDate) && matchesTagFilter(log, options.tagFilter))
+      ? dataset.logs.filter((log) => (!useDateFilter || isDateInRange(log.date, startDate, endDate)) && matchesTagFilter(log, options.tagFilter))
       : [],
     partners: dimensions.partners ? dataset.partners : [],
     tags: dimensions.tags ? dataset.tags : [],
     cycleEvents: dimensions.cycleEvents
-      ? dataset.cycleEvents.filter((event) => isDateInRange(event.date, startDate, endDate))
+      ? dataset.cycleEvents.filter((event) => !useDateFilter || isDateInRange(event.date, startDate, endDate))
       : [],
     pregnancyEvents: dimensions.pregnancyEvents
-      ? dataset.pregnancyEvents.filter((event) => isDateInRange(event.date, startDate, endDate))
+      ? dataset.pregnancyEvents.filter((event) => !useDateFilter || isDateInRange(event.date, startDate, endDate))
       : [],
     snapshots: dimensions.snapshots
       ? dataset.snapshots.filter((snapshot) => {
+        if (!useDateFilter) return true;
         const snapshotDate = getSnapshotDate(snapshot);
         return snapshotDate ? isDateInRange(snapshotDate, startDate, endDate) : true;
       })

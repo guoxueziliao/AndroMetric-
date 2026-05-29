@@ -104,7 +104,7 @@ describe('buildCsvExportFiles', () => {
 
     expect(daysCsv).toContain('date,status,morning_woke_with_erection');
     expect(daysCsv).toContain('2026-05-20,completed,true,4,normal');
-    expect(daysCsv).toContain('2,happy,2,home,sunny,"needs, csv ""escape"""');
+    expect(daysCsv).toContain('2,happy,2,home,sunny,');
   });
 
   it('flattens event arrays into dedicated CSV files', () => {

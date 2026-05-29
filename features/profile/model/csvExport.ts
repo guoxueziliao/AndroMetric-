@@ -1,4 +1,4 @@
-import type { AlcoholItem, CycleEvent, LogEntry, PartnerProfile, PregnancyEvent, Snapshot, TagEntry } from '../../../domain';
+import type { AlcoholItem, CycleEvent, GoalCheckin, LogEntry, PartnerProfile, PregnancyEvent, PornUseEvent, MasturbationEvent, SexEvent, Snapshot, TagEntry, TrainingGoal } from '../../../domain';
 import type { ExportDataset, ExportDimensions } from './exportOptions';
 
 export interface CsvExportFile {
@@ -184,6 +184,84 @@ const SNAPSHOT_HEADERS = [
   'pregnancy_events_count'
 ];
 
+const PORN_USE_EVENT_HEADERS = [
+  'id',
+  'target_date',
+  'started_at',
+  'duration_minutes',
+  'ejaculation',
+  'exceeded_time',
+  'control_feeling',
+  'led_to_masturbation',
+  'linked_masturbation_ids',
+  'linked_sex_ids',
+  'notes'
+];
+
+const MASTURBATION_EVENT_HEADERS = [
+  'id',
+  'target_date',
+  'started_at',
+  'duration_minutes',
+  'ejaculation',
+  'edging',
+  'hardness',
+  'satisfaction',
+  'linked_porn_use_ids',
+  'linked_sex_ids',
+  'notes'
+];
+
+const SEX_EVENT_HEADERS = [
+  'id',
+  'target_date',
+  'started_at',
+  'duration_minutes',
+  'ejaculation',
+  'porn_involved',
+  'hardness',
+  'satisfaction',
+  'fatigue',
+  'partner_ids',
+  'linked_porn_use_ids',
+  'linked_masturbation_ids',
+  'notes'
+];
+
+const ADULT_EVENT_LINK_HEADERS = [
+  'source_type',
+  'source_id',
+  'target_type',
+  'target_id',
+  'link_direction'
+];
+
+const TRAINING_GOAL_HEADERS = [
+  'id',
+  'title',
+  'category',
+  'status',
+  'target_window_days',
+  'start_date',
+  'source',
+  'linked_insight_id',
+  'description',
+  'created_at',
+  'updated_at'
+];
+
+const GOAL_CHECKIN_HEADERS = [
+  'id',
+  'goal_id',
+  'target_date',
+  'status',
+  'cycle_feeling',
+  'note',
+  'window_start_date',
+  'window_end_date',
+  'created_at'
+];
+
 const encoder = new TextEncoder();
 let crcTable: Uint32Array | null = null;
 
@@ -251,7 +329,7 @@ const createDaysCsv = (logs: LogEntry[]): CsvExportFile => ({
     log.stressLevel,
     log.location,
     log.weather,
-    log.notes
+    '' // notes excluded for privacy
   ]))
 });
 
@@ -273,7 +351,7 @@ const createSexCsv = (logs: LogEntry[]): CsvExportFile => ({
     record.semenSwallowed,
     record.partnerScore,
     record.mood,
-    record.notes,
+    '', // notes excluded for privacy
     getInteractionsField(record.interactions, 'partner'),
     getInteractionsField(record.interactions, 'location'),
     record.acts?.join('|') || getInteractionActions(record.interactions, 'act'),
@@ -312,7 +390,7 @@ const createMasturbationCsv = (logs: LogEntry[]): CsvExportFile => ({
     record.fatigue,
     record.postFatigue,
     record.location,
-    record.notes
+    '' // notes excluded for privacy
   ])))
 });
 
@@ -329,7 +407,7 @@ const createExerciseCsv = (logs: LogEntry[]): CsvExportFile => ({
     record.steps,
     record.feeling,
     record.ongoing,
-    record.notes
+    '' // notes excluded for privacy
   ])))
 });
 
@@ -379,7 +457,7 @@ const createPartnersCsv = (partners: PartnerProfile[]): CsvExportFile => ({
     partner.sensitiveSpots.join('|'),
     partner.stimulationPreferences.join('|'),
     partner.likedPositions.join('|'),
-    partner.notes
+    '' // notes excluded for privacy
   ]))
 });
 
@@ -402,7 +480,7 @@ const createCycleEventsCsv = (events: CycleEvent[]): CsvExportFile => ({
     event.kind,
     event.source,
     event.confidence,
-    event.notes,
+    '', // notes excluded for privacy
     event.payload ? JSON.stringify(event.payload) : ''
   ]))
 });
@@ -415,7 +493,7 @@ const createPregnancyEventsCsv = (events: PregnancyEvent[]): CsvExportFile => ({
     event.date,
     event.kind,
     event.source,
-    event.notes,
+    '', // notes excluded for privacy
     event.payload ? JSON.stringify(event.payload) : ''
   ]))
 });
@@ -434,6 +512,112 @@ const createSnapshotsCsv = (snapshots: Snapshot[]): CsvExportFile => ({
     snapshot.data.tags.length,
     snapshot.data.cycleEvents.length,
     snapshot.data.pregnancyEvents.length
+  ]))
+});
+
+const createPornUseEventsCsv = (events: PornUseEvent[]): CsvExportFile => ({
+  name: 'porn_use_events.csv',
+  content: toCsv(PORN_USE_EVENT_HEADERS, events.map((e) => [
+    e.id,
+    e.targetDate,
+    e.startedAt,
+    e.durationMinutes,
+    e.ejaculated,
+    e.exceededIntendedTime,
+    e.controlFeeling,
+    e.ledToMasturbation,
+    joinList(e.linkedMasturbationEventIds),
+    joinList(e.linkedSexEventIds),
+    '' // notes excluded for privacy
+  ]))
+});
+
+const createMasturbationEventsCsv = (events: MasturbationEvent[]): CsvExportFile => ({
+  name: 'masturbation_events.csv',
+  content: toCsv(MASTURBATION_EVENT_HEADERS, events.map((e) => [
+    e.id,
+    e.targetDate,
+    e.startedAt,
+    e.durationMinutes,
+    e.ejaculated,
+    e.edging,
+    e.hardnessLevel,
+    e.satisfaction,
+    joinList(e.linkedPornUseEventIds),
+    joinList(e.linkedSexEventIds),
+    '' // notes excluded for privacy
+  ]))
+});
+
+const createSexEventsCsv = (events: SexEvent[]): CsvExportFile => ({
+  name: 'sex_events.csv',
+  content: toCsv(SEX_EVENT_HEADERS, events.map((e) => [
+    e.id,
+    e.targetDate,
+    e.startedAt,
+    e.durationMinutes,
+    e.ejaculated,
+    e.pornInvolved,
+    e.hardnessLevel,
+    e.satisfaction,
+    e.fatigueAfter,
+    joinList(e.partnerIds),
+    joinList(e.linkedPornUseEventIds),
+    joinList(e.linkedMasturbationEventIds),
+    '' // notes excluded for privacy
+  ]))
+});
+
+const createAdultEventLinksCsv = (
+  pornEvents: PornUseEvent[],
+  mbEvents: MasturbationEvent[],
+  sexEvents: SexEvent[]
+): CsvExportFile => {
+  const rows: unknown[][] = [];
+  for (const e of pornEvents) {
+    for (const tid of e.linkedMasturbationEventIds) rows.push(['porn_use', e.id, 'masturbation', tid, 'forward']);
+    for (const tid of e.linkedSexEventIds) rows.push(['porn_use', e.id, 'sex', tid, 'forward']);
+  }
+  for (const e of mbEvents) {
+    for (const tid of e.linkedPornUseEventIds) rows.push(['masturbation', e.id, 'porn_use', tid, 'forward']);
+    for (const tid of e.linkedSexEventIds) rows.push(['masturbation', e.id, 'sex', tid, 'forward']);
+  }
+  for (const e of sexEvents) {
+    for (const tid of e.linkedPornUseEventIds) rows.push(['sex', e.id, 'porn_use', tid, 'forward']);
+    for (const tid of e.linkedMasturbationEventIds) rows.push(['sex', e.id, 'masturbation', tid, 'forward']);
+  }
+  return { name: 'adult_event_links.csv', content: toCsv(ADULT_EVENT_LINK_HEADERS, rows) };
+};
+
+const createTrainingGoalsCsv = (goals: TrainingGoal[]): CsvExportFile => ({
+  name: 'training_goals.csv',
+  content: toCsv(TRAINING_GOAL_HEADERS, goals.map((g) => [
+    g.id,
+    g.title,
+    g.category,
+    g.status,
+    g.targetWindowDays,
+    g.startDate,
+    g.source,
+    g.linkedInsightId ?? '',
+    g.description ?? '',
+    g.createdAt,
+    g.updatedAt
+  ]))
+});
+
+const createGoalCheckinsCsv = (checkins: GoalCheckin[]): CsvExportFile => ({
+  name: 'goal_checkins.csv',
+  content: toCsv(GOAL_CHECKIN_HEADERS, checkins.map((c) => [
+    c.id,
+    c.goalId,
+    c.targetDate,
+    c.status,
+    c.cycleFeeling ?? '',
+    '', // note excluded for privacy
+    c.windowStartDate ?? '',
+    c.windowEndDate ?? '',
+    c.createdAt
   ]))
 });
 
@@ -481,6 +665,23 @@ export const buildCsvExportFilesFromDataset = (
   if (dimensions.cycleEvents) files.push(createCycleEventsCsv(dataset.cycleEvents));
   if (dimensions.pregnancyEvents) files.push(createPregnancyEventsCsv(dataset.pregnancyEvents));
   if (dimensions.snapshots) files.push(createSnapshotsCsv(dataset.snapshots));
+
+  // Adult behavior events (always included when present)
+  const pornEvents = dataset.pornUseEvents ?? [];
+  const mbEvents = dataset.masturbationEvents ?? [];
+  const sxEvents = dataset.sexEvents ?? [];
+  if (pornEvents.length > 0 || mbEvents.length > 0 || sxEvents.length > 0) {
+    if (pornEvents.length > 0) files.push(createPornUseEventsCsv(pornEvents));
+    if (mbEvents.length > 0) files.push(createMasturbationEventsCsv(mbEvents));
+    if (sxEvents.length > 0) files.push(createSexEventsCsv(sxEvents));
+    files.push(createAdultEventLinksCsv(pornEvents, mbEvents, sxEvents));
+  }
+
+  // Training data (always included when present)
+  const goals = dataset.trainingGoals ?? [];
+  const checkins = dataset.goalCheckins ?? [];
+  if (goals.length > 0) files.push(createTrainingGoalsCsv(goals));
+  if (checkins.length > 0) files.push(createGoalCheckinsCsv(checkins));
 
   return metadata ? [createMetaJson(metadata), ...files] : files;
 };

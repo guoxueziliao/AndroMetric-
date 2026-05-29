@@ -2,6 +2,7 @@ import type { Snapshot } from '../../domain';
 import { checkAdultEventLinks } from './importMerge';
 import { normalizeTrainingGoals, normalizeGoalCheckins } from './importMerge';
 import { getActivityTargetDate } from '../../shared/lib/targetDate';
+import { LATEST_VERSION } from './migration';
 
 const MIN_READBACK_LENGTH_RATIO = 0.95;
 
@@ -102,6 +103,35 @@ export interface SnapshotIntegrityIssue {
 export const checkSnapshotIntegrity = (snapshot: Snapshot): SnapshotIntegrityIssue[] => {
   const issues: SnapshotIntegrityIssue[] = [];
   const data = snapshot.data;
+
+  // Check schema version
+  const dataVersion = data.version ?? snapshot.dataVersion;
+  if (typeof dataVersion === 'number') {
+    if (dataVersion > LATEST_VERSION) {
+      issues.push({
+        severity: 'error',
+        kind: 'newer_version',
+        message: `数据版本 v${dataVersion} 高于当前应用版本 v${LATEST_VERSION}，无法导入`,
+      });
+    } else if (dataVersion < LATEST_VERSION) {
+      issues.push({
+        severity: 'info',
+        kind: 'older_version',
+        message: `数据版本 v${dataVersion}，将自动迁移到 v${LATEST_VERSION}`,
+      });
+    }
+  }
+
+  // Check cycle and pregnancy event counts
+  const cycleEvents = data.cycleEvents ?? [];
+  const pregnancyEvents = data.pregnancyEvents ?? [];
+  if (cycleEvents.length > 0 || pregnancyEvents.length > 0) {
+    issues.push({
+      severity: 'info',
+      kind: 'reproductive_data_present',
+      message: `生殖数据：${cycleEvents.length} 个周期事件，${pregnancyEvents.length} 个怀孕事件`,
+    });
+  }
 
   // Check event link issues (orphan, one-way, duplicate_id)
   const puEvents = data.pornUseEvents ?? [];

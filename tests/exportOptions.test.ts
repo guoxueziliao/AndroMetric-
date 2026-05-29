@@ -74,6 +74,7 @@ describe('applyExportOptionsToDataset', () => {
   it('filters date-bound dimensions by the selected range', () => {
     const options = {
       ...createDefaultExportOptions('json'),
+      rangeMode: 'date' as const,
       startDate: '2026-05-10',
       endDate: '2026-05-31'
     };
@@ -86,6 +87,16 @@ describe('applyExportOptionsToDataset', () => {
     expect(filtered.snapshots).toHaveLength(1);
     expect(filtered.partners).toHaveLength(1);
     expect(filtered.tags).toHaveLength(1);
+  });
+
+  it('exports all data when rangeMode is all (default)', () => {
+    const options = createDefaultExportOptions('json');
+    const filtered = applyExportOptionsToDataset(dataset, options);
+
+    expect(filtered.logs).toHaveLength(2);
+    expect(filtered.cycleEvents).toHaveLength(2);
+    expect(filtered.pregnancyEvents).toHaveLength(1);
+    expect(filtered.snapshots).toHaveLength(2);
   });
 
   it('removes dimensions that are not selected', () => {
@@ -148,7 +159,7 @@ describe('applyExportOptionsToDataset', () => {
 
   it('does not filter logs when tagFilter is empty', () => {
     const filtered = applyExportOptionsToDataset(dataset, {
-      ...createDefaultExportOptions('markdown'),
+      ...createDefaultExportOptions('json'),
       tagFilter: []
     });
 

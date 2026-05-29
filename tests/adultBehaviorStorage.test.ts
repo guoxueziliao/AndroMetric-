@@ -5,6 +5,7 @@ import {
 } from '../core/storage/importMerge';
 import { assertSnapshotReadback, checkSnapshotIntegrity } from '../core/storage/snapshotIntegrity';
 import { buildImportPreview } from '../features/profile/model/importPreview';
+import { LATEST_VERSION } from '../core/storage/migration';
 import type { Snapshot, PornUseEvent, MasturbationEvent, SexEvent } from '../domain';
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
@@ -187,7 +188,7 @@ describe('assertSnapshotReadback with events', () => {
     settings: null,
     userName: null,
     data: {
-      version: 47,
+      version: LATEST_VERSION,
       logs: [],
       partners: [],
       tags: [],
@@ -234,7 +235,7 @@ describe('checkSnapshotIntegrity', () => {
     settings: null,
     userName: null,
     data: {
-      version: 47,
+      version: LATEST_VERSION,
       logs: [],
       partners: [],
       tags: [],
@@ -317,7 +318,7 @@ describe('buildImportPreview with events', () => {
       settings: null,
       userName: null,
       data: {
-        version: 47,
+        version: LATEST_VERSION,
         logs: [],
         partners: [],
         tags: [],
@@ -358,7 +359,7 @@ describe('buildImportPreview with events', () => {
       settings: null,
       userName: null,
       data: {
-        version: 47,
+        version: LATEST_VERSION,
         logs: [],
         partners: [],
         tags: [],

@@ -63,3 +63,43 @@ export const formatHistoryValue = (field: string, val: string | null | undefined
     }
     return String(val);
 };
+
+/**
+ * 将数据健康检查中的技术路径转换为可读的中文标签。
+ * 例如: "masturbation[0].contentItems[1].platform" → "自慰记录 1 / 素材 2 / 来源平台"
+ */
+const PATH_PART_LABELS: Record<string, string> = {
+    contentItems: '素材',
+    type: '素材类型',
+    platform: '来源平台',
+    partner: '伴侣',
+    startTime: '开始时间',
+    endTime: '结束时间',
+    hardness: '硬度',
+};
+
+const PATH_SECTION_LABELS: Record<string, string> = {
+    masturbation: '自慰记录',
+    sex: '性爱记录',
+    exercise: '运动记录',
+    sleep: '睡眠',
+    morning: '晨间状态',
+};
+
+export const pathToLabel = (path: string): string => {
+    const parts = path.split('.');
+    const result: string[] = [];
+
+    for (const part of parts) {
+        const match = part.match(/^(\w+)\[(\d+)\]$/);
+        if (match) {
+            const [, name, idx] = match;
+            const label = PATH_SECTION_LABELS[name] ?? PATH_PART_LABELS[name] ?? name;
+            result.push(`${label} ${parseInt(idx) + 1}`);
+        } else {
+            result.push(PATH_PART_LABELS[part] ?? PATH_SECTION_LABELS[part] ?? part);
+        }
+    }
+
+    return result.join(' / ');
+};

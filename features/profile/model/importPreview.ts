@@ -1,6 +1,7 @@
 import { LATEST_VERSION } from '../../../core/storage/migration';
 import { computeLogConflicts, checkAdultEventLinks, normalizeTrainingGoals, normalizeGoalCheckins, type LogImportConflict, type AdultEventLinkIssue, type TrainingImportWarning } from '../../../core/storage/importMerge';
-import type { LogEntry } from '../../../domain';
+import { checkSnapshotIntegrity, type SnapshotIntegrityIssue } from '../../../core/storage/snapshotIntegrity';
+import type { LogEntry, Snapshot } from '../../../domain';
 import { isEncryptedSnapshotJson } from '../../../shared/lib';
 
 export type ImportStrategy = 'merge' | 'overwrite';
@@ -32,6 +33,7 @@ export interface ImportPreview {
   conflicts: LogImportConflict[];
   eventLinkIssues: AdultEventLinkIssue[];
   trainingWarnings: TrainingImportWarning[];
+  integrityIssues: SnapshotIntegrityIssue[];
 }
 
 const getArrayLength = (value: unknown): number => Array.isArray(value) ? value.length : 0;
@@ -100,6 +102,25 @@ export const buildImportPreview = (rawText: string, encrypted: boolean, currentL
       sexEvents,
     }),
     trainingWarnings,
+    integrityIssues: (() => {
+      // Run integrity check on parsed data (read-only, no IndexedDB write)
+      try {
+        const snapshotForCheck: Snapshot = {
+          id: 0,
+          timestamp: Date.now(),
+          dataVersion: dataVersion ?? LATEST_VERSION,
+          appVersion: typeof parsed.appVersion === 'string' ? parsed.appVersion : 'unknown',
+          description: 'preflight',
+          kind: 'manual',
+          settings: null,
+          userName: null,
+          data: data as unknown as Snapshot['data'],
+        };
+        return checkSnapshotIntegrity(snapshotForCheck);
+      } catch {
+        return [];
+      }
+    })(),
   };
 };
 

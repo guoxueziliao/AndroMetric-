@@ -218,7 +218,7 @@ export const checkDataHealth = (logs: LogEntry[], partners: PartnerProfile[]): D
         // 3. Array Checks
         const checkArray = (arr: any, name: string) => {
             if (!Array.isArray(arr)) {
-                issues.push({ id: `${log.date}_${name}_array`, date: log.date, type: 'schema', message: `${name} 数据格式错误(非数组)`, severity: 'high' });
+                issues.push({ id: `${log.date}_${name}_array`, date: log.date, type: 'schema', message: `${name} 数据格式错误(非数组)`, severity: 'high', path: name });
                 nullArrays++;
             }
         };
@@ -235,7 +235,7 @@ export const checkDataHealth = (logs: LogEntry[], partners: PartnerProfile[]): D
                 names.forEach(name => {
                     if (!partnerNames.has(name)) {
                         brokenRelations++;
-                        issues.push({ id: `${log.date}_rel_${idx}`, date: log.date, type: 'relation', message: `引用不存在的伴侣: ${name}`, severity: 'low' });
+                        issues.push({ id: `${log.date}_rel_${idx}`, date: log.date, type: 'relation', message: `引用不存在的伴侣: ${name}`, severity: 'low', path: `sex[${idx}].partner` });
                     }
                 });
             });
@@ -252,7 +252,10 @@ export const checkDataHealth = (logs: LogEntry[], partners: PartnerProfile[]): D
                             // Map ContentNoticeDef to global HealthIssue format for report
                             // 'error' -> 'high', 'warn' -> 'medium', 'info' -> 'low'
                             const severity = def.level === 'error' ? 'high' : def.level === 'warn' ? 'medium' : 'low';
-                            
+                            const basePath = `masturbation[${mIdx}].contentItems[${cIdx}]`;
+                            const specificPath = def.ruleId === 'C-W1' ? `${basePath}.type` :
+                              def.ruleId === 'C-W2' ? `${basePath}.platform` : basePath;
+
                             issues.push({
                                 id: `${log.date}_content_${mIdx}_${cIdx}_${def.ruleId}`,
                                 date: log.date,
@@ -260,7 +263,7 @@ export const checkDataHealth = (logs: LogEntry[], partners: PartnerProfile[]): D
                                 severity,
                                 message: def.title,
                                 hintAction: def.actionLabel,
-                                path: `masturbation[${mIdx}].contentItems[${cIdx}]`
+                                path: specificPath
                             });
 
                             if (def.ruleId === 'C-W1') contentStats.missingType++;

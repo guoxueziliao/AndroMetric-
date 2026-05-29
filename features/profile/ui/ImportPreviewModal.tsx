@@ -49,7 +49,7 @@ const ImportPreviewModal: React.FC<ImportPreviewModalProps> = ({
   onChangeStrategy,
   onChangeConflictResolution
 }) => {
-  const rows = preview ? [
+  const baseRows = preview ? [
     ['日志', preview.counts.logs],
     ['伴侣', preview.counts.partners],
     ['标签', preview.counts.tags],
@@ -57,8 +57,27 @@ const ImportPreviewModal: React.FC<ImportPreviewModalProps> = ({
     ['怀孕事件', preview.counts.pregnancyEvents],
     ['内部快照', preview.counts.snapshots]
   ] as const : [];
+
+  const adultRows = preview ? [
+    ['色情使用', preview.counts.pornUseEvents],
+    ['自慰事件', preview.counts.masturbationEvents],
+    ['性爱事件', preview.counts.sexEvents],
+  ] as const : [];
+
+  const trainingRows = preview ? [
+    ['训练目标', preview.counts.trainingGoals],
+    ['目标签到', preview.counts.goalCheckins],
+  ] as const : [];
+
+  const hasAdultEvents = adultRows.some(([, v]) => v > 0);
+  const hasTrainingData = trainingRows.some(([, v]) => v > 0);
+  const linkIssues = preview?.eventLinkIssues ?? [];
+  const trainingWarnings = preview?.trainingWarnings ?? [];
+  const integrityIssues = preview?.integrityIssues ?? [];
+  const errorIssues = integrityIssues.filter((i) => i.severity === 'error');
+  const warningIssues = integrityIssues.filter((i) => i.severity === 'warning');
   const versionNotice = preview ? getVersionNotice(preview) : null;
-  const canConfirm = !!preview && preview.versionStatus !== 'newer' && status !== 'importing';
+  const canConfirm = !!preview && preview.versionStatus !== 'newer' && errorIssues.length === 0 && status !== 'importing';
   const conflicts = strategy === 'merge' ? preview?.conflicts ?? [] : [];
 
   return (
@@ -87,13 +106,91 @@ const ImportPreviewModal: React.FC<ImportPreviewModalProps> = ({
           {versionNotice && <div className={`rounded-2xl border p-3 text-xs font-bold ${versionNotice.className}`}>{versionNotice.text}</div>}
 
           <div className="grid grid-cols-2 gap-2">
-            {rows.map(([label, value]) => (
+            {baseRows.map(([label, value]) => (
               <div key={label} className="rounded-xl bg-surface-card border border-surface-border p-3 text-center">
                 <div className="text-[10px] font-bold text-text-muted">{label}</div>
                 <div className="text-lg font-black text-text-primary">{value}</div>
               </div>
             ))}
           </div>
+
+          {hasAdultEvents && (
+            <div>
+              <p className="text-[10px] font-bold text-text-muted mb-2">成人行为事件</p>
+              <div className="grid grid-cols-3 gap-2">
+                {adultRows.map(([label, value]) => (
+                  <div key={label} className="rounded-xl bg-surface-card border border-surface-border p-2 text-center">
+                    <div className="text-[10px] font-bold text-text-muted">{label}</div>
+                    <div className="text-sm font-black text-text-primary">{value}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {hasTrainingData && (
+            <div>
+              <p className="text-[10px] font-bold text-text-muted mb-2">训练数据</p>
+              <div className="grid grid-cols-2 gap-2">
+                {trainingRows.map(([label, value]) => (
+                  <div key={label} className="rounded-xl bg-surface-card border border-surface-border p-2 text-center">
+                    <div className="text-[10px] font-bold text-text-muted">{label}</div>
+                    <div className="text-sm font-black text-text-primary">{value}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {linkIssues.length > 0 && (
+            <div className="rounded-2xl bg-state-warning-bg border border-state-warning-text/20 p-3">
+              <p className="text-xs font-bold text-state-warning-text mb-1">关联问题 ({linkIssues.length})</p>
+              <div className="space-y-1 max-h-32 overflow-y-auto">
+                {linkIssues.slice(0, 10).map((issue, i) => (
+                  <p key={i} className="text-[10px] text-state-warning-text">{issue.message}</p>
+                ))}
+                {linkIssues.length > 10 && (
+                  <p className="text-[10px] text-state-warning-text">另有 {linkIssues.length - 10} 条未展开</p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {trainingWarnings.length > 0 && (
+            <div className="rounded-2xl bg-state-info-bg border border-state-info-text/20 p-3">
+              <p className="text-xs font-bold text-state-info-text mb-1">训练数据提示 ({trainingWarnings.length})</p>
+              <div className="space-y-1 max-h-32 overflow-y-auto">
+                {trainingWarnings.slice(0, 10).map((w, i) => (
+                  <p key={i} className="text-[10px] text-state-info-text">{w.message}</p>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {errorIssues.length > 0 && (
+            <div className="rounded-2xl bg-state-danger-bg border border-state-danger-text/20 p-3">
+              <p className="text-xs font-bold text-state-danger-text mb-1">严重问题 ({errorIssues.length})</p>
+              <div className="space-y-1 max-h-32 overflow-y-auto">
+                {errorIssues.map((issue, i) => (
+                  <p key={i} className="text-[10px] text-state-danger-text">{issue.message}</p>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {warningIssues.length > 0 && (
+            <div className="rounded-2xl bg-state-warning-bg border border-state-warning-text/20 p-3">
+              <p className="text-xs font-bold text-state-warning-text mb-1">完整性提示 ({warningIssues.length})</p>
+              <div className="space-y-1 max-h-32 overflow-y-auto">
+                {warningIssues.slice(0, 10).map((issue, i) => (
+                  <p key={i} className="text-[10px] text-state-warning-text">{issue.message}</p>
+                ))}
+                {warningIssues.length > 10 && (
+                  <p className="text-[10px] text-state-warning-text">另有 {warningIssues.length - 10} 条未展开</p>
+                )}
+              </div>
+            </div>
+          )}
 
           <div className="rounded-2xl bg-surface-muted border border-surface-border p-3 space-y-3">
             <div className="flex items-center justify-between text-xs font-bold text-text-muted">

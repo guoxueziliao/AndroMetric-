@@ -1,7 +1,7 @@
 import React from 'react';
-import { FileJson, FileSpreadsheet, FileText, type LucideIcon } from 'lucide-react';
+import { FileJson, FileSpreadsheet, type LucideIcon } from 'lucide-react';
 import { Modal } from '../../shared/ui';
-import type { ExportCounts, ExportDimension, ExportFormat, ExportOptions, ExportTagOption } from './model/exportOptions';
+import type { ExportCounts, ExportDimension, ExportFormat, ExportOptions, ExportRangeMode, ExportTagOption } from './model/exportOptions';
 import { EXPORT_DIMENSION_LABELS, hasSelectedExportDimension } from './model/exportOptions';
 
 const EXPORT_DIMENSIONS: ExportDimension[] = [
@@ -15,8 +15,12 @@ const EXPORT_DIMENSIONS: ExportDimension[] = [
 
 const FORMAT_OPTIONS: Array<{ id: ExportFormat; label: string; icon: LucideIcon }> = [
   { id: 'json', label: 'JSON', icon: FileJson },
-  { id: 'csv', label: 'CSV', icon: FileSpreadsheet },
-  { id: 'markdown', label: 'Markdown', icon: FileText }
+  { id: 'csv', label: 'CSV', icon: FileSpreadsheet }
+];
+
+const RANGE_OPTIONS: Array<{ id: ExportRangeMode; label: string }> = [
+  { id: 'all', label: '全部' },
+  { id: 'date', label: '按日期' }
 ];
 
 interface ExportOptionsModalProps {
@@ -32,8 +36,7 @@ interface ExportOptionsModalProps {
   onConfirm: () => void;
 }
 
-const hasDataForFormat = (options: ExportOptions, counts: ExportCounts) => {
-  if (options.format === 'markdown') return options.dimensions.logs && counts.logs > 0;
+const hasDataForFormat = (_options: ExportOptions, counts: ExportCounts) => {
   return Object.values(counts).some((count) => count > 0);
 };
 
@@ -91,7 +94,7 @@ const ExportOptionsModal: React.FC<ExportOptionsModalProps> = ({
       <div className="space-y-5 py-2">
         <section>
           <h3 className="mb-3 text-xs font-black uppercase tracking-wider text-text-muted">格式</h3>
-          <div className="grid grid-cols-3 gap-2 rounded-2xl bg-surface-muted p-1">
+          <div className="grid grid-cols-2 gap-2 rounded-2xl bg-surface-muted p-1">
             {FORMAT_OPTIONS.map((format) => {
               const Icon = format.icon;
               const active = options.format === format.id;
@@ -117,27 +120,46 @@ const ExportOptionsModal: React.FC<ExportOptionsModalProps> = ({
         </section>
 
         <section>
-          <h3 className="mb-3 text-xs font-black uppercase tracking-wider text-text-muted">日期区间</h3>
-          <div className="grid grid-cols-2 gap-3">
-            <label className="block text-xs font-bold text-text-muted">
-              开始
-              <input
-                type="date"
-                value={options.startDate || ''}
-                onChange={(event) => onChange({ ...options, startDate: event.target.value })}
-                className="mt-2 min-h-[44px] w-full rounded-xl border border-surface-border bg-surface-card px-3 text-sm font-bold text-text-primary outline-none"
-              />
-            </label>
-            <label className="block text-xs font-bold text-text-muted">
-              结束
-              <input
-                type="date"
-                value={options.endDate || ''}
-                onChange={(event) => onChange({ ...options, endDate: event.target.value })}
-                className="mt-2 min-h-[44px] w-full rounded-xl border border-surface-border bg-surface-card px-3 text-sm font-bold text-text-primary outline-none"
-              />
-            </label>
+          <h3 className="mb-3 text-xs font-black uppercase tracking-wider text-text-muted">导出范围</h3>
+          <div className="grid grid-cols-2 gap-2 rounded-2xl bg-surface-muted p-1 mb-3">
+            {RANGE_OPTIONS.map((opt) => (
+              <button
+                key={opt.id}
+                type="button"
+                onClick={() => onChange({ ...options, rangeMode: opt.id, ...(opt.id === 'all' ? { startDate: '', endDate: '' } : {}) })}
+                className={`min-h-[36px] rounded-xl text-xs font-bold transition-colors ${
+                  options.rangeMode === opt.id
+                    ? 'bg-surface-card text-accent shadow-sm'
+                    : 'text-text-muted'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
           </div>
+          <p className="text-[10px] text-text-muted mb-2">JSON 是完整备份。CSV 是可读导出。</p>
+          {options.rangeMode === 'date' && (
+            <div className="grid grid-cols-2 gap-3">
+              <label className="block text-xs font-bold text-text-muted">
+                开始
+                <input
+                  type="date"
+                  value={options.startDate || ''}
+                  onChange={(event) => onChange({ ...options, startDate: event.target.value })}
+                  className="mt-2 min-h-[44px] w-full rounded-xl border border-surface-border bg-surface-card px-3 text-sm font-bold text-text-primary outline-none"
+                />
+              </label>
+              <label className="block text-xs font-bold text-text-muted">
+                结束
+                <input
+                  type="date"
+                  value={options.endDate || ''}
+                  onChange={(event) => onChange({ ...options, endDate: event.target.value })}
+                  className="mt-2 min-h-[44px] w-full rounded-xl border border-surface-border bg-surface-card px-3 text-sm font-bold text-text-primary outline-none"
+                />
+              </label>
+            </div>
+          )}
         </section>
 
         {tagOptions.length > 0 && (

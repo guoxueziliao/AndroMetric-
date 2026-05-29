@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, type ChangeEvent } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import type { AppSettings, BackupRetentionSettings, BackupScheduleSettings, CycleEvent, ExportSnapshot, LogEntry, PartnerProfile, PregnancyEvent, Snapshot, TagEntry } from '../../../domain';
+import type { AppSettings, BackupRetentionSettings, BackupScheduleSettings, CycleEvent, GoalCheckin, LogEntry, MasturbationEvent, PartnerProfile, PregnancyEvent, PornUseEvent, SexEvent, Snapshot, TagEntry, TrainingGoal } from '../../../domain';
 import { StorageService, db, backupService, LAST_AUTO_BACKUP_META_KEY, LATEST_VERSION } from '../../../core/storage';
 import { useToast } from '../../../contexts/ToastContext';
 import { decryptSnapshotJson, encryptSnapshotJson, getErrorMessage } from '../../../shared/lib';
@@ -8,7 +8,6 @@ import { APP_VERSION } from '../../../app/appConfig';
 import type { ImportConflictResolution, ImportPreview, ImportStrategy } from './importPreview';
 import { buildImportPreview, getImportFileKind } from './importPreview';
 import { createCsvExportBlobFromDataset } from './csvExport';
-import { buildMarkdownExport } from './markdownExport';
 import {
   applyExportOptionsToDataset,
   createDefaultExportOptions,
@@ -91,11 +90,21 @@ export const useProfileMaintenance = ({
   const liveTags = useLiveQuery(StorageService.tags.getAll) as TagEntry[] | undefined;
   const liveCycleEvents = useLiveQuery(StorageService.cycleEvents.queries.all) as CycleEvent[] | undefined;
   const livePregnancyEvents = useLiveQuery(StorageService.pregnancyEvents.queries.all) as PregnancyEvent[] | undefined;
+  const livePornUseEvents = useLiveQuery(StorageService.pornUseEvents.queries.all) as PornUseEvent[] | undefined;
+  const liveMasturbationEvents = useLiveQuery(StorageService.masturbationEvents.queries.all) as MasturbationEvent[] | undefined;
+  const liveSexEvents = useLiveQuery(StorageService.sexEvents.queries.all) as SexEvent[] | undefined;
+  const liveTrainingGoals = useLiveQuery(StorageService.trainingGoals.queries.all) as TrainingGoal[] | undefined;
+  const liveGoalCheckins = useLiveQuery(StorageService.goalCheckins.queries.all) as GoalCheckin[] | undefined;
   const snapshots = useMemo(() => liveSnapshots || [], [liveSnapshots]);
   const partners = useMemo(() => livePartners || [], [livePartners]);
   const tags = useMemo(() => liveTags || [], [liveTags]);
   const cycleEvents = useMemo(() => liveCycleEvents || [], [liveCycleEvents]);
   const pregnancyEvents = useMemo(() => livePregnancyEvents || [], [livePregnancyEvents]);
+  const pornUseEvents = useMemo(() => livePornUseEvents || [], [livePornUseEvents]);
+  const masturbationEvents = useMemo(() => liveMasturbationEvents || [], [liveMasturbationEvents]);
+  const sexEvents = useMemo(() => liveSexEvents || [], [liveSexEvents]);
+  const trainingGoals = useMemo(() => liveTrainingGoals || [], [liveTrainingGoals]);
+  const goalCheckins = useMemo(() => liveGoalCheckins || [], [liveGoalCheckins]);
   const dbMeta = useLiveQuery(async () => {
     const dataVersion = await db.meta.get('dataVersion');
     const dataFixVersion = await db.meta.get('dataFixVersion');
@@ -128,8 +137,13 @@ export const useProfileMaintenance = ({
     tags,
     cycleEvents,
     pregnancyEvents,
-    snapshots
-  }), [cycleEvents, logs, partners, pregnancyEvents, snapshots, tags]);
+    snapshots,
+    pornUseEvents,
+    masturbationEvents,
+    sexEvents,
+    trainingGoals,
+    goalCheckins
+  }), [cycleEvents, logs, partners, pregnancyEvents, snapshots, tags, pornUseEvents, masturbationEvents, sexEvents, trainingGoals, goalCheckins]);
   const filteredExportDataset = useMemo(() => (
     applyExportOptionsToDataset(exportDataset, exportOptions)
   ), [exportDataset, exportOptions]);
@@ -228,28 +242,6 @@ export const useProfileMaintenance = ({
     }
   }, [downloadBlob, logs, showToast]);
 
-  const buildJsonExport = useCallback((dataset: ExportDataset) => {
-    const snapshot: ExportSnapshot = {
-      appName: '硬度日记',
-      appVersion: APP_VERSION,
-      dataVersion: LATEST_VERSION,
-      exportDate: new Date().toISOString(),
-      settings,
-      userName: localStorage.getItem('userName'),
-      data: {
-        version: LATEST_VERSION,
-        logs: dataset.logs,
-        partners: dataset.partners,
-        tags: dataset.tags,
-        cycleEvents: dataset.cycleEvents,
-        pregnancyEvents: dataset.pregnancyEvents,
-        snapshots: dataset.snapshots
-      }
-    };
-
-    return JSON.stringify(snapshot, null, 2);
-  }, [settings]);
-
   const openExportOptions = useCallback((format: ExportFormat, encrypted = false) => {
     setIsEncryptedExport(encrypted);
     setExportOptions(createDefaultExportOptions(encrypted ? 'json' : format));
@@ -283,8 +275,6 @@ export const useProfileMaintenance = ({
 
   const handleExportClick = useCallback(() => openExportOptions('json'), [openExportOptions]);
 
-  const handleMarkdownExportClick = useCallback(() => openExportOptions('markdown'), [openExportOptions]);
-
   const handleCsvExportClick = useCallback(() => openExportOptions('csv'), [openExportOptions]);
 
   const handleEncryptedExportClick = useCallback(() => openExportOptions('json', true), [openExportOptions]);
@@ -293,10 +283,6 @@ export const useProfileMaintenance = ({
     const dataset = filteredExportDataset;
     if (!hasAnyExportData(dataset)) {
       showToast('当前选择没有可导出的内容', 'error');
-      return false;
-    }
-    if (exportOptions.format === 'markdown' && (!exportOptions.dimensions.logs || dataset.logs.length === 0)) {
-      showToast('Markdown 导出需要选择并包含日志数据', 'error');
       return false;
     }
 
@@ -310,7 +296,7 @@ export const useProfileMaintenance = ({
         ? `-tags-${exportOptions.tagFilter.length}`
         : '';
       if (exportOptions.format === 'json') {
-        const json = buildJsonExport(dataset);
+        const json = await StorageService.createSnapshot();
         const content = isEncryptedExport ? await encryptSnapshotJson(json, passphrase!) : json;
         const extension = isEncryptedExport ? 'hdenc.json' : 'json';
         downloadBlob(new Blob([content], { type: 'application/json' }), `hardness-diary${tagSuffix}-${timestamp}.${extension}`);
@@ -323,10 +309,6 @@ export const useProfileMaintenance = ({
         });
         downloadBlob(blob, `hardness-diary-csv${tagSuffix}-${timestamp}.zip`);
         showToast('CSV 导出包已生成', 'success');
-      } else {
-        const markdown = buildMarkdownExport(dataset.logs);
-        downloadBlob(new Blob([markdown], { type: 'text/markdown;charset=utf-8' }), `hardness-diary${tagSuffix}-${timestamp}.md`);
-        showToast('Markdown 导出已生成', 'success');
       }
 
       onUpdateSettings({ ...settings, lastExportAt: Date.now() });
@@ -340,7 +322,6 @@ export const useProfileMaintenance = ({
       setIsExporting(false);
     }
   }, [
-    buildJsonExport,
     downloadBlob,
     exportOptions,
     filteredExportDataset,
@@ -519,7 +500,6 @@ export const useProfileMaintenance = ({
     onRunHealthCheck: runHealthCheck,
     onRepairData: handleRepairData,
     onExportClick: handleExportClick,
-    onMarkdownExportClick: handleMarkdownExportClick,
     onCsvExportClick: handleCsvExportClick,
     onEncryptedExportClick: handleEncryptedExportClick,
     onChangeExportOptions: setExportOptions,
