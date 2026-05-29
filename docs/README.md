@@ -10,17 +10,17 @@
 
 已完成或已发布的历史文档，默认低频查阅，不参与日常规划维护：
 
-- [completed/README.md](./completed/README.md)：0.2.5 及以前的完成版本索引。
+- [completed/README.md](./completed/README.md)：0.2.6 及以前的完成版本索引。
 
 ## Active
 
-当前无活跃开发线。下一条候选线是 0.2.6。
+当前无活跃开发线。下一条候选线是 0.2.7。
 
 ## Planned
 
 正在开发、review 或仍有规划价值的版本计划：
 
-- [planned/README.md](./planned/README.md)：当前 planned 文档索引，覆盖 0.2.6 - 0.2.12 和 0.2.14 待讨论入口。
+- [planned/README.md](./planned/README.md)：当前 planned 文档索引，覆盖 0.2.7 - 0.2.16、0.2.6 后置反馈池。
 
 ## Roadmap
 
