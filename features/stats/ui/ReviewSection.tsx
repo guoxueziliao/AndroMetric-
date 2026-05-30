@@ -16,17 +16,17 @@ import {
   buildReportFileName,
   SENSITIVE_EXPORT_WARNING,
 } from '../model/adultBehaviorReviewReport';
-import { Activity, Zap, Moon, Heart, AlertCircle, TrendingDown, FileText, Download } from 'lucide-react';
+import { Activity, Zap, Moon, Heart, AlertCircle, TrendingDown, Download } from 'lucide-react';
 import TrainingSection from './TrainingSection';
 
 // ── Window options ───────────────────────────────────────────────────────────
 
-const WINDOW_OPTIONS: { kind: ReviewWindowKind; label: string }[] = [
-  { kind: 'rolling_7d', label: '7天' },
-  { kind: 'rolling_14d', label: '14天' },
-  { kind: 'rolling_30d', label: '30天' },
-  { kind: 'week', label: '周报' },
-  { kind: 'month', label: '月报' },
+const WINDOW_OPTIONS: { kind: ReviewWindowKind; label: string; description: string }[] = [
+  { kind: 'rolling_7d', label: '7天', description: '近期状态快照，重点看最近变化和记录完整度' },
+  { kind: 'rolling_14d', label: '14天', description: '短周期对比，适合训练目标和生活节律' },
+  { kind: 'rolling_30d', label: '30天', description: '月内趋势，重点看稳定性、波动和长期状态' },
+  { kind: 'week', label: '周报', description: '自然周回顾，周一到周日总结' },
+  { kind: 'month', label: '月报', description: '自然月回顾，适合阶段性回看' },
 ];
 
 // ── Sub-components ───────────────────────────────────────────────────────────
@@ -315,6 +315,11 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({ logs }) => {
         ))}
       </div>
 
+      {/* Window description */}
+      <p className="text-[10px] text-text-muted px-1">
+        {WINDOW_OPTIONS.find((o) => o.kind === windowKind)?.description}
+      </p>
+
       {/* Primary summary */}
       <SectionCard title="硬度与恢复" icon={Zap}>
         <MetricRow
@@ -466,23 +471,10 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({ logs }) => {
       {/* Training section */}
       <TrainingSection facts={facts} insights={insights} />
 
-      {/* Report actions */}
-      <SectionCard title="报告" icon={FileText}>
+      {/* Export actions */}
+      <SectionCard title="导出" icon={Download}>
+        <p className="text-[10px] text-text-muted mb-2">导出当前窗口数据，格式为 JSON 完整备份或 CSV 可读导出。</p>
         <div className="flex flex-wrap gap-2">
-          <button
-            className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium bg-surface-muted rounded-xl border border-surface-border text-text-secondary hover:text-accent transition-colors"
-            onClick={() => handleExportMarkdown('week')}
-          >
-            <FileText size={12} />
-            周报 Markdown
-          </button>
-          <button
-            className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium bg-surface-muted rounded-xl border border-surface-border text-text-secondary hover:text-accent transition-colors"
-            onClick={() => handleExportMarkdown('month')}
-          >
-            <FileText size={12} />
-            月报 Markdown
-          </button>
           <button
             className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium bg-surface-muted rounded-xl border border-surface-border text-text-secondary hover:text-accent transition-colors"
             onClick={() => handleExportMarkdown(windowKind)}

@@ -544,7 +544,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                                                 {summaryLog.pornConsumption && summaryLog.pornConsumption !== 'none' && (
                                                     <div className={summaryItemClass}>
                                                         <Film size={18} className="text-accent-vivid"/>
-                                                        <span className="text-sm font-black text-text-secondary">看片: {PORN_LABELS[summaryLog.pornConsumption] || summaryLog.pornConsumption}</span>
+                                                        <span className="text-sm font-black text-text-secondary">色情使用: {PORN_LABELS[summaryLog.pornConsumption] || summaryLog.pornConsumption}</span>
                                                     </div>
                                                 )}
                                                 {summaryLog.screenTime?.totalMinutes ? (

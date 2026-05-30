@@ -70,7 +70,10 @@ const GoalHistoryCard: React.FC<{
   checkins: GoalCheckin[];
   onRestore: (goal: TrainingGoal) => void;
   onArchive: (goal: TrainingGoal) => void;
-}> = ({ goal, checkins, onRestore, onArchive }) => {
+  onPause?: (goal: TrainingGoal) => void;
+  onComplete?: (goal: TrainingGoal) => void;
+  onDelete?: (goal: TrainingGoal) => void;
+}> = ({ goal, checkins, onRestore, onArchive, onPause, onComplete }) => {
   const [expanded, setExpanded] = useState(false);
   const endDate = getGoalEndDate(goal);
 
@@ -111,6 +114,26 @@ const GoalHistoryCard: React.FC<{
       )}
 
       <div className="flex gap-2 mt-2">
+        {goal.status === 'active' && (
+          <>
+            {onPause && (
+              <button
+                onClick={() => onPause(goal)}
+                className="flex items-center gap-1 px-2 py-1 text-[10px] text-text-muted rounded-lg hover:bg-surface-muted"
+              >
+                暂停
+              </button>
+            )}
+            {onComplete && (
+              <button
+                onClick={() => onComplete(goal)}
+                className="flex items-center gap-1 px-2 py-1 text-[10px] text-text-muted rounded-lg hover:bg-surface-muted"
+              >
+                结束
+              </button>
+            )}
+          </>
+        )}
         {goal.status === 'archived' && (
           <button
             onClick={() => onRestore(goal)}
@@ -141,9 +164,12 @@ interface GoalHistorySectionProps {
   checkins: GoalCheckin[];
   onRestore: (goal: TrainingGoal) => void;
   onArchive: (goal: TrainingGoal) => void;
+  onPause?: (goal: TrainingGoal) => void;
+  onComplete?: (goal: TrainingGoal) => void;
+  onDelete?: (goal: TrainingGoal) => void;
 }
 
-const GoalHistorySection: React.FC<GoalHistorySectionProps> = ({ goals, checkins, onRestore, onArchive }) => {
+const GoalHistorySection: React.FC<GoalHistorySectionProps> = ({ goals, checkins, onRestore, onArchive, onPause, onComplete, onDelete }) => {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('all');
 
@@ -283,6 +309,9 @@ const GoalHistorySection: React.FC<GoalHistorySectionProps> = ({ goals, checkins
               checkins={getCheckinsForGoal(checkins, goal.id)}
               onRestore={onRestore}
               onArchive={onArchive}
+              onPause={onPause}
+              onComplete={onComplete}
+              onDelete={onDelete}
             />
           ))}
         </div>

@@ -542,9 +542,9 @@ const LogForm: React.FC<LogFormProps> = ({ data, actions }) => {
                                 </div>
                             </div>
 
-                            {/* 看片 */}
+                            {/* 色情使用 */}
                             <div>
-                                <label className="text-[11px] font-black text-text-muted uppercase tracking-widest mb-3 block">看片</label>
+                                <label className="text-[11px] font-black text-text-muted uppercase tracking-widest mb-3 block">色情使用</label>
                                 <div className="flex gap-2">
                                     {[
                                         { id: 'none', label: '无' },

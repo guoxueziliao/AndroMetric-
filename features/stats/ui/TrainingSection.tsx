@@ -16,6 +16,7 @@ import {
   getGoalEndDate,
   archiveGoal,
   restoreGoal,
+  transitionGoal,
   CATEGORY_LABELS,
 } from '../../stats/model/trainingGoalService';
 import { getActivityTargetDate } from '../../../shared/lib/targetDate';
@@ -45,9 +46,10 @@ const MetricPill: React.FC<{
 
 const SuggestionCard: React.FC<{
   suggestion: TrainingSuggestion;
+  isAlreadyStarted: boolean;
   onStart: (suggestion: TrainingSuggestion) => void;
   onIgnore: (id: string) => void;
-}> = ({ suggestion, onStart, onIgnore }) => (
+}> = ({ suggestion, isAlreadyStarted, onStart, onIgnore }) => (
   <div className="p-3 bg-surface-muted rounded-xl border border-surface-border">
     <div className="flex items-center justify-between mb-1">
       <span className="text-xs font-bold text-text-primary">
@@ -68,13 +70,19 @@ const SuggestionCard: React.FC<{
     )}
     {suggestion.suggestedGoal && (
       <div className="flex gap-2">
-        <button
-          onClick={() => onStart(suggestion)}
-          className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-white bg-accent rounded-lg hover:opacity-90"
-        >
-          <Target size={12} />
-          开始
-        </button>
+        {isAlreadyStarted ? (
+          <span className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-state-success-text bg-state-success-bg rounded-lg">
+            已开始
+          </span>
+        ) : (
+          <button
+            onClick={() => onStart(suggestion)}
+            className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-white bg-accent rounded-lg hover:opacity-90"
+          >
+            <Target size={12} />
+            开始
+          </button>
+        )}
         <button
           onClick={() => onIgnore(suggestion.id)}
           className="px-3 py-1.5 text-xs font-medium text-text-muted rounded-lg border border-surface-border hover:bg-surface-muted"
@@ -271,6 +279,15 @@ const TrainingSection: React.FC<TrainingSectionProps> = ({ facts, insights }) =>
 
   const handleStart = async (suggestion: TrainingSuggestion) => {
     if (!suggestion.suggestedGoal) return;
+    // Idempotency: check if an active goal already exists for this suggestion category
+    const existingGoal = goals.find(
+      (g) => g.status === 'active' && g.category === suggestion.suggestedGoal!.category,
+    );
+    if (existingGoal) {
+      // Already started — mark suggestion as ignored to show "已开始"
+      setIgnoredIds((prev) => new Set(prev).add(suggestion.id));
+      return;
+    }
     const errors = validateGoalDraft(suggestion.suggestedGoal);
     if (errors.length > 0) return;
     const goal = createGoalFromDraft(suggestion.suggestedGoal, today);
@@ -328,6 +345,22 @@ const TrainingSection: React.FC<TrainingSectionProps> = ({ facts, insights }) =>
     setGoals((prev) => prev.map((g) => g.id === restored.id ? restored : g));
   };
 
+  const handlePause = async (goal: TrainingGoal) => {
+    const current = await StorageService.trainingGoals.queries.byId(goal.id);
+    if (!current || current.status !== 'active') return;
+    const paused = transitionGoal(current, 'paused');
+    await StorageService.trainingGoals.save(paused);
+    setGoals((prev) => prev.map((g) => g.id === paused.id ? paused : g));
+  };
+
+  const handleComplete = async (goal: TrainingGoal) => {
+    const current = await StorageService.trainingGoals.queries.byId(goal.id);
+    if (!current || current.status !== 'active') return;
+    const completed = transitionGoal(current, 'completed');
+    await StorageService.trainingGoals.save(completed);
+    setGoals((prev) => prev.map((g) => g.id === completed.id ? completed : g));
+  };
+
   const hasContent = suggestions.length > 0 || activeGoals.length > 0 || dueGoals.length > 0 || goals.length > 0 || checkins.length > 0;
   if (!hasContent) return null;
 
@@ -341,14 +374,20 @@ const TrainingSection: React.FC<TrainingSectionProps> = ({ facts, insights }) =>
             训练建议
           </h3>
           <div className="space-y-2">
-            {suggestions.map((s) => (
-              <SuggestionCard
-                key={s.id}
-                suggestion={s}
-                onStart={handleStart}
-                onIgnore={handleIgnore}
-              />
-            ))}
+            {suggestions.map((s) => {
+              const alreadyStarted = s.suggestedGoal ? goals.some(
+                (g) => g.status === 'active' && g.category === s.suggestedGoal!.category,
+              ) : false;
+              return (
+                <SuggestionCard
+                  key={s.id}
+                  suggestion={s}
+                  isAlreadyStarted={alreadyStarted}
+                  onStart={handleStart}
+                  onIgnore={handleIgnore}
+                />
+              );
+            })}
           </div>
         </div>
       )}
@@ -440,6 +479,8 @@ const TrainingSection: React.FC<TrainingSectionProps> = ({ facts, insights }) =>
               checkins={checkins}
               onRestore={handleRestore}
               onArchive={handleArchive}
+              onPause={handlePause}
+              onComplete={handleComplete}
             />
           </div>
         )}
