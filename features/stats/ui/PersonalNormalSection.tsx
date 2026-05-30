@@ -111,6 +111,7 @@ interface PersonalNormalSectionProps {
 const PersonalNormalSection: React.FC<PersonalNormalSectionProps> = ({ logs }) => {
   const [windowDays, setWindowDays] = useState<14 | 30>(14);
   const [observationDraft, setObservationDraft] = useState<ObservationPlanDraft | null>(null);
+  const [planRefreshKey, setPlanRefreshKey] = useState(0);
   const today = useMemo(() => getActivityTargetDate(new Date()), []);
 
   const result: PersonalNormalResult = useMemo(() => {
@@ -134,13 +135,11 @@ const PersonalNormalSection: React.FC<PersonalNormalSectionProps> = ({ logs }) =
     const adjusted = { ...observationDraft, windowDays: selectedWindowDays };
     const goalInput = draftToGoalInput(adjusted);
     const errors = validateGoalDraft(goalInput);
-    if (errors.length > 0) {
-      setObservationDraft(null);
-      return;
-    }
+    if (errors.length > 0) return; // keep modal open on validation failure
     const goal = createGoalFromDraft(goalInput, today);
     await StorageService.trainingGoals.save(goal);
     setObservationDraft(null);
+    setPlanRefreshKey((k) => k + 1);
   }, [observationDraft, today]);
 
   if (result.metrics.length === 0) {
@@ -219,7 +218,7 @@ const PersonalNormalSection: React.FC<PersonalNormalSectionProps> = ({ logs }) =
       )}
 
       {/* Observation plans */}
-      <ObservationPlanSection />
+      <ObservationPlanSection refreshKey={planRefreshKey} />
 
       {/* Record gaps */}
       {result.recordGaps.length > 0 && (

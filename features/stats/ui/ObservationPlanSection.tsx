@@ -95,7 +95,11 @@ const ReviewCard: React.FC<{ review: ObservationReview }> = ({ review }) => {
 
 // ── Main section ─────────────────────────────────────────────────────────────
 
-const ObservationPlanSection: React.FC = () => {
+interface ObservationPlanSectionProps {
+  refreshKey?: number;
+}
+
+const ObservationPlanSection: React.FC<ObservationPlanSectionProps> = ({ refreshKey }) => {
   const today = useMemo(() => getActivityTargetDate(new Date()), []);
   const [goals, setGoals] = useState<TrainingGoal[]>([]);
   const [checkins, setCheckins] = useState<GoalCheckin[]>([]);
@@ -108,7 +112,7 @@ const ObservationPlanSection: React.FC = () => {
       setCheckins(allCheckins);
     };
     void load();
-  }, []);
+  }, [refreshKey]);
 
   const observationGoals = useMemo(() => goals.filter(isObservationPlan), [goals]);
   const activePlans = useMemo(() => getActiveObservationPlans(goals), [goals]);

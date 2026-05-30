@@ -3,7 +3,7 @@ import { isTrainingGoalCategory, ALLOWED_GOAL_WINDOWS } from '../../../domain';
 
 // ── Goal creation ────────────────────────────────────────────────────────────
 
-export const CATEGORY_LABELS: Record<string, string> = {
+export const CATEGORY_LABELS: Record<TrainingGoalCategory, string> = {
   record_quality: '记录质量',
   recovery: '恢复',
   hardness_stability: '硬度稳定',
@@ -220,9 +220,9 @@ export const getGoalsWithCheckins = (goals: TrainingGoal[], checkins: GoalChecki
   return goals.filter((g) => goalIdsWithCheckins.has(g.id));
 };
 
-export const getRecentFocusCategories = (goals: TrainingGoal[], count: number = 4): string[] => {
+export const getRecentFocusCategories = (goals: TrainingGoal[], count: number = 4): TrainingGoalCategory[] => {
   const sorted = [...goals].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
-  const seen = new Set<string>();
+  const seen = new Set<TrainingGoalCategory>();
   for (const g of sorted) {
     seen.add(g.category);
     if (seen.size >= count) break;

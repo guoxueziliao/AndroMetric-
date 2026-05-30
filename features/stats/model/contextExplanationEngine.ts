@@ -117,7 +117,7 @@ const generateId = (): string =>
 const buildContextFact = (
   def: ContextDef,
   series: DataPoint[],
-  windowDays: number,
+  windowDays: 14 | 30,
 ): { fact: ContextWindowFact; usable: boolean; gap: { contextType: ContextType; gapType: GapType; detail: string } | null } => {
   const coverage = computeCoverage(series, windowDays);
   const missingDays = windowDays - series.length;
@@ -203,24 +203,24 @@ export const computeContextExplanations = (
       if (!def) continue;
 
       const series = filterByDateRange(getSeries(ctxType), windowStartStr, today);
-      const result = buildContextFact(def, series, windowDays);
+      const factResult = buildContextFact(def, series, windowDays);
 
-      if (result.gap) {
-        allGaps.push({ ...result.gap, detail: `${metric.label}：${result.gap.detail}` });
+      if (factResult.gap) {
+        allGaps.push({ ...factResult.gap, detail: `${metric.label}：${factResult.gap.detail}` });
       }
 
-      if (result.usable) {
+      if (factResult.usable) {
         metricCards.push({
           id: generateId(),
           metricId: metric.id,
           contextType: ctxType,
           windowDays,
-          message: result.fact.confidence !== 'none'
+          message: factResult.fact.confidence === 'medium'
             ? def.highMessage(def.label, metric.label)
             : def.lowMessage(def.label, metric.label),
           sampleSize: series.length,
-          confidence: result.fact.confidence,
-          limitations: result.fact.limitations,
+          confidence: factResult.fact.confidence,
+          limitations: factResult.fact.limitations,
         });
       }
     }
@@ -231,7 +231,7 @@ export const computeContextExplanations = (
   }
 
   // Global limitations
-  if (allGaps.length > changedMetrics.length) {
+  if (allGaps.length > allCards.length) {
     globalLimitations.push('多个上下文记录不足，解释卡片可能不完整。');
   }
   globalLimitations.push('解释卡片仅供观察参考，不表示因果关系。');

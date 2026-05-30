@@ -49,14 +49,15 @@ export interface ObservationPlanDraft {
  */
 export const buildDraftFromExplanationCard = (
   card: ContextExplanationCard,
-  windowDays: 7 | 14 = 14,
+  windowDays?: 7 | 14,
 ): ObservationPlanDraft => {
+  const effectiveWindow: 7 | 14 = windowDays ?? (card.windowDays === 30 ? 14 : card.windowDays);
   const contextLabel = CONTEXT_LABELS[card.contextType] ?? card.contextType;
   return {
     sourceExplanationId: card.id,
     sourceMetricId: card.metricId,
     contextType: card.contextType,
-    windowDays,
+    windowDays: effectiveWindow,
     title: `观察${contextLabel}`,
     focusFields: CONTEXT_FOCUS_FIELDS[card.contextType] ?? [],
   };

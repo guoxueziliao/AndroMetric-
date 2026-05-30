@@ -2,6 +2,7 @@ import React, { useMemo, useEffect, useState } from 'react';
 import type { TrainingGoal } from '../../domain';
 import { StorageService } from '../../core/storage';
 import { getActiveObservationPlans } from '../stats/model/observationPlanService';
+import { getActivityTargetDate } from '../../shared/lib/targetDate';
 import { Eye, ChevronRight, Calendar } from 'lucide-react';
 
 interface DashboardObservationHintProps {
@@ -27,7 +28,7 @@ const DashboardObservationHint: React.FC<DashboardObservationHintProps> = ({ onN
   const start = new Date(nearest.startDate + 'T12:00:00');
   const end = new Date(start);
   end.setDate(end.getDate() + nearest.targetWindowDays);
-  const today = new Date();
+  const today = new Date(getActivityTargetDate(new Date()) + 'T12:00:00');
   const daysLeft = Math.max(0, Math.ceil((end.getTime() - today.getTime()) / 86400000));
 
   return (
