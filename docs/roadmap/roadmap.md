@@ -18,7 +18,7 @@
 | 0.2.5 | completed | 训练中心与长期目标历史 | [summary](../completed/README.md) |
 | 0.2.6 | completed | 数据安全与长期数据承诺 | [summary](../completed/README.md) |
 | 0.2.7 | completed | 关系上下文与女性性健康关怀系统 v1 | [summary](../completed/README.md) |
-| 0.2.8 | planned | 个人常态系统 v1 | [plan](../planned/plan-0.2.8.md) |
+| 0.2.8 | completed | 个人常态系统 v1 | [summary](../completed/README.md) |
 | 0.2.9 | planned | 个人常态详情中的变化解释层 v1 | [plan](../planned/plan-0.2.9.md) |
 | 0.2.10 | planned | 个人观察计划 v1 | [plan](../planned/plan-0.2.10.md) |
 | 0.2.11 | planned | 个人经验沉淀 v1 | [plan](../planned/plan-0.2.11.md) |
@@ -32,11 +32,11 @@
 
 ## Current
 
-0.2.7 实现完成，当前无活跃开发线。下一条候选线是 0.2.8。
+0.2.8 实现完成，当前无活跃开发线。下一条候选线是 0.2.9。
 
 ## Planned
 
-- 0.2.7 已完成；0.2.8 - 0.2.18 已确定为后续实现链。
+- 0.2.8 已完成；0.2.9 - 0.2.18 已确定为后续实现链。
 - 0.2.4 / 0.2.5 后发现的非数据安全反馈，先放入 [`0.2.6 后置反馈池`](../planned/post-0.2.6-feedback.md)。
 - 0.2.12 已确定为个人阶段回顾 v1。
 - 旧 0.2.13 档案索引方向已删除，不作为后置候选维护。
