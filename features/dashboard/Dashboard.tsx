@@ -17,6 +17,7 @@ import { attachMenstrualSummary } from '../reproductive/model/p4Derivations';
 import DashboardDayView from './DashboardDayView';
 import ImpactFindings from './ImpactFindings';
 import DashboardTrainingHint from './DashboardTrainingHint';
+import DashboardExplanationHint from './DashboardExplanationHint';
 
 const GlobalTimeline = lazy(() => import('./GlobalTimeline').then((module) => ({ default: module.GlobalTimeline })));
 const LogHistory = lazy(() => import('./LogHistory').then((module) => ({ default: module.LogHistory })));
@@ -279,6 +280,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             <>
                 <ImpactFindings logs={logs} />
                 <DashboardTrainingHint goals={trainingGoals} onNavigateToReview={onNavigateToReview} />
+                <DashboardExplanationHint logs={logs} onNavigateToStats={onNavigateToReview} />
                 <DashboardDayView
                     logs={logs}
                     todayLog={todayLog}

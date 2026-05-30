@@ -6,6 +6,7 @@ import { FIRST_LAYER_METRICS, SECONDARY_METRICS } from '../model/personalNormalT
 import type { LogEntry } from '../../../domain';
 import { getActivityTargetDate } from '../../../shared/lib/targetDate';
 import { BarChart3, AlertCircle, Info, ChevronDown, ChevronRight } from 'lucide-react';
+import ExplanationLayerSection from './ExplanationLayerSection';
 
 // ── State styling ────────────────────────────────────────────────────────────
 
@@ -184,6 +185,11 @@ const PersonalNormalSection: React.FC<PersonalNormalSectionProps> = ({ logs }) =
             {secondaryMetrics.map((m) => <MetricCard key={m.id} metric={m} />)}
           </div>
         </div>
+      )}
+
+      {/* Explanation layer */}
+      {result.summary.shiftedCount > 0 && (
+        <ExplanationLayerSection logs={logs} windowDays={windowDays} />
       )}
 
       {/* Record gaps */}
