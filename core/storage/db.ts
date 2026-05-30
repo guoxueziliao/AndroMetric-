@@ -50,7 +50,7 @@ dbInstance.version(9).stores({
   sex_events: '&id, startedAt, targetDate, status, source',
   training_goals: '&id, status, category, startDate, updatedAt',
   goal_checkins: '&id, goalId, targetDate, createdAt',
-  health_projects: '&id, type, status, startDate',
+  health_projects: '&id, type, status, startDate, updatedAt',
   health_project_plans: '&id, projectId, scheduleType, startDate',
   health_project_logs: '&id, projectId, targetDate, status'
 });

@@ -100,7 +100,10 @@ const normalizeImportedSnapshots = (snapshots: unknown[]): Snapshot[] => (
                     masturbationEvents: Array.isArray(rest.data.masturbationEvents) ? rest.data.masturbationEvents : [],
                     sexEvents: Array.isArray(rest.data.sexEvents) ? rest.data.sexEvents : [],
                     trainingGoals: Array.isArray(rest.data.trainingGoals) ? rest.data.trainingGoals : [],
-                    goalCheckins: Array.isArray(rest.data.goalCheckins) ? rest.data.goalCheckins : []
+                    goalCheckins: Array.isArray(rest.data.goalCheckins) ? rest.data.goalCheckins : [],
+                    healthProjects: Array.isArray(rest.data.healthProjects) ? rest.data.healthProjects : [],
+                    healthProjectPlans: Array.isArray(rest.data.healthProjectPlans) ? rest.data.healthProjectPlans : [],
+                    healthProjectLogs: Array.isArray(rest.data.healthProjectLogs) ? rest.data.healthProjectLogs : []
                 }
             };
         })

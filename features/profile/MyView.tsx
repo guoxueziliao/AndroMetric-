@@ -438,7 +438,7 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
                       ) : (
                           <div className="space-y-4 animate-in fade-in">
                               <div className="flex justify-between items-center pb-2 border-b border-surface-border ">
-                                  <span className="text-sm font-medium">综合评分</span>
+                                  <span className="text-sm font-medium">数据状态</span>
                                   <span className={`text-xl font-black ${healthReport.score >= 90 ? 'text-state-success-text' : healthReport.score >= 60 ? 'text-state-warning-text' : 'text-state-danger-text'}`}>{healthReport.score}</span>
                               </div>
                               <div className="text-xs space-y-1 text-text-muted">
