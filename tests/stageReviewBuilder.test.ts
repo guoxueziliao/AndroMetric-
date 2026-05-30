@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import type { PersonalNormalResult } from '../features/stats/model/personalNormalTypes';
 import type { ContextExplanationCard } from '../features/stats/model/contextExplanationTypes';
 import { buildStageReview, getMonthRange, getQuarterRange, getPeriodLabel } from '../features/stats/model/stageReviewBuilder';
+import type { StageReviewSummary } from '../features/stats/model/stageReviewTypes';
 
 const makeLogs = (dates: string[]) => dates.map((d) => ({ date: d }));
 
@@ -141,7 +142,7 @@ describe('stageReviewBuilder', () => {
         observationPlans: [{ goalId: 'tg_1', title: '观察', status: 'active', windowDays: 14, startDate: '2026-05-01', endDate: '2026-05-14' }],
       });
       const summarySection = review.sections.find((s) => s.type === 'summary');
-      const summary = summarySection!.data as any;
+      const summary = summarySection!.data as StageReviewSummary;
       expect(summary.totalDays).toBe(31);
       expect(summary.daysWithLogs).toBe(3);
       expect(summary.metricsAtNormal).toBe(4);

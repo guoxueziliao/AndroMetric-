@@ -213,15 +213,19 @@ const StageReviewSection: React.FC<StageReviewSectionProps> = ({ logs }) => {
     // Observation plans in period
     const obsPlans: ReviewObservationPlan[] = goals
       .filter(isObservationPlan)
-      .filter((g) => g.startDate <= endDate && g.startDate >= startDate || g.status === 'active')
-      .map((g) => ({
-        goalId: g.id,
-        title: g.title,
-        status: g.status,
-        windowDays: g.targetWindowDays,
-        startDate: g.startDate,
-        endDate: g.startDate,
-      }));
+      .filter((g) => (g.startDate <= endDate && g.startDate >= startDate) || g.status === 'active')
+      .map((g) => {
+        const planEnd = new Date(g.startDate + 'T12:00:00');
+        planEnd.setDate(planEnd.getDate() + g.targetWindowDays);
+        return {
+          goalId: g.id,
+          title: g.title,
+          status: g.status,
+          windowDays: g.targetWindowDays,
+          startDate: g.startDate,
+          endDate: planEnd.toISOString().slice(0, 10),
+        };
+      });
 
     // Experience cards in period
     const expCards = getExperienceCards(goals, checkins)
