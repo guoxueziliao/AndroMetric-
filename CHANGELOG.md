@@ -2,10 +2,87 @@
 
 所有显著变更记录于此文件。
 
-## [Unreleased]
+## [0.2.8] - 2026-05-30
 
 ### Added
-- 待补。
+- 新增个人常态系统 v1：从用户 90 天历史中派生个人基线，用 14 / 30 天窗口比较最近状态。
+- Stats 新增"常态"tab，展示指标卡片（三状态判定：正常、偏离、数据不足）、记录缺口和全局限制说明。
+- 指标分两层：第一层（硬度、睡眠、压力、性负荷）为核心，第二层（色情使用、满意度、运动、目标历史、关系上下文）为扩展。
+- 置信度基于覆盖率降级：<50% 仅事实、50-69% 最多 low、>=70% 最多 medium，总体 summary 需 >=50% 指标达 medium。
+- 新增 `personalNormalEngine.ts` 纯函数引擎（中位数、P25-P75、MAD、isScalar 零过滤）。
+
+## [0.2.7] - 2026-05-30
+
+### Added
+- 新增关系上下文与女性性健康关怀系统 v1，SexEvent 支持记录 5 维度关系上下文（关系情境、沟通、边界偏好、反馈恢复、周期关怀）。
+- 性生活复盘新增关系上下文摘要和导出报告段。
+- PartnerProfile 新增伴侣关系偏好和周期关怀设置。
+- 导入完整性检查新增孤儿伴侣 ID 和 legacy 伴侣名称检测。
+- LATEST_VERSION 升至 49。
+- 新增 RelationshipContextForm 可折叠表单，支持周期情境和关怀需求选择。
+
+## [0.2.6] - 2026-05-30
+
+### Added
+- 导出新增"全部 / 按日期"区间切换，JSON 始终全量备份，CSV 按日期过滤。
+- JSON 导出改用 `createSnapshot()` 确保覆盖全部 10 个数据存储。
+- 导入预览新增成人行为事件和训练数据计数，新增关联问题检测和完整性警告。
+- CSV 新增 6 个文件：`porn_use_events.csv`、`masturbation_events.csv`、`sex_events.csv`、`adult_event_links.csv`、`training_goals.csv`、`goal_checkins.csv`。
+- 完整性检查新增 schema 版本验证和 cycle / pregnancy event 计数检查。
+- 数据生态新增 `pathToLabel()` 技术路径映射，显示用户可读的问题位置。
+- 数据健康修复入口改为 4 状态流程（未检查、可修复、不可修复、健康）。
+
+### Changed
+- 所有 CSV 导出默认排除 notes 全文（隐私保护）。
+- Markdown 导出选项已移除（review / report 仍可内部使用）。
+- 导出格式网格改为 2 列。
+
+## [0.2.5] - 2026-05-30
+
+### Added
+- Stats 新增目标历史工作台，支持状态和分类筛选、签到历史、孤儿签到提示。
+- 训练目标支持 archived → active 恢复转换。
+- 跨周期摘要展示完成 >= 2 个目标时的模式洞察。
+- Dashboard 训练提示新增"查看目标历史"导航链接。
+- 新增 10 个训练目标辅助函数（restoreGoal、getCompletedGoals、getArchivedGoals 等）。
+
+## [0.2.4] - 2026-05-30
+
+### Added
+- 新增养成系与关系/表现训练系统：训练目标、签到和规则建议。
+- 新增目标历史回看入口。
+
+## [0.2.3] - 2026-05-29
+
+### Added
+- 新增洞察与复盘增强：StatsEngine 系列扩展（硬度、睡眠、酒精、压力、运动、自慰、性负荷、屏幕、健康评分）。
+- 复盘引入样本量和可信度规则。
+
+## [0.2.2] - 2026-05-29
+
+### Added
+- 新增成人行为与色情使用记录闭环，支持色情使用事件、自慰事件、性事件和事件关联。
+- 新增 9 张数据库表（v8 migration），覆盖成人行为事件和训练数据。
+
+## [0.2.1] - 2026-05-28
+
+### Added
+- HardnessSelector v2 重写，使用成人医学标签。
+- 新增 DataCard 语义基元和 RecordCard 统一展示。
+- 新增 Switch 组件，Toast 升级支持 warning 类型和分层时长。
+- Modal / BottomSheet / ConfirmModal 统一重构为 OverlayPrimitive。
+- 新增自定义图标和交互系统文档。
+
+### Changed
+- 性活动从生活 tab 拆出，成为独立 tab。
+- 保存反馈、空状态和移动端触控体验更清晰。
+
+## [0.2.0] - 2026-05-27
+
+### Added
+- 视觉系统骨架：品牌 token（brand-bg、brand-text、brand-accent、brand-muted）贯穿全应用。
+- sex-life 模块 token 重映射，Chart.js 视觉验证通过。
+- app / root 层重映射，manifest 单一来源化，图标清理。
 
 ## [0.1.3] - 2026-05-26
 
