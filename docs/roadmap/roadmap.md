@@ -23,7 +23,7 @@
 | 0.2.10 | completed | 个人观察计划 v1 | [summary](../completed/README.md) |
 | 0.2.11 | completed | 个人经验沉淀 v1 | [summary](../completed/README.md) |
 | 0.2.12 | completed | 个人阶段回顾 v1 | [summary](../completed/README.md) |
-| 0.2.13 | planned | 健康项目与补剂周期系统 v1 | [plan](../planned/plan-0.2.13.md) |
+| 0.2.13 | completed | 健康项目与补剂周期系统 v1 | [summary](../completed/README.md) |
 | 0.2.14 | planned | 记录、复盘与训练入口收束 v1 | [plan](../planned/plan-0.2.14.md) |
 | 0.2.15 | planned | 导航与信息架构整理 v1 | [plan](../planned/plan-0.2.15.md) |
 | 0.2.16 | planned | 长期使用体验与洞察校准 v1 | [plan](../planned/plan-0.2.16.md) |
@@ -33,11 +33,11 @@
 
 ## Current
 
-0.2.12 实现完成，当前无活跃开发线。下一条候选线是 0.2.13。
+0.2.13 实现完成，当前无活跃开发线。下一条候选线是 0.2.14。
 
 ## Planned
 
-- 0.2.12 已完成；0.2.13 - 0.2.19 已确定为后续实现链。
+- 0.2.13 已完成；0.2.14 - 0.2.19 已确定为后续实现链。
 - 0.2.4 / 0.2.5 后发现的非数据安全反馈，先放入 [`0.2.6 后置反馈池`](../planned/post-0.2.6-feedback.md)。
 - 0.2.12 已确定为个人阶段回顾 v1。
 - 旧 0.2.13 档案索引方向已删除，不作为后置候选维护。

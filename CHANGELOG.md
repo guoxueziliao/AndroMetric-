@@ -2,6 +2,19 @@
 
 所有显著变更记录于此文件。
 
+## [0.2.13] - 2026-05-30
+
+### Added
+- 新增健康项目与补剂周期系统 v1：用户可创建补剂、晒太阳、拉伸、康复、作息干预等健康项目。
+- 支持每日、隔日、每周若干天、连续 N 天和按需五种周期。
+- 补剂项目支持剂量、单位和服用时间标签（早晨/中午/傍晚/睡前/饭前/饭后/随时）。
+- 项目状态支持进行中、暂停、恢复、结束和归档。
+- Dashboard 新增今日健康项目卡片，一键完成/跳过。
+- 我的页面新增健康项目管理入口。
+- Dexie v9 新增 health_projects、health_project_plans、health_project_logs 三张表。
+- LATEST_VERSION=50，snapshot/import/export/reset 全覆盖新表。
+- 旧 supplements 字段继续作为 legacy daily fact 兼容读取。
+
 ## [0.2.12] - 2026-05-30
 
 ### Added
