@@ -4,6 +4,7 @@
 
 ## 阅读顺序
 
+- [执行计划](./execution-plan.md)：开发会话优先阅读，包含代码入口、切片、验收和停线项。
 - [范围与边界](./scope-and-boundaries.md)：长期用户校准层和明确不做。
 - [长期数据质量](./long-term-data-quality.md)：缺口、偏差、无效字段和质量提示。
 - [洞察可信度](./insight-confidence-calibration.md)：趋势、复盘和建议的可信度表达。

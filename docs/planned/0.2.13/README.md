@@ -4,6 +4,7 @@
 
 ## 专题文档
 
+- [执行计划](./execution-plan.md)：开发会话优先阅读，包含代码入口、实现切片、验收和停线项。
 - [范围与边界](./scope-and-boundaries.md)：健康项目、补剂、健康习惯和用药边界。
 - [数据模型](./data-model-and-migration.md)：健康项目、计划、执行记录和类型边界。
 - [迁移与数据安全](./migration-and-data-safety.md)：旧 `supplements` 兼容、migration、backup、preview 和 integrity。

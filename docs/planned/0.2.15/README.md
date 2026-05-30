@@ -4,6 +4,7 @@
 
 ## 阅读顺序
 
+- [执行计划](./execution-plan.md)：开发会话优先阅读，包含代码入口、切片、验收和停线项。
 - [范围与边界](./scope-and-boundaries.md)：确认 0.2.15 只做信息架构整理。
 - [主导航归属](./main-navigation-contract.md)：四个主入口的职责。
 - [模块归属矩阵](./module-placement-matrix.md)：0.2.7 - 0.2.14 能力放置规则。

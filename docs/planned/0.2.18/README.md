@@ -4,6 +4,7 @@
 
 ## 阅读顺序
 
+- [执行计划](./execution-plan.md)：开发会话优先阅读，包含 docs 工作台结构、归档流程和检查命令。
 - [范围与边界](./scope-and-boundaries.md)：维护工作台的边界。
 - [版本状态模型](./version-status-model.md)：版本状态和转换规则。
 - [执行工作流](./execution-workflow.md)：开发前、开发中、完成后的流程。

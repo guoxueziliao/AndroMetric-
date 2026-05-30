@@ -4,6 +4,7 @@
 
 ## 阅读顺序
 
+- [执行计划](./execution-plan.md)：开发会话优先阅读，包含筛选模型、UI 切片、验收和停线项。
 - [范围与边界](./scope-and-boundaries.md)：高级筛选和自定义回看的边界。
 - [筛选维度契约](./filter-dimensions.md)：可筛选字段和组合规则。
 - [回看体验](./review-experience.md)：结果页、摘要和保存视图。

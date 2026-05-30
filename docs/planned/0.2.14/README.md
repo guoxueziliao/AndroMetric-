@@ -4,6 +4,7 @@
 
 ## 专题文档
 
+- [执行计划](./execution-plan.md)：开发会话优先阅读，包含代码入口、问题对应、实现切片和验收。
 - [范围与边界](./scope-and-boundaries.md)：入口收束、默认不新增 schema、明确不做。
 - [复盘窗口契约](./review-window-contract.md)：7 天、14 天、30 天、周报、月报的差异。
 - [训练目标管理契约](./training-goal-management.md)：建议、目标、历史、取消、归档和重复开始。

@@ -4,6 +4,7 @@
 
 ## 阅读顺序
 
+- [执行计划](./execution-plan.md)：开发会话优先阅读，包含代码入口、偏好模型、模块接入和验收。
 - [范围与边界](./scope-and-boundaries.md)：确认 0.2.19 做什么、不做什么。
 - [指标偏好模型](./metric-preference-model.md)：三档轻量分组和默认规则。
 - [界面与模块使用](./ui-and-module-usage.md)：各模块如何消费偏好。

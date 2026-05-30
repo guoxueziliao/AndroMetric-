@@ -24,6 +24,8 @@
 
 - [目录索引](./0.2.14/README.md)
   - 0.2.14 专题文档入口。
+- [执行计划](./0.2.14/execution-plan.md)
+  - 真实代码校准、问题对应、实现切片、验收步骤和停线项。
 - [范围与边界](./0.2.14/scope-and-boundaries.md)
   - 入口收束、默认不新增 schema、明确不做。
 - [复盘窗口契约](./0.2.14/review-window-contract.md)
