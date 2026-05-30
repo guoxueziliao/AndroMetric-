@@ -473,7 +473,7 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({ logs }) => {
 
       {/* Export actions */}
       <SectionCard title="导出" icon={Download}>
-        <p className="text-[10px] text-text-muted mb-2">导出当前窗口数据，格式为 JSON 完整备份或 CSV 可读导出。</p>
+        <p className="text-[10px] text-text-muted mb-2">导出当前窗口复盘报告。</p>
         <div className="flex flex-wrap gap-2">
           <button
             className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium bg-surface-muted rounded-xl border border-surface-border text-text-secondary hover:text-accent transition-colors"

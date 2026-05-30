@@ -72,7 +72,6 @@ const GoalHistoryCard: React.FC<{
   onArchive: (goal: TrainingGoal) => void;
   onPause?: (goal: TrainingGoal) => void;
   onComplete?: (goal: TrainingGoal) => void;
-  onDelete?: (goal: TrainingGoal) => void;
 }> = ({ goal, checkins, onRestore, onArchive, onPause, onComplete }) => {
   const [expanded, setExpanded] = useState(false);
   const endDate = getGoalEndDate(goal);
@@ -166,10 +165,9 @@ interface GoalHistorySectionProps {
   onArchive: (goal: TrainingGoal) => void;
   onPause?: (goal: TrainingGoal) => void;
   onComplete?: (goal: TrainingGoal) => void;
-  onDelete?: (goal: TrainingGoal) => void;
 }
 
-const GoalHistorySection: React.FC<GoalHistorySectionProps> = ({ goals, checkins, onRestore, onArchive, onPause, onComplete, onDelete }) => {
+const GoalHistorySection: React.FC<GoalHistorySectionProps> = ({ goals, checkins, onRestore, onArchive, onPause, onComplete }) => {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('all');
 
@@ -311,7 +309,6 @@ const GoalHistorySection: React.FC<GoalHistorySectionProps> = ({ goals, checkins
               onArchive={onArchive}
               onPause={onPause}
               onComplete={onComplete}
-              onDelete={onDelete}
             />
           ))}
         </div>

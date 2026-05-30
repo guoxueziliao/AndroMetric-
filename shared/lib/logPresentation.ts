@@ -76,7 +76,7 @@ export const generateLogSummary = (log: Partial<LogEntry>): Array<{ label: strin
     } else {
         life.push(`饮酒: 无`);
     }
-    life.push(`看片: ${LABELS.porn[log.pornConsumption || 'none']}`);
+    life.push(`色情使用: ${LABELS.porn[log.pornConsumption || 'none']}`);
 
     if (log.caffeineRecord && log.caffeineRecord.totalCount > 0) {
         const detailStr = log.caffeineRecord.items
