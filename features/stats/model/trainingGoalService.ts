@@ -10,6 +10,7 @@ export const CATEGORY_LABELS: Record<string, string> = {
   sex_performance_stability: '性表现稳定',
   ejaculation_control_observation: '射精控制观察',
   relationship_communication: '关系沟通',
+  observation: '短期观察',
 };
 
 const generateId = (): string => {

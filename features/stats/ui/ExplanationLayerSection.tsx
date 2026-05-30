@@ -6,6 +6,8 @@ import { computeContextExplanations } from '../model/contextExplanationEngine';
 import type { ContextExplanationResult, ContextExplanationCard } from '../model/contextExplanationTypes';
 import { getActivityTargetDate } from '../../../shared/lib/targetDate';
 import { Eye, AlertCircle, Info, ChevronDown, ChevronRight } from 'lucide-react';
+import { buildDraftFromExplanationCard } from '../model/observationPlanService';
+import type { ObservationPlanDraft } from '../model/observationPlanService';
 
 // ── Labels ───────────────────────────────────────────────────────────────────
 
@@ -30,7 +32,10 @@ const CONFIDENCE_LABEL: Record<string, string> = {
 
 // ── Explanation card ─────────────────────────────────────────────────────────
 
-const ExplanationCard: React.FC<{ card: ContextExplanationCard }> = ({ card }) => {
+const ExplanationCard: React.FC<{
+  card: ContextExplanationCard;
+  onStartObservation?: (draft: ObservationPlanDraft) => void;
+}> = ({ card, onStartObservation }) => {
   const [expanded, setExpanded] = useState(false);
 
   return (
@@ -74,6 +79,17 @@ const ExplanationCard: React.FC<{ card: ContextExplanationCard }> = ({ card }) =
           ))}
         </ul>
       )}
+
+      {onStartObservation && (
+        <button
+          type="button"
+          onClick={() => onStartObservation(buildDraftFromExplanationCard(card))}
+          className="flex items-center gap-1 mt-2 text-[10px] text-accent hover:underline"
+        >
+          记录一段时间再看
+          <ChevronRight size={10} />
+        </button>
+      )}
     </div>
   );
 };
@@ -83,9 +99,10 @@ const ExplanationCard: React.FC<{ card: ContextExplanationCard }> = ({ card }) =
 interface ExplanationLayerSectionProps {
   logs: LogEntry[];
   windowDays: 14 | 30;
+  onStartObservation?: (draft: ObservationPlanDraft) => void;
 }
 
-const ExplanationLayerSection: React.FC<ExplanationLayerSectionProps> = ({ logs, windowDays }) => {
+const ExplanationLayerSection: React.FC<ExplanationLayerSectionProps> = ({ logs, windowDays, onStartObservation }) => {
   const today = useMemo(() => getActivityTargetDate(new Date()), []);
 
   const result: ContextExplanationResult = useMemo(() => {
@@ -120,7 +137,7 @@ const ExplanationLayerSection: React.FC<ExplanationLayerSectionProps> = ({ logs,
       {result.cards.length > 0 && (
         <div className="space-y-2">
           {result.cards.map((card) => (
-            <ExplanationCard key={card.id} card={card} />
+            <ExplanationCard key={card.id} card={card} onStartObservation={onStartObservation} />
           ))}
         </div>
       )}

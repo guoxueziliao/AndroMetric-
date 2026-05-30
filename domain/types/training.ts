@@ -8,7 +8,8 @@ export type TrainingGoalCategory =
   | 'hardness_stability'
   | 'sex_performance_stability'
   | 'ejaculation_control_observation'
-  | 'relationship_communication';
+  | 'relationship_communication'
+  | 'observation';
 
 export type TrainingGoalSource = 'manual' | 'suggested';
 
@@ -19,6 +20,7 @@ export const ALLOWED_GOAL_CATEGORIES: ReadonlySet<TrainingGoalCategory> = new Se
   'sex_performance_stability',
   'ejaculation_control_observation',
   'relationship_communication',
+  'observation',
 ]);
 
 export const ALLOWED_GOAL_STATUSES: ReadonlySet<TrainingGoalStatus> = new Set([

@@ -1,12 +1,18 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import { StatsEngine } from '../model/StatsEngine';
 import { computePersonalNormal } from '../model/personalNormalEngine';
 import type { PersonalNormalResult, PersonalNormalMetric, PersonalNormalState } from '../model/personalNormalTypes';
 import { FIRST_LAYER_METRICS, SECONDARY_METRICS } from '../model/personalNormalTypes';
 import type { LogEntry } from '../../../domain';
+import { StorageService } from '../../../core/storage';
 import { getActivityTargetDate } from '../../../shared/lib/targetDate';
 import { BarChart3, AlertCircle, Info, ChevronDown, ChevronRight } from 'lucide-react';
 import ExplanationLayerSection from './ExplanationLayerSection';
+import ObservationPlanConfirmModal from './ObservationPlanConfirmModal';
+import ObservationPlanSection from './ObservationPlanSection';
+import type { ObservationPlanDraft } from '../model/observationPlanService';
+import { draftToGoalInput } from '../model/observationPlanService';
+import { createGoalFromDraft, validateGoalDraft } from '../model/trainingGoalService';
 
 // ── State styling ────────────────────────────────────────────────────────────
 
@@ -104,6 +110,7 @@ interface PersonalNormalSectionProps {
 
 const PersonalNormalSection: React.FC<PersonalNormalSectionProps> = ({ logs }) => {
   const [windowDays, setWindowDays] = useState<14 | 30>(14);
+  const [observationDraft, setObservationDraft] = useState<ObservationPlanDraft | null>(null);
   const today = useMemo(() => getActivityTargetDate(new Date()), []);
 
   const result: PersonalNormalResult = useMemo(() => {
@@ -118,6 +125,24 @@ const PersonalNormalSection: React.FC<PersonalNormalSectionProps> = ({ logs }) =
   const primaryMetrics = result.metrics.filter((m) => m.layer === 'primary');
   const secondaryMetrics = result.metrics.filter((m) => m.layer === 'secondary');
 
+  const handleStartObservation = useCallback((draft: ObservationPlanDraft) => {
+    setObservationDraft(draft);
+  }, []);
+
+  const handleConfirmObservation = useCallback(async (selectedWindowDays: 7 | 14) => {
+    if (!observationDraft) return;
+    const adjusted = { ...observationDraft, windowDays: selectedWindowDays };
+    const goalInput = draftToGoalInput(adjusted);
+    const errors = validateGoalDraft(goalInput);
+    if (errors.length > 0) {
+      setObservationDraft(null);
+      return;
+    }
+    const goal = createGoalFromDraft(goalInput, today);
+    await StorageService.trainingGoals.save(goal);
+    setObservationDraft(null);
+  }, [observationDraft, today]);
+
   if (result.metrics.length === 0) {
     return (
       <div className="rounded-2xl border border-dashed border-surface-border bg-surface-card/50 p-6 text-center space-y-2">
@@ -129,6 +154,7 @@ const PersonalNormalSection: React.FC<PersonalNormalSectionProps> = ({ logs }) =
   }
 
   return (
+    <>
     <div className="space-y-4">
       {/* Window toggle */}
       <div className="flex p-1 bg-surface-muted rounded-xl border border-surface-border">
@@ -189,8 +215,11 @@ const PersonalNormalSection: React.FC<PersonalNormalSectionProps> = ({ logs }) =
 
       {/* Explanation layer */}
       {result.summary.shiftedCount > 0 && (
-        <ExplanationLayerSection logs={logs} windowDays={windowDays} />
+        <ExplanationLayerSection logs={logs} windowDays={windowDays} onStartObservation={handleStartObservation} />
       )}
+
+      {/* Observation plans */}
+      <ObservationPlanSection />
 
       {/* Record gaps */}
       {result.recordGaps.length > 0 && (
@@ -227,6 +256,16 @@ const PersonalNormalSection: React.FC<PersonalNormalSectionProps> = ({ logs }) =
         </div>
       )}
     </div>
+
+    {/* Observation plan confirm modal */}
+    {observationDraft && (
+      <ObservationPlanConfirmModal
+        draft={observationDraft}
+        onConfirm={handleConfirmObservation}
+        onCancel={() => setObservationDraft(null)}
+      />
+    )}
+    </>
   );
 };
 
