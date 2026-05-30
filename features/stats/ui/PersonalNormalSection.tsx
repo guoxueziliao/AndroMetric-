@@ -10,9 +10,13 @@ import { BarChart3, AlertCircle, Info, ChevronDown, ChevronRight } from 'lucide-
 import ExplanationLayerSection from './ExplanationLayerSection';
 import ObservationPlanConfirmModal from './ObservationPlanConfirmModal';
 import ObservationPlanSection from './ObservationPlanSection';
+import ExperienceCardSaveModal from './ExperienceCardSaveModal';
+import ExperienceCardSection from './ExperienceCardSection';
 import type { ObservationPlanDraft } from '../model/observationPlanService';
 import { draftToGoalInput } from '../model/observationPlanService';
 import { createGoalFromDraft, validateGoalDraft } from '../model/trainingGoalService';
+import type { ExperienceCardDraft } from '../model/experienceCardService';
+import { draftToCheckin } from '../model/experienceCardService';
 
 // ── State styling ────────────────────────────────────────────────────────────
 
@@ -111,7 +115,9 @@ interface PersonalNormalSectionProps {
 const PersonalNormalSection: React.FC<PersonalNormalSectionProps> = ({ logs }) => {
   const [windowDays, setWindowDays] = useState<14 | 30>(14);
   const [observationDraft, setObservationDraft] = useState<ObservationPlanDraft | null>(null);
+  const [experienceDraft, setExperienceDraft] = useState<ExperienceCardDraft | null>(null);
   const [planRefreshKey, setPlanRefreshKey] = useState(0);
+  const [expRefreshKey, setExpRefreshKey] = useState(0);
   const today = useMemo(() => getActivityTargetDate(new Date()), []);
 
   const result: PersonalNormalResult = useMemo(() => {
@@ -141,6 +147,17 @@ const PersonalNormalSection: React.FC<PersonalNormalSectionProps> = ({ logs }) =
     setObservationDraft(null);
     setPlanRefreshKey((k) => k + 1);
   }, [observationDraft, today]);
+
+  const handleSaveExperience = useCallback((draft: ExperienceCardDraft) => {
+    setExperienceDraft(draft);
+  }, []);
+
+  const handleConfirmExperience = useCallback(async (updated: ExperienceCardDraft) => {
+    const checkin = draftToCheckin(updated);
+    await StorageService.goalCheckins.save(checkin);
+    setExperienceDraft(null);
+    setExpRefreshKey((k) => k + 1);
+  }, []);
 
   if (result.metrics.length === 0) {
     return (
@@ -218,7 +235,10 @@ const PersonalNormalSection: React.FC<PersonalNormalSectionProps> = ({ logs }) =
       )}
 
       {/* Observation plans */}
-      <ObservationPlanSection refreshKey={planRefreshKey} />
+      <ObservationPlanSection refreshKey={planRefreshKey} onSaveExperience={handleSaveExperience} />
+
+      {/* Experience cards */}
+      <ExperienceCardSection refreshKey={expRefreshKey} />
 
       {/* Record gaps */}
       {result.recordGaps.length > 0 && (
@@ -262,6 +282,15 @@ const PersonalNormalSection: React.FC<PersonalNormalSectionProps> = ({ logs }) =
         draft={observationDraft}
         onConfirm={handleConfirmObservation}
         onCancel={() => setObservationDraft(null)}
+      />
+    )}
+
+    {/* Experience card save modal */}
+    {experienceDraft && (
+      <ExperienceCardSaveModal
+        draft={experienceDraft}
+        onSave={handleConfirmExperience}
+        onCancel={() => setExperienceDraft(null)}
       />
     )}
     </>

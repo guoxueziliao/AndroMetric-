@@ -4,7 +4,9 @@ import { StorageService } from '../../../core/storage';
 import { getActivityTargetDate } from '../../../shared/lib/targetDate';
 import { buildObservationReview, getActiveObservationPlans, isObservationPlan } from '../model/observationPlanService';
 import type { ObservationReview } from '../model/observationPlanService';
-import { Eye, ChevronDown, ChevronRight, CheckCircle } from 'lucide-react';
+import { buildFactSummary, buildDefaultLimitations } from '../model/experienceCardService';
+import type { ExperienceCardDraft } from '../model/experienceCardService';
+import { Eye, ChevronDown, ChevronRight, CheckCircle, BookOpen } from 'lucide-react';
 
 // ── Active plan card ─────────────────────────────────────────────────────────
 
@@ -43,8 +45,26 @@ const ActivePlanCard: React.FC<{ goal: TrainingGoal; today: string }> = ({ goal,
 
 // ── Completed review card ────────────────────────────────────────────────────
 
-const ReviewCard: React.FC<{ review: ObservationReview }> = ({ review }) => {
+const ReviewCard: React.FC<{
+  review: ObservationReview;
+  onSaveExperience?: (draft: ExperienceCardDraft) => void;
+}> = ({ review, onSaveExperience }) => {
   const [expanded, setExpanded] = useState(false);
+
+  const handleSaveExperience = () => {
+    if (!onSaveExperience) return;
+    const draft: ExperienceCardDraft = {
+      sourceGoalId: review.goalId,
+      sourceGoalTitle: review.title,
+      contextTypes: [],
+      dateRange: { startDate: review.startDate, endDate: review.endDate },
+      title: review.title,
+      factSummary: buildFactSummary(review.title, review.windowDays, review.checkinDays, review.missingDays),
+      userReflection: '',
+      limitations: buildDefaultLimitations(review.checkinDays, review.totalDays),
+    };
+    onSaveExperience(draft);
+  };
 
   return (
     <div className="p-3 rounded-xl border border-surface-border bg-surface-card">
@@ -89,6 +109,18 @@ const ReviewCard: React.FC<{ review: ObservationReview }> = ({ review }) => {
           ))}
         </ul>
       )}
+
+      {onSaveExperience && (
+        <button
+          type="button"
+          onClick={handleSaveExperience}
+          className="flex items-center gap-1 mt-2 text-[10px] text-accent hover:underline"
+        >
+          <BookOpen size={10} />
+          保存这次观察经验
+          <ChevronRight size={10} />
+        </button>
+      )}
     </div>
   );
 };
@@ -97,9 +129,10 @@ const ReviewCard: React.FC<{ review: ObservationReview }> = ({ review }) => {
 
 interface ObservationPlanSectionProps {
   refreshKey?: number;
+  onSaveExperience?: (draft: ExperienceCardDraft) => void;
 }
 
-const ObservationPlanSection: React.FC<ObservationPlanSectionProps> = ({ refreshKey }) => {
+const ObservationPlanSection: React.FC<ObservationPlanSectionProps> = ({ refreshKey, onSaveExperience }) => {
   const today = useMemo(() => getActivityTargetDate(new Date()), []);
   const [goals, setGoals] = useState<TrainingGoal[]>([]);
   const [checkins, setCheckins] = useState<GoalCheckin[]>([]);
@@ -148,7 +181,11 @@ const ObservationPlanSection: React.FC<ObservationPlanSectionProps> = ({ refresh
         <div className="space-y-2">
           <p className="text-[10px] font-bold text-text-muted">已完成的观察</p>
           {reviews.map((review) => (
-            <ReviewCard key={review.goalId} review={review} />
+            <ReviewCard
+              key={review.goalId}
+              review={review}
+              onSaveExperience={onSaveExperience}
+            />
           ))}
         </div>
       )}
