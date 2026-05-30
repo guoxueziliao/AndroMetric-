@@ -10,6 +10,7 @@ import type { LogEntry } from '../../domain';
 import { Activity, Zap, TrendingUp, BrainCircuit, Radar, CheckCircle, ArrowDown, AlertTriangle, Info, Tag, Sparkles } from 'lucide-react';
 import { ErrorBoundary, useChartColors } from '../../shared/ui';
 import ReviewSection from './ui/ReviewSection';
+import PersonalNormalSection from './ui/PersonalNormalSection';
 import {
     getMasturbationRecommendationsFromEvents,
     getSexRecommendationsFromEvents,
@@ -48,12 +49,13 @@ interface P3ListCardProps {
     emptyText: string;
 }
 
-type StatsTab = 'overview' | 'sexual' | 'behavior' | 'review';
+type StatsTab = 'overview' | 'sexual' | 'behavior' | 'review' | 'normal';
 const STATS_TABS: { id: StatsTab; label: string }[] = [
     { id: 'overview', label: '总览' },
     { id: 'behavior', label: '习惯' },
     { id: 'sexual', label: '性爱' },
-    { id: 'review', label: '复盘' }
+    { id: 'review', label: '复盘' },
+    { id: 'normal', label: '常态' }
 ];
 
 interface StatsViewProps {
@@ -585,6 +587,9 @@ const StatsView: React.FC<StatsViewProps> = ({ logs: rawLogs }) => {
                 )}
                 {activeTab === 'review' && (
                     <ReviewSection logs={displayLogs} />
+                )}
+                {activeTab === 'normal' && (
+                    <PersonalNormalSection logs={displayLogs} />
                 )}
                 </>
                 )}
