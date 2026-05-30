@@ -11,6 +11,7 @@ import { Activity, Zap, TrendingUp, BrainCircuit, Radar, CheckCircle, ArrowDown,
 import { ErrorBoundary, useChartColors } from '../../shared/ui';
 import ReviewSection from './ui/ReviewSection';
 import PersonalNormalSection from './ui/PersonalNormalSection';
+import StageReviewSection from './ui/StageReviewSection';
 import {
     getMasturbationRecommendationsFromEvents,
     getSexRecommendationsFromEvents,
@@ -49,13 +50,14 @@ interface P3ListCardProps {
     emptyText: string;
 }
 
-type StatsTab = 'overview' | 'sexual' | 'behavior' | 'review' | 'normal';
+type StatsTab = 'overview' | 'sexual' | 'behavior' | 'review' | 'normal' | 'stage_review';
 const STATS_TABS: { id: StatsTab; label: string }[] = [
     { id: 'overview', label: '总览' },
     { id: 'behavior', label: '习惯' },
     { id: 'sexual', label: '性爱' },
     { id: 'review', label: '复盘' },
-    { id: 'normal', label: '常态' }
+    { id: 'normal', label: '常态' },
+    { id: 'stage_review', label: '回顾' }
 ];
 
 interface StatsViewProps {
@@ -590,6 +592,9 @@ const StatsView: React.FC<StatsViewProps> = ({ logs: rawLogs }) => {
                 )}
                 {activeTab === 'normal' && (
                     <PersonalNormalSection logs={displayLogs} />
+                )}
+                {activeTab === 'stage_review' && (
+                    <StageReviewSection logs={displayLogs} />
                 )}
                 </>
                 )}
