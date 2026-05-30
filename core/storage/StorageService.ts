@@ -1,5 +1,5 @@
 import { db } from './db';
-import { CycleEvent, LogEntry, PartnerProfile, PregnancyEvent, Snapshot, TagEntry, DataQualitySource, type AppSettings, type SnapshotData, type ExportSnapshot, type PornUseEvent, type MasturbationEvent, type SexEvent, type TrainingGoal, type GoalCheckin } from '../../domain';
+import { CycleEvent, LogEntry, PartnerProfile, PregnancyEvent, Snapshot, TagEntry, DataQualitySource, type AppSettings, type SnapshotData, type ExportSnapshot, type PornUseEvent, type MasturbationEvent, type SexEvent, type TrainingGoal, type GoalCheckin, type HealthProject, type HealthProjectPlan, type HealthProjectLog } from '../../domain';
 import { validateLogEntry } from '../../utils/validators';
 import { runMigrations, runPartnerMigrations, LATEST_VERSION } from './migration';
 import { pluginManager } from '../../services/PluginManager';
@@ -48,7 +48,10 @@ const buildSnapshotData = (
     masturbationEvents: MasturbationEvent[] = [],
     sexEvents: SexEvent[] = [],
     trainingGoals: TrainingGoal[] = [],
-    goalCheckins: GoalCheckin[] = []
+    goalCheckins: GoalCheckin[] = [],
+    healthProjects: HealthProject[] = [],
+    healthProjectPlans: HealthProjectPlan[] = [],
+    healthProjectLogs: HealthProjectLog[] = []
 ): SnapshotData => ({
     version: LATEST_VERSION,
     logs,
@@ -60,7 +63,10 @@ const buildSnapshotData = (
     masturbationEvents,
     sexEvents,
     trainingGoals,
-    goalCheckins
+    goalCheckins,
+    healthProjects,
+    healthProjectPlans,
+    healthProjectLogs
 });
 
 const normalizeImportedSnapshots = (snapshots: unknown[]): Snapshot[] => (
@@ -149,6 +155,9 @@ export const StorageService = {
         const sexEvents = await db.sex_events.toArray();
         const trainingGoals = await db.training_goals.toArray();
         const goalCheckins = await db.goal_checkins.toArray();
+        const healthProjects = await db.health_projects.toArray();
+        const healthProjectPlans = await db.health_project_plans.toArray();
+        const healthProjectLogs = await db.health_project_logs.toArray();
         const localState = readSnapshotLocalState();
 
         const snapshot: ExportSnapshot = {
@@ -158,7 +167,7 @@ export const StorageService = {
             exportDate: new Date().toISOString(),
             settings: localState.settings,
             userName: localState.userName,
-            data: buildSnapshotData(logs, partners, tags, cycleEvents, pregnancyEvents, pornUseEvents, masturbationEvents, sexEvents, trainingGoals, goalCheckins)
+            data: buildSnapshotData(logs, partners, tags, cycleEvents, pregnancyEvents, pornUseEvents, masturbationEvents, sexEvents, trainingGoals, goalCheckins, healthProjects, healthProjectPlans, healthProjectLogs)
         };
         return JSON.stringify(snapshot, null, 2);
     },
@@ -187,6 +196,9 @@ export const StorageService = {
             const newSexEvents: SexEvent[] = migratedData.sexEvents ?? [];
             const newTrainingGoals: TrainingGoal[] = migratedData.trainingGoals ?? [];
             const newGoalCheckins: GoalCheckin[] = migratedData.goalCheckins ?? [];
+            const newHealthProjects: HealthProject[] = Array.isArray(data.healthProjects) ? data.healthProjects : [];
+            const newHealthProjectPlans: HealthProjectPlan[] = Array.isArray(data.healthProjectPlans) ? data.healthProjectPlans : [];
+            const newHealthProjectLogs: HealthProjectLog[] = Array.isArray(data.healthProjectLogs) ? data.healthProjectLogs : [];
 
             // Normalize training data before persisting
             const goalNorm = normalizeTrainingGoals(newTrainingGoals);
@@ -208,9 +220,15 @@ export const StorageService = {
                 : [[], []] as [TrainingGoal[], GoalCheckin[]];
             const tgToImport = strategy === 'merge' ? mergeEventsForImport(existingTG, goalNorm.goals, conflictResolution) : goalNorm.goals;
             const gcToImport = strategy === 'merge' ? mergeEventsForImport(existingGC, checkinNorm.checkins, conflictResolution) : checkinNorm.checkins;
+            const [existingHP, existingHPL, existingHPLG] = strategy === 'merge'
+                ? await Promise.all([db.health_projects.toArray(), db.health_project_plans.toArray(), db.health_project_logs.toArray()])
+                : [[], [], []] as [HealthProject[], HealthProjectPlan[], HealthProjectLog[]];
+            const hpToImport = strategy === 'merge' ? mergeEventsForImport(existingHP, newHealthProjects, conflictResolution) : newHealthProjects;
+            const hplToImport = strategy === 'merge' ? mergeEventsForImport(existingHPL, newHealthProjectPlans, conflictResolution) : newHealthProjectPlans;
+            const hplgToImport = strategy === 'merge' ? mergeEventsForImport(existingHPLG, newHealthProjectLogs, conflictResolution) : newHealthProjectLogs;
 
             // 2. 写入数据库
-            await db.transaction('rw', [db.logs, db.partners, db.tags, db.meta, db.cycle_events, db.pregnancy_events, db.snapshots, db.porn_use_events, db.masturbation_events, db.sex_events, db.training_goals, db.goal_checkins], async () => {
+            await db.transaction('rw', [db.logs, db.partners, db.tags, db.meta, db.cycle_events, db.pregnancy_events, db.snapshots, db.porn_use_events, db.masturbation_events, db.sex_events, db.training_goals, db.goal_checkins, db.health_projects, db.health_project_plans, db.health_project_logs], async () => {
                 if (strategy === 'overwrite') {
                     await db.logs.clear();
                     await db.partners.clear();
@@ -222,6 +240,9 @@ export const StorageService = {
                     await db.sex_events.clear();
                     await db.training_goals.clear();
                     await db.goal_checkins.clear();
+                    await db.health_projects.clear();
+                    await db.health_project_plans.clear();
+                    await db.health_project_logs.clear();
                 }
                 await db.logs.bulkPut(logsToImport);
                 if (newPartners.length > 0) await db.partners.bulkPut(newPartners);
@@ -234,6 +255,9 @@ export const StorageService = {
                 if (sxToImport.length > 0) await db.sex_events.bulkPut(sxToImport);
                 if (tgToImport.length > 0) await db.training_goals.bulkPut(tgToImport);
                 if (gcToImport.length > 0) await db.goal_checkins.bulkPut(gcToImport);
+                if (hpToImport.length > 0) await db.health_projects.bulkPut(hpToImport);
+                if (hplToImport.length > 0) await db.health_project_plans.bulkPut(hplToImport);
+                if (hplgToImport.length > 0) await db.health_project_logs.bulkPut(hplgToImport);
 
                 // 同步数据版本号，避免导入后再次触发 migration
                 await db.meta.put({ key: 'dataVersion', value: LATEST_VERSION });
@@ -297,7 +321,7 @@ export const StorageService = {
      * Clears all data from IndexedDB.
      */
     async clearAllData(): Promise<void> {
-        await db.transaction('rw', [db.logs, db.partners, db.meta, db.system_logs, db.snapshots, db.tags, db.cycle_events, db.pregnancy_events, db.porn_use_events, db.masturbation_events, db.sex_events, db.training_goals, db.goal_checkins], async () => {
+        await db.transaction('rw', [db.logs, db.partners, db.meta, db.system_logs, db.snapshots, db.tags, db.cycle_events, db.pregnancy_events, db.porn_use_events, db.masturbation_events, db.sex_events, db.training_goals, db.goal_checkins, db.health_projects, db.health_project_plans, db.health_project_logs], async () => {
             await Promise.all([
                 db.logs.clear(),
                 db.partners.clear(),
@@ -311,7 +335,10 @@ export const StorageService = {
                 db.masturbation_events.clear(),
                 db.sex_events.clear(),
                 db.training_goals.clear(),
-                db.goal_checkins.clear()
+                db.goal_checkins.clear(),
+                db.health_projects.clear(),
+                db.health_project_plans.clear(),
+                db.health_project_logs.clear()
             ]);
         });
     },
@@ -371,10 +398,13 @@ export const StorageService = {
             const sexEvents = await db.sex_events.toArray();
             const trainingGoals = await db.training_goals.toArray();
             const goalCheckins = await db.goal_checkins.toArray();
+            const healthProjects = await db.health_projects.toArray();
+            const healthProjectPlans = await db.health_project_plans.toArray();
+            const healthProjectLogs = await db.health_project_logs.toArray();
             const meta = await db.meta.get('dataVersion');
             const dataVersion = meta ? meta.value : LATEST_VERSION;
             const localState = readSnapshotLocalState();
-            const snapshotData = buildSnapshotData(logs, partners, tags, cycleEvents, pregnancyEvents, pornUseEvents, masturbationEvents, sexEvents, trainingGoals, goalCheckins);
+            const snapshotData = buildSnapshotData(logs, partners, tags, cycleEvents, pregnancyEvents, pornUseEvents, masturbationEvents, sexEvents, trainingGoals, goalCheckins, healthProjects, healthProjectPlans, healthProjectLogs);
 
             const snapshot: Snapshot = {
                 timestamp: Date.now(),
@@ -408,7 +438,7 @@ export const StorageService = {
             const data = snapshot.data;
             const normalizedPartners = runPartnerMigrations(data.partners || [], snapshot.dataVersion || LATEST_VERSION);
 
-            await db.transaction('rw', [db.logs, db.partners, db.tags, db.meta, db.cycle_events, db.pregnancy_events, db.porn_use_events, db.masturbation_events, db.sex_events, db.training_goals, db.goal_checkins], async () => {
+            await db.transaction('rw', [db.logs, db.partners, db.tags, db.meta, db.cycle_events, db.pregnancy_events, db.porn_use_events, db.masturbation_events, db.sex_events, db.training_goals, db.goal_checkins, db.health_projects, db.health_project_plans, db.health_project_logs], async () => {
                 await db.logs.clear();
                 await db.partners.clear();
                 await db.tags.clear();
@@ -419,6 +449,9 @@ export const StorageService = {
                 await db.sex_events.clear();
                 await db.training_goals.clear();
                 await db.goal_checkins.clear();
+                await db.health_projects.clear();
+                await db.health_project_plans.clear();
+                await db.health_project_logs.clear();
                 await db.logs.bulkAdd(data.logs);
                 if (normalizedPartners.length > 0) await db.partners.bulkAdd(normalizedPartners);
                 if (data.tags) await db.tags.bulkAdd(data.tags);
@@ -429,6 +462,9 @@ export const StorageService = {
                 if (data.sexEvents && data.sexEvents.length > 0) await db.sex_events.bulkAdd(data.sexEvents);
                 if (data.trainingGoals && data.trainingGoals.length > 0) await db.training_goals.bulkAdd(data.trainingGoals);
                 if (data.goalCheckins && data.goalCheckins.length > 0) await db.goal_checkins.bulkAdd(data.goalCheckins);
+                if (data.healthProjects && data.healthProjects.length > 0) await db.health_projects.bulkAdd(data.healthProjects);
+                if (data.healthProjectPlans && data.healthProjectPlans.length > 0) await db.health_project_plans.bulkAdd(data.healthProjectPlans);
+                if (data.healthProjectLogs && data.healthProjectLogs.length > 0) await db.health_project_logs.bulkAdd(data.healthProjectLogs);
                 await db.meta.put({ key: 'dataVersion', value: snapshot.dataVersion });
             });
 
@@ -594,6 +630,43 @@ export const StorageService = {
         delete: async (id: string) => { await db.goal_checkins.delete(id); },
         bulkImport: (checkins: GoalCheckin[]) => db.goal_checkins.bulkPut(checkins),
         clear: () => db.goal_checkins.clear(),
+    },
+
+    healthProjects: {
+        queries: {
+            all: () => db.health_projects.orderBy('updatedAt').reverse().toArray(),
+            byStatus: (status: string) => db.health_projects.where('status').equals(status).toArray(),
+            byId: (id: string) => db.health_projects.get(id),
+        },
+        save: async (project: HealthProject) => { await db.health_projects.put(project); },
+        delete: async (id: string) => { await db.health_projects.delete(id); },
+        bulkImport: (projects: HealthProject[]) => db.health_projects.bulkPut(projects),
+        clear: () => db.health_projects.clear(),
+    },
+
+    healthProjectPlans: {
+        queries: {
+            all: () => db.health_project_plans.toArray(),
+            byProjectId: (projectId: string) => db.health_project_plans.where('projectId').equals(projectId).toArray(),
+            byId: (id: string) => db.health_project_plans.get(id),
+        },
+        save: async (plan: HealthProjectPlan) => { await db.health_project_plans.put(plan); },
+        delete: async (id: string) => { await db.health_project_plans.delete(id); },
+        bulkImport: (plans: HealthProjectPlan[]) => db.health_project_plans.bulkPut(plans),
+        clear: () => db.health_project_plans.clear(),
+    },
+
+    healthProjectLogs: {
+        queries: {
+            all: () => db.health_project_logs.orderBy('targetDate').reverse().toArray(),
+            byProjectId: (projectId: string) => db.health_project_logs.where('projectId').equals(projectId).toArray(),
+            byDate: (targetDate: string) => db.health_project_logs.where('targetDate').equals(targetDate).toArray(),
+            byId: (id: string) => db.health_project_logs.get(id),
+        },
+        save: async (log: HealthProjectLog) => { await db.health_project_logs.put(log); },
+        delete: async (id: string) => { await db.health_project_logs.delete(id); },
+        bulkImport: (logs: HealthProjectLog[]) => db.health_project_logs.bulkPut(logs),
+        clear: () => db.health_project_logs.clear(),
     },
 
     logs: {

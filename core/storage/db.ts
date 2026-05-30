@@ -1,5 +1,5 @@
 import Dexie, { Table } from 'dexie';
-import { CycleEvent, LogEntry, PartnerProfile, PregnancyEvent, Snapshot, TagEntry, PornUseEvent, MasturbationEvent, SexEvent, TrainingGoal, GoalCheckin } from '../../domain';
+import { CycleEvent, LogEntry, PartnerProfile, PregnancyEvent, Snapshot, TagEntry, PornUseEvent, MasturbationEvent, SexEvent, TrainingGoal, GoalCheckin, HealthProject, HealthProjectPlan, HealthProjectLog } from '../../domain';
 
 export interface MetaEntry {
   key: string;
@@ -28,10 +28,34 @@ export type HardnessDiaryDatabase = Dexie & {
   sex_events: Table<SexEvent, string>;
   training_goals: Table<TrainingGoal, string>;
   goal_checkins: Table<GoalCheckin, string>;
+  health_projects: Table<HealthProject, string>;
+  health_project_plans: Table<HealthProjectPlan, string>;
+  health_project_logs: Table<HealthProjectLog, string>;
 };
 
 const dbInstance = new Dexie('HardnessDiaryDB') as HardnessDiaryDatabase;
 
+// Version 9: Add health project tables
+dbInstance.version(9).stores({
+  logs: '&date, status',
+  partners: '&id',
+  cycle_events: '&id, partnerId, date, kind, source',
+  pregnancy_events: '&id, partnerId, date, kind, source',
+  meta: 'key',
+  system_logs: '++id, timestamp, level, action',
+  snapshots: '++id, timestamp',
+  tags: '[name+category], category, dimension',
+  porn_use_events: '&id, startedAt, targetDate, status, source',
+  masturbation_events: '&id, startedAt, targetDate, status, source',
+  sex_events: '&id, startedAt, targetDate, status, source',
+  training_goals: '&id, status, category, startDate, updatedAt',
+  goal_checkins: '&id, goalId, targetDate, createdAt',
+  health_projects: '&id, type, status, startDate',
+  health_project_plans: '&id, projectId, scheduleType, startDate',
+  health_project_logs: '&id, projectId, targetDate, status'
+});
+
+// Version 8: Add training goals tables
 dbInstance.version(8).stores({
   logs: '&date, status',
   partners: '&id',

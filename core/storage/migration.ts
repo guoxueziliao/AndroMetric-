@@ -4,7 +4,7 @@ import { scrubHistoricalDefaultContamination, flagLegacyMasturbationInference } 
 import { getActivityTargetDate } from '../../shared/lib/targetDate';
 
 // The latest version of our data structure.
-export const LATEST_VERSION = 49;
+export const LATEST_VERSION = 50;
 
 /**
  * MIGRATION UTILITIES

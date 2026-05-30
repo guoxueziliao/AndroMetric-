@@ -19,6 +19,7 @@ import { useProfileMaintenance } from './model/useProfileMaintenance';
 import ImportPreviewModal from './ui/ImportPreviewModal';
 import AboutModal from './AboutModal';
 import ExportOptionsModal from './ExportOptionsModal';
+import HealthProjectManager from './HealthProjectManager';
 
 const TagManager = lazy(() => import('../tags').then((module) => ({ default: module.TagManager })));
 const BackupSettings = lazy(() => import('../backup').then((module) => ({ default: module.BackupSettings })));
@@ -408,6 +409,16 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
                         </>
                       )}
                     </div>
+                  </div>
+              </section>
+
+              {/* Health Projects */}
+              <section>
+                  <h3 className="text-xs font-bold text-text-muted uppercase tracking-wider mb-3 flex items-center">
+                      健康项目
+                  </h3>
+                  <div className="bg-surface-card border border-surface-border rounded-2xl p-4 shadow-sm">
+                      <HealthProjectManager />
                   </div>
               </section>
 

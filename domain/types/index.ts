@@ -9,3 +9,4 @@ export * from './events';
 export * from './adultBehavior';
 export * from './training';
 export * from './relationshipContext';
+export * from './healthProject';

@@ -6,6 +6,7 @@ import type { AppSettings } from './settings';
 import type { PornUseEvent, MasturbationEvent, SexEvent } from './adultBehavior';
 
 import type { TrainingGoal, GoalCheckin } from './training';
+import type { HealthProject, HealthProjectPlan, HealthProjectLog } from './healthProject';
 
 export interface SnapshotData {
     version: number;
@@ -19,6 +20,9 @@ export interface SnapshotData {
     sexEvents?: SexEvent[];
     trainingGoals?: TrainingGoal[];
     goalCheckins?: GoalCheckin[];
+    healthProjects?: HealthProject[];
+    healthProjectPlans?: HealthProjectPlan[];
+    healthProjectLogs?: HealthProjectLog[];
     snapshots?: Snapshot[];
 }
 

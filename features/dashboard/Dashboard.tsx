@@ -19,6 +19,7 @@ import ImpactFindings from './ImpactFindings';
 import DashboardTrainingHint from './DashboardTrainingHint';
 import DashboardExplanationHint from './DashboardExplanationHint';
 import DashboardObservationHint from './DashboardObservationHint';
+import TodayHealthCard from './TodayHealthCard';
 
 const GlobalTimeline = lazy(() => import('./GlobalTimeline').then((module) => ({ default: module.GlobalTimeline })));
 const LogHistory = lazy(() => import('./LogHistory').then((module) => ({ default: module.LogHistory })));
@@ -283,6 +284,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                 <DashboardTrainingHint goals={trainingGoals} onNavigateToReview={onNavigateToReview} />
                 <DashboardExplanationHint logs={logs} onNavigateToStats={onNavigateToReview} />
                 <DashboardObservationHint onNavigateToStats={onNavigateToReview} />
+                <TodayHealthCard />
                 <DashboardDayView
                     logs={logs}
                     todayLog={todayLog}
