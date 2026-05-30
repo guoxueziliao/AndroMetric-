@@ -41,18 +41,25 @@ interface ExperienceNoteData {
   userReflection: string;
   contextTypes: string[];
   sourceMetricId?: string;
+  sourceGoalTitle?: string;
+  dateRange: { startDate: string; endDate: string };
   limitations: string[];
 }
 
 // ── Conversion ───────────────────────────────────────────────────────────────
 
-const EXPERIENCE_NOTE_PREFIX = '{"type":"experience_card"';
-
 /**
  * Check if a GoalCheckin is an experience card.
  */
-export const isExperienceCard = (checkin: GoalCheckin): boolean =>
-  typeof checkin.note === 'string' && checkin.note.startsWith(EXPERIENCE_NOTE_PREFIX);
+export const isExperienceCard = (checkin: GoalCheckin): boolean => {
+  if (typeof checkin.note !== 'string') return false;
+  try {
+    const data = JSON.parse(checkin.note);
+    return data?.type === 'experience_card';
+  } catch {
+    return false;
+  }
+};
 
 /**
  * Build a fact summary from observation review data.
@@ -99,6 +106,8 @@ export const draftToCheckin = (draft: ExperienceCardDraft): GoalCheckin => {
     userReflection: draft.userReflection,
     contextTypes: draft.contextTypes,
     sourceMetricId: draft.sourceMetricId,
+    sourceGoalTitle: draft.sourceGoalTitle,
+    dateRange: draft.dateRange,
     limitations: draft.limitations,
   };
 
@@ -107,6 +116,8 @@ export const draftToCheckin = (draft: ExperienceCardDraft): GoalCheckin => {
     goalId: draft.sourceGoalId,
     createdAt: new Date().toISOString(),
     targetDate: draft.dateRange.endDate,
+    windowStartDate: draft.dateRange.startDate,
+    windowEndDate: draft.dateRange.endDate,
     status: 'complete',
     note: JSON.stringify(noteData),
   };
@@ -127,11 +138,11 @@ export const parseExperienceCard = (
     return {
       checkinId: checkin.id,
       goalId: checkin.goalId,
-      goalTitle,
+      goalTitle: data.sourceGoalTitle || goalTitle,
       savedAt: checkin.createdAt,
       sourceMetricId: data.sourceMetricId,
       contextTypes: data.contextTypes ?? [],
-      dateRange: {
+      dateRange: data.dateRange ?? {
         startDate: checkin.windowStartDate ?? '',
         endDate: checkin.windowEndDate ?? checkin.targetDate,
       },

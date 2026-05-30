@@ -146,7 +146,7 @@ const ExperienceCardSection: React.FC<ExperienceCardSectionProps> = ({ refreshKe
             <button
               key={ctx}
               type="button"
-              onClick={() => setFilter({ contextType: filter.contextType === ctx ? undefined : ctx })}
+              onClick={() => setFilter(filter.contextType === ctx ? {} : { contextType: ctx })}
               className={`text-[10px] px-2 py-1 rounded-full border ${
                 filter.contextType === ctx
                   ? 'bg-accent text-text-on-accent border-accent'

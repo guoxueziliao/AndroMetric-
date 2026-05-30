@@ -93,6 +93,8 @@ describe('experienceCardService', () => {
       expect(card!.userReflection).toContain('感觉睡眠不足');
       expect(card!.contextTypes).toEqual(['sleep']);
       expect(card!.limitations.length).toBeGreaterThan(0);
+      expect(card!.dateRange.startDate).toBe('2026-05-17');
+      expect(card!.dateRange.endDate).toBe('2026-05-30');
     });
 
     it('returns null for non-experience checkin', () => {
