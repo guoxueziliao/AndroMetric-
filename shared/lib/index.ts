@@ -1,3 +1,4 @@
+export * from './confidence';
 export * from './dates';
 export * from './labels';
 export * from './logPresentation';

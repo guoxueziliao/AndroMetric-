@@ -11,6 +11,7 @@ import { Activity, Zap, TrendingUp, BrainCircuit, Radar, CheckCircle, ArrowDown,
 import { ErrorBoundary, useChartColors } from '../../shared/ui';
 import ReviewSection from './ui/ReviewSection';
 import PersonalNormalSection from './ui/PersonalNormalSection';
+import DataQualityOverviewSection from './ui/DataQualityOverviewSection';
 import StageReviewSection from './ui/StageReviewSection';
 import {
     getMasturbationRecommendationsFromEvents,
@@ -591,7 +592,10 @@ const StatsView: React.FC<StatsViewProps> = ({ logs: rawLogs }) => {
                     <ReviewSection logs={displayLogs} />
                 )}
                 {activeTab === 'normal' && (
-                    <PersonalNormalSection logs={displayLogs} />
+                    <div className="space-y-4">
+                        <DataQualityOverviewSection logs={displayLogs} />
+                        <PersonalNormalSection logs={displayLogs} />
+                    </div>
                 )}
                 {activeTab === 'stage_review' && (
                     <StageReviewSection logs={displayLogs} />

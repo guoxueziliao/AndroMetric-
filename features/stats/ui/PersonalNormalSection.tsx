@@ -6,6 +6,7 @@ import { FIRST_LAYER_METRICS, SECONDARY_METRICS } from '../model/personalNormalT
 import type { LogEntry } from '../../../domain';
 import { StorageService } from '../../../core/storage';
 import { getActivityTargetDate } from '../../../shared/lib/targetDate';
+import { confidenceBadgeLabel, confidenceTierLabel } from '../../../shared/lib/confidence';
 import { BarChart3, AlertCircle, Info, ChevronDown, ChevronRight } from 'lucide-react';
 import ExplanationLayerSection from './ExplanationLayerSection';
 import ObservationPlanConfirmModal from './ObservationPlanConfirmModal';
@@ -27,9 +28,9 @@ const STATE_STYLE: Record<PersonalNormalState, { bg: string; text: string; label
 };
 
 const CONFIDENCE_LABEL: Record<string, string> = {
-  none: '',
-  low: '样本有限',
-  medium: '初步可看',
+  none: confidenceBadgeLabel('none'),
+  low: confidenceBadgeLabel('low'),
+  medium: confidenceBadgeLabel('medium'),
 };
 
 const METRIC_LABELS: Record<string, string> = Object.fromEntries(
@@ -209,6 +210,9 @@ const PersonalNormalSection: React.FC<PersonalNormalSectionProps> = ({ logs }) =
             <p className="text-[10px] text-text-muted">数据不足</p>
           </div>
         </div>
+        <p className="mt-2 text-[10px] text-text-muted text-center">
+          整体可信度：{confidenceTierLabel(result.summary.confidence)}
+        </p>
       </div>
 
       {/* Primary metric cards */}

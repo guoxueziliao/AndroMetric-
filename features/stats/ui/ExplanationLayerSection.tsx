@@ -5,6 +5,7 @@ import { computePersonalNormal } from '../model/personalNormalEngine';
 import { computeContextExplanations } from '../model/contextExplanationEngine';
 import type { ContextExplanationResult, ContextExplanationCard } from '../model/contextExplanationTypes';
 import { getActivityTargetDate } from '../../../shared/lib/targetDate';
+import { confidenceBadgeLabel } from '../../../shared/lib/confidence';
 import { Eye, AlertCircle, Info, ChevronDown, ChevronRight } from 'lucide-react';
 import { buildDraftFromExplanationCard } from '../model/observationPlanService';
 import type { ObservationPlanDraft } from '../model/observationPlanService';
@@ -25,9 +26,9 @@ const CONTEXT_LABELS: Record<string, string> = {
 };
 
 const CONFIDENCE_LABEL: Record<string, string> = {
-  none: '',
-  low: '样本有限',
-  medium: '初步可看',
+  none: confidenceBadgeLabel('none'),
+  low: confidenceBadgeLabel('low'),
+  medium: confidenceBadgeLabel('medium'),
 };
 
 // ── Explanation card ─────────────────────────────────────────────────────────

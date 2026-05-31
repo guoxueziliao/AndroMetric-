@@ -2,6 +2,7 @@ import React, { useMemo, useState, useEffect } from 'react';
 import { StorageService } from '../../../core/storage';
 import type { PornUseEvent, MasturbationEvent, SexEvent, LogEntry } from '../../../domain';
 import { getActivityTargetDate } from '../../../shared/lib/targetDate';
+import { confidenceBadgeLabel } from '../../../shared/lib/confidence';
 import {
   buildReviewInputForWindow,
   type ReviewWindowKind,
@@ -89,7 +90,7 @@ const InsightCard: React.FC<{ insight: GatedInsight }> = ({ insight }) => (
         insight.confidence === 'low' ? 'bg-warning/15 text-warning' :
         'bg-surface-border text-text-muted'
       }`}>
-        {insight.confidence === 'medium' ? '初步可看' : insight.confidence === 'low' ? '样本少' : insight.confidence}
+        {insight.confidence === 'medium' ? confidenceBadgeLabel('medium') : insight.confidence === 'low' ? confidenceBadgeLabel('low') : insight.confidence}
       </span>
     </div>
     {insight.supportingFacts.length > 0 && (
