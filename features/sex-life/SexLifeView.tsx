@@ -5,7 +5,7 @@ import { ErrorBoundary } from '../../shared/ui';
 import PartnerManager from './PartnerManager';
 import SexRecordModal from './SexRecordModal';
 import MasturbationRecordModal from './MasturbationRecordModal';
-import { LABELS } from '../../shared/lib';
+import { LABELS, getActivityTargetDate } from '../../shared/lib';
 
 const ReproductivePanel = lazy(() => import('../reproductive/ReproductivePanel'));
 
@@ -124,6 +124,16 @@ const SexLifeView: React.FC<SexLifeViewProps> = ({
             }
         });
 
+        // 色情使用：统计最近 30 天内有记录的天数（来自每日记录的 pornConsumption）。
+        // cutoff 用生理日口径派生本地日期，与 log.date 的生成方式一致，避免跨时区早晨时段 off-by-one。
+        const todayStr = getActivityTargetDate(new Date());
+        const cutoffDate = new Date(todayStr + 'T12:00:00');
+        cutoffDate.setDate(cutoffDate.getDate() - 30);
+        const cutoffStr = getActivityTargetDate(cutoffDate);
+        const pornDays = logs.filter(
+            (l) => l.date >= cutoffStr && l.pornConsumption && l.pornConsumption !== 'none',
+        ).length;
+
         const formatRate = (count: number, total: number) => {
             if (total === 0) return '--';
             return Math.round((count / total) * 100) + '%';
@@ -134,9 +144,10 @@ const SexLifeView: React.FC<SexLifeViewProps> = ({
             mbCount,
             sexEjacRate: formatRate(sexEjaculationCount, sexCount),
             mbEjacRate: formatRate(mbEjaculationCount, mbCount),
+            pornDays,
             totalActs: sexCount + mbCount
         };
-    }, [timeline]);
+    }, [timeline, logs]);
 
     const handleRecordClick = (record: TimelineRecord) => {
         setEditingRecord(record);
@@ -213,6 +224,21 @@ const SexLifeView: React.FC<SexLifeViewProps> = ({
                             <span className="text-xs font-bold text-accent-vivid dark:text-accent-vivid">次</span>
                         </div>
                         <p className="text-[10px] text-accent-vivid font-bold mt-1">射精率 {stats.sexEjacRate}</p>
+                    </div>
+                </div>
+
+                {/* 色情使用：主归属在性生活，记录入口在每日记录 */}
+                <div className="bg-surface-card border border-surface-border rounded-3xl p-4 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-surface-muted rounded-xl">
+                            <Film size={18} className="text-text-secondary" />
+                        </div>
+                        <div>
+                            <div className="text-sm font-black text-text-primary">色情使用</div>
+                            <div className="text-[10px] font-bold text-text-muted mt-0.5">
+                                近 30 天 {stats.pornDays} 天有记录 · 在每日记录中标记
+                            </div>
+                        </div>
                     </div>
                 </div>
 
