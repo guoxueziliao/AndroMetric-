@@ -12,6 +12,7 @@ import { ErrorBoundary, useChartColors } from '../../shared/ui';
 import ReviewSection from './ui/ReviewSection';
 import PersonalNormalSection from './ui/PersonalNormalSection';
 import DataQualityOverviewSection from './ui/DataQualityOverviewSection';
+import AdvancedReviewSection from './ui/AdvancedReviewSection';
 import StageReviewSection from './ui/StageReviewSection';
 import {
     getMasturbationRecommendationsFromEvents,
@@ -51,14 +52,15 @@ interface P3ListCardProps {
     emptyText: string;
 }
 
-type StatsTab = 'overview' | 'sexual' | 'behavior' | 'review' | 'normal' | 'stage_review';
+type StatsTab = 'overview' | 'sexual' | 'behavior' | 'review' | 'normal' | 'stage_review' | 'filter';
 const STATS_TABS: { id: StatsTab; label: string }[] = [
     { id: 'overview', label: '总览' },
     { id: 'behavior', label: '习惯' },
     { id: 'sexual', label: '性爱' },
     { id: 'review', label: '复盘' },
     { id: 'normal', label: '常态' },
-    { id: 'stage_review', label: '回顾' }
+    { id: 'stage_review', label: '回顾' },
+    { id: 'filter', label: '回看' }
 ];
 
 interface StatsViewProps {
@@ -599,6 +601,9 @@ const StatsView: React.FC<StatsViewProps> = ({ logs: rawLogs }) => {
                 )}
                 {activeTab === 'stage_review' && (
                     <StageReviewSection logs={displayLogs} />
+                )}
+                {activeTab === 'filter' && (
+                    <AdvancedReviewSection logs={displayLogs} />
                 )}
                 </>
                 )}

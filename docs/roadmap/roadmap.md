@@ -27,7 +27,7 @@
 | 0.2.14 | completed | 记录、复盘与训练入口收束 v1 | [summary](../completed/README.md) |
 | 0.2.15 | completed | 导航与信息架构整理 v1 | [summary](../completed/README.md) |
 | 0.2.16 | completed | 长期使用体验与洞察校准 v1 | [summary](../completed/README.md) |
-| 0.2.17 | planned | 高级筛选与自定义回看 v1 | [plan](../planned/plan-0.2.17.md) |
+| 0.2.17 | completed | 高级筛选与自定义回看 v1 | [summary](../completed/README.md) |
 | 0.2.18 | planned | 长期维护与版本执行工作台 v1 | [plan](../planned/plan-0.2.18.md) |
 | 0.2.19 | planned | 个人指标自定义与权重 v1 | [plan](../planned/plan-0.2.19.md) |
 | 0.2.20 | planned | 视觉系统收尾与固化 v1 | [plan](../planned/plan-0.2.20.md) |
@@ -36,11 +36,11 @@
 
 ## Current
 
-0.2.17 高级筛选与自定义回看 v1 为下一条候选线。0.2.17 - 0.2.22 已收口为执行草案 / 待实现。
+0.2.18 长期维护与版本执行工作台 v1 为下一条候选线。0.2.18 - 0.2.22 已收口为执行草案 / 待实现。
 
 ## Planned
 
-- 0.2.16 已完成；0.2.17 为下一候选；0.2.17 - 0.2.22 已确定为后续实现链。
+- 0.2.17 已完成；0.2.18 为下一候选；0.2.18 - 0.2.22 已确定为后续实现链。
 - 0.2.4 / 0.2.5 后发现的非数据安全反馈，先放入 [`0.2.6 后置反馈池`](../planned/post-0.2.6-feedback.md)。
 - 0.2.12 已确定为个人阶段回顾 v1。
 - 旧 0.2.13 档案索引方向已删除，不作为后置候选维护。
