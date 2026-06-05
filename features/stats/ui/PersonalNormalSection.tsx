@@ -3,7 +3,8 @@ import { StatsEngine } from '../model/StatsEngine';
 import { computePersonalNormal } from '../model/personalNormalEngine';
 import type { PersonalNormalResult, PersonalNormalMetric, PersonalNormalState } from '../model/personalNormalTypes';
 import { FIRST_LAYER_METRICS, SECONDARY_METRICS } from '../model/personalNormalTypes';
-import type { LogEntry } from '../../../domain';
+import type { LogEntry, MetricPreferenceMap } from '../../../domain';
+import { sortByMetricPreference } from '../../../domain';
 import { StorageService } from '../../../core/storage';
 import { getActivityTargetDate } from '../../../shared/lib/targetDate';
 import { confidenceBadgeLabel, confidenceTierLabel } from '../../../shared/lib/confidence';
@@ -111,9 +112,10 @@ const MetricCard: React.FC<{ metric: PersonalNormalMetric }> = ({ metric }) => {
 
 interface PersonalNormalSectionProps {
   logs: LogEntry[];
+  metricPreferences?: MetricPreferenceMap;
 }
 
-const PersonalNormalSection: React.FC<PersonalNormalSectionProps> = ({ logs }) => {
+const PersonalNormalSection: React.FC<PersonalNormalSectionProps> = ({ logs, metricPreferences }) => {
   const [windowDays, setWindowDays] = useState<14 | 30>(14);
   const [observationDraft, setObservationDraft] = useState<ObservationPlanDraft | null>(null);
   const [experienceDraft, setExperienceDraft] = useState<ExperienceCardDraft | null>(null);
@@ -130,8 +132,14 @@ const PersonalNormalSection: React.FC<PersonalNormalSectionProps> = ({ logs }) =
     );
   }, [logs, windowDays, today]);
 
-  const primaryMetrics = result.metrics.filter((m) => m.layer === 'primary');
-  const secondaryMetrics = result.metrics.filter((m) => m.layer === 'secondary');
+  const primaryMetrics = useMemo(
+    () => sortByMetricPreference(result.metrics.filter((m) => m.layer === 'primary'), (metric) => metric.id, metricPreferences),
+    [metricPreferences, result.metrics]
+  );
+  const secondaryMetrics = useMemo(
+    () => sortByMetricPreference(result.metrics.filter((m) => m.layer === 'secondary'), (metric) => metric.id, metricPreferences),
+    [metricPreferences, result.metrics]
+  );
 
   const handleStartObservation = useCallback((draft: ObservationPlanDraft) => {
     setObservationDraft(draft);

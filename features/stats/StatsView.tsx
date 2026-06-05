@@ -6,7 +6,8 @@ import { calculateXpStats } from './model/xpStats';
 import type { DimensionStat } from './model/xpStats';
 import { generateInsights } from './model/insights';
 import type { Insight, InsightCategory } from './model/insights';
-import type { LogEntry } from '../../domain';
+import type { LogEntry, MetricPreferenceMap } from '../../domain';
+import { sortByMetricPreference } from '../../domain';
 import { Activity, Zap, TrendingUp, BrainCircuit, Radar, CheckCircle, ArrowDown, AlertTriangle, Info, Tag, Sparkles } from 'lucide-react';
 import { ErrorBoundary, useChartColors } from '../../shared/ui';
 import ReviewSection from './ui/ReviewSection';
@@ -66,6 +67,7 @@ const STATS_TABS: { id: StatsTab; label: string }[] = [
 interface StatsViewProps {
     isDarkMode: boolean;
     logs: LogEntry[];
+    metricPreferences?: MetricPreferenceMap;
 }
 
 // --- Sub-Components ---
@@ -151,15 +153,16 @@ const InsightCard: React.FC<{ insight: Insight }> = ({ insight }) => {
     );
 };
 
-const StatsView: React.FC<StatsViewProps> = ({ logs: rawLogs }) => {
+const StatsView: React.FC<StatsViewProps> = ({ logs: rawLogs, metricPreferences }) => {
     const logs = useMemo(() => Array.isArray(rawLogs) ? rawLogs : [], [rawLogs]);
     const [activeTab, setActiveTab] = useState<StatsTab>('overview');
     const [trendComparison, setTrendComparison] = useState<MetricId>('sleep');
     const theme = useChartColors();
 
-    const comparisonOptions = useMemo<readonly MetricId[]>(() => (
-        ['sleep', 'exercise', 'alcohol', 'stress', 'screenTime']
-    ), []);
+    const comparisonOptions = useMemo<readonly MetricId[]>(
+        () => sortByMetricPreference(['sleep', 'exercise', 'alcohol', 'stress', 'screenTime'] as const, (metricId) => metricId, metricPreferences),
+        [metricPreferences]
+    );
 
     const displayLogs = useMemo(() => {
         return [...logs].filter(l => l.status === 'completed' && !isNaN(new Date(l.date).getTime()))
@@ -596,14 +599,14 @@ const StatsView: React.FC<StatsViewProps> = ({ logs: rawLogs }) => {
                 {activeTab === 'normal' && (
                     <div className="space-y-4">
                         <DataQualityOverviewSection logs={displayLogs} />
-                        <PersonalNormalSection logs={displayLogs} />
+                        <PersonalNormalSection logs={displayLogs} metricPreferences={metricPreferences} />
                     </div>
                 )}
                 {activeTab === 'stage_review' && (
                     <StageReviewSection logs={displayLogs} />
                 )}
                 {activeTab === 'filter' && (
-                    <AdvancedReviewSection logs={displayLogs} />
+                    <AdvancedReviewSection logs={displayLogs} metricPreferences={metricPreferences} />
                 )}
                 </>
                 )}

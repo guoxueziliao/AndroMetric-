@@ -8,23 +8,23 @@ interface WelcomeProps {
 
 const FeatureCard: React.FC<{ icon: React.ElementType, title: string, description: string }> = ({ icon: Icon, title, description }) => (
     <div className="flex items-start space-x-4">
-        <div className="flex-shrink-0 bg-accent text-brand-accent p-3 rounded-full">
+        <div className="flex-shrink-0 bg-accent text-accent p-3 rounded-full">
             <Icon size={24} />
         </div>
         <div>
-            <h3 className="font-semibold text-lg text-brand-text dark:text-text-muted">{title}</h3>
-            <p className="text-brand-muted">{description}</p>
+            <h3 className="font-semibold text-lg text-text-primary dark:text-text-muted">{title}</h3>
+            <p className="text-text-muted">{description}</p>
         </div>
     </div>
 );
 
 const Welcome: React.FC<WelcomeProps> = ({ onGetStarted }) => {
     return (
-        <div className="min-h-screen bg-brand-bg dark:bg-surface-muted text-brand-text flex flex-col items-center justify-center p-6 text-center animate-fade-in">
+        <div className="min-h-screen bg-surface-base dark:bg-surface-muted text-text-primary flex flex-col items-center justify-center p-6 text-center animate-fade-in">
             <main className="max-w-md w-full">
-                <Flame size={64} className="mx-auto text-brand-accent mb-4" />
-                <h1 className="text-4xl font-bold text-brand-accent mb-2">欢迎使用 硬度日记</h1>
-                <p className="text-brand-muted mb-8">专为您打造的、科学的男性健康指标追踪工具。</p>
+                <Flame size={64} className="mx-auto text-accent mb-4" />
+                <h1 className="text-4xl font-bold text-accent mb-2">欢迎使用 硬度日记</h1>
+                <p className="text-text-muted mb-8">专为您打造的、科学的男性健康指标追踪工具。</p>
 
                 <div className="space-y-6 text-left mb-10">
                     <FeatureCard
@@ -46,7 +46,7 @@ const Welcome: React.FC<WelcomeProps> = ({ onGetStarted }) => {
                 
                 <button
                     onClick={onGetStarted}
-                    className="w-full px-6 py-4 text-lg font-semibold text-white bg-brand-accent rounded-lg shadow-md hover:bg-brand-accent-hover transition-all transform hover:scale-105"
+                    className="w-full px-6 py-4 text-lg font-semibold text-white bg-accent rounded-lg shadow-md hover:bg-accent-hover transition-all transform hover:scale-105"
                 >
                     开始使用
                 </button>

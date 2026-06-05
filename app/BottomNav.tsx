@@ -23,8 +23,8 @@ const NavItem: React.FC<{
       aria-pressed={isActive}
       className={`group relative flex flex-col items-center justify-center flex-1 min-h-[56px] gap-0.5 py-1 transition-colors duration-300 ${
         isActive
-        ? 'text-brand-accent'
-        : 'text-brand-muted hover:text-text-muted dark:hover:text-text-muted'
+        ? 'text-accent'
+        : 'text-text-muted hover:text-text-muted dark:hover:text-text-muted'
       }`}
     >
       <motion.div
@@ -40,7 +40,7 @@ const NavItem: React.FC<{
       {isActive && (
         <motion.span
           layoutId="bottomNavIndicator"
-          className="absolute bottom-0 w-1 h-1 rounded-full bg-brand-accent"
+          className="absolute bottom-0 w-1 h-1 rounded-full bg-accent"
           transition={{ type: 'spring', stiffness: 500, damping: 30 }}
         />
       )}

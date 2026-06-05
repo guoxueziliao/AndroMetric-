@@ -1,7 +1,12 @@
 
 import React, { useRef, useState, useMemo, lazy, Suspense } from 'react';
-import { Settings, AlertTriangle, Archive, Database, Trash2, Smartphone, Moon, Sun, Share2, Pencil, FolderInput, Stethoscope, CheckCircle, Wrench, RotateCcw, ShieldCheck, ChevronRight, AlertCircle, ArrowRight, Tags, FlaskConical, Fingerprint, LockKeyhole, FileSpreadsheet, Info } from 'lucide-react';
-import type { AppLockSettings, AppSettings, AutoBackupIntervalHours, AutoSafetySnapshotLimit, AutoSafetySnapshotSizeLimitMB, LogEntry, TagEntry, TagType } from '../../domain';
+import { Settings, AlertTriangle, Archive, Database, Trash2, Smartphone, Moon, Sun, Share2, Pencil, FolderInput, Stethoscope, CheckCircle, Wrench, RotateCcw, ShieldCheck, ChevronRight, AlertCircle, ArrowRight, Tags, FlaskConical, Fingerprint, LockKeyhole, FileSpreadsheet, Info, Target } from 'lucide-react';
+import {
+  METRIC_PREFERENCE_DEFINITIONS,
+  METRIC_PREFERENCE_LEVEL_LABEL,
+  setMetricPreferenceLevel
+} from '../../domain';
+import type { AppLockSettings, AppSettings, AutoBackupIntervalHours, AutoSafetySnapshotLimit, AutoSafetySnapshotSizeLimitMB, LogEntry, MetricPreferenceLevel, TagEntry, TagType } from '../../domain';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
 import { Modal } from '../../shared/ui';
 import { canUseWebAuthn, createWebAuthnCredential, pathToLabel } from '../../shared/lib';
@@ -34,6 +39,34 @@ const ANALYTICS_LABELS: Record<string, string> = {
   masturbation: '自慰',
   sex: '性爱'
 };
+
+const DATA_TABLE_LABELS: Record<string, string> = {
+  logs: '每日记录',
+  partners: '伴侣',
+  tags: '标签',
+  cycle_events: '周期事件',
+  pregnancy_events: '怀孕事件',
+  porn_use_events: '色情使用事件',
+  masturbation_events: '自慰事件',
+  sex_events: '性生活事件',
+  training_goals: '训练目标',
+  goal_checkins: '目标签到',
+  health_projects: '健康项目',
+  health_project_plans: '健康项目计划',
+  health_project_logs: '健康项目日志'
+};
+
+const metricPreferenceGroups = METRIC_PREFERENCE_DEFINITIONS.reduce(
+  (groups, definition) => {
+    const current = groups.get(definition.module) ?? [];
+    current.push(definition);
+    groups.set(definition.module, current);
+    return groups;
+  },
+  new Map<string, typeof METRIC_PREFERENCE_DEFINITIONS[number][]>()
+);
+
+const metricPreferenceLevels: MetricPreferenceLevel[] = ['focus', 'normal', 'muted'];
 
 interface MyViewData {
   settings: AppSettings;
@@ -102,6 +135,7 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
     dbMeta,
     healthReport,
     isRepairing,
+    isCleaningOrphans,
     isExportOptionsOpen,
     exportOptions,
     exportSourceCounts,
@@ -117,6 +151,7 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
     canUseFileSystem,
     onRunHealthCheck,
     onRepairData,
+    onCleanOrphanRelations,
     onExportClick,
     onCsvExportClick,
     onEncryptedExportClick,
@@ -180,6 +215,17 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
 
   const updateAppLock = (appLock: AppLockSettings) => onUpdateSettings({ ...settings, appLock });
 
+  const handleMetricPreferenceChange = (id: typeof METRIC_PREFERENCE_DEFINITIONS[number]['id'], level: MetricPreferenceLevel) => {
+    onUpdateSettings({
+      ...settings,
+      metricPreferences: setMetricPreferenceLevel(settings.metricPreferences, id, level)
+    });
+  };
+
+  const handleResetMetricPreferences = () => {
+    onUpdateSettings({ ...settings, metricPreferences: {} });
+  };
+
   const handlePinComplete = (result: { pinHash: string; pinSalt: string } | null) => {
     if (!result) {
       updateAppLock({ enabled: false, autoLockMinutes: settings.appLock?.autoLockMinutes ?? 5 });
@@ -223,6 +269,8 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
       setIsSettingsOpen(false);
       onNavigateToLog(date);
   };
+
+  const isIssueLogDate = (date: string) => /^\d{4}-\d{2}-\d{2}$/.test(date);
 
   const formatRelativeDays = (timestamp: number): string => {
     const days = Math.floor((Date.now() - timestamp) / (1000 * 60 * 60 * 24));
@@ -327,38 +375,93 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
       {/* --- Settings / Data Modal --- */}
       <Modal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} title="设置与数据" footer={null}>
           <div className="space-y-8 pb-4">
-              
-              {/* 1. Theme Settings */}
+
+              {/* Appearance and display preferences */}
               <section>
-                  <h3 className="text-xs font-bold text-text-muted uppercase tracking-wider mb-3">外观</h3>
-                  <div className="bg-surface-muted  p-1 rounded-xl flex">
-	                      {([
-	                          { id: 'system', icon: Smartphone, label: '跟随系统' },
-	                          { id: 'light', icon: Sun, label: '浅色' },
-	                          { id: 'dark', icon: Moon, label: '深色' }
-	                      ] satisfies Array<{ id: AppSettings['theme']; icon: typeof Smartphone; label: string }>).map(opt => (
-	                          <button
-	                            key={opt.id}
-	                            onClick={() => onUpdateSettings({ ...settings, theme: opt.id })}
-                            className={`flex-1 py-2 flex items-center justify-center text-xs font-bold rounded-lg transition-all ${settings.theme === opt.id ? 'bg-surface-card  text-accent shadow-sm' : 'text-text-muted'}`}
-                          >
-                              <opt.icon size={14} className="mr-1.5"/>{opt.label}
-                          </button>
+                  <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-text-muted">外观与通知</h3>
+                  <div className="space-y-4">
+                    <div className="bg-surface-muted p-1 rounded-xl flex">
+                      {([
+                          { id: 'system', icon: Smartphone, label: '跟随系统' },
+                          { id: 'light', icon: Sun, label: '浅色' },
+                          { id: 'dark', icon: Moon, label: '深色' }
+                      ] satisfies Array<{ id: AppSettings['theme']; icon: typeof Smartphone; label: string }>).map(opt => (
+                        <button
+                          key={opt.id}
+                          onClick={() => onUpdateSettings({ ...settings, theme: opt.id })}
+                          className={`flex-1 py-2 flex items-center justify-center text-xs font-bold rounded-lg transition-all ${settings.theme === opt.id ? 'bg-surface-card text-accent shadow-sm' : 'text-text-muted'}`}
+                        >
+                          <opt.icon size={14} className="mr-1.5"/>{opt.label}
+                        </button>
                       ))}
+                    </div>
+                    <div className="rounded-2xl border border-surface-border bg-surface-card p-3 shadow-sm">
+                      <div className="mb-3 flex items-center justify-between gap-3">
+                        <h4 className="flex items-center text-xs font-bold text-text-primary">
+                          <Target size={14} className="mr-1.5 text-accent"/> 关注指标
+                        </h4>
+                      <button
+                        type="button"
+                        onClick={handleResetMetricPreferences}
+                        className="rounded-full bg-surface-muted px-3 py-1.5 text-[10px] font-black text-text-muted transition-colors hover:text-accent"
+                      >
+                        恢复默认
+                      </button>
+                      </div>
+                      <div className="space-y-3">
+                        {Array.from(metricPreferenceGroups.entries()).map(([module, definitions]) => (
+                          <div key={module} className="rounded-2xl border border-surface-border bg-surface-muted p-3">
+                            <div className="mb-2 text-[10px] font-black uppercase tracking-wider text-text-muted">{module}</div>
+                            <div className="space-y-2">
+                              {definitions.map((definition) => {
+                                const level = settings.metricPreferences?.[definition.id] ?? definition.defaultLevel;
+                                return (
+                                  <div key={definition.id} className="grid gap-2 rounded-xl bg-surface-card p-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+                                    <div>
+                                      <div className="text-xs font-black text-text-primary">{definition.label}</div>
+                                      <div className="text-[10px] font-bold text-text-muted">只影响展示顺序和默认出现频率</div>
+                                    </div>
+                                    <div className="grid grid-cols-3 gap-1 rounded-xl border border-surface-border bg-surface-muted p-1">
+                                      {metricPreferenceLevels.map((option) => (
+                                        <button
+                                          key={option}
+                                          type="button"
+                                          onClick={() => handleMetricPreferenceChange(definition.id, option)}
+                                          className={`min-h-[34px] rounded-lg px-2 text-[10px] font-black transition-colors ${
+                                            level === option
+                                              ? 'bg-accent text-text-on-accent shadow-sm'
+                                              : 'text-text-muted hover:bg-surface-card'
+                                          }`}
+                                        >
+                                          {METRIC_PREFERENCE_LEVEL_LABEL[option]}
+                                        </button>
+                                      ))}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        ))}
+                        <p className="rounded-2xl bg-surface-muted p-3 text-[11px] font-bold leading-relaxed text-text-muted">
+                          弱化不会删除记录，也不会改变健康结论；完整记录和手动筛选仍然可以看到这些数据。
+                        </p>
+                      </div>
+                    </div>
                   </div>
               </section>
 
-              {/* 1b. Privacy Settings */}
+              {/* Privacy and access control */}
               <section>
-                  <h3 className="text-xs font-bold text-text-muted uppercase tracking-wider mb-3">隐私</h3>
+                  <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-text-muted">隐私与安全</h3>
                   <div className="space-y-3">
-                    <div className="p-3 bg-surface-card  border border-surface-border  rounded-2xl space-y-3">
+                    <div className="p-3 bg-surface-card border border-surface-border rounded-2xl space-y-3">
                       <div className="flex items-center justify-between gap-3">
                         <div className="flex items-start gap-3">
-                          <div className="p-2 rounded-xl bg-surface-muted  text-accent"><LockKeyhole size={18} /></div>
+                          <div className="p-2 rounded-xl bg-surface-muted text-accent"><LockKeyhole size={18} /></div>
                           <div>
-                            <p className="text-sm font-bold text-text-primary ">应用锁</p>
-                            <p className="text-xs text-text-muted  mt-0.5">离开一段时间后用 4 位 PIN 解锁</p>
+                            <p className="text-sm font-bold text-text-primary">应用锁</p>
+                            <p className="text-xs text-text-muted mt-0.5">离开一段时间后用 4 位 PIN 解锁</p>
                           </div>
                         </div>
                         <button
@@ -371,14 +474,14 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
                       </div>
                       {settings.appLock?.enabled && (
                         <>
-                          <div className="flex items-center justify-between gap-3 border-t border-surface-border  pt-3">
+                          <div className="flex items-center justify-between gap-3 border-t border-surface-border pt-3">
                             <button type="button" onClick={() => setPinModalMode('change')} className="text-xs font-black text-accent">修改 PIN</button>
-                            <label className="flex items-center gap-2 text-xs font-bold text-text-muted ">
+                            <label className="flex items-center gap-2 text-xs font-bold text-text-muted">
                               自动锁定
                               <select
                                 value={settings.appLock.autoLockMinutes}
                                 onChange={(e) => updateAppLock({ ...settings.appLock!, autoLockMinutes: Number(e.target.value) })}
-                                className="rounded-xl border border-surface-border bg-surface-muted px-2 py-1 text-xs font-bold text-text-primary outline-none   "
+                                className="rounded-xl border border-surface-border bg-surface-muted px-2 py-1 text-xs font-bold text-text-primary outline-none"
                               >
                                 <option value={1}>1 分钟</option>
                                 <option value={5}>5 分钟</option>
@@ -387,8 +490,8 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
                               </select>
                             </label>
                           </div>
-                          <div className="flex items-center justify-between gap-3 border-t border-surface-border  pt-3">
-                            <div className="flex items-center gap-2 text-xs font-bold text-text-muted ">
+                          <div className="flex items-center justify-between gap-3 border-t border-surface-border pt-3">
+                            <div className="flex items-center gap-2 text-xs font-bold text-text-muted">
                               <Fingerprint size={16} className="text-accent" />
                               生物识别
                             </div>
@@ -397,7 +500,7 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
                                 type="button"
                                 onClick={settings.appLock.webAuthnCredentialId ? handleDisableBiometric : handleEnableBiometric}
                                 disabled={biometricBusy}
-                                className="rounded-xl bg-surface-muted px-3 py-2 text-xs font-black text-text-primary transition-colors disabled:opacity-50  "
+                                className="rounded-xl bg-surface-muted px-3 py-2 text-xs font-black text-text-primary transition-colors disabled:opacity-50"
                               >
                                 {biometricBusy ? '处理中...' : settings.appLock.webAuthnCredentialId ? '关闭' : '启用'}
                               </button>
@@ -412,359 +515,396 @@ const MyView: React.FC<MyViewProps> = ({ data, actions }) => {
                   </div>
               </section>
 
-              {/* Health Projects */}
+              {/* Data management tools */}
               <section>
-                  <h3 className="text-xs font-bold text-text-muted uppercase tracking-wider mb-3 flex items-center">
-                      健康项目
-                  </h3>
-                  <div className="bg-surface-card border border-surface-border rounded-2xl p-4 shadow-sm">
+                  <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-text-muted">数据管理</h3>
+                  <div className="space-y-4">
+                    <div className="bg-surface-card border border-surface-border rounded-2xl p-4 shadow-sm">
                       <HealthProjectManager />
-                  </div>
-              </section>
+                    </div>
 
-              {/* 2. Health Check & Repair */}
-              <section>
-                  <h3 className="text-xs font-bold text-text-muted uppercase tracking-wider mb-3 flex items-center">
-                      <Stethoscope size={14} className="mr-1.5 text-state-success-text"/> 数据健康 (v{dbMeta.dataVersion})
-                  </h3>
-                  <div className="bg-surface-card  border border-surface-border  rounded-2xl p-4 shadow-sm">
+                    <div className="bg-surface-card border border-surface-border rounded-2xl p-4 shadow-sm">
+                      <h4 className="mb-3 flex items-center text-xs font-bold text-text-primary">
+                        <Stethoscope size={14} className="mr-1.5 text-state-success-text"/> 数据健康 (v{dbMeta.dataVersion})
+                      </h4>
                       {!healthReport ? (
-                          <div className="text-center py-2">
-                              <p className="text-sm text-text-muted mb-3">定期检查数据结构，确保记录完整可用。</p>
-                              <button onClick={onRunHealthCheck} className="px-4 py-2 bg-state-success-bg text-state-success-text font-bold rounded-xl text-sm hover:bg-state-success-bg/80 transition-colors">
-                                  开始体检
-                              </button>
-                          </div>
+                        <div className="text-center py-2">
+                          <p className="text-sm text-text-muted mb-3">定期检查数据结构，确保记录完整可用。</p>
+                          <button onClick={onRunHealthCheck} className="px-4 py-2 bg-state-success-bg text-state-success-text font-bold rounded-xl text-sm hover:bg-state-success-bg/80 transition-colors">
+                            开始体检
+                          </button>
+                        </div>
                       ) : (
-                          <div className="space-y-4 animate-in fade-in">
-                              <div className="flex justify-between items-center pb-2 border-b border-surface-border ">
-                                  <span className="text-sm font-medium">数据状态</span>
-                                  <span className={`text-xl font-black ${healthReport.score >= 90 ? 'text-state-success-text' : healthReport.score >= 60 ? 'text-state-warning-text' : 'text-state-danger-text'}`}>{healthReport.score}</span>
-                              </div>
-                              <div className="text-xs space-y-1 text-text-muted">
-                                  <div className="flex justify-between"><span>总记录数</span><span>{healthReport.totalRecords}</span></div>
-                                  <div className="flex justify-between"><span>发现问题</span><span className={healthReport.issues.length > 0 ? 'text-state-danger-text font-bold' : 'text-state-success-text'}>{healthReport.issues.length}</span></div>
-                              </div>
-                              <div className="grid grid-cols-3 gap-2 text-center">
-                                  <div className="rounded-xl bg-surface-muted  p-2 border border-surface-border ">
-                                      <div className="text-[10px] text-text-muted font-bold">结构</div>
-                                      <div className="text-sm font-black text-text-secondary ">{healthReport.scores.structure}</div>
-                                  </div>
-                                  <div className="rounded-xl bg-surface-muted  p-2 border border-surface-border ">
-                                      <div className="text-[10px] text-text-muted font-bold">完整度</div>
-                                      <div className="text-sm font-black text-text-secondary ">{healthReport.scores.completeness}</div>
-                                  </div>
-                                  <div className="rounded-xl bg-surface-muted  p-2 border border-surface-border ">
-                                      <div className="text-[10px] text-text-muted font-bold">分析可用度</div>
-                                      <div className="text-sm font-black text-text-secondary ">{healthReport.scores.analytics}</div>
-                                  </div>
-                              </div>
-                              <div className="text-xs space-y-1 text-text-muted rounded-xl bg-surface-muted  p-3 border border-surface-border ">
-                                  <div className="flex justify-between"><span>已追踪字段</span><span>{healthReport.stats.completeness.trackedFields}</span></div>
-                                  <div className="flex justify-between"><span>有效字段</span><span>{healthReport.stats.completeness.recordedFields}</span></div>
-                                  <div className="flex justify-between"><span>缺失/默认字段</span><span>{healthReport.stats.completeness.missingFields}</span></div>
-                              </div>
-                              <div className="rounded-xl bg-surface-muted  p-3 border border-surface-border ">
-                                  <h4 className="text-xs font-bold text-text-muted mb-2">分析样本</h4>
-                                  <div className="space-y-1 text-xs text-text-muted">
-                                      {Object.entries(healthReport.stats.analyticsAvailability).map(([key, item]) => (
-                                          <div key={key} className="flex justify-between">
-                                              <span>{ANALYTICS_LABELS[key] || key}</span>
-                                              <span>{item.usableSamples}/{item.totalRecords}</span>
-                                          </div>
-                                      ))}
-                                  </div>
-                              </div>
-                              
-                              {/* Display Issues List */}
-                              {healthReport.issues.length > 0 && (
-                                  <div className="mt-2 bg-surface-muted  rounded-xl p-3 border border-surface-border ">
-                                      <h4 className="text-xs font-bold text-text-muted mb-2 flex items-center">
-                                          <AlertCircle size={12} className="mr-1 text-state-danger-text"/>
-                                          问题详情 ({healthReport.issues.length})
-                                      </h4>
-                                      <div className="max-h-60 overflow-y-auto custom-scrollbar space-y-2">
-                                          {healthReport.issues.map((issue) => (
-                                              <div
-                                                key={issue.id}
-                                                onClick={() => handleJumpToIssue(issue.date)}
-                                                className="bg-surface-card  p-3 rounded-lg border border-surface-border  text-xs flex flex-col gap-1.5 cursor-pointer hover:bg-surface-muted dark:hover:bg-surface-muted transition-colors group"
-                                              >
-                                                  <div className="flex justify-between items-center">
-                                                      <div className="flex items-center gap-2">
-                                                          <span className="font-bold text-text-primary  font-mono bg-surface-muted  px-1.5 rounded text-[10px]">{issue.date}</span>
-                                                          <span className={`text-[10px] uppercase font-bold px-1.5 rounded ${
-                                                              issue.severity === 'high' ? 'bg-state-danger-bg text-state-danger-text' :
-                                                              issue.severity === 'medium' ? 'bg-state-warning-bg text-state-warning-text' : 'bg-state-info-bg text-state-info-text'
-                                                          }`}>{issue.type}</span>
-                                                      </div>
-                                                      <div className="flex items-center text-accent">
-                                                          <span className="font-bold mr-1">前往修复</span>
-                                                          <ArrowRight size={12}/>
-                                                      </div>
-                                                  </div>
-                                                  <p className="text-text-secondary  leading-tight">{issue.message}</p>
-                                                  {issue.path && (
-                                                      <p className="text-[10px] text-accent font-medium">
-                                                          需要检查：{pathToLabel(issue.path)}
-                                                      </p>
-                                                  )}
-                                              </div>
-                                          ))}
-                                      </div>
-                                  </div>
-                              )}
-
-                              {healthReport.canRepair && (
-                                  <button 
-                                    onClick={onRepairData}
-                                    disabled={isRepairing}
-                                    className="w-full py-2 bg-accent text-text-on-accent font-bold rounded-xl flex items-center justify-center disabled:opacity-50"
-                                  >
-                                      {isRepairing ? <RotateCcw size={16} className="animate-spin mr-2"/> : <Wrench size={16} className="mr-2"/>}
-                                      {isRepairing ? '修复中...' : '一键修复'}
-                                  </button>
-                              )}
-                              {!healthReport.canRepair && healthReport.issues.length > 0 && (
-                                  <div className="text-center text-xs text-state-warning-text font-bold flex items-center justify-center pt-2">
-                                      <AlertCircle size={14} className="mr-1"/> 发现需要手动检查的问题
-                                  </div>
-                              )}
-                              {!healthReport.canRepair && healthReport.issues.length === 0 && (
-                                  <div className="text-center text-xs text-state-success-text font-bold flex items-center justify-center pt-2">
-                                      <CheckCircle size={14} className="mr-1"/> 数据健康，无需修复
-                                  </div>
-                              )}
+                        <div className="space-y-4 animate-in fade-in">
+                          <div className="flex justify-between items-center pb-2 border-b border-surface-border">
+                            <span className="text-sm font-medium">数据状态</span>
+                            <span className={`text-xl font-black ${healthReport.score >= 90 ? 'text-state-success-text' : healthReport.score >= 60 ? 'text-state-warning-text' : 'text-state-danger-text'}`}>{healthReport.score}</span>
                           </div>
+                          <div className="text-xs space-y-1 text-text-muted">
+                            <div className="flex justify-between"><span>总记录数</span><span>{healthReport.totalRecords}</span></div>
+                            <div className="flex justify-between"><span>发现问题</span><span className={healthReport.issues.length > 0 ? 'text-state-danger-text font-bold' : 'text-state-success-text'}>{healthReport.issues.length}</span></div>
+                          </div>
+                          <div className="grid grid-cols-3 gap-2 text-center">
+                            <div className="rounded-xl bg-surface-muted p-2 border border-surface-border">
+                              <div className="text-[10px] text-text-muted font-bold">结构</div>
+                              <div className="text-sm font-black text-text-secondary">{healthReport.scores.structure}</div>
+                            </div>
+                            <div className="rounded-xl bg-surface-muted p-2 border border-surface-border">
+                              <div className="text-[10px] text-text-muted font-bold">完整度</div>
+                              <div className="text-sm font-black text-text-secondary">{healthReport.scores.completeness}</div>
+                            </div>
+                            <div className="rounded-xl bg-surface-muted p-2 border border-surface-border">
+                              <div className="text-[10px] text-text-muted font-bold">分析可用度</div>
+                              <div className="text-sm font-black text-text-secondary">{healthReport.scores.analytics}</div>
+                            </div>
+                          </div>
+                          <div className="text-xs space-y-1 text-text-muted rounded-xl bg-surface-muted p-3 border border-surface-border">
+                            <div className="flex justify-between"><span>已追踪字段</span><span>{healthReport.stats.completeness.trackedFields}</span></div>
+                            <div className="flex justify-between"><span>有效字段</span><span>{healthReport.stats.completeness.recordedFields}</span></div>
+                            <div className="flex justify-between"><span>缺失/默认字段</span><span>{healthReport.stats.completeness.missingFields}</span></div>
+                          </div>
+                          <div className="rounded-xl bg-surface-muted p-3 border border-surface-border">
+                            <h4 className="text-xs font-bold text-text-muted mb-2">分析样本</h4>
+                            <div className="space-y-1 text-xs text-text-muted">
+                              {Object.entries(healthReport.stats.analyticsAvailability).map(([key, item]) => (
+                                <div key={key} className="flex justify-between">
+                                  <span>{ANALYTICS_LABELS[key] || key}</span>
+                                  <span>{item.usableSamples}/{item.totalRecords}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                          <div className="rounded-xl bg-surface-muted p-3 border border-surface-border">
+                            <h4 className="text-xs font-bold text-text-muted mb-2">分表覆盖</h4>
+                            <div className="grid grid-cols-2 gap-2 text-xs text-text-muted">
+                              {Object.entries(healthReport.stats.tableStats)
+                                .filter(([, item]) => item.records > 0 || item.issues > 0)
+                                .map(([key, item]) => (
+                                  <div key={key} className="rounded-lg bg-surface-card border border-surface-border p-2">
+                                    <div className="font-bold text-text-secondary">{DATA_TABLE_LABELS[key] || key}</div>
+                                    <div className="mt-1 flex justify-between"><span>记录</span><span>{item.records}</span></div>
+                                    <div className="flex justify-between"><span>问题</span><span className={item.issues > 0 ? 'text-state-danger-text font-bold' : 'text-state-success-text'}>{item.issues}</span></div>
+                                  </div>
+                                ))}
+                            </div>
+                          </div>
+                          {healthReport.stats.orphanRelations.total > 0 && (
+                            <div className="rounded-xl bg-state-warning-bg p-3 border border-state-warning-text/20 text-xs text-state-warning-text">
+                              <div className="flex justify-between font-black mb-2">
+                                <span>孤立关系</span>
+                                <span>{healthReport.stats.orphanRelations.total}</span>
+                              </div>
+                              <div className="space-y-1">
+                                {Object.entries(healthReport.stats.orphanRelations.byTable).map(([key, count]) => (
+                                  <div key={key} className="flex justify-between">
+                                    <span>{DATA_TABLE_LABELS[key] || key}</span>
+                                    <span>{count}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {healthReport.issues.length > 0 && (
+                            <div className="mt-2 bg-surface-muted rounded-xl p-3 border border-surface-border">
+                              <h4 className="text-xs font-bold text-text-muted mb-2 flex items-center">
+                                <AlertCircle size={12} className="mr-1 text-state-danger-text"/>
+                                问题详情 ({healthReport.issues.length})
+                              </h4>
+                              <div className="max-h-60 overflow-y-auto custom-scrollbar space-y-2">
+                                {healthReport.issues.map((issue) => {
+                                  const canJumpToLog = isIssueLogDate(issue.date);
+                                  return (
+                                    <div
+                                      key={`${issue.id}-${issue.path ?? issue.date}`}
+                                      onClick={canJumpToLog ? () => handleJumpToIssue(issue.date) : undefined}
+                                      className={`bg-surface-card p-3 rounded-lg border border-surface-border text-xs flex flex-col gap-1.5 transition-colors group ${
+                                        canJumpToLog ? 'cursor-pointer hover:bg-surface-muted dark:hover:bg-surface-muted' : ''
+                                      }`}
+                                    >
+                                      <div className="flex justify-between items-center">
+                                        <div className="flex items-center gap-2">
+                                          <span className="font-bold text-text-primary font-mono bg-surface-muted px-1.5 rounded text-[10px]">{issue.date}</span>
+                                          <span className={`text-[10px] uppercase font-bold px-1.5 rounded ${
+                                            issue.severity === 'high' ? 'bg-state-danger-bg text-state-danger-text' :
+                                              issue.severity === 'medium' ? 'bg-state-warning-bg text-state-warning-text' : 'bg-state-info-bg text-state-info-text'
+                                          }`}>{issue.type}</span>
+                                        </div>
+                                        {canJumpToLog && (
+                                          <div className="flex items-center text-accent">
+                                            <span className="font-bold mr-1">前往修复</span>
+                                            <ArrowRight size={12}/>
+                                          </div>
+                                        )}
+                                      </div>
+                                      <p className="text-text-secondary leading-tight">{issue.message}</p>
+                                      {issue.path && (
+                                        <p className="text-[10px] text-accent font-medium">
+                                          需要检查：{pathToLabel(issue.path)}
+                                        </p>
+                                      )}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+
+                          {healthReport.canRepair && (
+                            <button
+                              onClick={onRepairData}
+                              disabled={isRepairing}
+                              className="w-full py-2 bg-accent text-text-on-accent font-bold rounded-xl flex items-center justify-center disabled:opacity-50"
+                            >
+                              {isRepairing ? <RotateCcw size={16} className="animate-spin mr-2"/> : <Wrench size={16} className="mr-2"/>}
+                              {isRepairing ? '修复中...' : '一键修复'}
+                            </button>
+                          )}
+                          {healthReport.canCleanOrphanRelations && (
+                            <button
+                              onClick={onCleanOrphanRelations}
+                              disabled={isCleaningOrphans}
+                              className="w-full py-2 bg-state-warning-bg text-state-warning-text font-bold rounded-xl flex items-center justify-center disabled:opacity-50"
+                            >
+                              {isCleaningOrphans ? <RotateCcw size={16} className="animate-spin mr-2"/> : <Wrench size={16} className="mr-2"/>}
+                              {isCleaningOrphans ? '清理中...' : '清理孤立关系'}
+                            </button>
+                          )}
+                          {!healthReport.canRepair && healthReport.issues.length > 0 && (
+                            <div className="text-center text-xs text-state-warning-text font-bold flex items-center justify-center pt-2">
+                              <AlertCircle size={14} className="mr-1"/> 发现需要手动检查的问题
+                            </div>
+                          )}
+                          {!healthReport.canRepair && healthReport.issues.length === 0 && (
+                            <div className="text-center text-xs text-state-success-text font-bold flex items-center justify-center pt-2">
+                              <CheckCircle size={14} className="mr-1"/> 数据健康，无需修复
+                            </div>
+                          )}
+                        </div>
                       )}
+                    </div>
+
+                    <button
+                      onClick={() => { setIsSettingsOpen(false); setIsTagManagerOpen(true); }}
+                      className="w-full p-4 bg-surface-card border border-surface-border rounded-2xl flex items-center justify-between hover:bg-surface-muted dark:hover:bg-surface-muted transition-colors shadow-sm"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-surface-muted text-chart-tertiary rounded-xl">
+                          <Tags size={20} />
+                        </div>
+                        <div className="text-left">
+                          <h4 className="font-bold text-sm text-text-primary">标签管理</h4>
+                          <p className="text-xs text-text-muted">重命名或合并 XP、事件标签</p>
+                        </div>
+                      </div>
+                      <ChevronRight size={18} className="text-text-muted" />
+                    </button>
+
+                    {isDevMode && (
+                      <button
+                        onClick={() => { setIsSettingsOpen(false); setIsSimulationLabOpen(true); }}
+                        className="w-full p-4 bg-surface-card border border-surface-border rounded-2xl flex items-center justify-between hover:bg-surface-muted dark:hover:bg-surface-muted transition-colors shadow-sm"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-state-info-bg text-state-info-text rounded-xl">
+                            <FlaskConical size={20} />
+                          </div>
+                          <div className="text-left">
+                            <h4 className="font-bold text-sm text-text-primary">虚拟回测实验室</h4>
+                            <p className="text-xs text-text-muted">仅供开发验证的合成人群回测工具</p>
+                          </div>
+                        </div>
+                        <ChevronRight size={18} className="text-text-muted" />
+                      </button>
+                    )}
                   </div>
               </section>
 
-              {/* Data Ecosystem Overview */}
+              {/* Backup, snapshots, import and export */}
               <section>
-                  <h3 className="text-xs font-bold text-text-muted uppercase tracking-wider mb-3 flex items-center">
-                      <ShieldCheck size={14} className="mr-1.5 text-state-success-text"/> 数据生态
-                  </h3>
-                  <div className="bg-surface-card  border border-surface-border  rounded-2xl p-4 shadow-sm space-y-3">
+                  <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-text-muted">数据与备份</h3>
+                  <div className="space-y-4">
+                    <div className="bg-surface-card border border-surface-border rounded-2xl p-4 shadow-sm space-y-3">
+                      <h4 className="flex items-center text-xs font-bold text-text-primary">
+                        <ShieldCheck size={14} className="mr-1.5 text-state-success-text"/> 数据生态
+                      </h4>
                       <div className="grid grid-cols-2 gap-2 text-center">
-                          <div className="rounded-xl bg-surface-muted  p-2 border border-surface-border ">
-                              <div className="text-[10px] text-text-muted font-bold">最近导出</div>
-                              <div className="text-xs font-black text-text-primary ">
-                                  {settings.lastExportAt ? formatRelativeDays(settings.lastExportAt) : '从未'}
-                              </div>
+                        <div className="rounded-xl bg-surface-muted p-2 border border-surface-border">
+                          <div className="text-[10px] text-text-muted font-bold">最近导出</div>
+                          <div className="text-xs font-black text-text-primary">
+                            {settings.lastExportAt ? formatRelativeDays(settings.lastExportAt) : '从未'}
                           </div>
-                          <div className="rounded-xl bg-surface-muted  p-2 border border-surface-border ">
-                              <div className="text-[10px] text-text-muted font-bold">内部快照</div>
-                              <div className="text-xs font-black text-text-primary ">{snapshots.length} 个</div>
+                        </div>
+                        <div className="rounded-xl bg-surface-muted p-2 border border-surface-border">
+                          <div className="text-[10px] text-text-muted font-bold">内部快照</div>
+                          <div className="text-xs font-black text-text-primary">{snapshots.length} 个</div>
+                        </div>
+                        <div className="rounded-xl bg-surface-muted p-2 border border-surface-border">
+                          <div className="text-[10px] text-text-muted font-bold">自动备份</div>
+                          <div className="text-xs font-black text-text-primary">
+                            {backupStatus.isReady && backupMetadata?.lastBackupAt
+                              ? formatRelativeDays(backupMetadata.lastBackupAt)
+                              : backupStatus.needsReauthorization ? '需重授权' : '未启用'}
                           </div>
-                          <div className="rounded-xl bg-surface-muted  p-2 border border-surface-border ">
-                              <div className="text-[10px] text-text-muted font-bold">自动备份</div>
-                              <div className="text-xs font-black text-text-primary ">
-                                  {backupStatus.isReady && backupMetadata?.lastBackupAt
-                                      ? formatRelativeDays(backupMetadata.lastBackupAt)
-                                      : backupStatus.needsReauthorization ? '需重授权' : '未启用'}
-                              </div>
-                          </div>
-                          <div className="rounded-xl bg-surface-muted  p-2 border border-surface-border ">
-                              <div className="text-[10px] text-text-muted font-bold">数据版本</div>
-                              <div className="text-xs font-black text-text-primary ">v{dbMeta.dataVersion}</div>
-                          </div>
+                        </div>
+                        <div className="rounded-xl bg-surface-muted p-2 border border-surface-border">
+                          <div className="text-[10px] text-text-muted font-bold">数据版本</div>
+                          <div className="text-xs font-black text-text-primary">v{dbMeta.dataVersion}</div>
+                        </div>
                       </div>
                       {ecosystemHints.length > 0 && (
-                          <ul className="space-y-1 text-[11px] text-text-muted ">
-                              {ecosystemHints.map((hint) => (
-                                  <li key={hint} className="flex items-start gap-1.5">
-                                      <span className="mt-1 inline-block h-1 w-1 rounded-full bg-accent"/>
-                                      <span>{hint}</span>
-                                  </li>
-                              ))}
-                          </ul>
+                        <ul className="space-y-1 text-[11px] text-text-muted">
+                          {ecosystemHints.map((hint) => (
+                            <li key={hint} className="flex items-start gap-1.5">
+                              <span className="mt-1 inline-block h-1 w-1 rounded-full bg-accent"/>
+                              <span>{hint}</span>
+                            </li>
+                          ))}
+                        </ul>
                       )}
-                  </div>
-              </section>
+                    </div>
 
-{/* Auto Backup Settings */}
-      <section>
-        <Suspense fallback={null}>
-          <BackupSettings logs={logs} />
-        </Suspense>
-      </section>
+                    <Suspense fallback={null}>
+                      <BackupSettings logs={logs} />
+                    </Suspense>
 
-      {/* Tag Management */}
-      <section>
-        <button
-          onClick={() => { setIsSettingsOpen(false); setIsTagManagerOpen(true); }}
-          className="w-full p-4 bg-surface-card  border border-surface-border  rounded-2xl flex items-center justify-between hover:bg-surface-muted dark:hover:bg-surface-muted transition-colors shadow-sm"
-        >
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-surface-muted text-chart-tertiary rounded-xl">
-              <Tags size={20} />
-            </div>
-            <div className="text-left">
-              <h3 className="font-bold text-sm text-text-primary ">标签管理</h3>
-              <p className="text-xs text-text-muted ">重命名或合并 XP、事件标签</p>
-            </div>
-          </div>
-          <ChevronRight size={18} className="text-text-muted" />
-        </button>
-      </section>
-
-      {isDevMode && (
-        <section>
-          <button
-          onClick={() => { setIsSettingsOpen(false); setIsSimulationLabOpen(true); }}
-          className="w-full p-4 bg-surface-card  border border-surface-border  rounded-2xl flex items-center justify-between hover:bg-surface-muted dark:hover:bg-surface-muted transition-colors shadow-sm"
-        >
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-state-info-bg text-state-info-text rounded-xl">
-              <FlaskConical size={20} />
-            </div>
-            <div className="text-left">
-              <h3 className="font-bold text-sm text-text-primary ">虚拟回测实验室</h3>
-              <p className="text-xs text-text-muted ">仅供开发验证的合成人群回测工具</p>
-            </div>
-          </div>
-          <ChevronRight size={18} className="text-text-muted" />
-        </button>
-        </section>
-      )}
-
-              {/* 3. Snapshots */}
-              <section>
-                  <div className="flex justify-between items-end mb-3">
-                      <h3 className="text-xs font-bold text-text-muted uppercase tracking-wider flex items-center"><Archive size={14} className="mr-1.5 text-state-info-text"/> 数据快照</h3>
-                      <button onClick={onCreateSnapshot} className="text-[10px] bg-state-info-bg text-state-info-text px-2 py-1 rounded font-bold hover:bg-state-info-bg/80">+ 创建快照</button>
-                  </div>
-                  <div className="mb-3 rounded-2xl border border-surface-border bg-surface-card p-3 shadow-sm   space-y-3">
-                      <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <div className="flex justify-between items-end mb-3">
+                        <h4 className="flex items-center text-xs font-bold text-text-primary"><Archive size={14} className="mr-1.5 text-state-info-text"/> 数据快照</h4>
+                        <button onClick={onCreateSnapshot} className="text-[10px] bg-state-info-bg text-state-info-text px-2 py-1 rounded font-bold hover:bg-state-info-bg/80">+ 创建快照</button>
+                      </div>
+                      <div className="mb-3 rounded-2xl border border-surface-border bg-surface-card p-3 shadow-sm space-y-3">
+                        <div className="flex items-center justify-between gap-3">
                           <div>
-                              <p className="text-sm font-bold text-text-primary ">idle 自动备份</p>
-                              <p className="text-xs text-text-muted  mt-0.5">上次：{formatRelativeHours(dbMeta.lastAutoBackupAt)}</p>
+                            <p className="text-sm font-bold text-text-primary">idle 自动备份</p>
+                            <p className="text-xs text-text-muted mt-0.5">上次：{formatRelativeHours(dbMeta.lastAutoBackupAt)}</p>
                           </div>
                           <span className="relative inline-flex items-center">
-                              <input
-                                type="checkbox"
-                                checked={backupSchedule.enabled}
-                                onChange={(event) => onChangeBackupSchedule({ ...backupSchedule, enabled: event.target.checked })}
-                                className="sr-only peer"
-                              />
-                              <span className="w-11 h-6 bg-surface-border  rounded-full peer peer-checked:bg-accent transition-colors"></span>
-                              <span className="absolute left-0.5 top-0.5 w-5 h-5 bg-surface-card rounded-full transition-transform peer-checked:translate-x-5"></span>
+                            <input
+                              type="checkbox"
+                              checked={backupSchedule.enabled}
+                              onChange={(event) => onChangeBackupSchedule({ ...backupSchedule, enabled: event.target.checked })}
+                              className="sr-only peer"
+                            />
+                            <span className="w-11 h-6 bg-surface-border rounded-full peer peer-checked:bg-accent transition-colors"></span>
+                            <span className="absolute left-0.5 top-0.5 w-5 h-5 bg-surface-card rounded-full transition-transform peer-checked:translate-x-5"></span>
                           </span>
-                      </div>
-                      <div className="grid grid-cols-2 gap-3">
-                          <label className="block text-xs font-bold text-text-muted ">
-                              自动间隔
-                              <select
-                                value={backupSchedule.intervalHours}
-                                disabled={!backupSchedule.enabled}
-                                onChange={(event) => onChangeBackupSchedule({ ...backupSchedule, intervalHours: Number(event.target.value) as AutoBackupIntervalHours })}
-                                className="mt-2 min-h-[44px] w-full rounded-xl border border-surface-border bg-surface-muted px-3 text-sm font-black text-text-primary outline-none disabled:opacity-50   "
-                              >
-                                {AUTO_BACKUP_INTERVAL_HOUR_OPTIONS.map((option) => (
-                                  <option key={option} value={option}>{option} 小时</option>
-                                ))}
-                              </select>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <label className="block text-xs font-bold text-text-muted">
+                            自动间隔
+                            <select
+                              value={backupSchedule.intervalHours}
+                              disabled={!backupSchedule.enabled}
+                              onChange={(event) => onChangeBackupSchedule({ ...backupSchedule, intervalHours: Number(event.target.value) as AutoBackupIntervalHours })}
+                              className="mt-2 min-h-[44px] w-full rounded-xl border border-surface-border bg-surface-muted px-3 text-sm font-black text-text-primary outline-none disabled:opacity-50"
+                            >
+                              {AUTO_BACKUP_INTERVAL_HOUR_OPTIONS.map((option) => (
+                                <option key={option} value={option}>{option} 小时</option>
+                              ))}
+                            </select>
                           </label>
-                          <label className="block text-xs font-bold text-text-muted ">
-                              保留方式
-                              <select
-                                value={backupRetention.mode}
-                                onChange={(event) => onChangeBackupRetention(event.target.value === 'size'
-                                  ? { mode: 'size', autoSafetyMaxMB: 20 }
-                                  : { mode: 'count', autoSafetyMaxCount: 7 })}
-                                className="mt-2 min-h-[44px] w-full rounded-xl border border-surface-border bg-surface-muted px-3 text-sm font-black text-text-primary outline-none   "
-                              >
-                                <option value="count">按个数</option>
-                                <option value="size">按容量</option>
-                              </select>
+                          <label className="block text-xs font-bold text-text-muted">
+                            保留方式
+                            <select
+                              value={backupRetention.mode}
+                              onChange={(event) => onChangeBackupRetention(event.target.value === 'size'
+                                ? { mode: 'size', autoSafetyMaxMB: 20 }
+                                : { mode: 'count', autoSafetyMaxCount: 7 })}
+                              className="mt-2 min-h-[44px] w-full rounded-xl border border-surface-border bg-surface-muted px-3 text-sm font-black text-text-primary outline-none"
+                            >
+                              <option value="count">按个数</option>
+                              <option value="size">按容量</option>
+                            </select>
                           </label>
-                      </div>
-                      {backupRetention.mode === 'count' ? (
-                        <label className="block text-xs font-bold text-text-muted ">
+                        </div>
+                        {backupRetention.mode === 'count' ? (
+                          <label className="block text-xs font-bold text-text-muted">
                             自动快照保留数
                             <select
                               value={backupRetention.autoSafetyMaxCount}
                               onChange={(event) => onChangeBackupRetention({ mode: 'count', autoSafetyMaxCount: Number(event.target.value) as AutoSafetySnapshotLimit })}
-                              className="mt-2 min-h-[44px] w-full rounded-xl border border-surface-border bg-surface-muted px-3 text-sm font-black text-text-primary outline-none   "
+                              className="mt-2 min-h-[44px] w-full rounded-xl border border-surface-border bg-surface-muted px-3 text-sm font-black text-text-primary outline-none"
                             >
                               {AUTO_SAFETY_SNAPSHOT_LIMIT_OPTIONS.map((option) => (
                                 <option key={option} value={option}>{option} 个</option>
                               ))}
                             </select>
-                        </label>
-                      ) : (
-                        <label className="block text-xs font-bold text-text-muted ">
+                          </label>
+                        ) : (
+                          <label className="block text-xs font-bold text-text-muted">
                             自动快照容量上限
                             <select
                               value={backupRetention.autoSafetyMaxMB}
                               onChange={(event) => onChangeBackupRetention({ mode: 'size', autoSafetyMaxMB: Number(event.target.value) as AutoSafetySnapshotSizeLimitMB })}
-                              className="mt-2 min-h-[44px] w-full rounded-xl border border-surface-border bg-surface-muted px-3 text-sm font-black text-text-primary outline-none   "
+                              className="mt-2 min-h-[44px] w-full rounded-xl border border-surface-border bg-surface-muted px-3 text-sm font-black text-text-primary outline-none"
                             >
                               {AUTO_SAFETY_SNAPSHOT_SIZE_LIMIT_OPTIONS_MB.map((option) => (
                                 <option key={option} value={option}>{option} MB</option>
                               ))}
                             </select>
-                        </label>
-                      )}
-                      <p className="text-[11px] font-bold text-text-muted">修复、导入和文件恢复前的安全快照不受此开关影响。</p>
-                  </div>
-                  <div className="bg-surface-card  border border-surface-border  rounded-2xl p-1 max-h-40 overflow-y-auto custom-scrollbar">
-                      {snapshots.length === 0 ? (
+                          </label>
+                        )}
+                        <p className="text-[11px] font-bold text-text-muted">修复、导入和文件恢复前的安全快照不受此开关影响。</p>
+                      </div>
+                      <div className="bg-surface-card border border-surface-border rounded-2xl p-1 max-h-40 overflow-y-auto custom-scrollbar">
+                        {snapshots.length === 0 ? (
                           <div className="text-center py-6 text-xs text-text-muted">暂无快照，建议定期备份。</div>
-                      ) : (
+                        ) : (
                           snapshots.map(snap => (
-                              <div key={snap.id} className="flex items-center justify-between p-3 border-b border-surface-border  last:border-0 hover:bg-surface-muted dark:hover:bg-surface-muted rounded-xl group transition-colors">
-                                  <div className="flex-1 min-w-0 pr-2">
-                                      <div className="font-bold text-xs truncate text-text-primary ">
-                                        {snap.description}
-                                        {snap.kind === 'auto-safety' && <span className="ml-2 rounded-full bg-state-info-bg px-1.5 py-0.5 text-[9px] font-black text-state-info-text">自动</span>}
-                                      </div>
-                                      <div className="text-[10px] text-text-muted">{new Date(snap.timestamp).toLocaleString()} • v{snap.dataVersion}</div>
-                                  </div>
-                                  <div className="flex gap-2">
-                                      <button onClick={() => onRestoreSnapshot(snap.id!)} aria-label="还原快照" className="p-2 bg-state-info-bg text-state-info-text rounded-lg min-w-[44px] min-h-[44px] flex items-center justify-center" title="还原"><RotateCcw size={14}/></button>
-                                      <button onClick={() => onDeleteSnapshot(snap.id!)} aria-label="删除快照" className="p-2 bg-state-danger-bg text-state-danger-text rounded-lg min-w-[44px] min-h-[44px] flex items-center justify-center" title="删除"><Trash2 size={14}/></button>
-                                  </div>
+                            <div key={snap.id} className="flex items-center justify-between p-3 border-b border-surface-border last:border-0 hover:bg-surface-muted dark:hover:bg-surface-muted rounded-xl group transition-colors">
+                              <div className="flex-1 min-w-0 pr-2">
+                                <div className="font-bold text-xs truncate text-text-primary">
+                                  {snap.description}
+                                  {snap.kind === 'auto-safety' && <span className="ml-2 rounded-full bg-state-info-bg px-1.5 py-0.5 text-[9px] font-black text-state-info-text">自动</span>}
+                                </div>
+                                <div className="text-[10px] text-text-muted">{new Date(snap.timestamp).toLocaleString()} • v{snap.dataVersion}</div>
                               </div>
+                              <div className="flex gap-2">
+                                <button onClick={() => onRestoreSnapshot(snap.id!)} aria-label="还原快照" className="p-2 bg-state-info-bg text-state-info-text rounded-lg min-w-[44px] min-h-[44px] flex items-center justify-center" title="还原"><RotateCcw size={14}/></button>
+                                <button onClick={() => onDeleteSnapshot(snap.id!)} aria-label="删除快照" className="p-2 bg-state-danger-bg text-state-danger-text rounded-lg min-w-[44px] min-h-[44px] flex items-center justify-center" title="删除"><Trash2 size={14}/></button>
+                              </div>
+                            </div>
                           ))
-                      )}
-                  </div>
-                  {snapshotFeedback && <p className="text-xs text-state-success-text text-center mt-2 animate-fade-in">{snapshotFeedback}</p>}
-              </section>
+                        )}
+                      </div>
+                      {snapshotFeedback && <p className="text-xs text-state-success-text text-center mt-2 animate-fade-in">{snapshotFeedback}</p>}
+                    </div>
 
-              {/* 4. Import / Export */}
-              <section>
-                  <h3 className="text-xs font-bold text-text-muted uppercase tracking-wider mb-3">迁移与备份</h3>
-                  <div className="grid grid-cols-2 gap-3">
-                      <button onClick={onExportClick} className="flex flex-col items-center justify-center p-4 bg-surface-card  border border-surface-border  rounded-2xl hover:border-accent transition-colors">
+                    <div>
+                      <h4 className="mb-3 text-xs font-bold text-text-primary">迁移与备份</h4>
+                      <div className="grid grid-cols-2 gap-3">
+                        <button onClick={onExportClick} className="flex flex-col items-center justify-center p-4 bg-surface-card border border-surface-border rounded-2xl hover:border-accent transition-colors">
                           <Share2 size={24} className="text-accent mb-2"/>
-                          <span className="text-xs font-bold text-text-primary ">导出 JSON</span>
-                      </button>
-                      <button onClick={onEncryptedExportClick} className="flex flex-col items-center justify-center p-4 bg-surface-card  border border-surface-border  rounded-2xl hover:border-accent transition-colors">
+                          <span className="text-xs font-bold text-text-primary">导出 JSON</span>
+                        </button>
+                        <button onClick={onEncryptedExportClick} className="flex flex-col items-center justify-center p-4 bg-surface-card border border-surface-border rounded-2xl hover:border-accent transition-colors">
                           <ShieldCheck size={24} className="text-state-success-text mb-2"/>
-                          <span className="text-xs font-bold text-text-primary ">加密导出</span>
-                      </button>
-                      <button onClick={onCsvExportClick} className="flex flex-col items-center justify-center p-4 bg-surface-card  border border-surface-border  rounded-2xl hover:border-accent transition-colors">
+                          <span className="text-xs font-bold text-text-primary">加密导出</span>
+                        </button>
+                        <button onClick={onCsvExportClick} className="flex flex-col items-center justify-center p-4 bg-surface-card border border-surface-border rounded-2xl hover:border-accent transition-colors">
                           <FileSpreadsheet size={24} className="text-state-success-text mb-2"/>
-                          <span className="text-xs font-bold text-text-primary ">导出 CSV</span>
-                      </button>
-                      <button onClick={handleImportClick} className="flex flex-col items-center justify-center p-4 bg-surface-card  border border-surface-border  rounded-2xl hover:border-accent transition-colors">
+                          <span className="text-xs font-bold text-text-primary">导出 CSV</span>
+                        </button>
+                        <button onClick={handleImportClick} className="flex flex-col items-center justify-center p-4 bg-surface-card border border-surface-border rounded-2xl hover:border-accent transition-colors">
                           {importStatus === 'importing' ? <RotateCcw className="animate-spin text-accent mb-2" size={24}/> : <FolderInput size={24} className="text-accent mb-2"/>}
-                          <span className="text-xs font-bold text-text-primary ">{importStatus === 'success' ? '导入成功' : '导入 JSON'}</span>
-                      </button>
-                      <input type="file" ref={fileInputRef} onChange={onFileChange} accept=".json,.hdenc.json" className="hidden" />
-                      
-                      {canUseFileSystem && (
-                          <button onClick={onFileSystemBackup} className="col-span-2 flex items-center justify-center p-3 bg-surface-muted  border border-surface-border  rounded-2xl text-xs font-bold text-text-secondary  hover:bg-surface-muted dark:hover:bg-surface-muted">
-                              <Archive size={16} className="mr-2"/> 保存到本地文件系统
+                          <span className="text-xs font-bold text-text-primary">{importStatus === 'success' ? '导入成功' : '导入 JSON'}</span>
+                        </button>
+                        <input type="file" ref={fileInputRef} onChange={onFileChange} accept=".json,.hdenc.json" className="hidden" />
+
+                        {canUseFileSystem && (
+                          <button onClick={onFileSystemBackup} className="col-span-2 flex items-center justify-center p-3 bg-surface-muted border border-surface-border rounded-2xl text-xs font-bold text-text-secondary hover:bg-surface-muted dark:hover:bg-surface-muted">
+                            <Archive size={16} className="mr-2"/> 保存到本地文件系统
                           </button>
-                      )}
+                        )}
+                      </div>
+                    </div>
                   </div>
               </section>
 
-              {/* 5. Danger Zone */}
+              {/* Destructive action */}
               <section>
+                  <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-text-muted">危险操作</h3>
                   <button onClick={() => setIsClearDataModalOpen(true)} className="w-full py-3 text-xs font-bold text-state-danger-text bg-state-danger-bg rounded-xl hover:bg-state-danger-bg/80 transition-colors">
                       清除所有数据
                   </button>

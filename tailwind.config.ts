@@ -34,6 +34,7 @@ const config: Config = {
         'text-inverted': withOpacity('--text-inverted'),
         'text-on-accent': withOpacity('--text-on-accent'),
         accent: withOpacity('--accent'),
+        'accent-hover': withOpacity('--accent-hover'),
         'accent-vivid': withOpacity('--accent-vivid'),
         'accent-muted': withOpacity('--accent-muted'),
         'state-danger-bg': withOpacity('--state-danger-bg'),
@@ -47,33 +48,7 @@ const config: Config = {
         'chart-primary': withOpacity('--chart-primary'),
         'chart-secondary': withOpacity('--chart-secondary'),
         'chart-tertiary': withOpacity('--chart-tertiary'),
-        'chart-quaternary': withOpacity('--chart-quaternary'),
-
-        // 0.2.0 migration aliases. Remove after刀 30.
-        'brand-bg': withOpacity('--surface-base'),
-        'brand-card': withOpacity('--surface-card'),
-        'brand-primary': withOpacity('--surface-muted'),
-        'brand-secondary': withOpacity('--surface-elevated'),
-        'brand-text': withOpacity('--text-primary'),
-        'brand-muted': withOpacity('--text-muted'),
-        'brand-accent': withOpacity('--accent'),
-        'brand-accent-hover': withOpacity('--accent-hover'),
-        'palette-ice': withOpacity('--surface-muted'),
-        'palette-pink': withOpacity('--accent-vivid'),
-        'pastel-red': withOpacity('--state-danger-bg'),
-        'pastel-red-text': withOpacity('--state-danger-text'),
-        'pastel-orange': withOpacity('--state-warning-bg'),
-        'pastel-orange-text': withOpacity('--state-warning-text'),
-        'pastel-yellow': withOpacity('--state-warning-bg'),
-        'pastel-yellow-text': withOpacity('--state-warning-text'),
-        'pastel-green': withOpacity('--state-success-bg'),
-        'pastel-green-text': withOpacity('--state-success-text'),
-        'pastel-blue': withOpacity('--state-info-bg'),
-        'pastel-blue-text': withOpacity('--state-info-text'),
-        'pastel-purple': withOpacity('--chart-tertiary'),
-        'pastel-purple-text': withOpacity('--chart-tertiary'),
-        'pastel-pink': withOpacity('--accent-vivid'),
-        'pastel-pink-text': withOpacity('--accent-vivid')
+        'chart-quaternary': withOpacity('--chart-quaternary')
       },
       fontFamily: {
         sans: [

@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import type { LogEntry } from '../../../domain';
+import type { LogEntry, MetricPreferenceMap } from '../../../domain';
+import { sortByMetricPreference } from '../../../domain';
 import {
   runReviewFilter,
   type ReviewFilterDraft,
@@ -103,11 +104,30 @@ const ResultRow: React.FC<{ log: LogEntry }> = ({ log }) => {
 
 interface AdvancedReviewSectionProps {
   logs: LogEntry[];
+  metricPreferences?: MetricPreferenceMap;
 }
 
 const MAX_RENDER = 60;
 
-const AdvancedReviewSection: React.FC<AdvancedReviewSectionProps> = ({ logs }) => {
+const BEHAVIOR_METRIC_ID: Record<BehaviorKey, string> = {
+  sleep: 'sleep',
+  exercise: 'exercise',
+  alcohol: 'alcohol',
+  caffeine: 'caffeine',
+  sex: 'sex',
+  masturbation: 'masturbation',
+  porn: 'porn',
+  partnerInvolved: 'relationship'
+};
+
+const QUALITY_METRIC_ID: Record<DataQualityKey, string> = {
+  complete: 'dataQuality',
+  missingSleep: 'sleep',
+  missingHardness: 'hardness',
+  lowConfidence: 'dataQuality'
+};
+
+const AdvancedReviewSection: React.FC<AdvancedReviewSectionProps> = ({ logs, metricPreferences }) => {
   const today = useMemo(() => getActivityTargetDate(new Date()), []);
   const [time, setTime] = useState<TimePreset>('last30');
   const [customFrom, setCustomFrom] = useState('');
@@ -124,6 +144,14 @@ const AdvancedReviewSection: React.FC<AdvancedReviewSectionProps> = ({ logs }) =
   );
 
   const result = useMemo(() => runReviewFilter(logs, draft, today), [logs, draft, today]);
+  const behaviorOptions = useMemo(
+    () => sortByMetricPreference(BEHAVIOR_OPTIONS, (option) => BEHAVIOR_METRIC_ID[option.key], metricPreferences),
+    [metricPreferences]
+  );
+  const qualityOptions = useMemo(
+    () => sortByMetricPreference(QUALITY_OPTIONS, (option) => QUALITY_METRIC_ID[option.key], metricPreferences),
+    [metricPreferences]
+  );
 
   const hasNonDefault = behaviors.length > 0 || dataQuality.length > 0 || time !== 'last30';
 
@@ -180,7 +208,7 @@ const AdvancedReviewSection: React.FC<AdvancedReviewSectionProps> = ({ logs }) =
       <div className="space-y-1.5">
         <p className="text-[10px] font-bold uppercase tracking-wider text-text-muted">行为（多选取并集）</p>
         <div className="flex flex-wrap gap-1.5">
-          {BEHAVIOR_OPTIONS.map((o) => (
+          {behaviorOptions.map((o) => (
             <Pill key={o.key} active={behaviors.includes(o.key)} onClick={() => setBehaviors(toggle(behaviors, o.key))}>
               {o.label}
             </Pill>
@@ -192,7 +220,7 @@ const AdvancedReviewSection: React.FC<AdvancedReviewSectionProps> = ({ logs }) =
       <div className="space-y-1.5">
         <p className="text-[10px] font-bold uppercase tracking-wider text-text-muted">记录质量</p>
         <div className="flex flex-wrap gap-1.5">
-          {QUALITY_OPTIONS.map((o) => (
+          {qualityOptions.map((o) => (
             <Pill
               key={o.key}
               active={dataQuality.includes(o.key)}

@@ -1,5 +1,6 @@
 import React, { lazy, Suspense, useMemo, useState } from 'react';
-import type { LogEntry } from '../../domain';
+import type { LogEntry, MetricPreferenceMap } from '../../domain';
+import { sortByMetricPreference } from '../../domain';
 import { ChevronRight, Sparkles, Target, TrendingUp } from 'lucide-react';
 import { ErrorBoundary } from '../../shared/ui';
 import { analyzePersonalState, type AchievableGoal, type ConfidenceLevel, type FactorImpact, type ForecastDay, type StateReason } from './model/PersonalStateEngine';
@@ -11,6 +12,7 @@ type StateTab = 'status' | 'history';
 interface StateViewProps {
   isDarkMode: boolean;
   logs: LogEntry[];
+  metricPreferences?: MetricPreferenceMap;
 }
 
 const confidenceClass: Record<ConfidenceLevel, string> = {
@@ -169,9 +171,21 @@ const ReasonChip: React.FC<{ reason: StateReason }> = ({ reason }) => (
   </div>
 );
 
-const StateView: React.FC<StateViewProps> = ({ isDarkMode, logs }) => {
+const StateView: React.FC<StateViewProps> = ({ isDarkMode, logs, metricPreferences }) => {
   const [activeTab, setActiveTab] = useState<StateTab>('status');
   const result = useMemo(() => analyzePersonalState(logs), [logs]);
+  const currentReasons = useMemo(
+    () => sortByMetricPreference(result.currentState.reasons, (reason) => reason.key, metricPreferences),
+    [metricPreferences, result.currentState.reasons]
+  );
+  const positiveFactors = useMemo(
+    () => sortByMetricPreference(result.influencingFactors.positiveTop5, (factor) => factor.key.replace(/-(positive|negative)$/, ''), metricPreferences),
+    [metricPreferences, result.influencingFactors.positiveTop5]
+  );
+  const negativeFactors = useMemo(
+    () => sortByMetricPreference(result.influencingFactors.negativeTop5, (factor) => factor.key.replace(/-(positive|negative)$/, ''), metricPreferences),
+    [metricPreferences, result.influencingFactors.negativeTop5]
+  );
   const stateTone = stateToneClass[result.currentState.type] || stateToneClass.stable;
   const weeklyAverageHardness = result.forecast.weeklySummary.averageHardness;
 
@@ -219,7 +233,7 @@ const StateView: React.FC<StateViewProps> = ({ isDarkMode, logs }) => {
                 </div>
               </div>
               <div className="mt-5 grid gap-3 md:grid-cols-2">
-                {result.currentState.reasons.map((reason) => <ReasonChip key={reason.key} reason={reason} />)}
+                {currentReasons.map((reason) => <ReasonChip key={reason.key} reason={reason} />)}
               </div>
             </section>
 
@@ -284,14 +298,14 @@ const StateView: React.FC<StateViewProps> = ({ isDarkMode, logs }) => {
             </section>
 
             <div className="grid gap-4 md:grid-cols-2">
-              <FactorList title="正向影响因素" factors={result.influencingFactors.positiveTop5} positive />
-              <FactorList title="负向影响因素" factors={result.influencingFactors.negativeTop5} positive={false} />
+              <FactorList title="正向影响因素" factors={positiveFactors} positive />
+              <FactorList title="负向影响因素" factors={negativeFactors} positive={false} />
             </div>
           </div>
         ) : (
           <div className="animate-in fade-in slide-in-from-bottom-2">
             <Suspense fallback={<div className="rounded-[1.5rem] border border-dashed border-surface-border bg-surface-muted p-5 text-sm font-medium text-text-muted">统计加载中...</div>}>
-              <StatsView isDarkMode={isDarkMode} logs={logs} />
+              <StatsView isDarkMode={isDarkMode} logs={logs} metricPreferences={metricPreferences} />
             </Suspense>
           </div>
         )}

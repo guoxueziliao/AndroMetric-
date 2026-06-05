@@ -1,5 +1,20 @@
 
-import { LogEntry, PartnerProfile, ContentItem } from '../types';
+import {
+    ContentItem,
+    CycleEvent,
+    GoalCheckin,
+    HealthProject,
+    HealthProjectLog,
+    HealthProjectPlan,
+    LogEntry,
+    MasturbationEvent,
+    PartnerProfile,
+    PregnancyEvent,
+    PornUseEvent,
+    SexEvent,
+    TagEntry,
+    TrainingGoal
+} from '../types';
 import { validateLogEntry } from './validators';
 import { validateTag } from './tagValidators';
 import { buildDataQualityForLog, isFieldUsable } from './dataQuality';
@@ -21,6 +36,30 @@ export interface HealthIssue {
     severity: 'high' | 'medium' | 'low';
     hintAction?: string; 
     path?: string; 
+}
+
+export interface DataTableHealthStats {
+    records: number;
+    issues: number;
+    missingIds: number;
+    missingFields: number;
+    brokenRelations: number;
+}
+
+export interface DataHealthDataset {
+    logs: LogEntry[];
+    partners: PartnerProfile[];
+    tags?: TagEntry[];
+    cycleEvents?: CycleEvent[];
+    pregnancyEvents?: PregnancyEvent[];
+    pornUseEvents?: PornUseEvent[];
+    masturbationEvents?: MasturbationEvent[];
+    sexEvents?: SexEvent[];
+    trainingGoals?: TrainingGoal[];
+    goalCheckins?: GoalCheckin[];
+    healthProjects?: HealthProject[];
+    healthProjectPlans?: HealthProjectPlan[];
+    healthProjectLogs?: HealthProjectLog[];
 }
 
 export interface DataHealthReport {
@@ -52,9 +91,33 @@ export interface DataHealthReport {
             missingPlatform: number;
             migrationUnconfirmed: number;
         };
+        tableStats: Record<string, DataTableHealthStats>;
+        orphanRelations: {
+            total: number;
+            byTable: Record<string, number>;
+        };
     };
     canRepair: boolean;
+    canCleanOrphanRelations: boolean;
 }
+
+const createTableStats = (records: number): DataTableHealthStats => ({
+    records,
+    issues: 0,
+    missingIds: 0,
+    missingFields: 0,
+    brokenRelations: 0
+});
+
+const hasValue = (value: unknown) => (
+    value !== undefined && value !== null && value !== ''
+);
+
+const getStringField = (record: unknown, field: string): string | null => {
+    if (typeof record !== 'object' || record === null) return null;
+    const value = (record as Record<string, unknown>)[field];
+    return typeof value === 'string' && value.trim() ? value : null;
+};
 
 // Reusable validation for a single ContentItem (UI & Backend) based on C-E1 to C-I3
 export const validateContentItem = (item: ContentItem): ContentNoticeDef[] => {
@@ -164,9 +227,31 @@ export const validateContentItem = (item: ContentItem): ContentNoticeDef[] => {
     return issues;
 };
 
-export const checkDataHealth = (logs: LogEntry[], partners: PartnerProfile[]): DataHealthReport => {
+export const checkDataHealth = (
+    input: DataHealthDataset | LogEntry[],
+    legacyPartners: PartnerProfile[] = []
+): DataHealthReport => {
+    const dataset: DataHealthDataset = Array.isArray(input) ? { logs: input, partners: legacyPartners } : input;
+    const {
+        logs,
+        partners,
+        tags = [],
+        cycleEvents = [],
+        pregnancyEvents = [],
+        pornUseEvents = [],
+        masturbationEvents = [],
+        sexEvents = [],
+        trainingGoals = [],
+        goalCheckins = [],
+        healthProjects = [],
+        healthProjectPlans = [],
+        healthProjectLogs = []
+    } = dataset;
     const issues: HealthIssue[] = [];
     const partnerNames = new Set(partners.map(p => p.name));
+    const partnerIds = new Set(partners.map(p => p.id));
+    const trainingGoalIds = new Set(trainingGoals.map(goal => goal.id));
+    const healthProjectIds = new Set(healthProjects.map(project => project.id));
     
     let missingSleep = 0;
     let missingHealth = 0;
@@ -182,6 +267,81 @@ export const checkDataHealth = (logs: LogEntry[], partners: PartnerProfile[]): D
         missingType: 0,
         missingPlatform: 0,
         migrationUnconfirmed: 0
+    };
+
+    const tableStats: Record<string, DataTableHealthStats> = {
+        logs: createTableStats(logs.length),
+        partners: createTableStats(partners.length),
+        tags: createTableStats(tags.length),
+        cycle_events: createTableStats(cycleEvents.length),
+        pregnancy_events: createTableStats(pregnancyEvents.length),
+        porn_use_events: createTableStats(pornUseEvents.length),
+        masturbation_events: createTableStats(masturbationEvents.length),
+        sex_events: createTableStats(sexEvents.length),
+        training_goals: createTableStats(trainingGoals.length),
+        goal_checkins: createTableStats(goalCheckins.length),
+        health_projects: createTableStats(healthProjects.length),
+        health_project_plans: createTableStats(healthProjectPlans.length),
+        health_project_logs: createTableStats(healthProjectLogs.length)
+    };
+
+    const orphanRelationsByTable: Record<string, number> = {};
+
+    const addTableIssue = (
+        table: string,
+        issue: HealthIssue,
+        counts?: { missingId?: boolean; missingField?: boolean; brokenRelation?: boolean }
+    ) => {
+        issues.push(issue);
+        const stats = tableStats[table] ?? (tableStats[table] = createTableStats(0));
+        stats.issues++;
+        if (counts?.missingId) stats.missingIds++;
+        if (counts?.missingField) stats.missingFields++;
+        if (counts?.brokenRelation) {
+            stats.brokenRelations++;
+            orphanRelationsByTable[table] = (orphanRelationsByTable[table] ?? 0) + 1;
+        }
+    };
+
+    const checkRequiredFields = (
+        table: string,
+        record: unknown,
+        index: number,
+        fields: string[],
+        displayName: string,
+        date: string
+    ) => {
+        fields.forEach(field => {
+            if (!hasValue(typeof record === 'object' && record !== null ? (record as Record<string, unknown>)[field] : undefined)) {
+                const id = getStringField(record, 'id') ?? String(index);
+                addTableIssue(table, {
+                    id: `${table}_${id}_missing_${field}`,
+                    date,
+                    type: field === 'id' ? 'schema' : 'missing_field',
+                    message: `${displayName} 缺少 ${field}`,
+                    severity: field === 'id' ? 'high' : 'medium',
+                    path: `${table}[${index}].${field}`
+                }, { missingId: field === 'id', missingField: field !== 'id' });
+            }
+        });
+    };
+
+    const addRelationIssue = (
+        table: string,
+        sourceId: string,
+        date: string,
+        path: string,
+        message: string
+    ) => {
+        brokenRelations++;
+        addTableIssue(table, {
+            id: `${table}_${sourceId}_${path}_orphan`,
+            date,
+            type: 'relation',
+            message,
+            severity: 'low',
+            path
+        }, { brokenRelation: true });
     };
 
     const analyticsAvailability: DataHealthReport['stats']['analyticsAvailability'] = {
@@ -216,7 +376,7 @@ export const checkDataHealth = (logs: LogEntry[], partners: PartnerProfile[]): D
         if (!log.health) { missingHealth++; }
 
         // 3. Array Checks
-        const checkArray = (arr: any, name: string) => {
+        const checkArray = (arr: unknown, name: string) => {
             if (!Array.isArray(arr)) {
                 issues.push({ id: `${log.date}_${name}_array`, date: log.date, type: 'schema', message: `${name} 数据格式错误(非数组)`, severity: 'high', path: name });
                 nullArrays++;
@@ -229,15 +389,33 @@ export const checkDataHealth = (logs: LogEntry[], partners: PartnerProfile[]): D
         // 4. Relations
         if (log.sex) {
             log.sex.forEach((sex, idx) => {
-                const names: string[] = [];
-                if (sex.partner) names.push(sex.partner);
-                if (sex.interactions) sex.interactions.forEach(i => i.partner && names.push(i.partner));
-                names.forEach(name => {
-                    if (!partnerNames.has(name)) {
+                if (sex.partner && !partnerNames.has(sex.partner)) {
+                    brokenRelations++;
+                    orphanRelationsByTable.logs = (orphanRelationsByTable.logs ?? 0) + 1;
+                    issues.push({
+                        id: `${log.date}_rel_${idx}_partner`,
+                        date: log.date,
+                        type: 'relation',
+                        message: `引用不存在的伴侣: ${sex.partner}`,
+                        severity: 'low',
+                        path: `sex[${idx}].partner`
+                    });
+                }
+                if (sex.interactions) {
+                    sex.interactions.forEach((interaction, interactionIdx) => {
+                        if (!interaction.partner || partnerNames.has(interaction.partner)) return;
                         brokenRelations++;
-                        issues.push({ id: `${log.date}_rel_${idx}`, date: log.date, type: 'relation', message: `引用不存在的伴侣: ${name}`, severity: 'low', path: `sex[${idx}].partner` });
-                    }
-                });
+                        orphanRelationsByTable.logs = (orphanRelationsByTable.logs ?? 0) + 1;
+                        issues.push({
+                            id: `${log.date}_rel_${idx}_interaction_${interactionIdx}`,
+                            date: log.date,
+                            type: 'relation',
+                            message: `引用不存在的伴侣: ${interaction.partner}`,
+                            severity: 'low',
+                            path: `sex[${idx}].interactions[${interactionIdx}].partner`
+                        });
+                    });
+                }
             });
         }
 
@@ -302,8 +480,116 @@ export const checkDataHealth = (logs: LogEntry[], partners: PartnerProfile[]): D
         if (Array.isArray(log.sex) && log.sex.length > 0) analyticsAvailability.sex.usableSamples++;
     });
 
+    const scoreIssues = [...issues];
+    tableStats.logs = {
+        records: logs.length,
+        issues: scoreIssues.filter(issue => !issue.path || !issue.path.includes('_events[')).length,
+        missingIds,
+        missingFields,
+        brokenRelations
+    };
+
+    partners.forEach((partner, index) => {
+        checkRequiredFields('partners', partner, index, ['id', 'name'], '伴侣', 'partners');
+    });
+
+    tags.forEach((tag, index) => {
+        checkRequiredFields('tags', tag, index, ['name', 'category'], '标签', 'tags');
+    });
+
+    cycleEvents.forEach((event, index) => {
+        checkRequiredFields('cycle_events', event, index, ['id', 'partnerId', 'date', 'kind', 'source'], '周期事件', event.date ?? 'cycle_events');
+        if (event.partnerId && !partnerIds.has(event.partnerId)) {
+            addRelationIssue('cycle_events', event.id || String(index), event.date, `cycle_events[${index}].partnerId`, `周期事件引用不存在的伴侣 ID: ${event.partnerId}`);
+        }
+    });
+
+    pregnancyEvents.forEach((event, index) => {
+        checkRequiredFields('pregnancy_events', event, index, ['id', 'partnerId', 'date', 'kind', 'source'], '怀孕事件', event.date ?? 'pregnancy_events');
+        if (event.partnerId && !partnerIds.has(event.partnerId)) {
+            addRelationIssue('pregnancy_events', event.id || String(index), event.date, `pregnancy_events[${index}].partnerId`, `怀孕事件引用不存在的伴侣 ID: ${event.partnerId}`);
+        }
+    });
+
+    pornUseEvents.forEach((event, index) => {
+        checkRequiredFields('porn_use_events', event, index, ['id', 'startedAt', 'targetDate', 'status', 'source'], '色情使用事件', event.targetDate ?? 'porn_use_events');
+        if (!Array.isArray(event.contentTypes)) {
+            addTableIssue('porn_use_events', {
+                id: `${event.id || index}_contentTypes_array`,
+                date: event.targetDate,
+                type: 'schema',
+                message: '色情使用事件 contentTypes 数据格式错误(非数组)',
+                severity: 'high',
+                path: `porn_use_events[${index}].contentTypes`
+            });
+        }
+        if (!Array.isArray(event.sourceTypes)) {
+            addTableIssue('porn_use_events', {
+                id: `${event.id || index}_sourceTypes_array`,
+                date: event.targetDate,
+                type: 'schema',
+                message: '色情使用事件 sourceTypes 数据格式错误(非数组)',
+                severity: 'high',
+                path: `porn_use_events[${index}].sourceTypes`
+            });
+        }
+    });
+
+    masturbationEvents.forEach((event, index) => {
+        checkRequiredFields('masturbation_events', event, index, ['id', 'startedAt', 'targetDate', 'status', 'source'], '自慰事件', event.targetDate ?? 'masturbation_events');
+    });
+
+    sexEvents.forEach((event, index) => {
+        checkRequiredFields('sex_events', event, index, ['id', 'startedAt', 'targetDate', 'status', 'source'], '性生活事件', event.targetDate ?? 'sex_events');
+        if (!Array.isArray(event.partnerIds)) {
+            addTableIssue('sex_events', {
+                id: `${event.id || index}_partnerIds_array`,
+                date: event.targetDate,
+                type: 'schema',
+                message: '性生活事件 partnerIds 数据格式错误(非数组)',
+                severity: 'high',
+                path: `sex_events[${index}].partnerIds`
+            });
+            return;
+        }
+        event.partnerIds.forEach(partnerId => {
+            if (partnerId && !partnerIds.has(partnerId)) {
+                addRelationIssue('sex_events', event.id || String(index), event.targetDate, `sex_events[${index}].partnerIds`, `性生活事件引用不存在的伴侣 ID: ${partnerId}`);
+            }
+        });
+    });
+
+    trainingGoals.forEach((goal, index) => {
+        checkRequiredFields('training_goals', goal, index, ['id', 'createdAt', 'updatedAt', 'status', 'category', 'title', 'startDate', 'targetWindowDays', 'source'], '训练目标', goal.startDate ?? 'training_goals');
+    });
+
+    goalCheckins.forEach((checkin, index) => {
+        checkRequiredFields('goal_checkins', checkin, index, ['id', 'goalId', 'createdAt', 'targetDate', 'status'], '目标签到', checkin.targetDate ?? 'goal_checkins');
+        if (checkin.goalId && !trainingGoalIds.has(checkin.goalId)) {
+            addRelationIssue('goal_checkins', checkin.id || String(index), checkin.targetDate, `goal_checkins[${index}].goalId`, `目标签到引用不存在的训练目标 ID: ${checkin.goalId}`);
+        }
+    });
+
+    healthProjects.forEach((project, index) => {
+        checkRequiredFields('health_projects', project, index, ['id', 'type', 'name', 'status', 'startDate', 'createdAt', 'updatedAt'], '健康项目', project.startDate ?? 'health_projects');
+    });
+
+    healthProjectPlans.forEach((plan, index) => {
+        checkRequiredFields('health_project_plans', plan, index, ['id', 'projectId', 'scheduleType', 'startDate'], '健康项目计划', plan.startDate ?? 'health_project_plans');
+        if (plan.projectId && !healthProjectIds.has(plan.projectId)) {
+            addRelationIssue('health_project_plans', plan.id || String(index), plan.startDate, `health_project_plans[${index}].projectId`, `健康项目计划引用不存在的项目 ID: ${plan.projectId}`);
+        }
+    });
+
+    healthProjectLogs.forEach((log, index) => {
+        checkRequiredFields('health_project_logs', log, index, ['id', 'projectId', 'targetDate', 'status'], '健康项目日志', log.targetDate ?? 'health_project_logs');
+        if (log.projectId && !healthProjectIds.has(log.projectId)) {
+            addRelationIssue('health_project_logs', log.id || String(index), log.targetDate, `health_project_logs[${index}].projectId`, `健康项目日志引用不存在的项目 ID: ${log.projectId}`);
+        }
+    });
+
     let structureRawScore = 100;
-    issues.forEach(i => {
+    scoreIssues.forEach(i => {
         if (i.severity === 'high') structureRawScore -= 5;
         else if (i.severity === 'medium') structureRawScore -= 2;
         else structureRawScore -= 0.5;
@@ -338,8 +624,14 @@ export const checkDataHealth = (logs: LogEntry[], partners: PartnerProfile[]): D
                 missingFields
             },
             analyticsAvailability,
-            contentIssues: contentStats
+            contentIssues: contentStats,
+            tableStats,
+            orphanRelations: {
+                total: Object.values(orphanRelationsByTable).reduce((sum, count) => sum + count, 0),
+                byTable: orphanRelationsByTable
+            }
         },
-        canRepair: issues.some(i => i.type === 'schema' || i.message.includes('ID'))
+        canRepair: scoreIssues.some(i => i.type === 'schema' || i.message.includes('ID')),
+        canCleanOrphanRelations: Object.values(orphanRelationsByTable).some(count => count > 0)
     };
 };

@@ -1,3 +1,5 @@
+import type { MetricPreferenceMap } from './metricPreferences';
+
 export interface AppLockSettings {
     enabled: boolean;
     pinHash?: string;
@@ -24,6 +26,7 @@ export interface AppSettings {
     enableNotifications: boolean;
     notificationTime: { morning: string; evening: string };
     hiddenFields: string[];
+    metricPreferences?: MetricPreferenceMap;
     lastExportAt?: number;
     appLock?: AppLockSettings;
     backupRetention?: BackupRetentionSettings;

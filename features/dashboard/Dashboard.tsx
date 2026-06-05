@@ -1,5 +1,6 @@
 import React, { lazy, Suspense, useEffect, useMemo, useState } from 'react';
-import type { LogEntry } from '../../domain';
+import type { LogEntry, MetricPreferenceMap } from '../../domain';
+import { sortByMetricPreference } from '../../domain';
 import { StorageService } from '../../core/storage';
 import { 
   Moon, Zap, Activity, Hand, Dumbbell, CloudSun, Beer, ShieldAlert, Edit3,
@@ -29,9 +30,21 @@ const DashboardMonthView = lazy(() => import('./DashboardMonthView'));
 
 interface DashboardProps {
   logs: LogEntry[];
+  metricPreferences?: MetricPreferenceMap;
   actions: DashboardActions;
   onNavigateToReview?: () => void;
 }
+
+const TILE_METRIC_ID: Partial<Record<TodayTileKey, string>> = {
+  sleep: 'sleep',
+  health: 'healthProject',
+  sexual: 'sexLoad',
+  exercise: 'exercise',
+  menstrual: 'relationship',
+  rest: 'sleep',
+  healthScore: 'healthScore',
+  overall: 'dataQuality'
+};
 
 const WEATHER_LABELS: Record<string, string> = { sunny: '晴', cloudy: '多云', rainy: '雨', snowy: '雪', windy: '大风', foggy: '雾' };
 const LOCATION_LABELS: Record<string, string> = { home: '家', partner: '伴侣家', hotel: '酒店', travel: '旅途', other: '其他' };
@@ -53,6 +66,7 @@ type DashboardView = 'day' | 'week' | 'month';
 
 const Dashboard: React.FC<DashboardProps> = ({
   logs: rawLogs,
+  metricPreferences,
   actions,
   onNavigateToReview
 }) => {
@@ -113,7 +127,10 @@ const Dashboard: React.FC<DashboardProps> = ({
     () => attachMenstrualSummary(logs.find((item) => item.date === todayDate) || hydrateLog({ date: todayDate }), partners, cycleEvents),
     [cycleEvents, logs, partners, todayDate]
   );
-  const todayTiles = useMemo(() => buildTodayTiles(todayLog), [todayLog]);
+  const todayTiles = useMemo(
+    () => sortByMetricPreference(buildTodayTiles(todayLog), (tile) => TILE_METRIC_ID[tile.key] ?? tile.key, metricPreferences),
+    [metricPreferences, todayLog]
+  );
   const selectedTile = useMemo(() => todayTiles.find((item) => item.key === selectedTileKey) || null, [todayTiles, selectedTileKey]);
   const weekSummary = useMemo(() => buildWeekSummary(logs), [logs]);
 

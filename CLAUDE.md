@@ -17,7 +17,7 @@ npm run build        # Production build to dist/
 npm run preview      # Preview production build
 npm run test         # Vitest single run
 npm run test:watch   # Vitest watch mode
-npx tsc --noEmit     # Typecheck (no dedicated script yet; architecture doc recommends adding `typecheck`)
+npm run typecheck    # Typecheck
 ```
 
 Run a single test file or test:
@@ -31,7 +31,7 @@ Vitest is configured in `vitest.config.ts`: `happy-dom` environment, globals on,
 
 ## Architecture
 
-The codebase is mid-refactor from a flat `components/`-based layout to a layered architecture. The active layout is documented in `docs/architecture.md` and is authoritative — prefer it over the legacy structure.
+The codebase uses the layered architecture documented in `docs/architecture.md`. Treat that file as authoritative for current boundaries.
 
 **Layers (strict dependency direction, top → bottom only):**
 
@@ -55,9 +55,9 @@ app  →  features  →  shared/ui, core/storage  →  shared/lib, domain
 - Per-activity write logic lives in `features/quick-actions/model/useCases/{sex,masturbation,exercise,nap,alcohol,sleep}.ts` as plain async functions; `useLogs()` only owns the live queries, the error-wrapped storage writers, and the `useCallback` bindings that inject `saveLog`/`deleteLog` into the use cases.
 - Phase-2 narrow contexts that the architecture doc names but that have no current consumer (LogCommand, QuickAction, Tag, Settings) are intentionally NOT built — add one when a real caller needs it, rather than ship dead infrastructure.
 
-**Legacy paths that still exist and are being migrated:**
+**Legacy paths that still exist:**
 
-- `utils/helpers.ts` — slated to split into `shared/lib` (pure helpers) and `domain/rules` (business rules); currently still at the repo root.
+- `utils/helpers.ts` — mixed legacy helpers; prefer `shared/lib` or `domain/rules` for new pure logic.
 
 **Moved into the new layered structure (root paths are now re-export shims):**
 
@@ -82,13 +82,13 @@ The `components/` directory has been removed entirely; do NOT recreate it.
 
 ## Database schema and migrations
 
-`db.ts` defines a Dexie database `HardnessDiaryDB` currently at **version 6** with tables: `logs`, `partners`, `cycle_events`, `pregnancy_events`, `meta`, `system_logs`, `snapshots`, `tags` (composite key `[name+category]`).
+`core/storage/db.ts` defines a Dexie database `HardnessDiaryDB` currently at **version 9** with tables: `logs`, `partners`, `cycle_events`, `pregnancy_events`, `meta`, `system_logs`, `snapshots`, `tags` (composite key `[name+category]`), adult behavior event tables, training tables, and health project tables. `core/storage/migration.ts` currently has `LATEST_VERSION = 50`.
 
-**Any schema change in `db.ts` must be paired with a migration step in `utils/migration.ts`.** The architecture doc forbids new migrations during the current refactor phase unless fixing data corruption. Never rename user-visible fields or exported JSON field names purely for refactoring.
+**Any schema change in `core/storage/db.ts` must be paired with a migration step in `core/storage/migration.ts`.** Never rename user-visible fields or exported JSON field names purely for refactoring.
 
 ## Build / bundling
 
-`vite.config.ts` defines explicit manual chunks (`react-vendor`, `dexie-vendor`, `chart-vendor`, `motion-vendor`, `icon-vendor`, `markdown-vendor`, `vendor`). PWA is configured via `vite-plugin-pwa` with `registerType: 'autoUpdate'`; Tailwind is loaded via CDN from `index.html` and cached by the service worker (see workbox `runtimeCaching`).
+`vite.config.ts` defines explicit manual chunks (`react-vendor`, `dexie-vendor`, `chart-vendor`, `motion-vendor`, `icon-vendor`, `markdown-vendor`, `vendor`). PWA is configured via `vite-plugin-pwa` with `registerType: 'autoUpdate'`. Tailwind is built locally through `tailwind.config.ts`, `postcss.config.js`, and `index.css`.
 
 Heavy views (`StatsView`, `SexLifeView`, `features/profile/MyView`) are loaded with `React.lazy()`; keep this when adding similarly large views.
 
@@ -96,13 +96,13 @@ Heavy views (`StatsView`, `SexLifeView`, `features/profile/MyView`) are loaded w
 
 - TypeScript `strict: true` plus `noUnusedLocals` / `noUnusedParameters` — both error. Do not introduce `any`; do not suppress these flags.
 - Module config: `ESNext` with `allowImportingTsExtensions: true` (imports may include `.ts`/`.tsx`).
-- Tailwind brand tokens: `brand-bg`, `brand-text`, `brand-accent`, `brand-muted`. Prefer Tailwind classes over inline styles.
+- Visual tokens: `index.css` is the single source of truth for semantic CSS variables (`--surface-*`, `--text-*`, `--accent-*`, `--state-*`, `--chart-*`), and `tailwind.config.ts` only maps those variables to utilities. Components should use semantic Tailwind tokens such as `bg-surface-base`, `text-text-primary`, `bg-accent`, and `text-text-muted`; do not reintroduce `brand-*`, `pastel-*`, or `palette-*` aliases, and avoid literal hex/rgb colors in component styles.
 
 ## Things to avoid
 
 - Adding business logic to `App.tsx` (currently only composes `AppProviders` + `AppContent`).
 - Importing `db`, Dexie tables, or `StorageService.logs.*` from new components.
-- Calling `useData()` from `shared/ui` primitives.
+- Consuming app contexts or storage services from `shared/ui` primitives.
 - Importing React, Dexie, DOM, window, or localStorage from `domain/`.
 - Deep-importing another feature's internal files; go through its `index.ts`.
 - Mixing architecture-migration changes and product-feature changes in the same PR.

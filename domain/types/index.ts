@@ -10,3 +10,4 @@ export * from './adultBehavior';
 export * from './training';
 export * from './relationshipContext';
 export * from './healthProject';
+export * from './metricPreferences';

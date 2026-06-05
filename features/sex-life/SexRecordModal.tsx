@@ -259,7 +259,7 @@ const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-brand-bg  text-text-primary  flex flex-col h-full font-sans overflow-hidden">
+    <div className="fixed inset-0 z-50 bg-surface-base  text-text-primary  flex flex-col h-full font-sans overflow-hidden">
         
         {/* --- Header --- */}
         <div className="flex-none px-4 py-3 flex items-center justify-between bg-surface-card  sticky top-0 z-10 border-b border-surface-border  shadow-sm">
@@ -577,7 +577,7 @@ const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave
                                                     onClick={() => updateActive('partner', p.name)}
                                                     className={`flex-shrink-0 flex flex-col items-center gap-2 transition-all duration-slow ${isActive ? 'opacity-100 scale-110' : 'opacity-60 hover:opacity-100'}`}
                                                 >
-                                                    <div className={`w-14 h-14 rounded-full flex items-center justify-center text-base font-bold shadow-md ring-2 ${isActive ? 'ring-brand-accent ring-offset-2 dark:ring-offset-surface-muted' : 'ring-transparent'} ${p.avatarColor || 'bg-surface-border'} text-text-on-accent`}>
+                                                    <div className={`w-14 h-14 rounded-full flex items-center justify-center text-base font-bold shadow-md ring-2 ${isActive ? 'ring-accent ring-offset-2 dark:ring-offset-surface-muted' : 'ring-transparent'} ${p.avatarColor || 'bg-surface-border'} text-text-on-accent`}>
                                                         {p.name[0]}
                                                     </div>
                                                     <span className={`text-[10px] font-medium ${isActive ? 'text-accent' : 'text-text-muted'}`}>{p.name}</span>
@@ -796,7 +796,7 @@ const SexRecordModal: React.FC<SexRecordModalProps> = ({ isOpen, onClose, onSave
                                  <button 
                                     key={k}
                                     onClick={() => updateIndicator(k as any, !data.indicators[k as keyof typeof data.indicators])}
-                                    className={`p-3 rounded-xl border flex items-center justify-between font-bold transition-all ${data.indicators[k as keyof typeof data.indicators] ? `bg-surface-card  border-accent shadow-sm ring-1 ring-brand-accent` : 'bg-surface-card  border-surface-border  text-text-muted'}`}
+                                    className={`p-3 rounded-xl border flex items-center justify-between font-bold transition-all ${data.indicators[k as keyof typeof data.indicators] ? `bg-surface-card  border-accent shadow-sm ring-1 ring-accent` : 'bg-surface-card  border-surface-border  text-text-muted'}`}
                                  >
                                      <span className="text-xs text-text-primary ">{l}</span>
                                      <Icon size={16} className={data.indicators[k as keyof typeof data.indicators] ? c : 'text-text-muted'}/>

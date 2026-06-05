@@ -22,8 +22,8 @@ const SexLifeView = lazy(() => import('../features/sex-life').then((module) => (
 const LogForm = lazy(() => import('../features/daily-log').then((module) => ({ default: module.LogForm })));
 
 const LoadingFallback = () => (
-  <div className="flex flex-col items-center justify-center h-[50vh] text-brand-muted">
-    <Loader2 size={32} className="animate-spin mb-2 text-brand-accent" />
+  <div className="flex flex-col items-center justify-center h-[50vh] text-text-muted">
+    <Loader2 size={32} className="animate-spin mb-2 text-accent" />
     <p className="text-sm font-medium">功能加载中...</p>
   </div>
 );
@@ -116,6 +116,7 @@ const MainViewRouter: React.FC<MainViewRouterProps> = ({
           {activeMainView === 'calendar' && (
             <Dashboard
               logs={logs}
+              metricPreferences={settings.metricPreferences}
               actions={{
                 onEdit,
                 onDeleteLog,
@@ -137,6 +138,7 @@ const MainViewRouter: React.FC<MainViewRouterProps> = ({
               <StateView
                 isDarkMode={isDarkMode}
                 logs={logs}
+                metricPreferences={settings.metricPreferences}
               />
             )}
             {activeMainView === 'sexlife' && (

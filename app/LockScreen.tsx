@@ -74,13 +74,13 @@ const LockScreen: React.FC<LockScreenProps> = ({ appLock, onUnlock }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-[200] flex flex-col items-center justify-center bg-brand-bg dark:bg-surface-muted px-6 safe-area-top safe-area-bottom">
+    <div className="fixed inset-0 z-[200] flex flex-col items-center justify-center bg-surface-base dark:bg-surface-muted px-6 safe-area-top safe-area-bottom">
       <div className="mb-8 flex flex-col items-center gap-3">
-        <div className="rounded-full bg-brand-accent/10 p-4">
-          <Lock size={32} className="text-brand-accent" />
+        <div className="rounded-full bg-accent/10 p-4">
+          <Lock size={32} className="text-accent" />
         </div>
-        <h1 className="text-xl font-black text-brand-text dark:text-text-muted">输入 PIN</h1>
-        <p className="text-xs text-brand-muted dark:text-text-muted">
+        <h1 className="text-xl font-black text-text-primary dark:text-text-muted">输入 PIN</h1>
+        <p className="text-xs text-text-muted dark:text-text-muted">
           {attempts === 0 ? (canUseBiometric ? '使用生物识别或 4 位 PIN 解锁' : '请输入 4 位 PIN 解锁') : `已输错 ${attempts} 次,继续重试`}
         </p>
       </div>
@@ -90,7 +90,7 @@ const LockScreen: React.FC<LockScreenProps> = ({ appLock, onUnlock }) => {
           type="button"
           onClick={unlockWithBiometric}
           disabled={biometricBusy}
-          className="mb-8 flex items-center gap-2 rounded-2xl bg-brand-accent px-5 py-3 text-sm font-black text-white shadow-soft active:scale-95 transition-all disabled:opacity-50"
+          className="mb-8 flex items-center gap-2 rounded-2xl bg-accent px-5 py-3 text-sm font-black text-white shadow-soft active:scale-95 transition-all disabled:opacity-50"
         >
           <Fingerprint size={18} />
           {biometricBusy ? '验证中...' : '生物识别解锁'}
@@ -107,7 +107,7 @@ const LockScreen: React.FC<LockScreenProps> = ({ appLock, onUnlock }) => {
           return (
             <div
               key={i}
-              className={`h-3 w-3 rounded-full transition-all ${filled ? 'bg-brand-accent scale-110' : 'bg-surface-muted dark:bg-surface-muted'}`}
+              className={`h-3 w-3 rounded-full transition-all ${filled ? 'bg-accent scale-110' : 'bg-surface-muted dark:bg-surface-muted'}`}
             />
           );
         })}
@@ -120,7 +120,7 @@ const LockScreen: React.FC<LockScreenProps> = ({ appLock, onUnlock }) => {
             type="button"
             onClick={() => press(d)}
             disabled={verifying}
-            className="aspect-square rounded-2xl bg-white dark:bg-surface-muted border border-surface-border dark:border-surface-border text-2xl font-black text-brand-text dark:text-text-muted active:scale-95 transition-all shadow-soft disabled:opacity-50"
+            className="aspect-square rounded-2xl bg-white dark:bg-surface-muted border border-surface-border dark:border-surface-border text-2xl font-black text-text-primary dark:text-text-muted active:scale-95 transition-all shadow-soft disabled:opacity-50"
           >
             {d}
           </button>
@@ -130,7 +130,7 @@ const LockScreen: React.FC<LockScreenProps> = ({ appLock, onUnlock }) => {
           type="button"
           onClick={() => press('0')}
           disabled={verifying}
-          className="aspect-square rounded-2xl bg-white dark:bg-surface-muted border border-surface-border dark:border-surface-border text-2xl font-black text-brand-text dark:text-text-muted active:scale-95 transition-all shadow-soft disabled:opacity-50"
+          className="aspect-square rounded-2xl bg-white dark:bg-surface-muted border border-surface-border dark:border-surface-border text-2xl font-black text-text-primary dark:text-text-muted active:scale-95 transition-all shadow-soft disabled:opacity-50"
         >
           0
         </button>

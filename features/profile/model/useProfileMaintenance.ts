@@ -124,6 +124,7 @@ export const useProfileMaintenance = ({
   const [snapshotFeedback, setSnapshotFeedback] = useState('');
   const [healthReport, setHealthReport] = useState<DataHealthReport | null>(null);
   const [isRepairing, setIsRepairing] = useState(false);
+  const [isCleaningOrphans, setIsCleaningOrphans] = useState(false);
   const [isMobile, setIsMobile] = useState(getIsMobileDevice);
   const [isExportOptionsOpen, setIsExportOptionsOpen] = useState(false);
   const [exportOptions, setExportOptions] = useState<ExportOptions>(() => createDefaultExportOptions());
@@ -199,6 +200,30 @@ export const useProfileMaintenance = ({
       showToast(`修复流程中断: ${getErrorMessage(error, '未知错误')}`, 'error');
     } finally {
       setIsRepairing(false);
+    }
+  }, [runHealthCheck, showToast]);
+
+  const handleCleanOrphanRelations = useCallback(async () => {
+    if (!confirm('系统将自动创建当前数据的备份快照，随后清理已确认的孤立关系。\n\n清理会移除失效引用或删除失去父记录的子记录。确定继续吗？')) return;
+
+    setIsCleaningOrphans(true);
+    try {
+      showToast('正在创建安全备份...', 'info');
+      await StorageService.snapshots.create(`系统自动备份 - v${APP_VERSION} 清理孤立关系前`, 'auto-safety');
+      const result = await StorageService.cleanOrphanRelations();
+      await db.meta.put({ key: 'dataFixVersion', value: 2 });
+
+      if (result.total > 0) {
+        showToast(`清理完成: 已处理 ${result.total} 处孤立关系`, 'success');
+      } else {
+        showToast('扫描完成: 未发现可清理的孤立关系', 'success');
+      }
+
+      await runHealthCheck();
+    } catch (error) {
+      showToast(`清理流程中断: ${getErrorMessage(error, '未知错误')}`, 'error');
+    } finally {
+      setIsCleaningOrphans(false);
     }
   }, [runHealthCheck, showToast]);
 
@@ -482,6 +507,7 @@ export const useProfileMaintenance = ({
     dbMeta,
     healthReport,
     isRepairing,
+    isCleaningOrphans,
     isExportOptionsOpen,
     exportOptions,
     exportSourceCounts,
@@ -499,6 +525,7 @@ export const useProfileMaintenance = ({
     backupStatus,
     onRunHealthCheck: runHealthCheck,
     onRepairData: handleRepairData,
+    onCleanOrphanRelations: handleCleanOrphanRelations,
     onExportClick: handleExportClick,
     onCsvExportClick: handleCsvExportClick,
     onEncryptedExportClick: handleEncryptedExportClick,

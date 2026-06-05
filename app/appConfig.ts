@@ -7,6 +7,7 @@ export const defaultSettings: AppSettings = {
   enableNotifications: false,
   notificationTime: { morning: '08:00', evening: '23:00' },
   hiddenFields: [],
+  metricPreferences: {},
   backupRetention: {
     mode: 'count',
     autoSafetyMaxCount: 7

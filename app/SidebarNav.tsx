@@ -39,7 +39,7 @@ const SidebarNav: React.FC<SidebarNavProps> = ({
       <div className="flex items-center justify-between p-4 border-b border-surface-border dark:border-surface-border">
         <motion.div
           animate={{ opacity: isCollapsed ? 0 : 1 }}
-          className="font-black text-xl text-brand-accent whitespace-nowrap overflow-hidden"
+          className="font-black text-xl text-accent whitespace-nowrap overflow-hidden"
         >
           硬度日记
         </motion.div>
@@ -66,7 +66,7 @@ const SidebarNav: React.FC<SidebarNavProps> = ({
               whileTap={{ scale: 0.98 }}
               className={`relative w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all ${
                 isActive
-                  ? 'bg-brand-accent text-white shadow-lg shadow-brand-accent/30'
+                  ? 'bg-accent text-white shadow-lg shadow-accent/30'
                   : 'text-text-muted dark:text-text-muted hover:bg-surface-muted dark:hover:bg-surface-muted'
               }`}
             >

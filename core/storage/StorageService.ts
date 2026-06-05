@@ -291,9 +291,51 @@ export const StorageService = {
      * Runs a comprehensive health check on all data.
      */
     async runHealthCheck(): Promise<DataHealthReport> {
-        const logs = await db.logs.toArray();
-        const partners = await db.partners.toArray();
-        return checkDataHealth(logs, partners);
+        const [
+            logs,
+            partners,
+            tags,
+            cycleEvents,
+            pregnancyEvents,
+            pornUseEvents,
+            masturbationEvents,
+            sexEvents,
+            trainingGoals,
+            goalCheckins,
+            healthProjects,
+            healthProjectPlans,
+            healthProjectLogs
+        ] = await Promise.all([
+            db.logs.toArray(),
+            db.partners.toArray(),
+            db.tags.toArray(),
+            db.cycle_events.toArray(),
+            db.pregnancy_events.toArray(),
+            db.porn_use_events.toArray(),
+            db.masturbation_events.toArray(),
+            db.sex_events.toArray(),
+            db.training_goals.toArray(),
+            db.goal_checkins.toArray(),
+            db.health_projects.toArray(),
+            db.health_project_plans.toArray(),
+            db.health_project_logs.toArray()
+        ]);
+
+        return checkDataHealth({
+            logs,
+            partners,
+            tags,
+            cycleEvents,
+            pregnancyEvents,
+            pornUseEvents,
+            masturbationEvents,
+            sexEvents,
+            trainingGoals,
+            goalCheckins,
+            healthProjects,
+            healthProjectPlans,
+            healthProjectLogs
+        });
     },
 
     /**
@@ -318,6 +360,150 @@ export const StorageService = {
         }
 
         return repairCount;
+    },
+
+    /**
+     * Cleans orphaned cross-table relations after the caller has created a safety snapshot.
+     */
+    async cleanOrphanRelations(): Promise<{
+        total: number;
+        updatedLogs: number;
+        updatedSexEvents: number;
+        deletedCycleEvents: number;
+        deletedPregnancyEvents: number;
+        deletedGoalCheckins: number;
+        deletedHealthProjectPlans: number;
+        deletedHealthProjectLogs: number;
+    }> {
+        const [
+            logs,
+            partners,
+            cycleEvents,
+            pregnancyEvents,
+            sexEvents,
+            trainingGoals,
+            goalCheckins,
+            healthProjects,
+            healthProjectPlans,
+            healthProjectLogs
+        ] = await Promise.all([
+            db.logs.toArray(),
+            db.partners.toArray(),
+            db.cycle_events.toArray(),
+            db.pregnancy_events.toArray(),
+            db.sex_events.toArray(),
+            db.training_goals.toArray(),
+            db.goal_checkins.toArray(),
+            db.health_projects.toArray(),
+            db.health_project_plans.toArray(),
+            db.health_project_logs.toArray()
+        ]);
+
+        const partnerIds = new Set(partners.map((partner) => partner.id));
+        const partnerNames = new Set(partners.map((partner) => partner.name));
+        const trainingGoalIds = new Set(trainingGoals.map((goal) => goal.id));
+        const healthProjectIds = new Set(healthProjects.map((project) => project.id));
+
+        let removedLogRelations = 0;
+        const logsToUpdate = logs
+            .map((log) => {
+                if (!Array.isArray(log.sex)) return { log, changed: false };
+                let changed = false;
+                const sex = log.sex.map((record) => {
+                    const next = { ...record };
+                    if (next.partner && !partnerNames.has(next.partner)) {
+                        delete next.partner;
+                        changed = true;
+                        removedLogRelations++;
+                    }
+                    if (Array.isArray(next.interactions)) {
+                        const interactions = next.interactions.map((interaction) => {
+                            if (!interaction.partner || partnerNames.has(interaction.partner)) return interaction;
+                            changed = true;
+                            removedLogRelations++;
+                            return { ...interaction, partner: '' };
+                        });
+                        next.interactions = interactions;
+                    }
+                    return next;
+                });
+                return changed ? { log: { ...log, sex, updatedAt: Date.now() }, changed } : { log, changed };
+            })
+            .filter((item) => item.changed)
+            .map((item) => item.log);
+
+        const sexEventsToUpdate = sexEvents
+            .map((event) => ({
+                event,
+                partnerIds: Array.isArray(event.partnerIds)
+                    ? event.partnerIds.filter((partnerId) => partnerIds.has(partnerId))
+                    : []
+            }))
+            .filter(({ event, partnerIds }) => (
+                !Array.isArray(event.partnerIds) || partnerIds.length !== event.partnerIds.length
+            ))
+            .map(({ event, partnerIds }) => ({
+                ...event,
+                partnerIds,
+                updatedAt: new Date().toISOString()
+            }));
+
+        const cycleEventIdsToDelete = cycleEvents
+            .filter((event) => !partnerIds.has(event.partnerId))
+            .map((event) => event.id);
+        const pregnancyEventIdsToDelete = pregnancyEvents
+            .filter((event) => !partnerIds.has(event.partnerId))
+            .map((event) => event.id);
+        const goalCheckinIdsToDelete = goalCheckins
+            .filter((checkin) => !trainingGoalIds.has(checkin.goalId))
+            .map((checkin) => checkin.id);
+        const healthProjectPlanIdsToDelete = healthProjectPlans
+            .filter((plan) => !healthProjectIds.has(plan.projectId))
+            .map((plan) => plan.id);
+        const healthProjectLogIdsToDelete = healthProjectLogs
+            .filter((log) => !healthProjectIds.has(log.projectId))
+            .map((log) => log.id);
+
+        await db.transaction('rw', [
+            db.logs,
+            db.cycle_events,
+            db.pregnancy_events,
+            db.sex_events,
+            db.goal_checkins,
+            db.health_project_plans,
+            db.health_project_logs
+        ], async () => {
+            if (logsToUpdate.length > 0) await db.logs.bulkPut(logsToUpdate);
+            if (sexEventsToUpdate.length > 0) await db.sex_events.bulkPut(sexEventsToUpdate);
+            await Promise.all([
+                ...cycleEventIdsToDelete.map((id) => db.cycle_events.delete(id)),
+                ...pregnancyEventIdsToDelete.map((id) => db.pregnancy_events.delete(id)),
+                ...goalCheckinIdsToDelete.map((id) => db.goal_checkins.delete(id)),
+                ...healthProjectPlanIdsToDelete.map((id) => db.health_project_plans.delete(id)),
+                ...healthProjectLogIdsToDelete.map((id) => db.health_project_logs.delete(id))
+            ]);
+        });
+
+        if (logsToUpdate.length > 0) {
+            pluginManager.notifyDataChange(await db.logs.toArray());
+        }
+
+        return {
+            total: removedLogRelations
+                + sexEventsToUpdate.length
+                + cycleEventIdsToDelete.length
+                + pregnancyEventIdsToDelete.length
+                + goalCheckinIdsToDelete.length
+                + healthProjectPlanIdsToDelete.length
+                + healthProjectLogIdsToDelete.length,
+            updatedLogs: logsToUpdate.length,
+            updatedSexEvents: sexEventsToUpdate.length,
+            deletedCycleEvents: cycleEventIdsToDelete.length,
+            deletedPregnancyEvents: pregnancyEventIdsToDelete.length,
+            deletedGoalCheckins: goalCheckinIdsToDelete.length,
+            deletedHealthProjectPlans: healthProjectPlanIdsToDelete.length,
+            deletedHealthProjectLogs: healthProjectLogIdsToDelete.length
+        };
     },
 
     /**
